@@ -139,8 +139,18 @@ switch ($action) {
         $clientToken = 'ct_' . bin2hex(random_bytes(12));
         $now = time();
 
+        $clientIp = trim($input['clientIp'] ?? '');
+        if (empty($clientIp)) {
+            $clientIp = $_SERVER['REMOTE_ADDR'] ?? '127.0.0.1';
+            if (!empty($_SERVER['HTTP_X_FORWARDED_FOR'])) {
+                $parts = explode(',', $_SERVER['HTTP_X_FORWARDED_FOR']);
+                $clientIp = trim($parts[0]);
+            }
+        }
+
         $room['clients'][$clientToken] = [
             'name' => $clientName,
+            'ip' => $clientIp,
             'joined_at' => $now,
             'last_seen' => $now
         ];
@@ -153,6 +163,7 @@ switch ($action) {
             'roomId' => $targetRoomId,
             'roomPin' => $room['pin'],
             'clientToken' => $clientToken,
+            'clientIp' => $clientIp,
             'state' => $room['state'],
             'stateVer' => $room['state_ver'] ?? 1
         ], JSON_UNESCAPED_UNICODE);
@@ -252,17 +263,34 @@ switch ($action) {
 
         $now = time();
         $activeClients = 0;
+        $clientsList = [];
         foreach ($sessions[$roomId]['clients'] as $cToken => $cData) {
-            if (($now - ($cData['last_seen'] ?? 0)) < 30) {
+            if (($now - ($cData['last_seen'] ?? 0)) < 45) {
                 $activeClients++;
+                $clientsList[] = [
+                    'token' => $cToken,
+                    'name' => $cData['name'] ?? 'جهاز تحكم',
+                    'ip' => $cData['ip'] ?? '127.0.0.1',
+                    'last_seen' => $cData['last_seen'] ?? $now
+                ];
             }
         }
 
         echo json_encode([
             'success' => true,
             'commands' => $commands,
-            'clientCount' => $activeClients
+            'clientCount' => $activeClients,
+            'clients' => $clientsList
         ], JSON_UNESCAPED_UNICODE);
+        break;
+
+    case 'get_my_ip':
+        $ip = $_SERVER['REMOTE_ADDR'] ?? '127.0.0.1';
+        if (!empty($_SERVER['HTTP_X_FORWARDED_FOR'])) {
+            $parts = explode(',', $_SERVER['HTTP_X_FORWARDED_FOR']);
+            $ip = trim($parts[0]);
+        }
+        echo json_encode(['success' => true, 'ip' => $ip], JSON_UNESCAPED_UNICODE);
         break;
 
     default:

@@ -191,18 +191,136 @@
               </button>
             </div>
 
-
-
             <div class="control-field" style="margin-top:6px;">
               <label class="toggle-switch-label" style="display:flex; align-items:center; justify-content:space-between; cursor:pointer; font-size:0.82rem; background:#f8fafc; border:1px solid #e2e8f0; padding:7px 10px; border-radius:9px; font-weight:600; color:#334155;">
                 <span><i class="fa-solid fa-eye-slash" style="margin-left:6px; color:#ef4444;"></i> إخفاء أرقام الشرائح والآيات وأدوات التحكم (Clean View)</span>
                 <input type="checkbox" id="btn-toggle-hide-controls" class="toggle-checkbox">
               </label>
             </div>
+
+            <!-- 4. HOTSPOT MODE TOGGLE & CONTROLS -->
+            <div class="hotspot-mode-section" style="margin-top:6px; border-top:1px solid #f1f5f9; padding-top:6px;">
+              <label class="toggle-switch-label" style="display:flex; align-items:center; justify-content:space-between; cursor:pointer; font-size:0.78rem; background:linear-gradient(135deg, rgba(37,99,235,0.06), rgba(16,185,129,0.06)); border:1px solid rgba(37,99,235,0.25); padding:7px 10px; border-radius:9px; font-weight:700; color:#1e293b; transition:all 0.2s ease;">
+                <span style="display:flex; align-items:center; gap:6px; white-space:nowrap;">
+                  <i class="fa-solid fa-tower-broadcast" style="color:#2563eb; font-size:0.9rem;"></i>
+                  <span>وضع نقطة الاتصال (Hotspot Mode)</span>
+                </span>
+                <input type="checkbox" id="btn-toggle-hotspot-mode" class="toggle-checkbox" style="margin-right:8px;">
+              </label>
+            </div>
+
+            <!-- 5. ILLUSTRATED CONNECTION GUIDE BANNER -->
+            <div id="hotspot-guide-banner" class="hotspot-guide-banner hidden" style="margin-top:6px; background:#ffffff; border:1px solid #cbd5e1; border-radius:10px; padding:10px; box-shadow:0 4px 12px rgba(0,0,0,0.05); font-size:0.75rem; color:#334155;">
+              <!-- Modern SVG Illustration -->
+              <div class="hotspot-illustration-wrap" style="text-align:center; margin-bottom:8px;">
+                <svg viewBox="0 0 280 90" width="100%" height="86" xmlns="http://www.w3.org/2000/svg" style="max-width:260px; margin:0 auto; display:block;">
+                  <defs>
+                    <linearGradient id="screenGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                      <stop offset="0%" stop-color="#1e293b"/>
+                      <stop offset="100%" stop-color="#0f172a"/>
+                    </linearGradient>
+                    <linearGradient id="waveGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+                      <stop offset="0%" stop-color="#3b82f6"/>
+                      <stop offset="50%" stop-color="#10b981"/>
+                      <stop offset="100%" stop-color="#3b82f6"/>
+                    </linearGradient>
+                    <filter id="hotspotGlow" x="-20%" y="-20%" width="140%" height="140%">
+                      <feGaussianBlur stdDeviation="2.5" result="blur"/>
+                      <feComposite in="SourceGraphic" in2="blur" operator="over"/>
+                    </filter>
+                  </defs>
+
+                  <!-- Left: Presentation Display (present.html) -->
+                  <g transform="translate(14, 10)">
+                    <rect x="0" y="0" width="76" height="48" rx="5" fill="url(#screenGrad)" stroke="#64748b" stroke-width="1.5"/>
+                    <path d="M 32 48 L 30 57 L 46 57 L 44 48 Z" fill="#64748b"/>
+                    <rect x="23" y="57" width="30" height="3" rx="1.5" fill="#475569"/>
+                    <rect x="5" y="5" width="66" height="38" rx="3" fill="#0284c7" opacity="0.2"/>
+                    <rect x="12" y="13" width="52" height="4" rx="2" fill="#38bdf8"/>
+                    <rect x="17" y="21" width="42" height="4" rx="2" fill="#bae6fd"/>
+                    <circle cx="38" cy="33" r="2.8" fill="#10b981"/>
+                    <text x="38" y="42" fill="#94a3b8" font-size="6" font-family="sans-serif" text-anchor="middle" font-weight="bold">present.html</text>
+                  </g>
+
+                  <!-- Center: Radiating Hotspot Wi-Fi Signal Waves -->
+                  <g transform="translate(108, 10)">
+                    <circle cx="28" cy="24" r="5" fill="#10b981" filter="url(#hotspotGlow)"/>
+                    <path d="M 18 14 A 16 16 0 0 1 38 14" fill="none" stroke="url(#waveGrad)" stroke-width="2" stroke-linecap="round"/>
+                    <path d="M 11 7 A 26 26 0 0 1 45 7" fill="none" stroke="url(#waveGrad)" stroke-width="2" stroke-linecap="round" opacity="0.75"/>
+                    <path d="M 4 0 A 36 36 0 0 1 52 0" fill="none" stroke="url(#waveGrad)" stroke-width="2" stroke-linecap="round" opacity="0.5"/>
+                    <text x="28" y="44" fill="#10b981" font-size="6.5" font-family="sans-serif" text-anchor="middle" font-weight="bold">Hotspot Wi-Fi</text>
+                    <path d="M 3 24 L 19 24" stroke="#10b981" stroke-width="1.2" stroke-dasharray="2 2"/>
+                    <path d="M 37 24 L 53 24" stroke="#10b981" stroke-width="1.2" stroke-dasharray="2 2"/>
+                  </g>
+
+                  <!-- Right: Remote Control Panel Device -->
+                  <g transform="translate(195, 6)">
+                    <rect x="0" y="0" width="38" height="64" rx="6" fill="#0f172a" stroke="#3b82f6" stroke-width="1.5"/>
+                    <rect x="4" y="6" width="30" height="52" rx="3" fill="#1e293b"/>
+                    <rect x="14" y="2" width="10" height="2" rx="1" fill="#475569"/>
+                    <circle cx="19" cy="61" r="1.5" fill="#475569"/>
+                    <rect x="7" y="10" width="24" height="6" rx="2" fill="#2563eb"/>
+                    <rect x="7" y="19" width="24" height="4" rx="1.5" fill="#475569"/>
+                    <rect x="7" y="26" width="11" height="8" rx="2" fill="#0284c7"/>
+                    <rect x="20" y="26" width="11" height="8" rx="2" fill="#10b981"/>
+                    <rect x="7" y="37" width="24" height="4" rx="1.5" fill="#475569"/>
+                    <rect x="7" y="44" width="24" height="4" rx="1.5" fill="#334155"/>
+                    <text x="19" y="55" fill="#60a5fa" font-size="5" font-family="sans-serif" text-anchor="middle" font-weight="bold">Control Panel</text>
+                  </g>
+                </svg>
+              </div>
+
+              <div style="font-weight:800; color:#1e293b; margin-bottom:4px; display:flex; align-items:center; justify-content:space-between;">
+                <span><i class="fa-solid fa-circle-info" style="color:#2563eb;"></i> كيفية ربط وتحكم الجهاز:</span>
+                <span id="hotspot-host-ip-pill" class="badge" style="font-size:0.68rem; background:#eff6ff; color:#2563eb; padding:2px 6px; border-radius:6px; font-weight:700;">IP: جاري الكشف...</span>
+              </div>
+
+              <ol style="padding-right:16px; margin:0; line-height:1.5; color:#475569;">
+                <li style="margin-bottom:3px;">صل كلا الجهازين بنفس شبكة الـ <b>Wi-Fi</b> أو نقطة اتصال الهاتف (Hotspot).</li>
+                <li style="margin-bottom:3px;">
+                  افتح رابط <b>لوحة التحكم</b> على الجهاز الآخر:
+                  <div style="margin-top:4px; display:flex; gap:4px; align-items:center;">
+                    <input type="text" id="input-hotspot-ctrl-url" readonly style="flex:1; font-size:0.68rem; padding:4px 6px; border:1px solid #cbd5e1; border-radius:6px; background:#f8fafc; color:#0f172a; direction:ltr; text-align:left;" value="">
+                    <button type="button" id="btn-copy-hotspot-url" class="btn btn-sm btn-secondary" style="padding:4px 8px; font-size:0.68rem; white-space:nowrap;" title="نسخ رابط التحكم">
+                      <i class="fa-solid fa-copy"></i>
+                    </button>
+                    <button type="button" id="btn-show-hotspot-qr" class="btn btn-sm btn-secondary" style="padding:4px 8px; font-size:0.68rem; white-space:nowrap;" title="عرض رمز QR">
+                      <i class="fa-solid fa-qrcode"></i>
+                    </button>
+                  </div>
+                </li>
+                <li>يظهر الجهاز المتصل أدناه باسم الـ <b>IP</b> الخاص به، وتتحكم أزرار لوحة التحكم بشاشة <b>present.html</b> مباشرة!</li>
+              </ol>
+            </div>
+
+            <!-- 6. CONNECTED HOTSPOT DEVICES LIST (NAMED BY IP) -->
+            <div id="hotspot-devices-container" class="hidden" style="margin-top:6px; border-top:1px solid #f1f5f9; padding-top:6px;">
+              <div style="font-size:0.75rem; font-weight:700; color:#10b981; margin-bottom:4px; display:flex; align-items:center; justify-content:space-between;">
+                <span style="display:flex; align-items:center; gap:4px;">
+                  <span class="online-pulse-dot"></span> الأجهزة المتصلة عبر الشبكة (Hotspot):
+                </span>
+                <span id="hotspot-devices-count-badge" style="font-size:0.68rem; background:rgba(16,185,129,0.15); color:#059669; padding:1px 6px; border-radius:10px; font-weight:800;">0 جهاز</span>
+              </div>
+              <div id="hotspot-devices-list" style="display:flex; flex-direction:column; gap:4px;">
+                <div id="hotspot-no-devices-placeholder" style="font-size:0.72rem; color:#94a3b8; font-style:italic; padding:6px 8px; background:#f8fafc; border:1px dashed #cbd5e1; border-radius:8px; text-align:center;">
+                  في انتظار فتح لوحة التحكم على جهاز آخر...
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </div>
     </header>
+
+    <!-- FLOATING HOTSPOT CONTROLLER MODE STATUS BAR -->
+    <div id="hotspot-controller-bar" class="hotspot-controller-bar hidden">
+      <div class="hotspot-controller-bar-content">
+        <span class="online-pulse-dot"></span>
+        <span class="controller-bar-title"><i class="fa-solid fa-tower-broadcast"></i> وضع التحكم المباشر (Hotspot Controller): تحكم في شاشة العرض</span>
+        <span id="controller-host-badge" class="controller-host-badge">متصل</span>
+        <button type="button" id="btn-exit-controller-mode" class="btn-exit-controller" title="الخروج من وضع التحكم"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+    </div>
 
     <!-- CENTERED INTELLIGENT SEARCH HERO -->
     <section class="search-hero">

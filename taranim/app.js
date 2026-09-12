@@ -1719,6 +1719,13 @@ document.addEventListener('DOMContentLoaded', () => {
     highlightedLineIndices: [],
     highlightColor: savedSettings.highlightColor || "#ef4444",
     hideControls: localStorage.getItem('sunday_school_taranim_hide_controls') === 'true',
+    isHotspotMode: localStorage.getItem('sunday_school_taranim_hotspot_mode') === 'true',
+    hotspotConnectedDevices: new Map(),
+    isHotspotControllerMode: false,
+    hotspotHostIp: '',
+    hotspotHostPin: '',
+    hotspotControllerPeer: null,
+    hotspotControllerConn: null,
 
     standbyConfig: (savedMediaConfig.standbyConfig && typeof savedMediaConfig.standbyConfig === 'object') ? {
       showLogo: true,
@@ -2202,6 +2209,19 @@ document.addEventListener('DOMContentLoaded', () => {
     btnAlignJustify: document.getElementById('btn-align-justify'),
     screensCastList: document.getElementById('screens-cast-list'),
     btnDetectScreens: document.getElementById('btn-detect-screens'),
+    btnToggleHotspotMode: document.getElementById('btn-toggle-hotspot-mode'),
+    hotspotGuideBanner: document.getElementById('hotspot-guide-banner'),
+    hotspotHostIpPill: document.getElementById('hotspot-host-ip-pill'),
+    inputHotspotCtrlUrl: document.getElementById('input-hotspot-ctrl-url'),
+    btnCopyHotspotUrl: document.getElementById('btn-copy-hotspot-url'),
+    btnShowHotspotQr: document.getElementById('btn-show-hotspot-qr'),
+    hotspotDevicesContainer: document.getElementById('hotspot-devices-container'),
+    hotspotDevicesList: document.getElementById('hotspot-devices-list'),
+    hotspotDevicesCountBadge: document.getElementById('hotspot-devices-count-badge'),
+    hotspotNoDevicesPlaceholder: document.getElementById('hotspot-no-devices-placeholder'),
+    hotspotControllerBar: document.getElementById('hotspot-controller-bar'),
+    controllerHostBadge: document.getElementById('controller-host-badge'),
+    btnExitControllerMode: document.getElementById('btn-exit-controller-mode'),
 
     btnCreditsInfo: document.getElementById('btn-credits-info'),
     modalCredits: document.getElementById('modal-credits'),
@@ -3492,13 +3512,29 @@ document.addEventListener('DOMContentLoaded', () => {
         activeRemotePeerConnections.set(conn.peer, conn);
         updateRemoteClientsUI(activeRemotePeerConnections.size);
 
+        if (conn.metadata && (conn.metadata.ip || conn.metadata.name)) {
+          registerHotspotDevice(conn.metadata, conn);
+        }
+
         conn.on('data', (cmd) => {
-          if (cmd) executeRemoteCommand(cmd);
+          if (cmd) {
+            if (cmd.type === 'REGISTER_DEVICE') {
+              registerHotspotDevice(cmd, conn);
+            } else {
+              executeRemoteCommand(cmd);
+            }
+          }
         });
 
         conn.on('close', () => {
           activeRemotePeerConnections.delete(conn.peer);
           updateRemoteClientsUI(activeRemotePeerConnections.size);
+          state.hotspotConnectedDevices.forEach((dev, key) => {
+            if (dev.conn === conn) {
+              state.hotspotConnectedDevices.delete(key);
+            }
+          });
+          renderHotspotConnectedDevices();
         });
 
         conn.on('error', () => {
@@ -3790,6 +3826,389 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
+  // =========================================================================
+  // HOTSPOT MODE & DEVICE CONNECTION ENGINE
+  // =========================================================================
+  async function detectLocalOrPublicIp() {
+    const hostname = window.location.hostname;
+    if (hostname && /^(\d{1,3}\.){3}\d{1,3}$/.test(hostname) && !hostname.startsWith('127.')) {
+      return hostname;
+    }
+
+    try {
+      const res = await fetch('/api.php?action=get_my_ip');
+      if (res.ok) {
+        const d = await res.json();
+        if (d && d.ip && d.ip !== '::1' && !d.ip.startsWith('127.')) {
+          return d.ip;
+        }
+      }
+    } catch(e) {}
+
+    return new Promise((resolve) => {
+      let resolved = false;
+      try {
+        const RTCPeer = window.RTCPeerConnection || window.webkitRTCPeerConnection || window.mozRTCPeerConnection;
+        if (!RTCPeer) {
+          resolve(window.location.hostname || '127.0.0.1');
+          return;
+        }
+        const pc = new RTCPeer({ iceServers: [] });
+        pc.createDataChannel('');
+        pc.createOffer().then(o => pc.setLocalDescription(o)).catch(() => {
+          if (!resolved) { resolved = true; resolve(window.location.hostname || '127.0.0.1'); }
+        });
+        pc.onicecandidate = (e) => {
+          if (resolved) return;
+          if (!e || !e.candidate || !e.candidate.candidate) return;
+          const match = /([0-9]{1,3}(\.[0-9]{1,3}){3})/.exec(e.candidate.candidate);
+          if (match && match[1] && !match[1].startsWith('127.')) {
+            resolved = true;
+            try { pc.close(); } catch(err) {}
+            resolve(match[1]);
+          }
+        };
+        setTimeout(() => {
+          if (!resolved) {
+            resolved = true;
+            try { pc.close(); } catch(err) {}
+            resolve(window.location.hostname || '127.0.0.1');
+          }
+        }, 1200);
+      } catch(err) {
+        resolve(window.location.hostname || '127.0.0.1');
+      }
+    });
+  }
+
+  function getHotspotControllerUrl(hostIp, roomPin) {
+    const loc = window.location;
+    const pin = roomPin || (remoteHostSession && remoteHostSession.roomPin) || '';
+    let targetHost = hostIp || loc.hostname;
+    const portStr = loc.port ? `:${loc.port}` : '';
+    let path = loc.pathname;
+    if (path.endsWith('.html') || path.endsWith('.php')) {
+      path = path.substring(0, path.lastIndexOf('/') + 1);
+    } else if (!path.endsWith('/')) {
+      path += '/';
+    }
+    
+    const protocol = loc.protocol;
+    if ((loc.hostname === 'localhost' || loc.hostname === '127.0.0.1') && hostIp && hostIp !== '127.0.0.1' && hostIp !== 'localhost') {
+      return `${protocol}//${hostIp}${portStr}${path}index.html?hotspot_ctrl=1&pin=${pin}`;
+    }
+    return `${protocol}//${loc.host}${path}index.html?hotspot_ctrl=1&pin=${pin}`;
+  }
+
+  function renderHotspotConnectedDevices() {
+    if (!els.hotspotDevicesList) return;
+    const devices = Array.from(state.hotspotConnectedDevices.values());
+    
+    if (els.hotspotDevicesCountBadge) {
+      els.hotspotDevicesCountBadge.textContent = `${devices.length} جهاز`;
+    }
+
+    if (devices.length === 0) {
+      if (els.hotspotNoDevicesPlaceholder) els.hotspotNoDevicesPlaceholder.classList.remove('hidden');
+      els.hotspotDevicesList.innerHTML = `
+        <div id="hotspot-no-devices-placeholder" style="font-size:0.72rem; color:#94a3b8; font-style:italic; padding:6px 8px; background:#f8fafc; border:1px dashed #cbd5e1; border-radius:8px; text-align:center;">
+          في انتظار فتح لوحة التحكم على جهاز آخر...
+        </div>
+      `;
+    } else {
+      let html = '';
+      devices.forEach((dev) => {
+        const ip = dev.ip || '127.0.0.1';
+        const isMobile = /mobile|phone|android|iphone/i.test(dev.userAgent || dev.name || '');
+        const iconCls = isMobile ? 'fa-solid fa-mobile-screen-button' : 'fa-solid fa-laptop';
+        html += `
+          <div class="hotspot-device-card" data-ip="${escapeHtml(ip)}">
+            <div class="device-info">
+              <span class="device-name">
+                <i class="${iconCls}" style="color:#10b981;"></i>
+                جهاز تحكم (${escapeHtml(ip)})
+              </span>
+              <span class="device-meta">
+                <span class="online-pulse-dot"></span>
+                <span>IP: ${escapeHtml(ip)}</span>
+                <span>•</span>
+                <span>تحكم مباشر</span>
+              </span>
+            </div>
+            <button type="button" class="btn-disconnect-device" data-ip="${escapeHtml(ip)}" title="فصل الاتصال" style="background:transparent; border:none; color:#ef4444; font-size:0.75rem; cursor:pointer; padding:4px;">
+              <i class="fa-solid fa-link-slash"></i>
+            </button>
+          </div>
+        `;
+      });
+      els.hotspotDevicesList.innerHTML = html;
+
+      els.hotspotDevicesList.querySelectorAll('.btn-disconnect-device').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          const targetIp = btn.dataset.ip;
+          if (targetIp) {
+            state.hotspotConnectedDevices.forEach((dev, key) => {
+              if (dev.ip === targetIp) {
+                if (dev.conn) { try { dev.conn.close(); } catch(err) {} }
+                state.hotspotConnectedDevices.delete(key);
+              }
+            });
+            renderHotspotConnectedDevices();
+            renderScreenOptions();
+            showToast(`تم فصل الجهاز ${targetIp}`);
+          }
+        });
+      });
+    }
+
+    renderScreenOptions();
+  }
+
+  function registerHotspotDevice(devInfo, conn = null) {
+    if (!devInfo) return;
+    const ip = devInfo.ip || (conn && conn._remoteAddress) || '127.0.0.1';
+    const key = ip + '_' + (devInfo.token || devInfo.id || (conn ? conn.peer : 'client'));
+    
+    const isNew = !state.hotspotConnectedDevices.has(key);
+    state.hotspotConnectedDevices.set(key, {
+      key: key,
+      ip: ip,
+      name: devInfo.name || 'لوحة تحكم',
+      userAgent: devInfo.userAgent || '',
+      type: devInfo.type || 'CONTROL_PANEL',
+      lastSeen: Date.now(),
+      conn: conn
+    });
+
+    renderHotspotConnectedDevices();
+    
+    if (isNew) {
+      showToast(`📱 تم اتصال جهاز تحكم جديد: ${ip}`);
+    }
+  }
+
+  async function updateHotspotHostUI() {
+    if (!remoteHostSession) {
+      await initRemoteHost();
+    }
+    const pin = remoteHostSession ? remoteHostSession.roomPin : '';
+    state.hotspotHostPin = pin;
+
+    const detectedIp = await detectLocalOrPublicIp();
+    state.hotspotHostIp = detectedIp;
+
+    if (els.hotspotHostIpPill) {
+      els.hotspotHostIpPill.textContent = `IP: ${detectedIp}`;
+    }
+
+    const ctrlUrl = getHotspotControllerUrl(detectedIp, pin);
+    if (els.inputHotspotCtrlUrl) {
+      els.inputHotspotCtrlUrl.value = ctrlUrl;
+    }
+
+    if (state.isHotspotMode) {
+      if (els.hotspotGuideBanner) els.hotspotGuideBanner.classList.remove('hidden');
+      if (els.hotspotDevicesContainer) els.hotspotDevicesContainer.classList.remove('hidden');
+    } else {
+      if (els.hotspotGuideBanner) els.hotspotGuideBanner.classList.add('hidden');
+      if (els.hotspotDevicesContainer) els.hotspotDevicesContainer.classList.add('hidden');
+    }
+
+    renderHotspotConnectedDevices();
+  }
+
+  async function toggleHotspotMode(enable = null) {
+    if (enable === null) {
+      state.isHotspotMode = !state.isHotspotMode;
+    } else {
+      state.isHotspotMode = Boolean(enable);
+    }
+    try {
+      localStorage.setItem('sunday_school_taranim_hotspot_mode', state.isHotspotMode ? 'true' : 'false');
+    } catch(e) {}
+
+    if (els.btnToggleHotspotMode) {
+      els.btnToggleHotspotMode.checked = state.isHotspotMode;
+    }
+
+    if (state.isHotspotMode) {
+      showToast('📡 تم تفعيل وضع نقطة الاتصال (Hotspot Mode)');
+      await updateHotspotHostUI();
+    } else {
+      if (els.hotspotGuideBanner) els.hotspotGuideBanner.classList.add('hidden');
+      if (els.hotspotDevicesContainer) els.hotspotDevicesContainer.classList.add('hidden');
+      showToast('تم إيقاف وضع نقطة الاتصال');
+    }
+  }
+
+  async function initHotspotControllerMode(targetPin) {
+    if (!targetPin) return;
+    state.isHotspotControllerMode = true;
+    state.hotspotHostPin = targetPin;
+
+    if (els.hotspotControllerBar) {
+      els.hotspotControllerBar.classList.remove('hidden');
+    }
+    if (els.controllerHostBadge) {
+      els.controllerHostBadge.textContent = `الغرفة: ${targetPin}`;
+    }
+
+    const myIp = await detectLocalOrPublicIp();
+
+    if (window.Peer) {
+      try {
+        const clientPeer = new window.Peer({
+          debug: 0,
+          config: {
+            iceServers: [
+              { urls: 'stun:stun.l.google.com:19302' },
+              { urls: 'stun:stun1.l.google.com:19302' },
+              { urls: 'stun:stun.cloudflare.com:3478' }
+            ]
+          }
+        });
+
+        clientPeer.on('open', () => {
+          const conn = clientPeer.connect('sstaranim_' + targetPin, {
+            metadata: { ip: myIp, name: 'لوحة تحكم', clientType: 'CONTROL_PANEL' }
+          });
+
+          conn.on('open', () => {
+            state.hotspotControllerConn = conn;
+            conn.send({
+              type: 'REGISTER_DEVICE',
+              ip: myIp,
+              name: 'لوحة تحكم',
+              clientType: 'CONTROL_PANEL',
+              userAgent: navigator.userAgent
+            });
+            if (els.controllerHostBadge) {
+              els.controllerHostBadge.textContent = `🟢 متصل بمضيف العرض (${targetPin})`;
+            }
+            showToast('🟢 تم الاتصال بمضيف العرض بنجاح!');
+          });
+
+          conn.on('data', (data) => {
+            if (data && data.type === 'STATE_UPDATE' && data.state) {
+              applyRemoteHostState(data.state);
+            }
+          });
+
+          conn.on('close', () => {
+            state.hotspotControllerConn = null;
+            if (els.controllerHostBadge) {
+              els.controllerHostBadge.textContent = `🔴 انقطع الاتصال (${targetPin})`;
+            }
+          });
+        });
+      } catch(e) {}
+    }
+
+    try {
+      const joinRes = await requestRemoteHostApi('join_room', {
+        pin: targetPin,
+        clientName: 'لوحة تحكم',
+        clientIp: myIp
+      });
+      if (joinRes && joinRes.success && joinRes.state) {
+        applyRemoteHostState(joinRes.state);
+      }
+    } catch(e) {}
+
+    if (els.btnExitControllerMode) {
+      els.btnExitControllerMode.addEventListener('click', () => {
+        state.isHotspotControllerMode = false;
+        if (els.hotspotControllerBar) els.hotspotControllerBar.classList.add('hidden');
+        window.history.replaceState({}, document.title, window.location.pathname);
+        showToast('تم الخروج من وضع التحكم');
+      });
+    }
+  }
+
+  function sendHotspotCommand(cmd) {
+    if (!state.isHotspotControllerMode) return;
+    if (state.hotspotControllerConn && state.hotspotControllerConn.open) {
+      try {
+        state.hotspotControllerConn.send(cmd);
+      } catch(e) {}
+    }
+
+    if (state.hotspotHostPin) {
+      requestRemoteHostApi('send_command', {
+        pin: state.hotspotHostPin,
+        command: cmd
+      });
+    }
+  }
+
+  function applyRemoteHostState(hostState) {
+    if (!hostState) return;
+    if (hostState.activeSong) {
+      state.activeSong = hostState.activeSong;
+    }
+    if (hostState.presentationLines) {
+      state.presentationLines = hostState.presentationLines;
+      renderPresentationLinesList();
+    }
+    if (hostState.currentLineIndex !== undefined) {
+      state.currentLineIndex = hostState.currentLineIndex;
+      highlightCurrentLine();
+    }
+    if (hostState.isBlank !== undefined) {
+      state.isBlank = hostState.isBlank;
+    }
+    if (hostState.isStandbyMode !== undefined) {
+      state.isStandbyMode = hostState.isStandbyMode;
+    }
+  }
+
+  function initHotspotEngine() {
+    if (els.btnToggleHotspotMode) {
+      els.btnToggleHotspotMode.checked = state.isHotspotMode;
+      els.btnToggleHotspotMode.addEventListener('change', () => {
+        toggleHotspotMode(els.btnToggleHotspotMode.checked);
+      });
+      if (state.isHotspotMode) {
+        updateHotspotHostUI();
+      }
+    }
+
+    if (els.btnCopyHotspotUrl) {
+      els.btnCopyHotspotUrl.addEventListener('click', async () => {
+        const val = els.inputHotspotCtrlUrl ? els.inputHotspotCtrlUrl.value : '';
+        if (val) {
+          try {
+            await copyToClipboard(val);
+            showToast('📋 تم نسخ رابط لوحة التحكم بنجاح!');
+          } catch(e) {
+            showToast('رابط التحكم: ' + val);
+          }
+          const orig = els.btnCopyHotspotUrl.innerHTML;
+          els.btnCopyHotspotUrl.innerHTML = '<i class="fa-solid fa-check"></i>';
+          setTimeout(() => { els.btnCopyHotspotUrl.innerHTML = orig; }, 1500);
+        }
+      });
+    }
+
+    if (els.btnShowHotspotQr) {
+      els.btnShowHotspotQr.addEventListener('click', () => {
+        const modal = document.getElementById('modal-remote-pairing');
+        if (modal) {
+          if (!remoteHostSession) initRemoteHost();
+          else renderRemotePairingUI();
+          modal.classList.remove('hidden');
+        }
+      });
+    }
+
+    const params = new URLSearchParams(window.location.search);
+    const targetPin = params.get('hotspot_ctrl') || params.get('hotspot_pin') || params.get('pin');
+    if (params.has('hotspot_ctrl') || params.has('hotspot_controller')) {
+      initHotspotControllerMode(targetPin);
+    }
+  }
+
   function init() {
     setupNetworkSync();
     applyUrlStyleSettings();
@@ -3798,6 +4217,7 @@ document.addEventListener('DOMContentLoaded', () => {
     initObsControllerUI();
     initRemoteModalUI();
     initRemoteHost();
+    initHotspotEngine();
     initBiblePopover();
     initCustomSongEditor();
     makeDraggableCenterPivot();
@@ -10262,6 +10682,14 @@ document.addEventListener('DOMContentLoaded', () => {
       }).join('');
 
       optionsHtml += '<option value="in_app_overlay">عرض داخل التبويب الحالي (Overlay)</option>';
+
+      if (state.hotspotConnectedDevices && state.hotspotConnectedDevices.size > 0) {
+        state.hotspotConnectedDevices.forEach((dev) => {
+          const ip = dev.ip || '127.0.0.1';
+          optionsHtml += '<option value="hotspot_' + escapeHtml(ip) + '">📱 جهاز تحكم متصل (' + escapeHtml(ip) + ')</option>';
+        });
+      }
+
       els.connectedScreensSelect.innerHTML = optionsHtml;
     }
 
@@ -10287,6 +10715,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
         return '<div class="' + cardClass + '" data-val="' + val + '"><div class="screen-info"><span class="screen-name"><i class="fa-solid fa-desktop"></i> ' + escapeHtml(name) + '</span>' + chipsHtml + '<span class="screen-res" style="font-size:0.75rem; color:#94a3b8; margin-top:3px; display:block;">' + s.width + ' × ' + s.height + ' px</span></div><i class="fa-solid fa-expand launch-btn-icon"></i></div>';
       }).join('');
+
+      if (state.hotspotConnectedDevices && state.hotspotConnectedDevices.size > 0) {
+        state.hotspotConnectedDevices.forEach((dev) => {
+          const ip = dev.ip || '127.0.0.1';
+          const isMobileDev = /mobile|phone|android|iphone/i.test(dev.userAgent || dev.name || '');
+          const devIcon = isMobileDev ? 'fa-mobile-screen-button' : 'fa-laptop';
+          cardsHtml += '<div class="screen-cast-card hotspot-device-card" data-val="hotspot_' + escapeHtml(ip) + '"><div class="screen-info"><span class="screen-name"><i class="fa-solid ' + devIcon + '" style="color:#10b981;"></i> جهاز تحكم (' + escapeHtml(ip) + ')</span><div class="screen-chips-row" style="margin-top:4px; display:flex; gap:4px; flex-wrap:wrap;"><span class="screen-chip" style="font-size:0.7rem; font-weight:600; background:rgba(16,185,129,0.2); color:#059669; padding:2px 8px; border-radius:10px;"><span class="online-pulse-dot"></span> متصل بنقطة الاتصال</span></div><span class="screen-res" style="font-size:0.75rem; color:#64748b; margin-top:3px; display:block;">IP: ' + escapeHtml(ip) + ' • تحكم مباشر في present.html</span></div><i class="fa-solid fa-tower-broadcast" style="color:#10b981;"></i></div>';
+        });
+      }
 
       els.screensCastList.innerHTML = cardsHtml;
 
@@ -15140,6 +15577,17 @@ document.addEventListener('DOMContentLoaded', () => {
     // 1. INSTANT LOCAL BROADCAST & STORAGE SYNC (0ms)
     try { broadcastChannel.postMessage(payload); } catch(e) {}
     try { localStorage.setItem('sunday_school_taranim_live_presentation', JSON.stringify(payload)); } catch(e) {}
+
+    // 1.1 SYNC STATE TO HOST WHEN IN HOTSPOT CONTROLLER MODE
+    if (state.isHotspotControllerMode && typeof sendHotspotCommand === 'function') {
+      sendHotspotCommand({
+        type: 'SYNC_STATE',
+        currentLineIndex: targetIndex,
+        activeSong: targetSong,
+        isBlank: state.isBlank,
+        isStandbyMode: isEndingStandby
+      });
+    }
 
     // Helper to apply fit modes
     const applyMediaFitMode = (el, fitMode = 'cover') => {
