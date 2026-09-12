@@ -2125,19 +2125,15 @@
         stateFontSize = data.fontSize;
       }
 
-      // STRICT LOCAL PRIORITY & TIMESTAMP DEDUPLICATION
+      // TIMESTAMP DEDUPLICATION FOR INSTANT 0MS LAN & HTTP SYNC
       if (source === 'server' || source === 'http') {
-        // If local update happened in last 10 seconds, NEVER let stale HTTP overwrite local slides
-        if (Date.now() - lastLocalPayloadTime < 10000) {
-          return;
-        }
         const incomingTs = data.timestamp || data.updatedAt || 0;
-        if (incomingTs && incomingTs < lastProcessedTimestamp) {
+        if (incomingTs && lastProcessedTimestamp && incomingTs < lastProcessedTimestamp) {
           return;
         }
       }
       if (data.timestamp || data.updatedAt) {
-        lastProcessedTimestamp = data.timestamp || data.updatedAt;
+        lastProcessedTimestamp = Math.max(lastProcessedTimestamp || 0, data.timestamp || data.updatedAt || 0);
       }
 
       const textEl = document.getElementById('presenter-text');
@@ -3018,15 +3014,7 @@
     let activeLiveApiUrl = null;
 
     async function fetchLiveHTTP() {
-      // 1. IF WI-FI / INTERNET IS OFF, SILENTLY BYPASS NETWORK FETCH (100% OFFLINE MODE)
-      if (navigator.onLine === false) return;
-
-      // 2. IF LOCAL STORAGE / BROADCAST WAS UPDATED IN LAST 10 SECONDS (SAME DEVICE PRESENTER), BYPASS INTERNET HTTP FETCH!
-      if (Date.now() - lastLocalPayloadTime < 10000) {
-        return;
-      }
-
-      // AUTO-HEALING DEADLOCK BREAKER: Reset after 1000ms
+      // 1. AUTO-HEALING DEADLOCK BREAKER: Reset after 1000ms
       if (isFetching && (Date.now() - lastFetchStartTime > 1000)) {
         isFetching = false;
       }
@@ -3073,6 +3061,8 @@
 
       const fallbackUrls = [
         'api.php?action=live',
+        '/api/live',
+        'api/live',
         '../api.php?action=live',
         '/taranim/api.php?action=live',
         '/api.php?action=live'
@@ -3107,17 +3097,17 @@
       clearTimeout(raceTimeout);
     }
 
-    // WORKER TIMER (80MS TICKS — OPTIMAL FOR MOBILE HOTSPOT & LOCAL DISPLAY SYNC)
+    // WORKER TIMER (30MS TICKS — ULTRA-FAST 0-DELAY LOCAL HOTSPOT & LAN SYNC)
     let workerTimer = null;
     try {
       const workerBlob = new Blob([
-        "let t = null; onmessage = function(e) { if (e.data === 'start') { clearInterval(t); t = setInterval(function() { postMessage('tick'); }, 80); } else if (e.data === 'stop') { clearInterval(t); } };"
+        "let t = null; onmessage = function(e) { if (e.data === 'start') { clearInterval(t); t = setInterval(function() { postMessage('tick'); }, 30); } else if (e.data === 'stop') { clearInterval(t); } };"
       ], { type: 'application/javascript' });
       workerTimer = new Worker(URL.createObjectURL(workerBlob));
       workerTimer.onmessage = function() { fetchLiveHTTP(); };
       workerTimer.postMessage('start');
     } catch (e) {
-      setInterval(fetchLiveHTTP, 80);
+      setInterval(fetchLiveHTTP, 30);
     }
 
     // INITIALIZE INSTANTLY FROM LOCAL STORAGE SETTINGS / LIVE PAYLOAD ON STARTUP

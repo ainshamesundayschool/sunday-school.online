@@ -25,7 +25,7 @@ $requestUri = $_SERVER['REQUEST_URI'];
 $parsedUrl  = parse_url($requestUri, PHP_URL_PATH);
 
 // MOBILE REMOTE CONTROL & HOTSPOT REAL-TIME SYNC
-if ((isset($_GET['action']) && (strpos($_GET['action'], 'remote_') === 0 || strpos($_GET['action'], 'hotspot_') === 0)) || (isset($_REQUEST['action']) && (strpos($_REQUEST['action'], 'remote_') === 0 || strpos($_REQUEST['action'], 'hotspot_') === 0)) || (isset($_GET['action']) && in_array($_GET['action'], ['create_room', 'join_room', 'push_state', 'get_state', 'send_command', 'poll_commands', 'get_my_ip']))) {
+if ((isset($_GET['action']) && (strpos($_GET['action'], 'remote_') === 0 || strpos($_GET['action'], 'hotspot_') === 0)) || (isset($_REQUEST['action']) && (strpos($_REQUEST['action'], 'remote_') === 0 || strpos($_REQUEST['action'], 'hotspot_') === 0)) || (isset($_GET['action']) && in_array($_GET['action'], ['create_room', 'join_room', 'push_state', 'get_state', 'send_command', 'poll_commands', 'get_my_ip', 'host_ip', 'hotspot_info', 'hotspot_ping', 'hotspot_devices']))) {
     require __DIR__ . '/remote_sync.php';
     exit;
 }
@@ -36,6 +36,23 @@ if (strpos($parsedUrl, '/api/live') !== false || (isset($_GET['action']) && $_GE
         $inputRaw = file_get_contents('php://input');
         if (!empty($inputRaw)) {
             file_put_contents($liveFile, $inputRaw, LOCK_EX);
+            // Also register client IP in hotspot devices
+            $clientIp = $_SERVER['REMOTE_ADDR'] ?? '127.0.0.1';
+            if (!empty($_SERVER['HTTP_X_FORWARDED_FOR'])) {
+                $parts = explode(',', $_SERVER['HTTP_X_FORWARDED_FOR']);
+                $clientIp = trim($parts[0]);
+            }
+            if ($clientIp && !str_starts_with($clientIp, '127.')) {
+                $devFile = __DIR__ . '/data/hotspot_devices.json';
+                $devs = file_exists($devFile) ? (@json_decode(file_get_contents($devFile), true) ?: []) : [];
+                $devs[$clientIp] = [
+                    'ip' => $clientIp,
+                    'name' => 'لوحة تحكم',
+                    'type' => 'CONTROL_PANEL',
+                    'last_seen' => time()
+                ];
+                @file_put_contents($devFile, json_encode($devs, JSON_UNESCAPED_UNICODE), LOCK_EX);
+            }
         }
         echo json_encode(['status' => 'success']);
         exit;

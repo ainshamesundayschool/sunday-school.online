@@ -285,12 +285,75 @@ switch ($action) {
         break;
 
     case 'get_my_ip':
-        $ip = $_SERVER['REMOTE_ADDR'] ?? '127.0.0.1';
+    case 'host_ip':
+    case 'hotspot_info':
+        $clientIp = $_SERVER['REMOTE_ADDR'] ?? '127.0.0.1';
         if (!empty($_SERVER['HTTP_X_FORWARDED_FOR'])) {
             $parts = explode(',', $_SERVER['HTTP_X_FORWARDED_FOR']);
-            $ip = trim($parts[0]);
+            $clientIp = trim($parts[0]);
         }
-        echo json_encode(['success' => true, 'ip' => $ip], JSON_UNESCAPED_UNICODE);
+        $lanIp = $_SERVER['SERVER_ADDR'] ?? gethostbyname(gethostname());
+        if (!$lanIp || $lanIp === '127.0.0.1' || $lanIp === '::1') {
+            try {
+                $sock = @socket_create(AF_INET, SOCK_DGRAM, SOL_UDP);
+                if ($sock) {
+                    @socket_connect($sock, '10.255.255.255', 1);
+                    @socket_getsockname($sock, $sockIp);
+                    @socket_close($sock);
+                    if (!empty($sockIp)) $lanIp = $sockIp;
+                }
+            } catch(Exception $e) {}
+        }
+        if (!$lanIp || $lanIp === '127.0.0.1' || $lanIp === '::1') {
+            $lanIp = $clientIp;
+        }
+        $port = $_SERVER['SERVER_PORT'] ?? 80;
+        echo json_encode([
+            'success' => true,
+            'ip' => $clientIp,
+            'lan_ip' => $lanIp,
+            'port' => $port,
+            'url' => "http://{$lanIp}:{$port}/index.html"
+        ], JSON_UNESCAPED_UNICODE);
+        break;
+
+    case 'hotspot_ping':
+        $hotspotDevicesFile = $dataDir . '/hotspot_devices.json';
+        $devices = getSessionsData($hotspotDevicesFile);
+        $clientIp = trim($input['clientIp'] ?? '');
+        if (empty($clientIp)) {
+            $clientIp = $_SERVER['REMOTE_ADDR'] ?? '127.0.0.1';
+            if (!empty($_SERVER['HTTP_X_FORWARDED_FOR'])) {
+                $parts = explode(',', $_SERVER['HTTP_X_FORWARDED_FOR']);
+                $clientIp = trim($parts[0]);
+            }
+        }
+        $now = time();
+        $devices[$clientIp] = [
+            'ip' => $clientIp,
+            'name' => trim($input['clientName'] ?? 'لوحة تحكم'),
+            'type' => 'CONTROL_PANEL',
+            'userAgent' => trim($input['userAgent'] ?? ($_SERVER['HTTP_USER_AGENT'] ?? '')),
+            'last_seen' => $now
+        ];
+        foreach ($devices as $k => $d) {
+            if (($now - ($d['last_seen'] ?? 0)) > 90) unset($devices[$k]);
+        }
+        @file_put_contents($hotspotDevicesFile, json_encode($devices, JSON_UNESCAPED_UNICODE), LOCK_EX);
+        echo json_encode(['success' => true, 'clientIp' => $clientIp], JSON_UNESCAPED_UNICODE);
+        break;
+
+    case 'hotspot_devices':
+        $hotspotDevicesFile = $dataDir . '/hotspot_devices.json';
+        $devices = getSessionsData($hotspotDevicesFile);
+        $now = time();
+        $activeDevs = [];
+        foreach ($devices as $k => $d) {
+            if (($now - ($d['last_seen'] ?? 0)) < 45) {
+                $activeDevs[] = $d;
+            }
+        }
+        echo json_encode(['success' => true, 'devices' => $activeDevs], JSON_UNESCAPED_UNICODE);
         break;
 
     default:

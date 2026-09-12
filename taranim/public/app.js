@@ -3835,16 +3835,24 @@ document.addEventListener('DOMContentLoaded', () => {
       return hostname;
     }
 
-    try {
-      const res = await fetch('/api.php?action=get_my_ip');
-      if (res.ok) {
-        const d = await res.json();
-        if (d && d.ip && d.ip !== '::1' && !d.ip.startsWith('127.')) {
-          return d.ip;
+    // 1. Check local server API endpoints (resolves LAN IP on router with 0 internet)
+    const testEndpoints = ['/api/host_ip', 'api/host_ip', '/api.php?action=host_ip', 'api.php?action=host_ip', '/api.php?action=get_my_ip'];
+    for (const ep of testEndpoints) {
+      try {
+        const res = await fetch(ep, { cache: 'no-cache' });
+        if (res.ok) {
+          const d = await res.json();
+          if (d && d.lan_ip && /^(\d{1,3}\.){3}\d{1,3}$/.test(d.lan_ip) && !d.lan_ip.startsWith('127.')) {
+            return d.lan_ip;
+          }
+          if (d && d.ip && /^(\d{1,3}\.){3}\d{1,3}$/.test(d.ip) && !d.ip.startsWith('127.')) {
+            return d.ip;
+          }
         }
-      }
-    } catch(e) {}
+      } catch(e) {}
+    }
 
+    // 2. Fallback to WebRTC local ICE candidate discovery (works 100% offline)
     return new Promise((resolve) => {
       let resolved = false;
       try {
@@ -3874,17 +3882,16 @@ document.addEventListener('DOMContentLoaded', () => {
             try { pc.close(); } catch(err) {}
             resolve(window.location.hostname || '127.0.0.1');
           }
-        }, 1200);
+        }, 800);
       } catch(err) {
         resolve(window.location.hostname || '127.0.0.1');
       }
     });
   }
 
-  function getHotspotControllerUrl(hostIp, roomPin) {
+  function getHotspotControllerUrl(hostIp) {
     const loc = window.location;
-    const pin = roomPin || (remoteHostSession && remoteHostSession.roomPin) || '';
-    let targetHost = hostIp || loc.hostname;
+    let targetHost = (hostIp && hostIp !== '127.0.0.1' && hostIp !== 'localhost') ? hostIp : loc.hostname;
     const portStr = loc.port ? `:${loc.port}` : '';
     let path = loc.pathname;
     if (path.endsWith('.html') || path.endsWith('.php')) {
@@ -3892,12 +3899,8 @@ document.addEventListener('DOMContentLoaded', () => {
     } else if (!path.endsWith('/')) {
       path += '/';
     }
-    
     const protocol = loc.protocol;
-    if ((loc.hostname === 'localhost' || loc.hostname === '127.0.0.1') && hostIp && hostIp !== '127.0.0.1' && hostIp !== 'localhost') {
-      return `${protocol}//${hostIp}${portStr}${path}index.html?hotspot_ctrl=1&pin=${pin}`;
-    }
-    return `${protocol}//${loc.host}${path}index.html?hotspot_ctrl=1&pin=${pin}`;
+    return `${protocol}//${targetHost}${portStr}${path}index.html?hotspot_ctrl=1`;
   }
 
   function renderHotspotConnectedDevices() {
@@ -3926,13 +3929,13 @@ document.addEventListener('DOMContentLoaded', () => {
             <div class="device-info">
               <span class="device-name">
                 <i class="${iconCls}" style="color:#10b981;"></i>
-                جهاز تحكم (${escapeHtml(ip)})
+                لوحة التحكم (${escapeHtml(ip)})
               </span>
               <span class="device-meta">
                 <span class="online-pulse-dot"></span>
                 <span>IP: ${escapeHtml(ip)}</span>
                 <span>•</span>
-                <span>تحكم مباشر</span>
+                <span>تحكم مباشر (LAN)</span>
               </span>
             </div>
             <button type="button" class="btn-disconnect-device" data-ip="${escapeHtml(ip)}" title="فصل الاتصال" style="background:transparent; border:none; color:#ef4444; font-size:0.75rem; cursor:pointer; padding:4px;">
@@ -3968,7 +3971,7 @@ document.addEventListener('DOMContentLoaded', () => {
   function registerHotspotDevice(devInfo, conn = null) {
     if (!devInfo) return;
     const ip = devInfo.ip || (conn && conn._remoteAddress) || '127.0.0.1';
-    const key = ip + '_' + (devInfo.token || devInfo.id || (conn ? conn.peer : 'client'));
+    const key = ip;
     
     const isNew = !state.hotspotConnectedDevices.has(key);
     state.hotspotConnectedDevices.set(key, {
@@ -3984,17 +3987,53 @@ document.addEventListener('DOMContentLoaded', () => {
     renderHotspotConnectedDevices();
     
     if (isNew) {
-      showToast(`📱 تم اتصال جهاز تحكم جديد: ${ip}`);
+      showToast(`📱 تم اتصال لوحة تحكم جديدة: ${ip}`);
     }
   }
 
-  async function updateHotspotHostUI() {
-    if (!remoteHostSession) {
-      await initRemoteHost();
+  let hotspotDevicesPollTimer = null;
+  function startHotspotDevicesPolling() {
+    if (hotspotDevicesPollTimer) clearInterval(hotspotDevicesPollTimer);
+    async function poll() {
+      if (!state.isHotspotMode) return;
+      try {
+        let res = await fetch('/api/hotspot_devices', { cache: 'no-cache' });
+        if (!res.ok) {
+          res = await fetch('/api.php?action=hotspot_devices', { cache: 'no-cache' });
+        }
+        if (res.ok) {
+          const data = await res.json();
+          if (data && Array.isArray(data.devices)) {
+            data.devices.forEach(dev => {
+              if (dev && dev.ip) registerHotspotDevice(dev);
+            });
+            const activeIps = new Set(data.devices.map(d => d.ip));
+            state.hotspotConnectedDevices.forEach((dev, key) => {
+              if (!activeIps.has(dev.ip) && (Date.now() - (dev.lastSeen || 0) > 45000)) {
+                state.hotspotConnectedDevices.delete(key);
+              }
+            });
+            renderHotspotConnectedDevices();
+          }
+        }
+      } catch(e) {}
     }
-    const pin = remoteHostSession ? remoteHostSession.roomPin : '';
-    state.hotspotHostPin = pin;
+    poll();
+    hotspotDevicesPollTimer = setInterval(poll, 2500);
+  }
 
+  function sendHotspotPing() {
+    const payload = JSON.stringify({
+      clientName: 'لوحة تحكم',
+      userAgent: navigator.userAgent
+    });
+    fetch('/api/hotspot_ping', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: payload })
+      .catch(() => {
+        fetch('/api.php?action=hotspot_ping', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: payload }).catch(() => {});
+      });
+  }
+
+  async function updateHotspotHostUI() {
     const detectedIp = await detectLocalOrPublicIp();
     state.hotspotHostIp = detectedIp;
 
@@ -4002,7 +4041,7 @@ document.addEventListener('DOMContentLoaded', () => {
       els.hotspotHostIpPill.textContent = `IP: ${detectedIp}`;
     }
 
-    const ctrlUrl = getHotspotControllerUrl(detectedIp, pin);
+    const ctrlUrl = getHotspotControllerUrl(detectedIp);
     if (els.inputHotspotCtrlUrl) {
       els.inputHotspotCtrlUrl.value = ctrlUrl;
     }
@@ -4010,9 +4049,14 @@ document.addEventListener('DOMContentLoaded', () => {
     if (state.isHotspotMode) {
       if (els.hotspotGuideBanner) els.hotspotGuideBanner.classList.remove('hidden');
       if (els.hotspotDevicesContainer) els.hotspotDevicesContainer.classList.remove('hidden');
+      startHotspotDevicesPolling();
     } else {
       if (els.hotspotGuideBanner) els.hotspotGuideBanner.classList.add('hidden');
       if (els.hotspotDevicesContainer) els.hotspotDevicesContainer.classList.add('hidden');
+      if (hotspotDevicesPollTimer) {
+        clearInterval(hotspotDevicesPollTimer);
+        hotspotDevicesPollTimer = null;
+      }
     }
 
     renderHotspotConnectedDevices();
@@ -4038,132 +4082,75 @@ document.addEventListener('DOMContentLoaded', () => {
     } else {
       if (els.hotspotGuideBanner) els.hotspotGuideBanner.classList.add('hidden');
       if (els.hotspotDevicesContainer) els.hotspotDevicesContainer.classList.add('hidden');
+      if (hotspotDevicesPollTimer) {
+        clearInterval(hotspotDevicesPollTimer);
+        hotspotDevicesPollTimer = null;
+      }
       showToast('تم إيقاف وضع نقطة الاتصال');
     }
   }
 
-  async function initHotspotControllerMode(targetPin) {
-    if (!targetPin) return;
+  let controllerLivePollTimer = null;
+
+  async function initHotspotControllerMode() {
     state.isHotspotControllerMode = true;
-    state.hotspotHostPin = targetPin;
 
     if (els.hotspotControllerBar) {
       els.hotspotControllerBar.classList.remove('hidden');
     }
     if (els.controllerHostBadge) {
-      els.controllerHostBadge.textContent = `الغرفة: ${targetPin}`;
+      els.controllerHostBadge.textContent = '🟢 متصل بمضيف العرض (Hotspot)';
     }
 
-    const myIp = await detectLocalOrPublicIp();
+    // Send immediate ping to register this device's IP on host machine
+    sendHotspotPing();
+    setInterval(sendHotspotPing, 8000);
 
-    if (window.Peer) {
+    // Fast poll to follow along if host changes slides (300ms)
+    let lastHostTimestamp = 0;
+    if (controllerLivePollTimer) clearInterval(controllerLivePollTimer);
+    controllerLivePollTimer = setInterval(async () => {
       try {
-        const clientPeer = new window.Peer({
-          debug: 0,
-          config: {
-            iceServers: [
-              { urls: 'stun:stun.l.google.com:19302' },
-              { urls: 'stun:stun1.l.google.com:19302' },
-              { urls: 'stun:stun.cloudflare.com:3478' }
-            ]
+        let res = await fetch('/api/live', { cache: 'no-cache' });
+        if (!res.ok) {
+          res = await fetch('/api.php?action=live', { cache: 'no-cache' });
+        }
+        if (res.ok) {
+          const liveData = await res.json();
+          if (liveData && (liveData.timestamp || liveData.updated_at)) {
+            const ts = liveData.timestamp || liveData.updated_at;
+            if (ts > lastHostTimestamp) {
+              lastHostTimestamp = ts;
+              if (liveData.isBlank !== undefined && els.btnToggleBlank) {
+                state.isBlank = Boolean(liveData.isBlank);
+                els.btnToggleBlank.classList.toggle('active', state.isBlank);
+              }
+            }
           }
-        });
-
-        clientPeer.on('open', () => {
-          const conn = clientPeer.connect('sstaranim_' + targetPin, {
-            metadata: { ip: myIp, name: 'لوحة تحكم', clientType: 'CONTROL_PANEL' }
-          });
-
-          conn.on('open', () => {
-            state.hotspotControllerConn = conn;
-            conn.send({
-              type: 'REGISTER_DEVICE',
-              ip: myIp,
-              name: 'لوحة تحكم',
-              clientType: 'CONTROL_PANEL',
-              userAgent: navigator.userAgent
-            });
-            if (els.controllerHostBadge) {
-              els.controllerHostBadge.textContent = `🟢 متصل بمضيف العرض (${targetPin})`;
-            }
-            showToast('🟢 تم الاتصال بمضيف العرض بنجاح!');
-          });
-
-          conn.on('data', (data) => {
-            if (data && data.type === 'STATE_UPDATE' && data.state) {
-              applyRemoteHostState(data.state);
-            }
-          });
-
-          conn.on('close', () => {
-            state.hotspotControllerConn = null;
-            if (els.controllerHostBadge) {
-              els.controllerHostBadge.textContent = `🔴 انقطع الاتصال (${targetPin})`;
-            }
-          });
-        });
+        }
       } catch(e) {}
-    }
+    }, 300);
 
-    try {
-      const joinRes = await requestRemoteHostApi('join_room', {
-        pin: targetPin,
-        clientName: 'لوحة تحكم',
-        clientIp: myIp
-      });
-      if (joinRes && joinRes.success && joinRes.state) {
-        applyRemoteHostState(joinRes.state);
-      }
-    } catch(e) {}
+    showToast('🟢 وضع التحكم المباشر نشط (تحكم فوري 0ms بدون إنترنت)');
 
     if (els.btnExitControllerMode) {
       els.btnExitControllerMode.addEventListener('click', () => {
         state.isHotspotControllerMode = false;
         if (els.hotspotControllerBar) els.hotspotControllerBar.classList.add('hidden');
+        if (controllerLivePollTimer) {
+          clearInterval(controllerLivePollTimer);
+          controllerLivePollTimer = null;
+        }
         window.history.replaceState({}, document.title, window.location.pathname);
         showToast('تم الخروج من وضع التحكم');
       });
     }
   }
 
-  function sendHotspotCommand(cmd) {
-    if (!state.isHotspotControllerMode) return;
-    if (state.hotspotControllerConn && state.hotspotControllerConn.open) {
-      try {
-        state.hotspotControllerConn.send(cmd);
-      } catch(e) {}
-    }
-
-    if (state.hotspotHostPin) {
-      requestRemoteHostApi('send_command', {
-        pin: state.hotspotHostPin,
-        command: cmd
-      });
-    }
-  }
-
-  function applyRemoteHostState(hostState) {
-    if (!hostState) return;
-    if (hostState.activeSong) {
-      state.activeSong = hostState.activeSong;
-    }
-    if (hostState.presentationLines) {
-      state.presentationLines = hostState.presentationLines;
-      renderPresentationLinesList();
-    }
-    if (hostState.currentLineIndex !== undefined) {
-      state.currentLineIndex = hostState.currentLineIndex;
-      highlightCurrentLine();
-    }
-    if (hostState.isBlank !== undefined) {
-      state.isBlank = hostState.isBlank;
-    }
-    if (hostState.isStandbyMode !== undefined) {
-      state.isStandbyMode = hostState.isStandbyMode;
-    }
-  }
-
   function initHotspotEngine() {
+    // Send ping on start to register this IP in case opened as secondary controller
+    sendHotspotPing();
+
     if (els.btnToggleHotspotMode) {
       els.btnToggleHotspotMode.checked = state.isHotspotMode;
       els.btnToggleHotspotMode.addEventListener('change', () => {
@@ -4195,17 +4182,33 @@ document.addEventListener('DOMContentLoaded', () => {
       els.btnShowHotspotQr.addEventListener('click', () => {
         const modal = document.getElementById('modal-remote-pairing');
         if (modal) {
-          if (!remoteHostSession) initRemoteHost();
-          else renderRemotePairingUI();
+          const ctrlUrl = els.inputHotspotCtrlUrl ? els.inputHotspotCtrlUrl.value : getHotspotControllerUrl(state.hotspotHostIp);
+          const qrBox = document.getElementById('remote-qr-canvas-container');
+          if (qrBox && typeof window.QRCode === 'function') {
+            qrBox.innerHTML = '';
+            new window.QRCode(qrBox, {
+              text: ctrlUrl,
+              width: 190,
+              height: 190,
+              colorDark: '#0f172a',
+              colorLight: '#ffffff',
+              correctLevel: window.QRCode.CorrectLevel.M
+            });
+          }
+          const pinTxt = document.getElementById('remote-host-pin-txt');
+          if (pinTxt) pinTxt.textContent = 'HOTSPOT';
+          const titleTxt = modal.querySelector('.modal-title');
+          if (titleTxt) titleTxt.textContent = 'لوحة التحكم عبر الشبكة المحلية (Hotspot)';
+          const subtitleTxt = modal.querySelector('.modal-subtitle');
+          if (subtitleTxt) subtitleTxt.textContent = 'امسح رمز QR لفتح لوحة التحكم الافتراضية كاملة على هاتفك بدون إنترنت';
           modal.classList.remove('hidden');
         }
       });
     }
 
     const params = new URLSearchParams(window.location.search);
-    const targetPin = params.get('hotspot_ctrl') || params.get('hotspot_pin') || params.get('pin');
     if (params.has('hotspot_ctrl') || params.has('hotspot_controller')) {
-      initHotspotControllerMode(targetPin);
+      initHotspotControllerMode();
     }
   }
 
