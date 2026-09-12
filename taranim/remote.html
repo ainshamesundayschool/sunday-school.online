@@ -67,15 +67,15 @@
 
     /* TOP STATUS BAR */
     .remote-header {
-      background: rgba(15, 23, 42, 0.88);
+      background: rgba(15, 23, 42, 0.92);
       backdrop-filter: blur(16px);
       -webkit-backdrop-filter: blur(16px);
       border-bottom: 1px solid var(--border-subtle);
-      padding: 10px 14px;
+      padding: 8px 12px;
       display: flex;
       align-items: center;
       justify-content: space-between;
-      gap: 10px;
+      gap: 8px;
       z-index: 50;
       flex-shrink: 0;
     }
@@ -83,12 +83,12 @@
     .room-badge {
       display: inline-flex;
       align-items: center;
-      gap: 7px;
-      background: rgba(37, 99, 235, 0.14);
-      border: 1px solid rgba(37, 99, 235, 0.35);
-      padding: 5px 12px;
-      border-radius: 20px;
-      font-size: 0.82rem;
+      gap: 6px;
+      background: rgba(37, 99, 235, 0.12);
+      border: 1px solid rgba(59, 130, 246, 0.3);
+      padding: 4px 10px;
+      border-radius: 16px;
+      font-size: 0.8rem;
       font-weight: 800;
       color: #60a5fa;
       cursor: pointer;
@@ -97,27 +97,27 @@
 
     .room-badge:active {
       transform: scale(0.96);
-      background: rgba(37, 99, 235, 0.25);
+      background: rgba(37, 99, 235, 0.22);
     }
 
     .status-dot {
-      width: 8px;
-      height: 8px;
+      width: 7px;
+      height: 7px;
       border-radius: 50%;
       background: var(--accent-emerald);
-      box-shadow: 0 0 10px var(--accent-emerald);
+      box-shadow: 0 0 8px var(--accent-emerald);
       animation: pulseDot 2s infinite;
     }
 
     .status-dot.offline {
       background: var(--accent-rose);
-      box-shadow: 0 0 10px var(--accent-rose);
+      box-shadow: 0 0 8px var(--accent-rose);
       animation: none;
     }
 
     @keyframes pulseDot {
       0%, 100% { transform: scale(1); opacity: 1; }
-      50% { transform: scale(1.3); opacity: 0.7; }
+      50% { transform: scale(1.25); opacity: 0.7; }
     }
 
     .header-quick-actions {
@@ -126,66 +126,132 @@
       gap: 6px;
     }
 
-    .btn-header-action {
-      background: rgba(255, 255, 255, 0.06);
-      border: 1px solid var(--border-subtle);
-      color: #cbd5e1;
-      width: 38px;
-      height: 38px;
-      border-radius: 12px;
+    /* CONTROL PANEL PRESENTATION MODES GROUP (STANDBY, BLANK) */
+    .presentation-modes-group {
+      display: inline-flex;
+      align-items: center;
+      background: rgba(30, 41, 59, 0.75);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 10px;
+      padding: 2px;
+      gap: 2px;
+    }
+
+    .mode-group-btn {
+      background: transparent;
+      border: none;
+      outline: none;
+      color: #94a3b8;
+      width: 33px;
+      height: 31px;
+      border-radius: 7px;
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      font-size: 0.95rem;
       cursor: pointer;
+      font-size: 0.88rem;
       transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+      padding: 0;
+      margin: 0;
     }
 
+    .mode-group-btn:hover {
+      color: #ffffff;
+      background: rgba(255, 255, 255, 0.08);
+    }
+
+    .mode-group-btn:active {
+      transform: scale(0.92);
+    }
+
+    .mode-group-btn.active-standby {
+      background: #2563eb !important;
+      color: #ffffff !important;
+      box-shadow: 0 1px 8px rgba(37, 99, 235, 0.45);
+    }
+
+    .mode-group-btn.active-blank {
+      background: #ef4444 !important;
+      color: #ffffff !important;
+      box-shadow: 0 1px 8px rgba(239, 68, 68, 0.45);
+    }
+
+    /* CONTROL PANEL STYLE MINI FLAT BUTTON & HEADER ACTION BUTTON */
+    .mini-btn-flat,
+    .btn-header-action {
+      background: rgba(30, 41, 59, 0.75);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      color: #cbd5e1;
+      width: 35px;
+      height: 35px;
+      border-radius: 9px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.9rem;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+
+    .mini-btn-flat:active,
     .btn-header-action:active {
       transform: scale(0.92);
       background: rgba(255, 255, 255, 0.15);
-    }
-
-    .btn-header-action.active-blank {
-      background: var(--accent-rose);
-      border-color: #fb7185;
       color: #ffffff;
-      box-shadow: 0 0 14px rgba(244, 63, 94, 0.5);
     }
 
-    .btn-header-action.active-standby {
-      background: var(--accent-blue);
-      border-color: #60a5fa;
-      color: #ffffff;
-      box-shadow: 0 0 14px rgba(37, 99, 235, 0.5);
+    /* 4-POINTED STAR / SPARKLE ICON FOR FRANCO MODE */
+    .icon-star-sparkle, .fa-star-sparkle {
+      display: inline-block;
+      width: 1.15em;
+      height: 1.15em;
+      vertical-align: -0.18em;
+      mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M12 0C12 6.627 6.627 12 0 12C6.627 12 12 17.373 12 24C12 17.373 17.373 12 24 12C17.373 12 12 6.627 12 0Z'/%3E%3C/svg%3E") no-repeat center / contain;
+      -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M12 0C12 6.627 6.627 12 0 12C6.627 12 12 17.373 12 24C12 17.373 17.373 12 24 12C17.373 12 12 6.627 12 0Z'/%3E%3C/svg%3E") no-repeat center / contain;
+      background-color: currentColor;
     }
 
-    /* TELEPROMPTER & LIVE SLIDE HUD */
-    .live-slide-hud {
-      margin: 10px 12px 6px;
+    /* MAIN SPLIT VIEW: RIGHT SIDE = OPENED SLIDES, LEFT SIDE = SMALL NAV BUTTONS */
+    .remote-main-split-view {
+      flex: 1;
+      display: flex;
+      flex-direction: row;
+      direction: rtl;
+      gap: 8px;
+      padding: 6px 10px;
+      min-height: 0;
+      overflow: hidden;
+      position: relative;
+    }
+
+    /* RIGHT SIDE (IN RTL): OPENED TARNIMA SLIDES SECTION */
+    .remote-slides-section {
+      flex: 1;
+      min-width: 0;
       background: var(--bg-card);
       backdrop-filter: blur(14px);
       -webkit-backdrop-filter: blur(14px);
       border: 1px solid var(--border-subtle);
-      border-radius: 18px;
-      padding: 12px 14px;
+      border-radius: 16px;
       display: flex;
       flex-direction: column;
-      gap: 8px;
-      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
-      flex-shrink: 0;
-      position: relative;
       overflow: hidden;
+      box-shadow: 0 6px 18px rgba(0, 0, 0, 0.3);
+      position: relative;
     }
 
-    .hud-top-bar {
+    .slides-section-header {
+      padding: 8px 12px;
+      background: rgba(15, 23, 42, 0.85);
+      border-bottom: 1px solid var(--border-subtle);
       display: flex;
       align-items: center;
       justify-content: space-between;
       gap: 8px;
+      flex-shrink: 0;
     }
 
-    .song-title-group {
+    .active-song-heading {
       display: flex;
       align-items: center;
       gap: 6px;
@@ -193,9 +259,9 @@
       flex: 1;
     }
 
-    .song-title-txt {
-      font-size: 1.05rem;
-      font-weight: 900;
+    .opened-song-title-txt {
+      font-size: 0.95rem;
+      font-weight: 850;
       color: #ffffff;
       white-space: nowrap;
       overflow: hidden;
@@ -204,13 +270,13 @@
     }
 
     .song-scale-chip {
-      background: rgba(37, 99, 235, 0.2);
-      border: 1px solid rgba(37, 99, 235, 0.4);
+      background: rgba(37, 99, 235, 0.18);
+      border: 1px solid rgba(59, 130, 246, 0.35);
       color: #93c5fd;
-      font-size: 0.72rem;
+      font-size: 0.7rem;
       font-weight: 800;
-      padding: 2px 8px;
-      border-radius: 20px;
+      padding: 1px 7px;
+      border-radius: 12px;
       white-space: nowrap;
       display: inline-flex;
       align-items: center;
@@ -218,55 +284,31 @@
     }
 
     .hud-counter-pill {
-      background: rgba(255, 255, 255, 0.08);
+      background: rgba(255, 255, 255, 0.06);
       border: 1px solid rgba(255, 255, 255, 0.12);
-      padding: 3px 10px;
-      border-radius: 20px;
-      font-size: 0.82rem;
-      font-weight: 900;
+      padding: 2px 8px;
+      border-radius: 14px;
+      font-size: 0.78rem;
+      font-weight: 850;
       color: var(--accent-blue-light);
       white-space: nowrap;
     }
 
-    .live-slide-preview-box {
-      background: rgba(0, 0, 0, 0.35);
-      border: 1px solid rgba(255, 255, 255, 0.05);
-      border-radius: 12px;
-      padding: 10px 12px;
-      min-height: 64px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      text-align: center;
-      position: relative;
-    }
-
-    .live-slide-text {
-      font-size: 1.15rem;
-      font-weight: 800;
-      line-height: 1.45;
-      color: #f1f5f9;
-      letter-spacing: -0.1px;
-    }
-
-    .live-slide-text.empty {
-      color: var(--text-muted);
-      font-size: 0.9rem;
-      font-weight: 600;
-    }
-
     .hud-mode-alert {
       position: absolute;
-      inset: 0;
-      background: rgba(15, 23, 42, 0.95);
-      border-radius: 12px;
+      top: 40px;
+      left: 0;
+      right: 0;
+      background: rgba(15, 23, 42, 0.96);
+      padding: 6px 12px;
       display: flex;
       align-items: center;
       justify-content: center;
-      gap: 8px;
-      font-size: 0.95rem;
+      gap: 7px;
+      font-size: 0.86rem;
       font-weight: 800;
-      z-index: 5;
+      z-index: 15;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
     }
 
     .hud-mode-alert.blank {
@@ -277,125 +319,185 @@
       color: #60a5fa;
     }
 
-    .next-slide-peek {
+    .remote-slides-list-container {
+      flex: 1;
+      overflow-y: auto;
+      padding: 8px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    .remote-slide-card {
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid var(--border-subtle);
+      border-radius: 11px;
+      padding: 9px 12px;
       display: flex;
       align-items: center;
-      gap: 6px;
-      font-size: 0.74rem;
-      color: var(--text-muted);
-      overflow: hidden;
-      white-space: nowrap;
-      text-overflow: ellipsis;
-    }
-
-    .next-peek-tag {
-      background: rgba(255, 255, 255, 0.08);
-      padding: 1px 6px;
-      border-radius: 6px;
-      font-weight: 800;
-      color: #cbd5e1;
-    }
-
-    /* MAIN BIG ERGONOMIC TOUCH CONTROLS */
-    .remote-main-touch-area {
-      flex: 1;
-      display: grid;
-      grid-template-rows: 1.15fr 0.85fr;
+      justify-content: space-between;
       gap: 10px;
-      padding: 4px 12px 10px;
-      position: relative;
+      cursor: pointer;
+      transition: all 0.15s ease;
     }
 
-    .touch-btn {
+    .remote-slide-card:active {
+      transform: scale(0.98);
+    }
+
+    .remote-slide-card.active {
+      background: rgba(37, 99, 235, 0.22);
+      border-color: #3b82f6;
+      box-shadow: 0 0 14px rgba(37, 99, 235, 0.35);
+    }
+
+    .remote-slide-card.active .slide-card-text {
+      color: #ffffff;
+      font-weight: 850;
+    }
+
+    .slide-card-text {
+      flex: 1;
+      font-size: 0.94rem;
+      font-weight: 700;
+      color: #cbd5e1;
+      line-height: 1.45;
+      word-break: break-word;
+    }
+
+    .slide-card-badge {
+      background: rgba(255, 255, 255, 0.08);
+      color: #94a3b8;
+      font-size: 0.72rem;
+      font-weight: 850;
+      padding: 2px 7px;
+      border-radius: 6px;
+      min-width: 22px;
+      text-align: center;
+      flex-shrink: 0;
+    }
+
+    .remote-slide-card.active .slide-card-badge {
+      background: #2563eb;
+      color: #ffffff;
+      box-shadow: 0 2px 8px rgba(37, 99, 235, 0.5);
+    }
+
+    .remote-slides-empty-state {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 40px 16px;
+      color: #64748b;
+    }
+
+    /* LEFT SIDE (IN RTL): SMALL UP & DOWN NAV CONTROLS */
+    .remote-side-controls {
+      width: 76px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      flex-shrink: 0;
+    }
+
+    .side-nav-btn {
       border: none;
-      border-radius: 22px;
+      border-radius: 14px;
       cursor: pointer;
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      gap: 8px;
+      gap: 4px;
+      font-family: inherit;
       transition: all 0.12s cubic-bezier(0.4, 0, 0.2, 1);
       position: relative;
       overflow: hidden;
-      font-family: inherit;
     }
 
-    .touch-btn:active {
-      transform: scale(0.975);
+    .side-nav-btn:active {
+      transform: scale(0.93);
     }
 
-    .touch-btn-next {
-      background: linear-gradient(145deg, #2563eb 0%, #1d4ed8 60%, #1e40af 100%);
-      color: #ffffff;
-      box-shadow: 0 10px 30px rgba(37, 99, 235, 0.45), inset 0 1px 1px rgba(255, 255, 255, 0.35);
-      border: 1px solid rgba(147, 197, 253, 0.45);
-    }
-
-    .touch-btn-next:active {
-      background: linear-gradient(145deg, #1d4ed8 0%, #1e40af 100%);
-      box-shadow: 0 4px 15px rgba(37, 99, 235, 0.4);
-    }
-
-    .touch-btn-prev {
+    .side-nav-btn-prev {
+      flex: 0.85;
       background: linear-gradient(145deg, #1e293b 0%, #0f172a 100%);
       color: #e2e8f0;
-      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4), inset 0 1px 1px rgba(255, 255, 255, 0.1);
       border: 1px solid rgba(255, 255, 255, 0.12);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.35);
     }
 
-    .touch-btn-prev:active {
+    .side-nav-btn-prev:active {
       background: linear-gradient(145deg, #0f172a 0%, #020617 100%);
     }
 
-    .touch-btn-icon {
-      font-size: 2.2rem;
-      filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
+    .side-nav-btn-prev .side-nav-icon {
+      font-size: 1.5rem;
+      color: #cbd5e1;
     }
 
-    .touch-btn-label {
-      font-size: 1.4rem;
+    .side-nav-btn-prev .side-nav-label {
+      font-size: 0.95rem;
+      font-weight: 850;
+      color: #cbd5e1;
+    }
+
+    .side-nav-btn-next {
+      flex: 1.15;
+      background: linear-gradient(145deg, #2563eb 0%, #1d4ed8 100%);
+      color: #ffffff;
+      border: 1px solid rgba(147, 197, 253, 0.45);
+      box-shadow: 0 6px 20px rgba(37, 99, 235, 0.42);
+    }
+
+    .side-nav-btn-next:active {
+      background: linear-gradient(145deg, #1d4ed8 0%, #1e40af 100%);
+      box-shadow: 0 2px 8px rgba(37, 99, 235, 0.35);
+    }
+
+    .side-nav-btn-next .side-nav-icon {
+      font-size: 1.8rem;
+      color: #ffffff;
+      filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.25));
+    }
+
+    .side-nav-btn-next .side-nav-label {
+      font-size: 1.05rem;
       font-weight: 900;
-      letter-spacing: -0.3px;
+      color: #ffffff;
     }
 
-    .touch-btn-hint {
-      font-size: 0.78rem;
-      opacity: 0.8;
-      font-weight: 600;
-      display: flex;
-      align-items: center;
-      gap: 4px;
-    }
-
-    /* BOTTOM CONTROLS & NAVIGATION BAR */
+    /* BOTTOM CONTROLS & NAVIGATION BAR - COMPACT & CLEAN */
     .remote-bottom-bar {
-      background: rgba(15, 23, 42, 0.94);
+      background: rgba(15, 23, 42, 0.95);
       backdrop-filter: blur(16px);
       -webkit-backdrop-filter: blur(16px);
       border-top: 1px solid var(--border-subtle);
-      padding: 8px 10px;
+      padding: 6px 8px;
       display: flex;
       align-items: center;
       justify-content: space-around;
-      gap: 6px;
+      gap: 5px;
       flex-shrink: 0;
       z-index: 40;
     }
 
     .bottom-action-btn {
       flex: 1;
-      background: rgba(255, 255, 255, 0.05);
+      background: rgba(255, 255, 255, 0.04);
       border: 1px solid var(--border-subtle);
-      border-radius: 14px;
-      padding: 8px 4px;
+      border-radius: 10px;
+      padding: 6px 2px;
       color: #cbd5e1;
-      font-size: 0.74rem;
-      font-weight: 800;
+      font-size: 0.72rem;
+      font-weight: 750;
       display: flex;
       flex-direction: column;
       align-items: center;
-      gap: 4px;
+      gap: 3px;
       cursor: pointer;
       transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
       font-family: inherit;
@@ -403,11 +505,11 @@
 
     .bottom-action-btn:active {
       transform: scale(0.93);
-      background: rgba(255, 255, 255, 0.14);
+      background: rgba(255, 255, 255, 0.12);
     }
 
     .bottom-action-btn i {
-      font-size: 1.1rem;
+      font-size: 0.98rem;
     }
 
     /* MODAL SHEETS & DRAWERS (SPRING LOADED) */
@@ -472,12 +574,12 @@
     .slide-card-item {
       background: rgba(255, 255, 255, 0.04);
       border: 1px solid var(--border-subtle);
-      border-radius: 14px;
-      padding: 12px 14px;
-      font-size: 0.95rem;
+      border-radius: 11px;
+      padding: 9px 12px;
+      font-size: 0.92rem;
       font-weight: 700;
       color: #e2e8f0;
-      line-height: 1.45;
+      line-height: 1.4;
       cursor: pointer;
       display: flex;
       align-items: center;
@@ -491,19 +593,19 @@
     }
 
     .slide-card-item.active {
-      background: rgba(37, 99, 235, 0.25);
+      background: rgba(37, 99, 235, 0.22);
       border-color: #3b82f6;
       color: #ffffff;
-      box-shadow: 0 0 16px rgba(37, 99, 235, 0.4);
+      box-shadow: 0 0 14px rgba(37, 99, 235, 0.35);
     }
 
     .slide-item-badge {
       background: var(--accent-blue);
       color: #ffffff;
-      font-size: 0.74rem;
-      padding: 3px 8px;
-      border-radius: 8px;
-      font-weight: 900;
+      font-size: 0.72rem;
+      padding: 2px 7px;
+      border-radius: 6px;
+      font-weight: 850;
       white-space: nowrap;
     }
 
@@ -584,28 +686,31 @@
       display: none;
     }
 
-    .btn-franco-toggle {
-      background: #1e293b;
-      border: 1px solid #475569;
+    .search-inside-toggle {
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid rgba(255, 255, 255, 0.12);
       color: #94a3b8;
+      width: 38px;
+      height: 38px;
       border-radius: 12px;
-      padding: 8px 12px;
-      font-size: 0.8rem;
-      font-weight: 900;
-      cursor: pointer;
       display: inline-flex;
       align-items: center;
-      gap: 5px;
+      justify-content: center;
+      cursor: pointer;
       transition: all 0.15s ease;
-      white-space: nowrap;
-      font-family: inherit;
+      flex-shrink: 0;
     }
 
-    .btn-franco-toggle.active {
-      background: var(--accent-blue);
-      border-color: #60a5fa;
+    .search-inside-toggle:hover {
       color: #ffffff;
-      box-shadow: 0 0 12px rgba(37, 99, 235, 0.45);
+      background: rgba(255, 255, 255, 0.12);
+    }
+
+    .search-inside-toggle.active {
+      background: var(--accent-blue) !important;
+      border-color: #60a5fa !important;
+      color: #ffffff !important;
+      box-shadow: 0 0 14px rgba(37, 99, 235, 0.5);
     }
 
     .search-filter-chips {
@@ -662,18 +767,18 @@
     .song-result-card {
       background: rgba(30, 41, 59, 0.7);
       border: 1px solid rgba(255, 255, 255, 0.08);
-      border-radius: 14px;
-      padding: 12px 14px;
+      border-radius: 12px;
+      padding: 10px 12px;
       cursor: pointer;
       transition: all 0.15s ease;
       display: flex;
       flex-direction: column;
-      gap: 5px;
+      gap: 6px;
     }
 
     .song-result-card:active {
       transform: scale(0.98);
-      background: rgba(37, 99, 235, 0.25);
+      background: rgba(37, 99, 235, 0.22);
       border-color: #3b82f6;
     }
 
@@ -685,45 +790,81 @@
     }
 
     .result-title {
-      font-weight: 900;
-      font-size: 1rem;
+      font-weight: 850;
+      font-size: 0.98rem;
       color: #ffffff;
+      line-height: 1.35;
     }
 
-    .result-meta-badge {
+    .item-badges-group {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      flex-shrink: 0;
+    }
+
+    .item-badge {
       font-size: 0.7rem;
-      font-weight: 900;
-      padding: 2px 8px;
-      border-radius: 8px;
+      font-weight: 800;
+      padding: 2px 7px;
+      border-radius: 6px;
       background: rgba(37, 99, 235, 0.2);
       color: #60a5fa;
       border: 1px solid rgba(37, 99, 235, 0.35);
       white-space: nowrap;
+      display: inline-flex;
+      align-items: center;
+      gap: 3px;
     }
 
-    .result-meta-badge.bible {
+    .item-badge.bible-badge {
       background: rgba(16, 185, 129, 0.2);
       color: #34d399;
       border-color: rgba(16, 185, 129, 0.35);
     }
 
-    .result-lyrics-snippet {
-      font-size: 0.82rem;
-      color: #94a3b8;
-      line-height: 1.4;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      display: -webkit-box;
-      -webkit-line-clamp: 2;
-      line-clamp: 2;
-      -webkit-box-orient: vertical;
+    .item-badge.lyrics-match-badge {
+      background: rgba(14, 116, 144, 0.25);
+      color: #38bdf8;
+      border-color: rgba(56, 189, 248, 0.4);
     }
 
-    mark {
+    /* TARNIMA PREVIEW BOX MATCHING CONTROL PANEL */
+    .item-preview-box {
+      padding: 7px 10px;
+      background: rgba(0, 0, 0, 0.3);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      border-radius: 9px;
+      font-size: 0.86rem;
+      font-weight: 650;
+      color: #cbd5e1;
+      line-height: 1.5;
+      word-break: break-word;
+    }
+
+    .line-num-mini {
+      font-size: 0.65rem;
+      font-weight: 850;
+      color: #60a5fa;
+      background: rgba(37, 99, 235, 0.2);
+      padding: 1px 5px;
+      border-radius: 4px;
+      margin-left: 5px;
+      display: inline-block;
+    }
+
+    .line-num-mini.matched-line-badge {
+      color: #c084fc;
+      background: rgba(168, 85, 247, 0.2);
+      border: 1px solid rgba(168, 85, 247, 0.3);
+    }
+
+    mark, .search-highlight {
       background: rgba(245, 158, 11, 0.35);
       color: #fef08a;
-      padding: 0 2px;
+      padding: 0 3px;
       border-radius: 3px;
+      font-weight: 800;
     }
 
     /* BIBLE NAVIGATOR SHEET */
@@ -997,63 +1138,68 @@
     </div>
 
     <div class="header-quick-actions">
-      <button type="button" id="btn-remote-blank" class="btn-header-action" title="إخفاء النص (Blank Screen)">
-        <i class="fa-solid fa-eye-slash"></i>
-      </button>
-      <button type="button" id="btn-remote-standby" class="btn-header-action" title="شاشة الانتظار (Standby)">
-        <i class="fa-solid fa-font"></i>
-      </button>
-      <button type="button" id="btn-open-search" class="btn-header-action" title="بحث ذكي">
+      <!-- PRESENTATION MODES GROUP (CONTROL PANEL DESIGN) -->
+      <div class="presentation-modes-group">
+        <button type="button" id="btn-remote-standby" class="mode-group-btn" title="شاشة الانتظار (Standby)">
+          <i class="fa-solid fa-font"></i>
+        </button>
+        <button type="button" id="btn-remote-blank" class="mode-group-btn" title="إخفاء النص (Blank Screen)">
+          <i class="fa-solid fa-eye-slash"></i>
+        </button>
+      </div>
+      <button type="button" id="btn-open-search" class="mini-btn-flat" title="بحث ذكي">
         <i class="fa-solid fa-magnifying-glass"></i>
       </button>
     </div>
   </header>
 
-  <!-- LIVE TELEPROMPTER & SLIDE HUD -->
-  <section class="live-slide-hud">
-    <div class="hud-top-bar">
-      <div class="song-title-group">
-        <span class="song-title-txt" id="song-title-txt">جاري المزامنة...</span>
-        <span class="song-scale-chip hidden" id="song-scale-chip">
-          <i class="fa-solid fa-music"></i> <span id="song-scale-txt">--</span>
-        </span>
+  <!-- MAIN SPLIT VIEW: RIGHT SIDE = OPENED TARNIMA SLIDES, LEFT SIDE = SMALL UP/DOWN BUTTONS -->
+  <main class="remote-main-split-view" id="touch-area">
+    <!-- RIGHT SIDE (in RTL): OPENED TARNIMA SLIDES LIST -->
+    <section class="remote-slides-section">
+      <div class="slides-section-header">
+        <div class="active-song-heading">
+          <i class="fa-solid fa-music" style="color:#60a5fa; font-size:0.85rem;"></i>
+          <span id="song-title-txt" class="opened-song-title-txt">لا توجد ترنيمة نشطة</span>
+          <span class="song-scale-chip hidden" id="song-scale-chip">
+            <span id="song-scale-txt">--</span>
+          </span>
+        </div>
+        <span class="hud-counter-pill" id="slide-counter-txt">-- / --</span>
       </div>
-      <div class="hud-counter-pill" id="slide-counter-txt">-- / --</div>
-    </div>
 
-    <!-- LIVE TEXT PREVIEW BOX -->
-    <div class="live-slide-preview-box">
-      <div class="live-slide-text empty" id="live-slide-text">لا توجد ترنيمة نشطة حالياً</div>
+      <!-- BLANK & STANDBY ALERTS -->
       <div class="hud-mode-alert blank hidden" id="hud-blank-alert">
-        <i class="fa-solid fa-eye-slash"></i> تم إخفاء النص عن الشاشة الرئيسية
+        <i class="fa-solid fa-eye-slash"></i> تم إخفاء النص عن الشاشة
       </div>
       <div class="hud-mode-alert standby hidden" id="hud-standby-alert">
         <i class="fa-solid fa-photo-film"></i> شاشة الانتظار معروضة الآن
       </div>
-    </div>
 
-    <!-- NEXT SLIDE PEEK -->
-    <div class="next-slide-peek" id="next-slide-peek-box">
-      <span class="next-peek-tag">التالي:</span>
-      <span id="next-slide-peek-txt">نهاية الترنيمة</span>
-    </div>
-  </section>
+      <!-- OPENED TARNIMA SLIDES LIST CONTAINER -->
+      <div class="remote-slides-list-container" id="remote-opened-slides-list">
+        <div class="remote-slides-empty-state" id="remote-slides-empty">
+          <i class="fa-solid fa-music" style="font-size:2.2rem; color:#475569; margin-bottom:8px;"></i>
+          <div style="font-size:0.95rem; color:#94a3b8; font-weight:800;">لا توجد ترنيمة معروضة حالياً</div>
+          <div style="font-size:0.8rem; color:#64748b; margin-top:4px;">ابحث عن ترنيمة لعرض كلماتها هنا</div>
+        </div>
+      </div>
+    </section>
 
-  <!-- BIG ERGONOMIC TOUCH CONTROLS -->
-  <main class="remote-main-touch-area" id="touch-area">
-    <!-- NEXT SLIDE BUTTON (LARGE TOP) -->
-    <button type="button" class="touch-btn touch-btn-next" id="btn-touch-next">
-      <i class="fa-solid fa-chevron-up touch-btn-icon"></i>
-      <span class="touch-btn-label">الشريحة التالية</span>
-      <span class="touch-btn-hint"><i class="fa-solid fa-arrow-up"></i> اسحب لأعلى أو اضغط للتقدم</span>
-    </button>
+    <!-- LEFT SIDE (in RTL): COMPACT UP & DOWN BUTTONS -->
+    <aside class="remote-side-controls">
+      <!-- UP BUTTON (PREVIOUS SLIDE) -->
+      <button type="button" class="side-nav-btn side-nav-btn-prev" id="btn-touch-prev" title="الشريحة السابقة">
+        <i class="fa-solid fa-chevron-up side-nav-icon"></i>
+        <span class="side-nav-label">السابق</span>
+      </button>
 
-    <!-- PREVIOUS SLIDE BUTTON -->
-    <button type="button" class="touch-btn touch-btn-prev" id="btn-touch-prev">
-      <i class="fa-solid fa-chevron-down touch-btn-icon"></i>
-      <span class="touch-btn-label">الشريحة السابقة</span>
-      <span class="touch-btn-hint"><i class="fa-solid fa-arrow-down"></i> اسحب لأسفل أو اضغط للرجوع</span>
-    </button>
+      <!-- DOWN BUTTON (NEXT SLIDE - MAIN) -->
+      <button type="button" class="side-nav-btn side-nav-btn-next" id="btn-touch-next" title="الشريحة التالية">
+        <i class="fa-solid fa-chevron-down side-nav-icon"></i>
+        <span class="side-nav-label">التالي</span>
+      </button>
+    </aside>
   </main>
 
   <!-- BOTTOM BAR -->
@@ -1068,11 +1214,11 @@
     </button>
     <button type="button" class="bottom-action-btn" id="btn-open-bible-sheet" style="color:#34d399;">
       <i class="fa-solid fa-book-bible"></i>
-      <span>الكتاب المقدس</span>
+      <span>الكتاب</span>
     </button>
     <button type="button" class="bottom-action-btn" id="btn-bottom-search">
       <i class="fa-solid fa-magnifying-glass"></i>
-      <span>بحث ذكي</span>
+      <span>بحث</span>
     </button>
     <button type="button" class="bottom-action-btn" id="btn-refresh-state">
       <i class="fa-solid fa-rotate"></i>
@@ -1113,8 +1259,8 @@
           <input type="text" id="remote-search-input" placeholder="بحث ذكي في الترانيم والكتاب المقدس..." autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
           <button type="button" id="btn-clear-search-input" class="btn-clear-search"><i class="fa-solid fa-circle-xmark"></i></button>
         </div>
-        <button type="button" id="btn-toggle-franco" class="btn-franco-toggle" title="تفعيل أو إلغاء الفرانكو">
-          <i class="fa-solid fa-language"></i> Franco
+        <button type="button" id="btn-toggle-franco" class="search-inside-toggle icon-only-toggle" title="مترجم الفرنكو والبحث الذكي">
+          <i class="icon-star-sparkle" style="font-size: 1.15rem;"></i>
         </button>
         <button type="button" id="btn-close-search" class="btn-header-action"><i class="fa-solid fa-xmark"></i></button>
       </div>
@@ -1699,8 +1845,6 @@
       const drawerCountEl = document.getElementById('drawer-count-txt');
       const btnBlank = document.getElementById('btn-remote-blank');
       const btnStandby = document.getElementById('btn-remote-standby');
-      const liveTextEl = document.getElementById('live-slide-text');
-      const nextPeekEl = document.getElementById('next-slide-peek-txt');
       const blankAlertEl = document.getElementById('hud-blank-alert');
       const standbyAlertEl = document.getElementById('hud-standby-alert');
       const scaleChipEl = document.getElementById('song-scale-chip');
@@ -1712,44 +1856,24 @@
 
       // 1. Song Title & Scale
       if (song) {
-        songTitleEl.textContent = song.title || 'ترنيمة بدون عنوان';
+        if (songTitleEl) songTitleEl.textContent = song.title || 'ترنيمة بدون عنوان';
         const scale = song.scale || song.musical_scale || song.scale_name || '';
-        if (scale) {
+        if (scale && scaleChipEl && scaleTxtEl) {
           scaleTxtEl.textContent = scale;
           scaleChipEl.classList.remove('hidden');
-        } else {
+        } else if (scaleChipEl) {
           scaleChipEl.classList.add('hidden');
         }
       } else {
-        songTitleEl.textContent = 'لا توجد ترنيمة نشطة';
-        scaleChipEl.classList.add('hidden');
+        if (songTitleEl) songTitleEl.textContent = 'لا توجد ترنيمة نشطة';
+        if (scaleChipEl) scaleChipEl.classList.add('hidden');
       }
 
       // 2. Slide Counter
-      counterEl.textContent = lines.length > 0 ? `${idx + 1} / ${lines.length}` : '-- / --';
+      if (counterEl) counterEl.textContent = lines.length > 0 ? `${idx + 1} / ${lines.length}` : '-- / --';
       if (drawerCountEl) drawerCountEl.textContent = lines.length;
 
-      // 3. Live Slide Text
-      if (lines.length > 0 && lines[idx]) {
-        const item = lines[idx];
-        const text = Array.isArray(item.lines) ? item.lines.join(' • ') : (item.text || '');
-        liveTextEl.textContent = text || 'شريحة فارغة';
-        liveTextEl.classList.remove('empty');
-      } else {
-        liveTextEl.textContent = song ? 'شريحة فارغة' : 'لا توجد ترنيمة نشطة حالياً';
-        liveTextEl.classList.add('empty');
-      }
-
-      // 4. Next Slide Peek
-      if (lines.length > 0 && (idx + 1) < lines.length) {
-        const nextItem = lines[idx + 1];
-        const nextText = Array.isArray(nextItem.lines) ? nextItem.lines.join(' • ') : (nextItem.text || '');
-        nextPeekEl.textContent = nextText;
-      } else {
-        nextPeekEl.textContent = 'نهاية الترنيمة';
-      }
-
-      // 5. Blank & Standby Modes
+      // 3. Blank & Standby Modes
       const isBlank = Boolean(state.isBlank);
       const isStandby = Boolean(state.isStandbyMode);
 
@@ -1763,8 +1887,53 @@
       if (blankAlertEl) blankAlertEl.classList.toggle('hidden', !isBlank);
       if (standbyAlertEl) standbyAlertEl.classList.toggle('hidden', !isStandby);
 
+      // 4. Render Opened Tarnima Slides in Main View (Right side)
+      renderOpenedTarnimaSlides(lines, idx);
+
+      // 5. Render drawer slides & recents
       renderDrawerSlidesList(lines, idx);
       if (state.sessionRecents) renderRecentsList(state.sessionRecents);
+    }
+
+    function renderOpenedTarnimaSlides(lines, currentIdx) {
+      const container = document.getElementById('remote-opened-slides-list');
+      if (!container) return;
+
+      if (!lines || lines.length === 0) {
+        container.innerHTML = `
+          <div class="remote-slides-empty-state">
+            <i class="fa-solid fa-music" style="font-size:2.2rem; color:#475569; margin-bottom:8px;"></i>
+            <div style="font-size:0.95rem; color:#94a3b8; font-weight:800;">لا توجد ترنيمة معروضة حالياً</div>
+            <div style="font-size:0.8rem; color:#64748b; margin-top:4px;">ابحث عن ترنيمة لعرض كلماتها هنا</div>
+          </div>
+        `;
+        return;
+      }
+
+      container.innerHTML = lines.map((item, i) => {
+        const text = Array.isArray(item.lines) ? item.lines.join(' • ') : (item.text || '');
+        const isCurrent = i === currentIdx;
+        return `
+          <div class="remote-slide-card ${isCurrent ? 'active' : ''}" data-idx="${i}">
+            <span class="slide-card-badge">${i + 1}</span>
+            <span class="slide-card-text">${escapeHtml(text)}</span>
+          </div>
+        `;
+      }).join('');
+
+      container.querySelectorAll('.remote-slide-card').forEach(card => {
+        card.addEventListener('click', (e) => {
+          e.stopPropagation();
+          const idx = parseInt(card.dataset.idx, 10);
+          sendRemoteCommand({ type: 'JUMP_LINE', lineIndex: idx });
+        });
+      });
+
+      // Auto-scroll active slide into view smoothly
+      const activeCard = container.querySelector('.remote-slide-card.active');
+      if (activeCard) {
+        activeCard.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      }
     }
 
     function renderDrawerSlidesList(lines, currentIdx) {
@@ -1868,11 +2037,39 @@
     // =========================================================================
     // 5. SONGS CATALOG LOADER & CACHING
     // =========================================================================
+    let bibleChaptersSearchCache = null;
+    function getBibleChaptersSearchCache() {
+      if (bibleChaptersSearchCache) return bibleChaptersSearchCache;
+      bibleChaptersSearchCache = [];
+      BIBLE_BOOKS_DATA.forEach(b => {
+        for (let ch = 1; ch <= b.totalChapters; ch++) {
+          const title = `${b.title} ${ch}`;
+          bibleChaptersSearchCache.push({
+            id: `bible_${b.id}_${ch}`,
+            book_id: b.id,
+            chapter_number: ch,
+            title: title,
+            text: `سفر ${b.title} - الإصحاح ${ch} (${b.abbr})`,
+            _tNorm: normalizeArabic(title),
+            _fullTextNorm: normalizeArabic(`سفر ${b.title} ${ch} ${b.abbr}`),
+            is_bible: true
+          });
+        }
+      });
+      return bibleChaptersSearchCache;
+    }
+
+    // =========================================================================
+    // 5. SONGS CATALOG LOADER & CACHING
+    // =========================================================================
     function mergeSongsIntoCache(newSongs) {
       if (!Array.isArray(newSongs) || newSongs.length === 0) return;
       const existingIds = new Set(allSongsCache.map(s => String(s.id)));
       newSongs.forEach(s => {
         if (s && s.id && !existingIds.has(String(s.id))) {
+          s._tNorm = normalizeArabic(s.title || '');
+          const txt = s.text || s.notes || (Array.isArray(s.lines) ? s.lines.join(' ') : '');
+          s._fullTextNorm = normalizeArabic(txt);
           allSongsCache.push(s);
           existingIds.add(String(s.id));
         }
@@ -1936,7 +2133,7 @@
     }
 
     // =========================================================================
-    // 6. SEARCH EXECUTION & RENDERING
+    // 6. SEARCH EXECUTION & RENDERING (0ms ULTRA-FAST MATCHING CONTROL PANEL)
     // =========================================================================
     const searchInput = document.getElementById('remote-search-input');
     const searchResultsList = document.getElementById('search-results-list');
@@ -1956,13 +2153,16 @@
 
       btnClearSearch.style.display = 'block';
 
-      // Franco detection
-      const isFrancoQuery = isFrancoActive || (/[a-z0-9]/i.test(rawQuery) && !/[\u0600-\u06FF]/.test(rawQuery));
+      // Franco detection & translation
+      const isFrancoQuery = isFrancoActive || (/[a-z]/i.test(rawQuery) && !/[\u0600-\u06FF]/.test(rawQuery));
+      let effectiveQuery = rawQuery;
+
       if (isFrancoQuery) {
         const trans = francoToArabic(rawQuery);
         if (trans) {
           francoTranslationText.textContent = trans;
           francoHintBox.classList.remove('hidden');
+          effectiveQuery = trans;
         } else {
           francoHintBox.classList.add('hidden');
         }
@@ -1970,53 +2170,94 @@
         francoHintBox.classList.add('hidden');
       }
 
-      // Search pool
-      let pool = [];
-
-      // 1. Taranim Songs
-      if (activeFilter === 'all' || activeFilter === 'taranim') {
-        pool.push(...allSongsCache);
+      const qNorm = normalizeArabic(effectiveQuery);
+      if (!qNorm) {
+        renderSearchResults([]);
+        return;
       }
 
-      // 2. Bible Chapters as searchable items
-      if (activeFilter === 'all' || activeFilter === 'bible') {
-        BIBLE_BOOKS_DATA.forEach(b => {
-          for (let ch = 1; ch <= b.totalChapters; ch++) {
-            pool.push({
-              id: `bible_${b.id}_${ch}`,
-              book_id: b.id,
-              chapter_number: ch,
-              title: `${b.title} ${ch}`,
-              text: `سفر ${b.title} - الإصحاح ${ch} (${b.abbr})`,
-              is_bible: true
-            });
+      const qWords = qNorm.split(/\s+/).filter(w => w.length >= 2 || (qNorm.length < 3 && w.length >= 1));
+      const qWordCount = qWords.length;
+      const allHighlightWords = Array.from(new Set([qNorm, ...qWords]));
+
+      const results = [];
+      const totalSongs = allSongsCache.length;
+
+      // 1. Instant Song Search (< 2ms runtime)
+      if (activeFilter === 'all' || activeFilter === 'taranim') {
+        for (let i = 0; i < totalSongs; i++) {
+          const song = allSongsCache[i];
+          const tNorm = song._tNorm || '';
+          const fullNorm = song._fullTextNorm || '';
+
+          let score = 0;
+          if (tNorm === qNorm) {
+            score = 100000;
+          } else if (tNorm.startsWith(qNorm)) {
+            score = 85000;
+          } else if (tNorm.includes(qNorm)) {
+            score = 70000;
+          } else if (qWordCount >= 2) {
+            if (fullNorm.includes(qNorm)) {
+              score = 55000;
+            } else {
+              let allFound = true;
+              for (let j = 0; j < qWordCount; j++) {
+                if (!fullNorm.includes(qWords[j])) { allFound = false; break; }
+              }
+              if (allFound) score = 30000;
+            }
+          } else if (qWordCount === 1) {
+            if (tNorm.includes(qWords[0])) {
+              score = 35000;
+            } else if (fullNorm.includes(qWords[0])) {
+              score = 15000;
+            }
           }
-        });
+
+          if (score > 0) {
+            results.push({ item: song, score });
+          }
+        }
+      }
+
+      // 2. Bible Chapters Search
+      if (activeFilter === 'all' || activeFilter === 'bible') {
+        const biblePool = getBibleChaptersSearchCache();
+        for (let i = 0; i < biblePool.length; i++) {
+          const bItem = biblePool[i];
+          let score = 0;
+          if (bItem._tNorm === qNorm) score = 95000;
+          else if (bItem._tNorm.startsWith(qNorm)) score = 80000;
+          else if (bItem._tNorm.includes(qNorm)) score = 65000;
+          else if (bItem._fullTextNorm.includes(qNorm)) score = 25000;
+
+          if (score > 0) {
+            results.push({ item: bItem, score });
+          }
+        }
       }
 
       // 3. Recents Filter
       if (activeFilter === 'recents' && currentState && currentState.sessionRecents) {
-        pool = currentState.sessionRecents;
+        currentState.sessionRecents.forEach(r => {
+          const tNorm = normalizeArabic(r.title || '');
+          if (tNorm.includes(qNorm)) {
+            results.push({ item: r, score: 90000 });
+          }
+        });
       }
 
-      // Score items
-      const scored = pool.map(item => ({
-        item,
-        score: getMatchScore(item, rawQuery, [
-          { val: item.title, weight: 3.5 },
-          { val: item.text || item.notes || '', weight: 1.0 }
-        ])
-      })).filter(entry => entry.score > 0)
-        .sort((a, b) => b.score - a.score)
-        .slice(0, 30);
+      results.sort((a, b) => b.score - a.score);
+      const topResults = results.slice(0, 30);
 
-      renderSearchResults(scored, rawQuery);
+      renderSearchResults(topResults, qNorm, allHighlightWords);
     }
 
-    function renderSearchResults(scoredResults, query = '') {
+    function renderSearchResults(scoredResults, query = '', highlightWords = []) {
       if (!query) {
         searchResultsList.innerHTML = `
-          <div style="text-align:center; padding:30px 20px; color:#64748b;">
+          <div style="text-align:center; padding:32px 20px; color:#64748b;">
             <i class="fa-solid fa-magnifying-glass" style="font-size:2rem; margin-bottom:8px; opacity:0.6;"></i>
             <div>اكتب أي كلمة، رقم، أو فرانكو للبحث الفوري...</div>
           </div>
@@ -2026,34 +2267,80 @@
 
       if (!scoredResults || scoredResults.length === 0) {
         searchResultsList.innerHTML = `
-          <div style="text-align:center; padding:30px 20px; color:#64748b;">
+          <div style="text-align:center; padding:32px 20px; color:#64748b;">
             <i class="fa-solid fa-circle-exclamation" style="font-size:2rem; margin-bottom:8px; opacity:0.6; color:#f59e0b;"></i>
             <div style="font-weight:900; color:#cbd5e1;">لم يتم العثور على نتائج لـ "${escapeHtml(query)}"</div>
-            <div style="font-size:0.82rem; margin-top:4px;">تأكد من الحروف أو اضغط على وضع الفرانكو</div>
+            <div style="font-size:0.82rem; margin-top:4px;">تأكد من الحروف أو اضغط على وضع الفرانكو ✨</div>
           </div>
         `;
         return;
       }
 
       searchResultsList.innerHTML = `
-        <div style="font-size:0.75rem; font-weight:800; color:#64748b; padding:0 4px 4px;">
+        <div style="font-size:0.75rem; font-weight:800; color:#64748b; padding:0 4px 6px;">
           تم العثور على ${scoredResults.length} نتيجة:
         </div>
       ` + scoredResults.map(({ item }) => {
         const isBible = Boolean(item.is_bible || item.chapter_number !== undefined);
-        const highlightedTitle = highlightMatches(escapeHtml(item.title), query);
-        const rawSnippet = (item.text || item.notes || '').substring(0, 100);
-        const highlightedSnippet = highlightMatches(escapeHtml(rawSnippet), query);
+        const highlightedTitle = highlightMatches(escapeHtml(item.title || ''), query);
+
+        // Find matched line in song lyrics
+        const allLines = Array.isArray(item.lines)
+          ? item.lines
+          : (item.text ? item.text.split(/[\r\n]+/).map(l => l.trim()).filter(Boolean) : []);
+        
+        let snippetHtml = '';
+        let matchInLyrics = false;
+
+        if (allLines.length > 0 && query) {
+          const qNorm = normalizeArabic(query);
+          let matchIdx = -1;
+          for (let i = 0; i < allLines.length; i++) {
+            if (normalizeArabic(allLines[i]).includes(qNorm)) {
+              matchIdx = i;
+              matchInLyrics = true;
+              break;
+            }
+          }
+          if (matchIdx >= 0) {
+            const lineNum = matchIdx + 1;
+            const highlightedLine = highlightMatches(escapeHtml(allLines[matchIdx]), query);
+            snippetHtml = `
+              <div class="item-preview-box">
+                <span class="line-num-mini matched-line-badge">${isBible ? 'آية' : lineNum}</span>
+                <span>${highlightedLine}</span>
+              </div>
+            `;
+          } else {
+            const firstSnippet = escapeHtml(allLines.slice(0, 2).join(' • '));
+            if (firstSnippet) {
+              snippetHtml = `
+                <div class="item-preview-box">
+                  <span>${firstSnippet}</span>
+                </div>
+              `;
+            }
+          }
+        }
+
+        const typeBadge = isBible
+          ? `<span class="item-badge bible-badge"><i class="fa-solid fa-book-open"></i> شاهد كتابي</span>`
+          : `<span class="item-badge"><i class="fa-solid fa-music"></i> ترنيمة</span>`;
+
+        const lyricsBadge = matchInLyrics
+          ? `<span class="item-badge lyrics-match-badge"><i class="fa-solid fa-align-left"></i> في الكلمات</span>`
+          : '';
 
         return `
           <div class="song-result-card" data-json="${encodeURIComponent(JSON.stringify(item))}">
             <div class="result-card-top">
               <span class="result-title">${highlightedTitle}</span>
-              <span class="result-meta-badge ${isBible ? 'bible' : ''}">
-                ${isBible ? '<i class="fa-solid fa-book-bible"></i> كتاب مقدس' : '<i class="fa-solid fa-music"></i> ترنيمة'}
-              </span>
+              <div class="item-badges-group">
+                ${lyricsBadge}
+                ${typeBadge}
+              </div>
             </div>
-            ${rawSnippet ? `<div class="result-lyrics-snippet">${highlightedSnippet}...</div>` : ''}
+            ${snippetHtml}
           </div>
         `;
       }).join('');
@@ -2230,9 +2517,11 @@
       const diffX = touchStartX - e.changedTouches[0].screenX;
 
       if (Math.abs(diffY) > 50 || Math.abs(diffX) > 50) {
-        if (diffY > 50 || diffX > 50) {
+        if (diffY < -50 || diffX > 50) {
+          // Swiping down or left advances to next slide (matches down button!)
           sendRemoteCommand({ type: 'NEXT_LINE' });
-        } else {
+        } else if (diffY > 50 || diffX < -50) {
+          // Swiping up or right goes back to previous slide
           sendRemoteCommand({ type: 'PREV_LINE' });
         }
       }
