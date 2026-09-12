@@ -3691,8 +3691,32 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
+  const processedRemoteCommandIds = new Set();
+  let lastRemoteCommandType = '';
+  let lastRemoteCommandTime = 0;
+
   function executeRemoteCommand(cmd) {
     if (!cmd || !cmd.type) return;
+
+    // 1. Deduplicate by unique Command ID across WebRTC, BroadcastChannel, and HTTP Long-poll
+    if (cmd.id) {
+      if (processedRemoteCommandIds.has(cmd.id)) {
+        return;
+      }
+      processedRemoteCommandIds.add(cmd.id);
+      if (processedRemoteCommandIds.size > 250) {
+        const first = processedRemoteCommandIds.values().next().value;
+        processedRemoteCommandIds.delete(first);
+      }
+    }
+
+    // 2. Debounce rapid identical command duplicate triggers (e.g. within 200ms)
+    const now = Date.now();
+    if (cmd.type === lastRemoteCommandType && (now - lastRemoteCommandTime < 200)) {
+      return;
+    }
+    lastRemoteCommandType = cmd.type;
+    lastRemoteCommandTime = now;
 
     if (cmd.type === 'NEXT_LINE') {
       nextLine();

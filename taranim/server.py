@@ -27,6 +27,7 @@ def get_lan_ip():
 
 LIVE_EVENT = threading.Event()
 CONNECTED_DEVICES = {}
+REMOTE_SESSIONS = {}
 
 if not os.path.exists(PLAYLISTS_FILE):
     with open(PLAYLISTS_FILE, 'w', encoding='utf-8') as f:
@@ -177,6 +178,121 @@ class SundaySchoolTaranimHandler(http.server.SimpleHTTPRequestHandler):
             LIVE_EVENT.set()
             LIVE_EVENT.clear()
             self.send_json({'success': True, 'client_ip': client_ip})
+
+        # Handle mobile remote actions in server.py
+        clean_action = action
+        if clean_action.startswith('remote_'):
+            clean_action = clean_action[7:]
+        if not clean_action and isinstance(data, dict) and 'action' in data:
+            clean_action = str(data['action'])
+            if clean_action.startswith('remote_'):
+                clean_action = clean_action[7:]
+
+        if clean_action in ('create_room', 'register_room'):
+            import random
+            room_id = data.get('roomId') or f"rm_{int(time.time()*1000)%1000000}"
+            pin = str(data.get('roomPin') or data.get('pin') or random.randint(100000, 999999))
+            host_key = data.get('hostKey') or f"hk_{int(time.time()*1000)}"
+            if room_id not in REMOTE_SESSIONS:
+                REMOTE_SESSIONS[room_id] = {
+                    'roomId': room_id,
+                    'roomPin': pin,
+                    'hostKey': host_key,
+                    'commands': [],
+                    'clients': {},
+                    'state': LIVE_STATE
+                }
+            self.send_json({
+                'success': True,
+                'roomId': room_id,
+                'roomPin': pin,
+                'hostKey': host_key
+            })
+            return
+
+        elif clean_action == 'join_room':
+            req_pin = str(data.get('pin', '')).strip()
+            req_room_id = str(data.get('roomId', '')).strip()
+            target_room = None
+            if req_room_id and req_room_id in REMOTE_SESSIONS:
+                target_room = REMOTE_SESSIONS[req_room_id]
+            elif req_pin:
+                for r in REMOTE_SESSIONS.values():
+                    if str(r.get('roomPin')) == req_pin:
+                        target_room = r
+                        break
+            if not target_room:
+                target_room = {
+                    'roomId': req_room_id or f"rm_{req_pin or 'live'}",
+                    'roomPin': req_pin or '123456',
+                    'hostKey': 'hk_auto',
+                    'commands': [],
+                    'clients': {},
+                    'state': LIVE_STATE
+                }
+                REMOTE_SESSIONS[target_room['roomId']] = target_room
+
+            token = f"ct_{int(time.time()*1000)}"
+            target_room['clients'][token] = {
+                'name': data.get('clientName', 'هاتف ريموت'),
+                'ip': client_ip,
+                'last_seen': time.time()
+            }
+            CONNECTED_DEVICES[client_ip] = {
+                'ip': client_ip,
+                'name': data.get('clientName', 'هاتف ريموت'),
+                'type': 'REMOTE_PHONE',
+                'userAgent': data.get('userAgent', self.headers.get('User-Agent', '')),
+                'last_seen': time.time()
+            }
+            self.send_json({
+                'success': True,
+                'roomId': target_room['roomId'],
+                'roomPin': target_room['roomPin'],
+                'clientToken': token,
+                'clientIp': client_ip,
+                'state': target_room.get('state', LIVE_STATE)
+            })
+            return
+
+        elif clean_action == 'send_command':
+            req_room_id = str(data.get('roomId', '')).strip()
+            cmd = data.get('command', {})
+            cmd_id = cmd.get('id') or f"cmd_{int(time.time()*1000)}"
+            cmd['id'] = cmd_id
+            cmd['timestamp'] = cmd.get('timestamp') or time.time()
+            for r in REMOTE_SESSIONS.values():
+                if not req_room_id or r.get('roomId') == req_room_id or r.get('roomPin') == req_room_id:
+                    r['commands'].append(cmd)
+            self.send_json({'success': True, 'commandId': cmd_id})
+            return
+
+        elif clean_action == 'poll_commands':
+            req_room_id = str(data.get('roomId', '')).strip()
+            cmds = []
+            client_count = 0
+            for r in REMOTE_SESSIONS.values():
+                if not req_room_id or r.get('roomId') == req_room_id:
+                    cmds = list(r.get('commands', []))
+                    r['commands'] = []
+                    client_count = len(r.get('clients', {}))
+                    break
+            self.send_json({'success': True, 'commands': cmds, 'clientCount': client_count})
+            return
+
+        elif clean_action == 'push_state':
+            st = data.get('state', {})
+            LIVE_STATE.update(st)
+            req_room_id = str(data.get('roomId', '')).strip()
+            for r in REMOTE_SESSIONS.values():
+                if not req_room_id or r.get('roomId') == req_room_id:
+                    r['state'] = LIVE_STATE
+            self.send_json({'success': True})
+            return
+
+        elif clean_action == 'get_state':
+            self.send_json({'success': True, 'state': LIVE_STATE})
+            return
 
         elif path == '/api/playlists':
             with open(PLAYLISTS_FILE, 'w', encoding='utf-8') as f:

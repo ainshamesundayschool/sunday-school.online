@@ -232,8 +232,8 @@ switch ($action) {
             exit;
         }
 
-        $command['id'] = 'cmd_' . uniqid(mt_rand(), true);
-        $command['timestamp'] = microtime(true);
+        $command['id'] = !empty($command['id']) ? trim($command['id']) : ('cmd_' . uniqid(mt_rand(), true));
+        $command['timestamp'] = !empty($command['timestamp']) ? $command['timestamp'] : microtime(true);
         $command['client_token'] = $clientToken;
 
         $sessions[$roomId]['commands'][] = $command;

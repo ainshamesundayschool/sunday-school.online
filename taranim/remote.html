@@ -1529,8 +1529,24 @@
     }
 
     // ULTRA-FAST ZERO DELAY COMMAND DISPATCH (OPTIMISTIC LOCAL + WEBRTC + BROADCAST + HTTP)
+    let lastSentCommandType = '';
+    let lastSentCommandTime = 0;
+
     async function sendRemoteCommand(cmd) {
-      if (!cmd) return;
+      if (!cmd || !cmd.type) return;
+
+      const now = Date.now();
+      // Suppress accidental rapid duplicate clicks within 200ms on the client
+      if (cmd.type === lastSentCommandType && (now - lastSentCommandTime < 200)) {
+        return;
+      }
+      lastSentCommandType = cmd.type;
+      lastSentCommandTime = now;
+
+      // Unique persistent Command ID for deduplication across all transport channels
+      cmd.id = cmd.id || ('cmd_' + now + '_' + Math.random().toString(36).substring(2, 8));
+      cmd.timestamp = now;
+
       vibrate(30);
 
       // 1. Optimistic Local HUD Update (0ms instant perceptible response!)
@@ -2193,28 +2209,59 @@
 
     const touchArea = document.getElementById('touch-area');
     touchArea.addEventListener('touchstart', (e) => {
-      touchStartY = e.changedTouches[0].screenY;
-      touchStartX = e.changedTouches[0].screenX;
+      // If touching a button, do not capture swipe to prevent double trigger!
+      if (e.target && e.target.closest && e.target.closest('button, .touch-btn, .btn, a')) {
+        touchStartY = 0;
+        touchStartX = 0;
+        return;
+      }
+      if (e.changedTouches && e.changedTouches[0]) {
+        touchStartY = e.changedTouches[0].screenY;
+        touchStartX = e.changedTouches[0].screenX;
+      }
     }, { passive: true });
 
     touchArea.addEventListener('touchend', (e) => {
+      if (!touchStartY && !touchStartX) return;
+      if (e.target && e.target.closest && e.target.closest('button, .touch-btn, .btn, a')) return;
+      if (!e.changedTouches || !e.changedTouches[0]) return;
+
       const diffY = touchStartY - e.changedTouches[0].screenY;
       const diffX = touchStartX - e.changedTouches[0].screenX;
 
-      if (Math.abs(diffY) > 35 || Math.abs(diffX) > 35) {
-        if (diffY > 35 || diffX > 35) {
+      if (Math.abs(diffY) > 50 || Math.abs(diffX) > 50) {
+        if (diffY > 50 || diffX > 50) {
           sendRemoteCommand({ type: 'NEXT_LINE' });
         } else {
           sendRemoteCommand({ type: 'PREV_LINE' });
         }
       }
+      touchStartY = 0;
+      touchStartX = 0;
     }, { passive: true });
 
-    document.getElementById('btn-touch-next').addEventListener('click', () => sendRemoteCommand({ type: 'NEXT_LINE' }));
-    document.getElementById('btn-touch-prev').addEventListener('click', () => sendRemoteCommand({ type: 'PREV_LINE' }));
-    document.getElementById('btn-remote-blank').addEventListener('click', () => sendRemoteCommand({ type: 'TOGGLE_BLANK' }));
-    document.getElementById('btn-remote-standby').addEventListener('click', () => sendRemoteCommand({ type: 'TOGGLE_STANDBY' }));
-    document.getElementById('btn-refresh-state').addEventListener('click', () => { vibrate(40); lastStateVer = 0; showToast('🔄 تم تحديث المزامنة'); });
+    document.getElementById('btn-touch-next').addEventListener('click', (e) => {
+      e.stopPropagation();
+      sendRemoteCommand({ type: 'NEXT_LINE' });
+    });
+    document.getElementById('btn-touch-prev').addEventListener('click', (e) => {
+      e.stopPropagation();
+      sendRemoteCommand({ type: 'PREV_LINE' });
+    });
+    document.getElementById('btn-remote-blank').addEventListener('click', (e) => {
+      e.stopPropagation();
+      sendRemoteCommand({ type: 'TOGGLE_BLANK' });
+    });
+    document.getElementById('btn-remote-standby').addEventListener('click', (e) => {
+      e.stopPropagation();
+      sendRemoteCommand({ type: 'TOGGLE_STANDBY' });
+    });
+    document.getElementById('btn-refresh-state').addEventListener('click', (e) => {
+      e.stopPropagation();
+      vibrate(40);
+      lastStateVer = 0;
+      showToast('🔄 تم تحديث المزامنة');
+    });
 
     // DRAWER TOGGLES
     const drawer = document.getElementById('slides-drawer');
