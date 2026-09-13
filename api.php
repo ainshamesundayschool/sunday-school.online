@@ -39236,14 +39236,20 @@ function restoreSingleAuditLogInternal($logId, $churchId, $conn, $targetStudentI
 
 
         // 1. Fetch the log entry
-
-        $stmt = $conn->prepare("SELECT * FROM audit_logs WHERE id = ? AND church_id = ?");
-
-        $stmt->bind_param("ii", $logId, $churchId);
-
-        $stmt->execute();
-
-        $log = $stmt->get_result()->fetch_assoc();
+        if (isDeveloperRole()) {
+            $stmt = $conn->prepare("SELECT * FROM audit_logs WHERE id = ?");
+            $stmt->bind_param("i", $logId);
+            $stmt->execute();
+            $log = $stmt->get_result()->fetch_assoc();
+            if ($log && !empty($log['church_id'])) {
+                $churchId = (int)$log['church_id'];
+            }
+        } else {
+            $stmt = $conn->prepare("SELECT * FROM audit_logs WHERE id = ? AND church_id = ?");
+            $stmt->bind_param("ii", $logId, $churchId);
+            $stmt->execute();
+            $log = $stmt->get_result()->fetch_assoc();
+        }
 
 
 
@@ -41471,37 +41477,51 @@ function devGetAuditCleanupStats()
 // ── Get activity logs for the currently logged-in uncle ───────
 
 function getUncleActivityLogs()
-
 {
-
     try {
-
         $conn = getDBConnection();
-
         $churchId = getChurchId();
-
         $limit = max(10, min(500, intval($_POST['limit'] ?? 100)));
 
-
-
-        // Works for both uncle login and church-admin login
-
         $uncleId = intval($_SESSION['uncle_id'] ?? 0);
+        $isDev = isDeveloperRole();
+        $isAdmin = isAdminOrDevRole();
 
+        // 1. Developer view
+        if ($isDev) {
+            if ($churchId > 0) {
+                $stmt = $conn->prepare("
+                    SELECT id, action, entity, entity_id, entity_name,
+                           uncle_name, notes, ip_address, created_at
+                    FROM audit_logs
+                    WHERE (church_id = ? OR church_id = 0)
+                    ORDER BY created_at DESC
+                    LIMIT ?
+                ");
+                $stmt->bind_param("ii", $churchId, $limit);
+            } else {
+                $stmt = $conn->prepare("
+                    SELECT id, action, entity, entity_id, entity_name,
+                           uncle_name, notes, ip_address, created_at
+                    FROM audit_logs
+                    ORDER BY created_at DESC
+                    LIMIT ?
+                ");
+                $stmt->bind_param("i", $limit);
+            }
+            $stmt->execute();
+            $rows = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
+            sendJSON(['success' => true, 'logs' => $rows, 'total' => count($rows)]);
+            return;
+        }
 
-
-        // If no uncle_id in session, try to find the uncle record by church_id
-
-        // (this covers church admins who are also listed as uncles)
-
-        if (!$uncleId && $churchId) {
-            // Return logs for this church filtered to known admin actions
-            // (no specific uncle_id filter — show all for this church)
+        // 2. Church admin or church login without specific uncle_id
+        if ($isAdmin || (!$uncleId && $churchId)) {
             $stmt = $conn->prepare("
                 SELECT id, action, entity, entity_id, entity_name,
                        uncle_name, notes, ip_address, created_at
                 FROM audit_logs
-                WHERE church_id = ?
+                WHERE (church_id = ? OR church_id = 0)
                 ORDER BY created_at DESC
                 LIMIT ?
             ");
@@ -41517,33 +41537,37 @@ function getUncleActivityLogs()
             return;
         }
 
-        $stmt = $conn->prepare("
-            SELECT id, action, entity, entity_id, entity_name,
-                   uncle_name, notes, ip_address, created_at
-            FROM audit_logs
-            WHERE uncle_id = ? AND church_id = ?
-            ORDER BY created_at DESC
-            LIMIT ?
-        ");
-
-        $stmt->bind_param("iii", $uncleId, $churchId, $limit);
+        // 3. Regular uncle view
+        if ($churchId > 0) {
+            $stmt = $conn->prepare("
+                SELECT id, action, entity, entity_id, entity_name,
+                       uncle_name, notes, ip_address, created_at
+                FROM audit_logs
+                WHERE uncle_id = ? AND (church_id = ? OR church_id = 0)
+                ORDER BY created_at DESC
+                LIMIT ?
+            ");
+            $stmt->bind_param("iii", $uncleId, $churchId, $limit);
+        } else {
+            $stmt = $conn->prepare("
+                SELECT id, action, entity, entity_id, entity_name,
+                       uncle_name, notes, ip_address, created_at
+                FROM audit_logs
+                WHERE uncle_id = ?
+                ORDER BY created_at DESC
+                LIMIT ?
+            ");
+            $stmt->bind_param("ii", $uncleId, $limit);
+        }
 
         $stmt->execute();
-
         $rows = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
-
         sendJSON(['success' => true, 'logs' => $rows, 'total' => count($rows)]);
 
-
-
     } catch (Exception $e) {
-
         error_log("getUncleActivityLogs error: " . $e->getMessage());
-
         sendJSON(['success' => false, 'message' => 'خطأ في تحميل السجل: ' . $e->getMessage()]);
-
     }
-
 }
 
 
@@ -46268,15 +46292,10 @@ function ensureNotificationsTable($conn)
 
 
 function getNotifications()
-
 {
-
     try {
-
         $conn = getDBConnection();
-
         $churchId = getChurchId();
-
         ensureNotificationsTable($conn);
 
         $uncleId = isset($_SESSION['uncle_id']) ? (int)$_SESSION['uncle_id'] : 0;
@@ -46287,103 +46306,155 @@ function getNotifications()
         $isDev = isDeveloperRole();
 
         if ($isDev) {
-            $stmt = $conn->prepare("
-                SELECT n.id, n.type, n.title, n.body, n.entity_type, n.entity_id, n.is_read, n.created_at, dm.redirect_url
-                FROM notifications n
-                LEFT JOIN developer_messages dm ON n.entity_type = 'developer_message' AND n.entity_id = dm.id
-                WHERE (n.church_id = ? OR n.church_id = 0 OR n.type IN ('whatsapp_otp', 'developer_message'))
-                  AND (n.deleted_by_uncles IS NULL OR FIND_IN_SET(?, n.deleted_by_uncles) = 0)
-                ORDER BY n.created_at DESC
-                LIMIT ? OFFSET ?
-            ");
-            $stmt->bind_param('isii', $churchId, $uncleIdStr, $limit, $offset);
-            $stmt->execute();
-            $rows = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
+            if ($churchId > 0) {
+                $stmt = $conn->prepare("
+                    SELECT n.id, n.type, n.title, n.body, n.entity_type, n.entity_id, n.is_read, n.created_at, dm.redirect_url
+                    FROM notifications n
+                    LEFT JOIN developer_messages dm ON n.entity_type = 'developer_message' AND n.entity_id = dm.id
+                    WHERE (n.church_id = ? OR n.church_id = 0 OR n.type IN ('whatsapp_otp', 'developer_message'))
+                      AND (n.deleted_by_uncles IS NULL OR ? = '0' OR FIND_IN_SET(?, n.deleted_by_uncles) = 0)
+                    ORDER BY n.created_at DESC
+                    LIMIT ? OFFSET ?
+                ");
+                $stmt->bind_param('issii', $churchId, $uncleIdStr, $uncleIdStr, $limit, $offset);
+                $stmt->execute();
+                $rows = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
 
-            $countStmt = $conn->prepare("
-                SELECT COUNT(*) as c 
-                FROM notifications 
-                WHERE (church_id=? OR church_id = 0 OR type IN ('whatsapp_otp', 'developer_message')) 
-                  AND is_read=0 
-                  AND (deleted_by_uncles IS NULL OR FIND_IN_SET(?, deleted_by_uncles) = 0)
-            ");
-            $countStmt->bind_param('is', $churchId, $uncleIdStr);
-            $countStmt->execute();
-            $unread = (int) $countStmt->get_result()->fetch_assoc()['c'];
+                $countStmt = $conn->prepare("
+                    SELECT COUNT(*) as c 
+                    FROM notifications 
+                    WHERE (church_id=? OR church_id = 0 OR type IN ('whatsapp_otp', 'developer_message')) 
+                      AND is_read=0 
+                      AND (deleted_by_uncles IS NULL OR ? = '0' OR FIND_IN_SET(?, deleted_by_uncles) = 0)
+                ");
+                $countStmt->bind_param('iss', $churchId, $uncleIdStr, $uncleIdStr);
+                $countStmt->execute();
+                $unread = (int) $countStmt->get_result()->fetch_assoc()['c'];
+            } else {
+                $stmt = $conn->prepare("
+                    SELECT n.id, n.type, n.title, n.body, n.entity_type, n.entity_id, n.is_read, n.created_at, dm.redirect_url
+                    FROM notifications n
+                    LEFT JOIN developer_messages dm ON n.entity_type = 'developer_message' AND n.entity_id = dm.id
+                    WHERE (n.deleted_by_uncles IS NULL OR ? = '0' OR FIND_IN_SET(?, n.deleted_by_uncles) = 0)
+                    ORDER BY n.created_at DESC
+                    LIMIT ? OFFSET ?
+                ");
+                $stmt->bind_param('ssii', $uncleIdStr, $uncleIdStr, $limit, $offset);
+                $stmt->execute();
+                $rows = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
+
+                $countStmt = $conn->prepare("
+                    SELECT COUNT(*) as c 
+                    FROM notifications 
+                    WHERE is_read=0 
+                      AND (deleted_by_uncles IS NULL OR ? = '0' OR FIND_IN_SET(?, deleted_by_uncles) = 0)
+                ");
+                $countStmt->bind_param('ss', $uncleIdStr, $uncleIdStr);
+                $countStmt->execute();
+                $unread = (int) $countStmt->get_result()->fetch_assoc()['c'];
+            }
+
+            foreach ($rows as &$r) {
+                if (!empty($r['body'])) {
+                    $routeSep = strpos($r['body'], '|||class_id:');
+                    if ($routeSep !== false) {
+                        $r['body'] = trim(substr($r['body'], 0, $routeSep));
+                    }
+                }
+            }
+            unset($r);
 
             sendJSON(['success' => true, 'notifications' => $rows, 'unread_count' => $unread]);
         } else {
+            if (!$churchId && $uncleId) {
+                $uChRow = $conn->query("SELECT church_id FROM uncles WHERE id = " . intval($uncleId) . " LIMIT 1")->fetch_assoc();
+                if (!empty($uChRow['church_id'])) {
+                    $churchId = (int)$uChRow['church_id'];
+                }
+            }
+
             $stmt = $conn->prepare("
                 SELECT n.id, n.type, n.title, n.body, n.entity_type, n.entity_id, n.is_read, n.created_at, dm.redirect_url
                 FROM notifications n
                 LEFT JOIN developer_messages dm ON n.entity_type = 'developer_message' AND n.entity_id = dm.id
-                WHERE (n.church_id = ? OR n.church_id = 0) AND n.type != 'whatsapp_otp' AND (n.deleted_by_uncles IS NULL OR FIND_IN_SET(?, n.deleted_by_uncles) = 0)
+                WHERE (n.church_id = ? OR n.church_id = 0) 
+                  AND n.type != 'whatsapp_otp' 
+                  AND (n.deleted_by_uncles IS NULL OR ? = '0' OR FIND_IN_SET(?, n.deleted_by_uncles) = 0)
                 ORDER BY n.created_at DESC
                 LIMIT ? OFFSET ?
             ");
-            $stmt->bind_param('isii', $churchId, $uncleIdStr, $limit, $offset);
+            $stmt->bind_param('issii', $churchId, $uncleIdStr, $uncleIdStr, $limit, $offset);
             $stmt->execute();
             $rows = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
 
-            $countStmt = $conn->prepare("SELECT COUNT(*) as c FROM notifications WHERE (church_id=? OR church_id = 0) AND type != 'whatsapp_otp' AND is_read=0 AND (deleted_by_uncles IS NULL OR FIND_IN_SET(?, deleted_by_uncles) = 0)");
-            $countStmt->bind_param('is', $churchId, $uncleIdStr);
+            $countStmt = $conn->prepare("SELECT COUNT(*) as c FROM notifications WHERE (church_id=? OR church_id = 0) AND type != 'whatsapp_otp' AND is_read=0 AND (deleted_by_uncles IS NULL OR ? = '0' OR FIND_IN_SET(?, deleted_by_uncles) = 0)");
+            $countStmt->bind_param('iss', $churchId, $uncleIdStr, $uncleIdStr);
             $countStmt->execute();
             $unread = (int) $countStmt->get_result()->fetch_assoc()['c'];
 
             // If uncle is a servant (not admin) with assigned classes, filter task_submission by their classes
-            $uRoleRow = $conn->query("SELECT role FROM uncles WHERE id = " . intval($uncleId) . " LIMIT 1")->fetch_assoc();
-            $uncleRole = strtolower(trim($uRoleRow['role'] ?? ''));
-            if (!in_array($uncleRole, ['admin', 'superadmin', 'developer', 'dev'])) {
-                $uClasses = [];
-                $uClsRes = $conn->query("SELECT class_name FROM uncle_class_assignments WHERE uncle_id = " . intval($uncleId));
-                if ($uClsRes) {
-                    while ($cr = $uClsRes->fetch_assoc()) {
-                        $uClasses[] = trim($cr['class_name']);
-                    }
-                }
-                if (!empty($uClasses)) {
-                    $uClassIds = [];
-                    $escCls = array_map(function($c) use ($conn) { return "'" . $conn->real_escape_string($c) . "'"; }, $uClasses);
-                    $cQ = $conn->query("
-                        SELECT id FROM church_classes 
-                        WHERE church_id = " . intval($churchId) . " AND (arabic_name IN (" . implode(',', $escCls) . ") OR code IN (" . implode(',', $escCls) . ")) 
-                        UNION 
-                        SELECT id FROM classes 
-                        WHERE (arabic_name IN (" . implode(',', $escCls) . ") OR code IN (" . implode(',', $escCls) . "))
-                    ");
-                    if ($cQ) {
-                        while ($cqRow = $cQ->fetch_assoc()) {
-                            $uClassIds[] = (int)$cqRow['id'];
+            if ($uncleId > 0) {
+                $uRoleRow = $conn->query("SELECT role FROM uncles WHERE id = " . intval($uncleId) . " LIMIT 1")->fetch_assoc();
+                $uncleRole = strtolower(trim($uRoleRow['role'] ?? ''));
+                if (!in_array($uncleRole, ['admin', 'superadmin', 'developer', 'dev'])) {
+                    $uClasses = [];
+                    $uClsRes = $conn->query("SELECT class_name FROM uncle_class_assignments WHERE uncle_id = " . intval($uncleId));
+                    if ($uClsRes) {
+                        while ($cr = $uClsRes->fetch_assoc()) {
+                            $uClasses[] = trim($cr['class_name']);
                         }
                     }
-
-                    $filteredRows = [];
-                    foreach ($rows as $r) {
-                        if ($r['type'] === 'task_submission') {
-                            $routeSep = strpos($r['body'] ?? '', '|||class_id:');
-                            if ($routeSep !== -1 && $routeSep !== false) {
-                                $cId = (int)substr($r['body'], $routeSep + 12);
-                                if ($cId > 0 && !in_array($cId, $uClassIds)) {
-                                    if ($r['is_read'] == 0 && $unread > 0) $unread--;
-                                    continue;
-                                }
+                    if (!empty($uClasses)) {
+                        $uClassIds = [];
+                        $escCls = array_map(function($c) use ($conn) { return "'" . $conn->real_escape_string($c) . "'"; }, $uClasses);
+                        $cQ = $conn->query("
+                            SELECT id FROM church_classes 
+                            WHERE church_id = " . intval($churchId) . " AND (arabic_name IN (" . implode(',', $escCls) . ") OR code IN (" . implode(',', $escCls) . ")) 
+                            UNION 
+                            SELECT id FROM classes 
+                            WHERE (arabic_name IN (" . implode(',', $escCls) . ") OR code IN (" . implode(',', $escCls) . "))
+                        ");
+                        if ($cQ) {
+                            while ($cqRow = $cQ->fetch_assoc()) {
+                                $uClassIds[] = (int)$cqRow['id'];
                             }
                         }
-                        $filteredRows[] = $r;
+
+                        $filteredRows = [];
+                        foreach ($rows as $r) {
+                            if ($r['type'] === 'task_submission') {
+                                $routeSep = strpos($r['body'] ?? '', '|||class_id:');
+                                if ($routeSep !== -1 && $routeSep !== false) {
+                                    $cId = (int)substr($r['body'], $routeSep + 12);
+                                    if ($cId > 0 && !in_array($cId, $uClassIds)) {
+                                        if ($r['is_read'] == 0 && $unread > 0) $unread--;
+                                        continue;
+                                    }
+                                }
+                            }
+                            $filteredRows[] = $r;
+                        }
+                        $rows = $filteredRows;
                     }
-                    $rows = $filteredRows;
                 }
             }
+
+            foreach ($rows as &$r) {
+                if (!empty($r['body'])) {
+                    $routeSep = strpos($r['body'], '|||class_id:');
+                    if ($routeSep !== false) {
+                        $r['body'] = trim(substr($r['body'], 0, $routeSep));
+                    }
+                }
+            }
+            unset($r);
 
             sendJSON(['success' => true, 'notifications' => $rows, 'unread_count' => max(0, $unread)]);
         }
 
     } catch (Exception $e) {
-
         sendJSON(['success' => false, 'message' => $e->getMessage()]);
-
     }
-
 }
 
 
@@ -46492,8 +46563,12 @@ function markAllNotificationsRead()
         ensureNotificationsTable($conn);
 
         if (isDeveloperRole()) {
-            $stmt = $conn->prepare("UPDATE notifications SET is_read=1 WHERE (church_id=? OR church_id=0 OR type IN ('whatsapp_otp', 'developer_message')) AND is_read=0");
-            $stmt->bind_param('i', $churchId);
+            if ($churchId > 0) {
+                $stmt = $conn->prepare("UPDATE notifications SET is_read=1 WHERE (church_id=? OR church_id=0 OR type IN ('whatsapp_otp', 'developer_message')) AND is_read=0");
+                $stmt->bind_param('i', $churchId);
+            } else {
+                $stmt = $conn->prepare("UPDATE notifications SET is_read=1 WHERE is_read=0");
+            }
         } else {
             $stmt = $conn->prepare("UPDATE notifications SET is_read=1 WHERE (church_id=? OR church_id=0) AND is_read=0");
             $stmt->bind_param('i', $churchId);

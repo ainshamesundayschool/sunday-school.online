@@ -12482,11 +12482,6 @@ $showSettings = $hasChurchId || $isDevOrAdmin;
                         style="position:absolute;top:-3px;right:-3px;width:8px;height:8px;background:var(--warning);border-radius:50%;border:2px solid var(--bg)"></span>
                 </button>
 
-                <!-- Admin / Servant WhatsApp OTP Verification Checker -->
-                <button class="topbar-btn" id="adminOtpTopbarBtn" onclick="showAdminOTPModal()" title="أكواد التحقق (WhatsApp OTP)"
-                    style="display:<?php echo $showSettings ? 'flex' : 'none'; ?>; color:#25d366; position:relative;">
-                    <i class="fab fa-whatsapp"></i>
-                </button>
 
                 <!-- Admin / Church settings -->
                 <a class="topbar-btn" id="adminChurchBtn" href="<?php echo $pathPrefix; ?>/uncle/church/" title="لوحة الإدارة والإعدادات"
@@ -15408,16 +15403,98 @@ $showSettings = $hasChurchId || $isDevOrAdmin;
             }, 500);
         }
 
+        // ── UNCLE ACTIVITY HISTORY DEFINITIONS ─────────────────────────
+        const historyActions = {
+            // ── Attendance ────────────────────────────────────────────
+            attendance: { label: 'تسجيل حضور', icon: 'fa-user-check', color: '#3b82f6', cat: 'attendance' },
+            attendance_add: { label: 'تسجيل حضور', icon: 'fa-user-check', color: '#3b82f6', cat: 'attendance' },
+            attendance_edit: { label: 'تعديل حضور', icon: 'fa-user-edit', color: '#f59e0b', cat: 'attendance' },
+            attendance_delete: { label: 'حذف حضور', icon: 'fa-user-times', color: '#ef4444', cat: 'attendance' },
+            bulk_attendance_save: { label: 'تسجيل حضور جماعي', icon: 'fa-clipboard-check', color: '#3b82f6', cat: 'attendance' },
+            submitAttendance: { label: 'تسجيل حضور وغياب', icon: 'fa-clipboard-check', color: '#3b82f6', cat: 'attendance' },
+
+            // ── Students ──────────────────────────────────────────────
+            student_add: { label: 'إضافة طفل', icon: 'fa-user-plus', color: '#10b981', cat: 'student' },
+            student_edit: { label: 'تعديل بيانات طفل', icon: 'fa-user-edit', color: '#f59e0b', cat: 'student' },
+            student_delete: { label: 'حذف طفل', icon: 'fa-user-times', color: '#ef4444', cat: 'student' },
+            student_merge: { label: 'دمج حسابات مكررة', icon: 'fa-code-merge', color: '#6366f1', cat: 'student' },
+            student_restore: { label: 'استعادة طفل', icon: 'fa-trash-restore', color: '#10b981', cat: 'student' },
+            bulk_student_delete: { label: 'حذف جماعي للأطفال', icon: 'fa-user-slash', color: '#ef4444', cat: 'student' },
+            bulk_student_class_update: { label: 'نقل جماعي للفصول', icon: 'fa-exchange-alt', color: '#8b5cf6', cat: 'student' },
+            bulkDeleteStudents: { label: 'حذف جماعي للأطفال', icon: 'fa-user-slash', color: '#ef4444', cat: 'student' },
+            bulkUpdateStudentsClass: { label: 'نقل جماعي للفصول', icon: 'fa-exchange-alt', color: '#8b5cf6', cat: 'student' },
+            deleteStudent: { label: 'حذف طفل', icon: 'fa-user-times', color: '#ef4444', cat: 'student' },
+            add: { label: 'إضافة طفل', icon: 'fa-plus-circle', color: '#10b981', cat: 'student' },
+            insert: { label: 'إضافة طفل', icon: 'fa-plus-circle', color: '#10b981', cat: 'student' },
+            create: { label: 'إنشاء', icon: 'fa-plus-circle', color: '#10b981', cat: 'student' },
+            edit: { label: 'تعديل', icon: 'fa-edit', color: '#f59e0b', cat: 'student' },
+            update: { label: 'تعديل', icon: 'fa-edit', color: '#f59e0b', cat: 'student' },
+            delete: { label: 'حذف', icon: 'fa-trash', color: '#ef4444', cat: 'student' },
+            remove: { label: 'حذف', icon: 'fa-trash', color: '#ef4444', cat: 'student' },
+            approve: { label: 'موافقة على تسجيل', icon: 'fa-check-circle', color: '#10b981', cat: 'student' },
+            reject: { label: 'رفض تسجيل', icon: 'fa-times-circle', color: '#ef4444', cat: 'student' },
+            auto_grade_up: { label: 'نقل سنوي تلقائي للفصول', icon: 'fa-graduation-cap', color: '#8b5cf6', cat: 'student' },
+            manual_grade_up: { label: 'نقل يدوي للفصول', icon: 'fa-graduation-cap', color: '#8b5cf6', cat: 'student' },
+            delete_graduate: { label: 'حذف خريج', icon: 'fa-user-times', color: '#ef4444', cat: 'student' },
+            restore_graduate: { label: 'استعادة خريج', icon: 'fa-user-check', color: '#10b981', cat: 'student' },
+            graduate_transfer_send: { label: 'تحويل خريج لكنيسة أخرى', icon: 'fa-paper-plane', color: '#3b82f6', cat: 'student' },
+            graduate_transfer_accept: { label: 'قبول خريج محول', icon: 'fa-check-circle', color: '#10b981', cat: 'student' },
+            graduate_transfer_reject: { label: 'رفض تحويل خريج', icon: 'fa-times-circle', color: '#ef4444', cat: 'student' },
+            note_add: { label: 'إضافة ملاحظة', icon: 'fa-sticky-note', color: '#06b6d4', cat: 'student' },
+            note_delete: { label: 'حذف ملاحظة', icon: 'fa-trash', color: '#ef4444', cat: 'student' },
+            bulk_note_add: { label: 'إضافة ملاحظات جماعية', icon: 'fa-notes-medical', color: '#06b6d4', cat: 'student' },
+
+            // ── Coupons ───────────────────────────────────────────────
+            coupon: { label: 'تعديل كوبونات', icon: 'fa-star', color: '#8b5cf6', cat: 'coupon' },
+            coupon_edit: { label: 'تعديل كوبونات', icon: 'fa-coins', color: '#8b5cf6', cat: 'coupon' },
+            coupon_add: { label: 'إضافة كوبونات', icon: 'fa-plus-circle', color: '#10b981', cat: 'coupon' },
+            coupon_remove: { label: 'خصم كوبونات', icon: 'fa-minus-circle', color: '#ef4444', cat: 'coupon' },
+            coupon_withdraw: { label: 'سحب كوبونات', icon: 'fa-hand-holding-usd', color: '#ef4444', cat: 'coupon' },
+            coupon_refund: { label: 'استرجاع كوبونات', icon: 'fa-undo', color: '#10b981', cat: 'coupon' },
+            bulk_student_coupon_update: { label: 'تعديل جماعي للكوبونات', icon: 'fa-coins', color: '#f59e0b', cat: 'coupon' },
+            bulkUpdateStudentsCoupons: { label: 'تعديل جماعي للكوبونات', icon: 'fa-coins', color: '#f59e0b', cat: 'coupon' },
+
+            // ── Login / Auth ──────────────────────────────────────────
+            login: { label: 'تسجيل دخول', icon: 'fa-sign-in-alt', color: '#5b6cf5', cat: 'login' },
+            logout: { label: 'تسجيل خروج', icon: 'fa-sign-out-alt', color: '#6b7280', cat: 'login' },
+
+            // ── Uncles / Staff / Fees ─────────────────────────────────
+            uncle_add: { label: 'إضافة خادم', icon: 'fa-user-plus', color: '#10b981', cat: 'other' },
+            uncle_edit: { label: 'تعديل خادم', icon: 'fa-user-edit', color: '#f59e0b', cat: 'other' },
+            uncle_delete: { label: 'حذف خادم', icon: 'fa-user-times', color: '#ef4444', cat: 'other' },
+            uncle_restore: { label: 'استعادة حساب خادم', icon: 'fa-user-check', color: '#10b981', cat: 'other' },
+            uncle_password: { label: 'تغيير كلمة المرور', icon: 'fa-key', color: '#6366f1', cat: 'other' },
+            fee_add: { label: 'إضافة اشتراك خادم', icon: 'fa-receipt', color: '#06b6d4', cat: 'other' },
+            fee_pay: { label: 'تسديد اشتراك خادم', icon: 'fa-credit-card', color: '#10b981', cat: 'other' },
+            fee_delete: { label: 'حذف اشتراك خادم', icon: 'fa-trash', color: '#ef4444', cat: 'other' },
+
+            // ── Trips ─────────────────────────────────────────────────
+            trip: { label: 'رحلة', icon: 'fa-bus', color: '#06b6d4', cat: 'other' },
+            trip_registration: { label: 'حجز رحلة', icon: 'fa-bus', color: '#06b6d4', cat: 'other' },
+            trip_cancel: { label: 'إلغاء حجز رحلة', icon: 'fa-ban', color: '#ef4444', cat: 'other' },
+            trip_payment_update: { label: 'تحديث دفع رحلة', icon: 'fa-money-bill-wave', color: '#10b981', cat: 'other' },
+            trip_remove_all_registered: { label: 'إلغاء مسجلي الرحلة', icon: 'fa-users-slash', color: '#ef4444', cat: 'other' },
+            trip_restore: { label: 'استعادة رحلة', icon: 'fa-bus', color: '#06b6d4', cat: 'other' },
+
+            // ── Exams ─────────────────────────────────────────────────
+            exam_add: { label: 'إضافة امتحان', icon: 'fa-file-alt', color: '#3b82f6', cat: 'other' },
+            exam_edit: { label: 'تعديل امتحان', icon: 'fa-edit', color: '#f59e0b', cat: 'other' },
+            exam_delete: { label: 'حذف امتحان', icon: 'fa-trash', color: '#ef4444', cat: 'other' },
+            exam_degrees_save: { label: 'رصد درجات امتحان', icon: 'fa-graduation-cap', color: '#10b981', cat: 'other' },
+            exam_degree_save: { label: 'رصد درجة امتحان', icon: 'fa-check', color: '#10b981', cat: 'other' },
+            exam_degree_delete: { label: 'حذف درجة امتحان', icon: 'fa-times', color: '#ef4444', cat: 'other' },
+            exam_answers_upload: { label: 'رفع ورقة إجابة', icon: 'fa-upload', color: '#8b5cf6', cat: 'other' },
+            exam_answers_delete: { label: 'حذف ورقة إجابة', icon: 'fa-trash', color: '#ef4444', cat: 'other' },
+
+            // ── Tasks / System / Other ────────────────────────────────
+            announcement: { label: 'إعلان', icon: 'fa-bullhorn', color: '#f59e0b', cat: 'other' },
+            task: { label: 'تاسك', icon: 'fa-tasks', color: '#6366f1', cat: 'other' },
+            submission: { label: 'حل تاسك', icon: 'fa-paper-plane', color: '#10b981', cat: 'other' },
+            audit_restore: { label: 'تراجع عن عملية', icon: 'fa-undo', color: '#3b82f6', cat: 'other' },
+        };
+
         function getActionMeta(act) {
-            const m = {
-                'submitAttendance': { label: 'تسجيل الحضور/الغياب' },
-                'bulkDeleteStudents': { label: 'حذف جماعي للأطفال' },
-                'bulkUpdateStudentsClass': { label: 'نقل جماعي للفصول' },
-                'bulkUpdateStudentsCoupons': { label: 'تعديل جماعي للكوبونات' },
-                'deleteStudent': { label: 'حذف طفل' },
-                'student_merge': { label: 'دمج الحسابات المكررة' }
-            };
-            return m[act] || { label: act };
+            return historyActions[act] || { label: act };
         }
 
         function showUndoToast(log) {
@@ -16610,6 +16687,11 @@ $showSettings = $hasChurchId || $isDevOrAdmin;
             const fd = new FormData();
             fd.append('action', 'getUncleActivityLogs');
             fd.append('limit', String(_historyLimit));
+            if (typeof _appendDevOverride === 'function') {
+                _appendDevOverride(fd);
+            } else if (typeof devViewChurchId !== 'undefined' && devViewChurchId > 0) {
+                fd.append('dev_override_church_id', devViewChurchId);
+            }
             fetch(API_URL, { method: 'POST', body: fd, credentials: 'include' })
                 .then(r => r.json())
                 .then(d => {
@@ -27477,43 +27559,26 @@ $showSettings = $hasChurchId || $isDevOrAdmin;
         }
 
 
-        // ── UNCLE ACTIVITY HISTORY ────────────────────────────────────
-        // ── History: human-readable action map ────────────────────────
-        // Each entry: { label, icon, color, category, desc(fn) }
-        const historyActions = {
-            // ── Attendance ────────────────────────────────────────────
-            attendance: { label: 'تسجيل حضور', icon: 'fa-user-check', color: '#3b82f6', cat: 'attendance' },
-            attendance_edit: { label: 'تعديل حضور', icon: 'fa-user-edit', color: '#f59e0b', cat: 'attendance' },
-            // ── Students ──────────────────────────────────────────────
-            student_add: { label: 'إضافة طفل', icon: 'fa-user-plus', color: '#10b981', cat: 'student' },
-            student_edit: { label: 'تعديل بيانات طفل', icon: 'fa-user-edit', color: '#f59e0b', cat: 'student' },
-            student_delete: { label: 'حذف طفل', icon: 'fa-user-times', color: '#ef4444', cat: 'student' },
-            add: { label: 'إضافة', icon: 'fa-plus-circle', color: '#10b981', cat: 'student' },
-            insert: { label: 'إضافة', icon: 'fa-plus-circle', color: '#10b981', cat: 'student' },
-            create: { label: 'إنشاء', icon: 'fa-plus-circle', color: '#10b981', cat: 'student' },
-            edit: { label: 'تعديل', icon: 'fa-edit', color: '#f59e0b', cat: 'student' },
-            update: { label: 'تعديل', icon: 'fa-edit', color: '#f59e0b', cat: 'student' },
-            delete: { label: 'حذف', icon: 'fa-trash', color: '#ef4444', cat: 'student' },
-            remove: { label: 'حذف', icon: 'fa-trash', color: '#ef4444', cat: 'student' },
-            approve: { label: 'موافقة على تسجيل', icon: 'fa-check-circle', color: '#10b981', cat: 'student' },
-            reject: { label: 'رفض تسجيل', icon: 'fa-times-circle', color: '#ef4444', cat: 'student' },
-            // ── Coupons ───────────────────────────────────────────────
-            coupon: { label: 'تعديل كوبونات', icon: 'fa-star', color: '#8b5cf6', cat: 'coupon' },
-            // ── Login ─────────────────────────────────────────────────
-            login: { label: 'تسجيل دخول', icon: 'fa-sign-in-alt', color: '#5b6cf5', cat: 'login' },
-            logout: { label: 'تسجيل خروج', icon: 'fa-sign-out-alt', color: '#6b7280', cat: 'login' },
-            // ── Uncles / other ────────────────────────────────────────
-            uncle_add: { label: 'إضافة خادم', icon: 'fa-user-plus', color: '#10b981', cat: 'other' },
-            uncle_edit: { label: 'تعديل خادم', icon: 'fa-user-edit', color: '#f59e0b', cat: 'other' },
-            uncle_delete: { label: 'حذف خادم', icon: 'fa-user-times', color: '#ef4444', cat: 'other' },
-            trip: { label: 'رحلة', icon: 'fa-bus', color: '#06b6d4', cat: 'other' },
-            announcement: { label: 'إعلان', icon: 'fa-bullhorn', color: '#f59e0b', cat: 'other' },
-        };
-
+        // ── UNCLE ACTIVITY HISTORY HELPERS ───────────────────────────
         // Friendly entity names (what the action was done to)
         const historyEntityNames = {
-            student: 'طفل', uncle: 'خادم', attendance: 'حضور', coupon: 'كوبونات',
-            trip: 'رحلة', announcement: 'إعلان', church: 'كنيسة', registration: 'تسجيل', auth: 'دخول',
+            student: 'طفل',
+            students: 'أطفال',
+            uncle: 'خادم',
+            attendance: 'حضور',
+            coupon: 'كوبونات',
+            trip: 'رحلة',
+            trip_registration: 'حجز رحلة',
+            trips: 'رحلات',
+            exam: 'امتحان',
+            task: 'تاسك',
+            submission: 'حل تاسك',
+            announcement: 'إعلان',
+            church: 'كنيسة',
+            registration: 'تسجيل',
+            auth: 'دخول',
+            bulk_action: 'إجراء جماعي',
+            audit_logs: 'سجل العمليات'
         };
 
         // Kept for legacy compatibility with any code still using these
@@ -27549,15 +27614,19 @@ $showSettings = $hasChurchId || $isDevOrAdmin;
 
             // Text search
             if (_historySearch) {
-                logs = logs.map(l => ({
-                    ...l,
-                    _score: getMatchScore(l, _historySearch, [
-                        { val: l.entity_name, weight: 1.2 },
-                        { val: l.notes, weight: 1.0 },
-                        { val: l.uncle_name, weight: 1.1 },
-                        { val: l.action, weight: 0.8 }
-                    ])
-                })).filter(l => l._score > 0)
+                logs = logs.map(l => {
+                    const actMeta = historyActions[l.action || ''] || {};
+                    return {
+                        ...l,
+                        _score: getMatchScore(l, _historySearch, [
+                            { val: l.entity_name, weight: 1.2 },
+                            { val: l.notes, weight: 1.0 },
+                            { val: l.uncle_name, weight: 1.1 },
+                            { val: actMeta.label || l.action, weight: 1.0 },
+                            { val: l.action, weight: 0.8 }
+                        ])
+                    };
+                }).filter(l => l._score > 0)
                     .sort((a, b) => b._score - a._score);
             }
 
@@ -27613,7 +27682,7 @@ $showSettings = $hasChurchId || $isDevOrAdmin;
                     if (entityType && !entityName) desc += ` في ${entityType}`;
 
                     const restorableActions = [
-                        'student_add', 'student_edit', 'student_delete', 'coupon_edit',
+                        'student_add', 'student_edit', 'student_delete', 'coupon_edit', 'coupon_withdraw',
                         'attendance_add', 'attendance_edit', 'attendance_delete',
                         'bulk_student_delete', 'bulk_student_class_update', 'bulk_student_coupon_update',
                         'bulk_attendance_save', 'bulk_note_add', 'note_add', 'note_delete',
@@ -27677,6 +27746,11 @@ $showSettings = $hasChurchId || $isDevOrAdmin;
                     const fd = new FormData();
                     fd.append('action', 'restoreAuditLog');
                     fd.append('log_id', logId);
+                    if (typeof _appendDevOverride === 'function') {
+                        _appendDevOverride(fd);
+                    } else if (typeof devViewChurchId !== 'undefined' && devViewChurchId > 0) {
+                        fd.append('dev_override_church_id', devViewChurchId);
+                    }
                     try {
                         const d = await fetch(API_URL, { method: 'POST', body: fd, credentials: 'include' })
                             .then(r => r.json())
@@ -27686,7 +27760,7 @@ $showSettings = $hasChurchId || $isDevOrAdmin;
                         if (d.success) {
                             showToast(d.message || 'تم التراجع عن العملية بنجاح', 'success');
                             loadData();
-                            showUncleHistory();
+                            _loadHistoryLogs();
                         } else {
                             showToast(d.message || 'فشل في التراجع عن العملية', 'error');
                         }
@@ -29243,6 +29317,10 @@ $showSettings = $hasChurchId || $isDevOrAdmin;
 
             // Load data for switched church
             loadData();
+            loadUnifiedNotifications();
+            if (typeof _loadHistoryLogs === 'function' && typeof _historyLogs !== 'undefined') {
+                _loadHistoryLogs();
+            }
         }
 
         function updateSwitchedChurchHeader() {
@@ -29958,6 +30036,11 @@ $showSettings = $hasChurchId || $isDevOrAdmin;
             try {
                 const fd = new FormData();
                 fd.append('action', 'getNotifications');
+                if (typeof _appendDevOverride === 'function') {
+                    _appendDevOverride(fd);
+                } else if (typeof devViewChurchId !== 'undefined' && devViewChurchId > 0) {
+                    fd.append('dev_override_church_id', devViewChurchId);
+                }
                 const d = await fetch(API_URL, { method: 'POST', body: fd, credentials: 'include' }).then(r => r.json());
                 if (!d.success) return;
                 _notifData = d.notifications || [];
@@ -30102,6 +30185,11 @@ $showSettings = $hasChurchId || $isDevOrAdmin;
         async function deleteUnifNotif(e, id) {
             e.stopPropagation();
             const fd = new FormData(); fd.append('action', 'deleteNotification'); fd.append('id', id);
+            if (typeof _appendDevOverride === 'function') {
+                _appendDevOverride(fd);
+            } else if (typeof devViewChurchId !== 'undefined' && devViewChurchId > 0) {
+                fd.append('dev_override_church_id', devViewChurchId);
+            }
             await fetch(API_URL, { method: 'POST', body: fd, credentials: 'include' });
             _notifData = _notifData.filter(n => n.id !== id);
             renderNotifPanel();
@@ -30110,6 +30198,11 @@ $showSettings = $hasChurchId || $isDevOrAdmin;
 
         async function markAllNotifsRead() {
             const fd = new FormData(); fd.append('action', 'markAllNotificationsRead');
+            if (typeof _appendDevOverride === 'function') {
+                _appendDevOverride(fd);
+            } else if (typeof devViewChurchId !== 'undefined' && devViewChurchId > 0) {
+                fd.append('dev_override_church_id', devViewChurchId);
+            }
             await fetch(API_URL, { method: 'POST', body: fd, credentials: 'include' });
             _notifData.forEach(n => n.is_read = 1);
             renderNotifPanel();
@@ -30123,7 +30216,10 @@ $showSettings = $hasChurchId || $isDevOrAdmin;
                 overlay.classList.toggle('open', _notifPanelOpen);
                 document.body.style.overflow = _notifPanelOpen ? 'hidden' : '';
             }
-            if (_notifPanelOpen) { loadUnifiedNotifications(); renderNotifPanel(); }
+            if (_notifPanelOpen) {
+                renderNotifPanel();
+                loadUnifiedNotifications();
+            }
         }
 
         function getClassOrderWeight(name) {
@@ -30597,10 +30693,12 @@ $showSettings = $hasChurchId || $isDevOrAdmin;
         function escStr(s) { return String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
 
         // Load on boot and every 60s
-        window.addEventListener('load', () => {
-            setTimeout(loadUnifiedNotifications, 2000);
-            setInterval(loadUnifiedNotifications, 60000);
-        });
+        loadUnifiedNotifications();
+        if (document.readyState === 'loading') {
+            window.addEventListener('DOMContentLoaded', loadUnifiedNotifications);
+            window.addEventListener('load', loadUnifiedNotifications);
+        }
+        setInterval(loadUnifiedNotifications, 60000);
 
         // Push → DB notification bridge: when SW sends NEW_REGISTRATION push,
         // also create a DB notification so it shows in the panel
