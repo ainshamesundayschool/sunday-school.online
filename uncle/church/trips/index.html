@@ -4644,27 +4644,28 @@
     }
 
     .sort-layer-add-btn {
-      padding: 4px 10px !important;
-      font-size: 0.72rem !important;
+      padding: 5px 12px !important;
+      font-size: 0.75rem !important;
       font-weight: 700 !important;
-      border-radius: 12px !important;
-      background: var(--brand-bg) !important;
-      color: var(--brand) !important;
-      border: 1px solid rgba(12, 175, 160, 0.15) !important;
+      border-radius: 8px !important;
+      background: var(--surface, #ffffff) !important;
+      color: var(--text, #1e293b) !important;
+      border: 1px solid var(--border-solid, #cbd5e1) !important;
       cursor: pointer !important;
-      font-family: 'Cairo', sans-serif !important;
+      font-family: inherit !important;
       display: inline-flex !important;
       align-items: center !important;
-      gap: 4px !important;
-      transition: all var(--t-fast) var(--ease) !important;
+      gap: 6px !important;
+      transition: all 0.18s ease !important;
       outline: none !important;
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04) !important;
     }
 
     .sort-layer-add-btn:hover {
-      background: var(--brand) !important;
-      color: #fff !important;
-      border-color: var(--brand) !important;
-      transform: translateY(-1px);
+      background: var(--surface-2, #f8fafc) !important;
+      color: var(--primary, #0cafa0) !important;
+      border-color: var(--primary, #0cafa0) !important;
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.06) !important;
     }
 
     .export-date-options {
@@ -7695,7 +7696,7 @@
     <div id="editCouponsModal" class="modal" style="z-index:2000;">
       <div class="modal-box">
         <div class="modal-head">
-          <h2><i class="fas fa-coins"></i> تعديل الكوبونات</h2><button class="modal-close"
+          <h2><i class="fas fa-star" style="color:var(--warning);"></i> تعديل الكوبونات</h2><button class="modal-close"
             onclick="closeModal('editCouponsModal')"><i class="fas fa-times"></i></button>
         </div>
         <div class="modal-body">

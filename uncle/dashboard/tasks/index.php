@@ -22602,8 +22602,8 @@ $dashBack = $pathPrefix . '/uncle/dashboard/' . ($activeClass ? '?class=' . urle
       const headers = clone.querySelectorAll('th');
       headers.forEach(th => {
         th.style.position = 'static';
-        th.style.background = 'var(--brand-bg, #eef0ff)';
-        th.style.color = 'var(--brand, #5b6cf5)';
+        th.style.background = 'var(--surface-2, #f1f5f9)';
+        th.style.color = 'var(--text, #1e293b)';
       });
 
       // Normalize icons inside clone for clean html2canvas rendering

@@ -2910,27 +2910,27 @@ $showSettings = $hasChurchId || $isDevOrAdmin;
         }
 
         .sort-layer-add-btn {
-            padding: 4px 10px !important;
-            font-size: 0.72rem !important;
+            padding: 5px 12px !important;
+            font-size: 0.75rem !important;
             font-weight: 700 !important;
-            border-radius: 12px !important;
-            background: var(--brand-bg) !important;
-            color: var(--brand) !important;
-            border: 1px solid rgba(12, 175, 160, 0.15) !important;
+            border-radius: 8px !important;
+            background: var(--surface, #ffffff) !important;
+            color: var(--text, #1e293b) !important;
+            border: 1px solid var(--border-solid, #cbd5e1) !important;
             cursor: pointer !important;
-            font-family: 'Cairo', sans-serif !important;
+            font-family: inherit !important;
             display: inline-flex !important;
             align-items: center !important;
-            gap: 4px !important;
-            transition: all var(--t-fast) var(--ease) !important;
+            gap: 6px !important;
+            transition: all 0.18s ease !important;
             outline: none !important;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04) !important;
         }
 
         .sort-layer-add-btn:hover {
-            background: var(--brand) !important;
-            color: #fff !important;
+            background: var(--brand-bg) !important;
+            color: var(--brand) !important;
             border-color: var(--brand) !important;
-            transform: translateY(-1px);
         }
 
         .export-date-options {
@@ -12356,7 +12356,7 @@ $showSettings = $hasChurchId || $isDevOrAdmin;
                     <button class="btn-bulk-action bulk-coupons" id="bulkCouponsBtn"
                         onclick="toggleDropdown('bulkCouponsMenu', 'bulkCouponsBtn'); event.stopPropagation();"
                         title="تعديل الكوبونات">
-                        <i class="fas fa-coins"></i>
+                        <i class="fas fa-star"></i>
                         <span class="btn-bulk-label">كوبونات</span>
                     </button>
                     <div class="dropdown-menu" id="bulkCouponsMenu" style="left:auto; right:0; min-width:120px;">
@@ -15446,13 +15446,13 @@ $showSettings = $hasChurchId || $isDevOrAdmin;
 
             // ── Coupons ───────────────────────────────────────────────
             coupon: { label: 'تعديل كوبونات', icon: 'fa-star', color: '#8b5cf6', cat: 'coupon' },
-            coupon_edit: { label: 'تعديل كوبونات', icon: 'fa-coins', color: '#8b5cf6', cat: 'coupon' },
+            coupon_edit: { label: 'تعديل كوبونات', icon: 'fa-star', color: '#8b5cf6', cat: 'coupon' },
             coupon_add: { label: 'إضافة كوبونات', icon: 'fa-plus-circle', color: '#10b981', cat: 'coupon' },
             coupon_remove: { label: 'خصم كوبونات', icon: 'fa-minus-circle', color: '#ef4444', cat: 'coupon' },
             coupon_withdraw: { label: 'سحب كوبونات', icon: 'fa-hand-holding-usd', color: '#ef4444', cat: 'coupon' },
             coupon_refund: { label: 'استرجاع كوبونات', icon: 'fa-undo', color: '#10b981', cat: 'coupon' },
-            bulk_student_coupon_update: { label: 'تعديل جماعي للكوبونات', icon: 'fa-coins', color: '#f59e0b', cat: 'coupon' },
-            bulkUpdateStudentsCoupons: { label: 'تعديل جماعي للكوبونات', icon: 'fa-coins', color: '#f59e0b', cat: 'coupon' },
+            bulk_student_coupon_update: { label: 'تعديل جماعي للكوبونات', icon: 'fa-star', color: '#f59e0b', cat: 'coupon' },
+            bulkUpdateStudentsCoupons: { label: 'تعديل جماعي للكوبونات', icon: 'fa-star', color: '#f59e0b', cat: 'coupon' },
 
             // ── Login / Auth ──────────────────────────────────────────
             login: { label: 'تسجيل دخول', icon: 'fa-sign-in-alt', color: '#5b6cf5', cat: 'login' },
@@ -19743,7 +19743,7 @@ $showSettings = $hasChurchId || $isDevOrAdmin;
                         ${credentialsHtml}
                     </div>
 
-                    <div class="merge-section-title"><i class="fas fa-coins"></i> الكوبونات والجوائز</div>
+                    <div class="merge-section-title"><i class="fas fa-star" style="color:var(--warning);"></i> الكوبونات والجوائز</div>
                     <div class="merge-coupons-box">
                         ${couponHtml}
                     </div>
@@ -21990,7 +21990,7 @@ $showSettings = $hasChurchId || $isDevOrAdmin;
                         <span style="font-weight:700; font-size:0.82rem; color:var(--text);">${escHtml(task.task_title)}</span>
                         <div style="display:flex; gap:8px; align-items:center; font-size:0.75rem; margin-top:2px; flex-wrap:wrap;">
                             <span style="color:var(--text-3);"><i class="far fa-clock"></i> تسليم: ${dateStr}</span>
-                            <span style="color:var(--brand); font-weight:700;"><i class="fas fa-coins" style="color:var(--coupon);"></i> ${task.coupons_awarded} كوبون</span>
+                            <span style="color:var(--brand); font-weight:700;"><i class="fas fa-star" style="color:var(--coupon);"></i> ${task.coupons_awarded} كوبون</span>
                         </div>
                     </div>
                     <div style="display:flex; align-items:center; gap:6px;">
@@ -33303,7 +33303,7 @@ $showSettings = $hasChurchId || $isDevOrAdmin;
                                 <span style="font-weight:700; font-size:0.84rem; color:var(--text-1); direction:ltr; text-align:left;">
                                     ${item.phone}
                                 </span>
-                                ${item.owner_name ? `<span style="font-size:0.68rem; font-weight:600; color:var(--brand); background:var(--brand-bg, rgba(79,70,229,0.08)); padding:1px 6px; border-radius:var(--r-full); border:1px solid rgba(79,70,229,0.2); line-height:1.2;">${item.owner_name}</span>` : ''}
+                                ${item.owner_name ? `<span style="font-size:0.68rem; font-weight:600; color:var(--text-2); background:var(--surface-2); padding:2px 8px; border-radius:var(--r-full); border:1px solid var(--border-solid); line-height:1.2;">${item.owner_name}</span>` : ''}
                                 ${item.church_name ? `<span style="font-size:0.65rem; font-weight:600; color:#b45309; background:rgba(245,158,11,0.1); padding:1px 6px; border-radius:var(--r-full); border:1px solid rgba(245,158,11,0.25); line-height:1.2; display:inline-flex; align-items:center; gap:3px;"><i class="fas fa-church" style="font-size:0.6rem;"></i>${item.church_name}</span>` : ''}
                             </div>
                             <div style="display:flex; align-items:center; gap:5px; font-size:0.68rem; color:var(--text-3);">
@@ -33540,7 +33540,7 @@ $showSettings = $hasChurchId || $isDevOrAdmin;
                     <div class="standalone-card">
                         <div class="standalone-card-title">
                             <div class="detail-icon purple" style="width:28px; height:28px; font-size:0.75rem;"><i
-                                    class="fas fa-coins"></i></div>
+                                    class="fas fa-star"></i></div>
                             <span>إضافة الكوبونات</span>
                         </div>
 
