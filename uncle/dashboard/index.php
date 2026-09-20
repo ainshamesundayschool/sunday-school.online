@@ -242,7 +242,7 @@ if (isset($_SESSION['uncle_id']) && intval($_SESSION['uncle_id']) > 0 && functio
             $_SESSION['uncle_role'] = $uRow['role'];
             $_SESSION['role'] = $uRow['role'];
             if (!empty($uRow['name'])) $_SESSION['uncle_name'] = $uRow['name'];
-            if (!empty($uRow['church_id']) && empty($_SESSION['church_id'])) {
+            if (!empty($uRow['church_id'])) {
                 $_SESSION['church_id'] = intval($uRow['church_id']);
             }
         } else {
@@ -251,17 +251,19 @@ if (isset($_SESSION['uncle_id']) && intval($_SESSION['uncle_id']) > 0 && functio
     } catch (Exception $e) {}
 }
 
-if ((empty($_SESSION['church_name']) || $_SESSION['church_name'] === 'الكنيسة') && !empty($_SESSION['church_id']) && function_exists('getDBConnection')) {
+$cId = intval($_SESSION['church_id'] ?? 0);
+if ($cId > 0 && function_exists('getDBConnection')) {
     try {
         $conn = getDBConnection();
         $cStmt = $conn->prepare("SELECT church_name, church_code, church_type FROM churches WHERE id = ? LIMIT 1");
-        $cId = intval($_SESSION['church_id']);
         $cStmt->bind_param("i", $cId);
         $cStmt->execute();
         if ($cRow = $cStmt->get_result()->fetch_assoc()) {
-            $_SESSION['church_name'] = $cRow['church_name'];
-            if (empty($_SESSION['church_code'])) $_SESSION['church_code'] = $cRow['church_code'];
-            if (empty($_SESSION['church_type'])) $_SESSION['church_type'] = $cRow['church_type'];
+            if (!empty($cRow['church_name'])) {
+                $_SESSION['church_name'] = $cRow['church_name'];
+            }
+            if (!empty($cRow['church_code'])) $_SESSION['church_code'] = $cRow['church_code'];
+            if (!empty($cRow['church_type'])) $_SESSION['church_type'] = $cRow['church_type'];
         }
     } catch (Exception $e) {}
 }
@@ -351,6 +353,12 @@ $showSettings = $hasChurchId || $isDevOrAdmin;
                 var dynamicApiUrl = window.location.pathname.indexOf('/testing/') !== -1 ? '/testing/api.php' : '/api.php';
                 var fd = new FormData();
                 fd.append('action', 'getSessionInfo');
+                var storedCid = localStorage.getItem('churchId') || localStorage.getItem('church_id');
+                if (storedCid) fd.append('church_id', storedCid);
+                var storedDevCid = localStorage.getItem('devViewChurchId');
+                if (storedDevCid && storedDevCid !== '-1' && storedDevCid !== '0') {
+                    fd.append('dev_override_church_id', storedDevCid);
+                }
 
                 fetch(dynamicApiUrl, { method: 'POST', body: fd, credentials: 'include' })
                     .then(function (r) { return r.json(); })
@@ -376,7 +384,12 @@ $showSettings = $hasChurchId || $isDevOrAdmin;
                             if (serverUncleUsername) {
                                 localStorage.setItem('uncleUsername', serverUncleUsername);
                             }
-                            if (d.church_name) localStorage.setItem('churchName', d.church_name);
+                            if (d.church_name && d.church_name !== 'الكنيسة' && d.church_name !== 'مدارس الأحد') {
+                                localStorage.setItem('churchName', d.church_name);
+                                var titleEl = document.querySelector('.topbar-title');
+                                if (titleEl) titleEl.textContent = d.church_name;
+                                document.title = 'Sunday School Online — ' + d.church_name;
+                            }
                             if (d.uncle_name) localStorage.setItem('uncleName', d.uncle_name);
                             if (d.church_type) localStorage.setItem('churchType', d.church_type);
                             if (d.uncle_role || d.role) {
@@ -15209,7 +15222,9 @@ $showSettings = $hasChurchId || $isDevOrAdmin;
 
             try {
                 if (phpChurchType) localStorage.setItem('churchType', phpChurchType);
-                if (phpChurchName && phpChurchName !== 'الكنيسة') localStorage.setItem('churchName', phpChurchName);
+                if (phpChurchName && phpChurchName !== 'الكنيسة' && phpChurchName !== 'مدارس الأحد') {
+                    localStorage.setItem('churchName', phpChurchName);
+                }
                 if (phpUncleName) localStorage.setItem('uncleName', phpUncleName);
                 if (phpUncleRole) localStorage.setItem('uncleRole', phpUncleRole);
                 if (phpChurchCode) localStorage.setItem('churchCode', phpChurchCode);
@@ -15225,12 +15240,19 @@ $showSettings = $hasChurchId || $isDevOrAdmin;
         })();
 
         function syncTopbarChurchDisplay(name) {
-            const finalName = name || localStorage.getItem('churchName') || '';
-            if (finalName && finalName !== 'الكنيسة' && finalName !== 'Sunday School') {
-                const titleEl = document.querySelector('.topbar-title');
-                if (titleEl && (!titleEl.textContent || titleEl.textContent === 'الكنيسة' || titleEl.textContent === 'مدارس الأحد' || titleEl.textContent.trim() === '')) {
-                    titleEl.textContent = finalName;
+            let finalName = name || '';
+            if (!finalName) {
+                const stored = localStorage.getItem('churchName');
+                if (stored && stored !== 'الكنيسة' && stored !== 'مدارس الأحد' && stored !== 'Sunday School') {
+                    finalName = stored;
                 }
+            }
+            if (phpChurchName && phpChurchName !== 'الكنيسة' && phpChurchName !== 'مدارس الأحد') {
+                finalName = phpChurchName;
+            }
+            if (finalName) {
+                const titleEl = document.querySelector('.topbar-title');
+                if (titleEl) titleEl.textContent = finalName;
             }
         }
         document.addEventListener('DOMContentLoaded', () => syncTopbarChurchDisplay());

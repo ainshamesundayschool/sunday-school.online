@@ -34430,6 +34430,21 @@ function getSessionInfo()
     }
     if ($churchId < 0) $churchId = 0;
 
+    if ($churchId <= 0 && isset($_SESSION['uncle_id']) && intval($_SESSION['uncle_id']) > 0) {
+        try {
+            $conn = getDBConnection();
+            $uStmt = $conn->prepare("SELECT church_id FROM uncles WHERE id = ? LIMIT 1");
+            $uStmt->bind_param("i", $_SESSION['uncle_id']);
+            $uStmt->execute();
+            if ($uRow = $uStmt->get_result()->fetch_assoc()) {
+                if (!empty($uRow['church_id'])) {
+                    $churchId = intval($uRow['church_id']);
+                    $_SESSION['church_id'] = $churchId;
+                }
+            }
+        } catch (Exception $e) {}
+    }
+
     $churchName = $_SESSION['church_name'] ?? '';
     $churchCode = $_SESSION['church_code'] ?? '';
     $churchType = $_SESSION['church_type'] ?? 'kids';
