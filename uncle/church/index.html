@@ -1801,12 +1801,12 @@
 
         @media (min-width: 769px) {
 
-            /* Restrict desktop content width and align */
+            /* Full desktop content width and align */
             .main-content,
             .page-header {
-                max-width: 1200px;
                 width: 100%;
-                margin: 0 auto;
+                max-width: none;
+                margin: 0;
             }
 
             /* Adjust columns to fit inline action buttons on desktop */
@@ -5701,18 +5701,95 @@
                 font-size: 1.65rem;
             }
 
-            /* Cards */
+            /* Cards — Keep card title and tools/export-row on the same line */
             .card-header {
-                flex-direction: column;
-                align-items: flex-start;
-                gap: 9px;
+                display: flex !important;
+                flex-direction: row !important;
+                align-items: center !important;
+                justify-content: space-between !important;
+                gap: 8px !important;
+                flex-wrap: nowrap !important;
+                padding: 12px 14px !important;
             }
 
+            .card-title {
+                display: flex !important;
+                align-items: center !important;
+                gap: 6px !important;
+                font-size: 0.92rem !important;
+                white-space: nowrap !important;
+                overflow: hidden !important;
+                text-overflow: ellipsis !important;
+                margin-bottom: 0 !important;
+                flex-shrink: 1 !important;
+                min-width: 0 !important;
+            }
+
+            .card-header .export-row,
             .card-header>div:last-child {
-                width: 100%;
-                display: flex;
-                flex-wrap: wrap;
-                gap: 6px;
+                width: auto !important;
+                display: inline-flex !important;
+                align-items: center !important;
+                justify-content: flex-end !important;
+                flex-wrap: nowrap !important;
+                gap: 6px !important;
+                flex-shrink: 0 !important;
+                margin-inline-start: auto !important;
+            }
+
+            /* When space is tight (mobile screens <= 580px), collapse button text into compact icon buttons */
+            @media (max-width: 580px) {
+                .card-header .export-row,
+                .card-header>div:last-child {
+                    gap: 5px !important;
+                }
+
+                .card-header .export-row .btn,
+                .card-header .export-row .action-popover-btn,
+                .card-header .export-row .export-dropdown-btn,
+                .card-header>div:last-child>.btn,
+                .card-header>div:last-child>.action-popover-wrap .action-popover-btn {
+                    font-size: 0 !important;
+                    width: 34px !important;
+                    height: 34px !important;
+                    min-width: 34px !important;
+                    max-width: 34px !important;
+                    padding: 0 !important;
+                    display: inline-flex !important;
+                    align-items: center !important;
+                    justify-content: center !important;
+                    border-radius: var(--radius-sm, 8px) !important;
+                    gap: 0 !important;
+                    box-sizing: border-box !important;
+                }
+
+                .card-header .export-row .btn i,
+                .card-header .export-row .action-popover-btn i:first-child,
+                .card-header .export-row .export-dropdown-btn i:first-child,
+                .card-header>div:last-child>.btn i {
+                    font-size: 0.95rem !important;
+                    margin: 0 !important;
+                    line-height: 1 !important;
+                }
+
+                .card-header .export-row .btn span,
+                .card-header .export-row .btn-text,
+                .card-header .export-row .action-popover-btn span,
+                .card-header .export-row .action-popover-btn .exp-chevron,
+                .card-header .export-row .action-popover-btn .fa-chevron-down,
+                .card-header>div:last-child>.btn span,
+                .card-header>div:last-child>.action-popover-wrap .action-popover-btn span,
+                .card-header>div:last-child>.action-popover-wrap .action-popover-btn .exp-chevron,
+                .card-header>div:last-child>.action-popover-wrap .action-popover-btn .fa-chevron-down {
+                    display: none !important;
+                }
+
+                .card-header .export-row select {
+                    max-width: 105px !important;
+                    height: 34px !important;
+                    font-size: 0.75rem !important;
+                    padding: 0 4px !important;
+                }
             }
 
             .card-body {
@@ -8312,17 +8389,17 @@
                                 <div class="card-title"><i class="fas fa-users"></i> الخُدام المسجلون</div>
                                 <div class="export-row">
                                     <button class="btn btn-primary btn-sm mobile-add-trigger"
-                                        onclick="openMobileAddModal('unclesSidebar')" style="display:none;"><i
-                                            class="fas fa-plus"></i> إضافة خادم</button>
+                                        onclick="openMobileAddModal('unclesSidebar')" title="إضافة خادم" style="display:none;"><i
+                                            class="fas fa-plus"></i> <span class="btn-text">إضافة خادم</span></button>
                                     <button class="btn btn-outline btn-sm" type="button"
-                                        onclick="showBulkAddUnclesModal()">
-                                        <i class="fas fa-upload"></i> استيراد مجموعة
+                                        onclick="showBulkAddUnclesModal()" title="استيراد مجموعة">
+                                        <i class="fas fa-upload"></i> <span class="btn-text">استيراد مجموعة</span>
                                     </button>
                                     <div class="action-popover-wrap">
                                         <button type="button" class="action-popover-btn"
-                                            onclick="toggleActionPopover(this, event)">
+                                            onclick="toggleActionPopover(this, event)" title="تصدير">
                                             <i class="fas fa-file-export"></i>
-                                            <span>تصدير</span>
+                                            <span class="btn-text">تصدير</span>
                                             <i class="fas fa-chevron-down exp-chevron"></i>
                                         </button>
                                         <div class="action-popover-menu">
@@ -8490,14 +8567,14 @@
 
                                         <!-- Interactive Adder Box -->
                                         <div class="parent-builder-box"
-                                            style="background:var(--surface-2, rgba(255,255,255,0.05)); border:1.5px dashed var(--primary); border-radius:8px; padding:8px; margin-bottom:8px; display:flex; flex-direction:column; gap:6px;">
+                                            style="background:var(--surface-2, rgba(255,255,255,0.05)); border:1.5px dashed var(--primary); border-radius:8px; padding:8px; margin-bottom:8px; display:flex; flex-direction:column; gap:6px; box-sizing:border-box; width:100%; max-width:100%; overflow:hidden;">
                                             <div
                                                 style="font-size:0.75rem; color:var(--primary); font-weight:700; display:flex; align-items:center; gap:4px;">
                                                 <i class="fas fa-plus-circle"></i> إضافة رقم ولي أمر جديد
                                             </div>
-                                            <div style="display:grid; grid-template-columns:1fr 1fr; gap:6px;">
+                                            <div style="display:grid; grid-template-columns:minmax(0, 1fr) minmax(0, 1fr); gap:6px; width:100%; box-sizing:border-box;">
                                                 <select id="addKid_builder_rel" class="form-select"
-                                                    style="font-size:0.8rem;height:32px;"
+                                                    style="font-size:0.78rem; height:32px; min-width:0; width:100%; box-sizing:border-box; padding-left:16px; padding-right:6px;"
                                                     onchange="handleParentPhoneRelationChange(this, 'addKid_builder_custom_rel')">
                                                     <option value="father">هاتف الأب</option>
                                                     <option value="mother">هاتف الأم</option>
@@ -8511,19 +8588,19 @@
                                                     <option value="other">أخرى (مخصص)</option>
                                                 </select>
                                                 <input type="text" id="addKid_builder_name" class="form-input"
-                                                    placeholder="الاسم (اختياري)" style="font-size:0.8rem;height:32px;">
+                                                    placeholder="الاسم (اختياري)" style="font-size:0.78rem; height:32px; min-width:0; width:100%; box-sizing:border-box; padding:0 8px;">
                                             </div>
                                             <input type="text" id="addKid_builder_custom_rel" class="form-input"
                                                 placeholder="صلة القرابة (مخصص)..."
-                                                style="display:none; font-size:0.8rem; height:32px;">
-                                            <div style="display:grid; grid-template-columns:1.8fr 1fr; gap:6px;">
+                                                style="display:none; font-size:0.8rem; height:32px; min-width:0; width:100%; box-sizing:border-box;">
+                                            <div style="display:flex; gap:6px; width:100%; box-sizing:border-box;">
                                                 <input type="tel" id="addKid_builder_phone" class="form-input"
                                                     placeholder="رقم الهاتف (01xxxxxxxxx)"
-                                                    style="font-size:0.8rem;height:32px;" dir="ltr">
+                                                    style="font-size:0.78rem; height:32px; flex:1; min-width:0; width:100%; box-sizing:border-box; padding:0 8px;" dir="ltr">
                                                 <button type="button" class="btn btn-primary btn-sm"
                                                     onclick="addParentPhoneFromBuilder('addKidParentPhonesList', 'addKid')"
-                                                    style="height:32px; font-size:0.75rem; white-space:nowrap; padding:0 8px; display:inline-flex; align-items:center; justify-content:center; gap:4px;">
-                                                    <i class="fas fa-plus"></i> إضافة للجهات
+                                                    style="height:32px; font-size:0.75rem; white-space:nowrap; padding:0 10px; display:inline-flex; align-items:center; justify-content:center; gap:4px; flex-shrink:0;">
+                                                    <i class="fas fa-plus"></i> إضافة
                                                 </button>
                                             </div>
                                         </div>
@@ -8606,12 +8683,12 @@
                                 <div class="card-title"><i class="fas fa-child"></i> قائمة الأطفال</div>
                                 <div class="export-row" style="display:flex; align-items:center; gap:8px;">
                                     <button class="btn btn-primary btn-sm mobile-add-trigger"
-                                        onclick="openMobileAddModal('studentsSidebar')" style="display:none;"><i
-                                            class="fas fa-plus"></i> إضافة طفل</button>
+                                        onclick="openMobileAddModal('studentsSidebar')" title="إضافة طفل" style="display:none;"><i
+                                            class="fas fa-plus"></i> <span class="btn-text">إضافة طفل</span></button>
                                     <button type="button" class="btn btn-outline btn-sm"
-                                        onclick="openTabCustomExport('students')">
+                                        onclick="openTabCustomExport('students')" title="تصدير مخصص">
                                         <i class="fas fa-sliders-h"></i>
-                                        <span>تصدير مخصص</span>
+                                        <span class="btn-text">تصدير مخصص</span>
                                     </button>
                                     <div class="header-more-wrap">
                                         <button type="button" class="btn btn-outline btn-sm btn-more-dots"
@@ -8729,9 +8806,9 @@
                                 <div class="card-title"><i class="fas fa-user-graduate"></i> خريجين</div>
                                 <div class="export-row">
                                     <button type="button" class="btn btn-outline btn-sm"
-                                        onclick="openTabCustomExport('graduates')">
+                                        onclick="openTabCustomExport('graduates')" title="تصدير مخصص">
                                         <i class="fas fa-sliders-h"></i>
-                                        <span>تصدير مخصص</span>
+                                        <span class="btn-text">تصدير مخصص</span>
                                     </button>
                                 </div>
                             </div>
@@ -8842,13 +8919,13 @@
                                 <div class="card-title"><i class="fas fa-users"></i> الزوار المسجلون</div>
                                 <div class="export-row">
                                     <button class="btn btn-primary btn-sm mobile-add-trigger"
-                                        onclick="openMobileAddModal('guestsSidebar')" style="display:none;"><i
-                                            class="fas fa-plus"></i> إضافة زائر</button>
+                                        onclick="openMobileAddModal('guestsSidebar')" title="إضافة زائر" style="display:none;"><i
+                                            class="fas fa-plus"></i> <span class="btn-text">إضافة زائر</span></button>
                                     <div class="action-popover-wrap">
                                         <button type="button" class="action-popover-btn"
-                                            onclick="toggleActionPopover(this, event)">
+                                            onclick="toggleActionPopover(this, event)" title="تصدير">
                                             <i class="fas fa-file-export"></i>
-                                            <span>تصدير</span>
+                                            <span class="btn-text">تصدير</span>
                                             <i class="fas fa-chevron-down exp-chevron"></i>
                                         </button>
                                         <div class="action-popover-menu">
@@ -8901,12 +8978,12 @@
                             <select id="attClassFilter" class="form-select" onchange="filterAttendanceDisplay()">
                                 <option value="">جميع الفصول</option>
                             </select>
-                            <button class="btn btn-primary btn-sm" onclick="showAddAttendanceModal()"><i
-                                    class="fas fa-plus"></i> إضافة حضور</button>
+                            <button class="btn btn-primary btn-sm" onclick="showAddAttendanceModal()" title="إضافة حضور"><i
+                                    class="fas fa-plus"></i> <span class="btn-text">إضافة حضور</span></button>
                             <button type="button" class="btn btn-outline btn-sm"
-                                onclick="openTabCustomExport('attendance')">
+                                onclick="openTabCustomExport('attendance')" title="تصدير مخصص">
                                 <i class="fas fa-sliders-h"></i>
-                                <span>تصدير مخصص</span>
+                                <span class="btn-text">تصدير مخصص</span>
                             </button>
                         </div>
                     </div>
@@ -8943,9 +9020,9 @@
                         <div class="card-title"><i class="fas fa-user-tie"></i> سجل حضور الخُدام - أيام الجُمعة</div>
                         <div class="export-row">
                             <button type="button" class="btn btn-outline btn-sm"
-                                onclick="openTabCustomExport('uncleAttendance')">
+                                onclick="openTabCustomExport('uncleAttendance')" title="تصدير مخصص">
                                 <i class="fas fa-sliders-h"></i>
-                                <span>تصدير مخصص</span>
+                                <span class="btn-text">تصدير مخصص</span>
                             </button>
                         </div>
                     </div>
@@ -9259,12 +9336,12 @@
                                 <div class="card-title"><i class="fas fa-list"></i> قائمة الرحلات / المؤتمرات</div>
                                 <div class="export-row">
                                     <button class="btn btn-primary btn-sm mobile-add-trigger"
-                                        onclick="openMobileAddModal('tripsSidebar')" style="display:none;"><i
-                                            class="fas fa-plus"></i> إضافة رحلة</button>
+                                        onclick="openMobileAddModal('tripsSidebar')" title="إضافة رحلة" style="display:none;"><i
+                                            class="fas fa-plus"></i> <span class="btn-text">إضافة رحلة</span></button>
                                     <button type="button" class="btn btn-outline btn-sm"
-                                        onclick="openTabCustomExport('trips')">
+                                        onclick="openTabCustomExport('trips')" title="تصدير مخصص">
                                         <i class="fas fa-sliders-h"></i>
-                                        <span>تصدير مخصص</span>
+                                        <span class="btn-text">تصدير مخصص</span>
                                     </button>
                                     <div class="search-wrap" style="min-width:180px;"><i
                                             class="fas fa-search"></i><input type="text" id="tripSearch"
