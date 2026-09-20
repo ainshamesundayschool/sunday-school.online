@@ -196,7 +196,7 @@
             --border-sidebar: #e4e6f0;
 
             /* Dimensions */
-            --sidebar-w: 272px;
+            --sidebar-w: 235px;
             --sidebar-collapsed: 70px;
             --topbar-h: 60px;
             --radius-xs: 6px;
@@ -424,7 +424,7 @@
             overflow: hidden;
             flex: 1;
             transition: opacity var(--t-slow) var(--ease), max-width var(--t-slow) var(--ease);
-            max-width: 180px;
+            max-width: 150px;
         }
 
         .brand-text h2 {
@@ -1367,7 +1367,7 @@
         .audit-date-swap-btn:hover {
             background: var(--primary-light);
             color: var(--primary);
-            border-color: var(--primary);
+            border-color: transparent;
         }
 
         .audit-date-swap-btn:active {
@@ -1511,7 +1511,7 @@
         }
 
         .btn-outline:hover {
-            border-color: var(--primary) !important;
+            border-color: transparent !important;
             color: var(--primary) !important;
             background: var(--primary-light) !important;
             box-shadow: none;
@@ -1949,6 +1949,20 @@
             border-radius: var(--radius-lg);
             border: 1px solid var(--border-solid);
             background: var(--card);
+            cursor: grab;
+        }
+
+        .tab-custom-export-table-wrap,
+        .tab-export-preview-wrap,
+        table {
+            cursor: grab;
+        }
+
+        body.is-table-dragging,
+        body.is-table-dragging * {
+            cursor: grabbing !important;
+            user-select: none !important;
+            -webkit-user-select: none !important;
         }
 
         .table-wrap table {
@@ -3352,18 +3366,19 @@
         @media (min-width: 1024px) {
             .admin-split-layout {
                 display: grid;
-                grid-template-columns: 1fr 280px;
+                grid-template-columns: 325px 1fr;
                 gap: 20px;
                 align-items: start;
             }
 
-            .split-main {
-                grid-column: 1;
-                grid-row: 1;
+            @media (min-width: 1400px) {
+                .admin-split-layout {
+                    grid-template-columns: 340px 1fr;
+                }
             }
 
             .split-sidebar {
-                grid-column: 2;
+                grid-column: 1;
                 grid-row: 1;
                 position: sticky !important;
                 top: 20px !important;
@@ -3383,6 +3398,11 @@
                 bottom: auto !important;
                 right: auto !important;
                 left: auto !important;
+            }
+
+            .split-main {
+                grid-column: 2;
+                grid-row: 1;
             }
 
             .split-sidebar::before {
@@ -3688,7 +3708,7 @@
         .export-dropdown-btn:hover,
         .action-popover-wrap.open .action-popover-btn,
         .export-dropdown-wrap.open .export-dropdown-btn {
-            border-color: var(--primary) !important;
+            border-color: transparent !important;
             background: var(--primary-light) !important;
             color: var(--primary) !important;
             box-shadow: none;
@@ -3830,7 +3850,7 @@
         .btn-more-dots:hover,
         .header-more-wrap.open .btn-more-dots {
             color: var(--primary) !important;
-            border-color: var(--primary) !important;
+            border-color: transparent !important;
             background: var(--primary-light) !important;
         }
 
@@ -7639,7 +7659,7 @@
         }
 
         .tab-export-mini-btn:hover {
-            border-color: var(--primary);
+            border-color: transparent;
             color: var(--primary);
             background: var(--primary-light);
         }
@@ -7679,7 +7699,7 @@
         }
 
         .sort-layer-select:hover {
-            border-color: var(--primary) !important;
+            border-color: transparent !important;
             background-color: var(--primary-light) !important;
             color: var(--primary) !important;
         }
@@ -7731,7 +7751,7 @@
         .sort-layer-add-btn:hover {
             background: var(--primary-light) !important;
             color: var(--primary) !important;
-            border-color: var(--primary) !important;
+            border-color: transparent !important;
             box-shadow: none !important;
         }
 
@@ -8018,7 +8038,7 @@
 
                     .search-result-item:hover {
                         background: var(--primary-light) !important;
-                        border-color: var(--primary) !important;
+                        border-color: transparent !important;
                         color: var(--primary) !important;
                         transform: translateX(-2px);
                     }
@@ -32055,6 +32075,108 @@
                 }
             }
         }
+
+        // ── Universal Table Mouse Drag-to-Scroll (Horizontal & Vertical) ──
+        (function initTableDragToScroll() {
+            let activeContainer = null;
+            let startX = 0;
+            let startY = 0;
+            let startScrollLeft = 0;
+            let startScrollTop = 0;
+            let startWindowY = 0;
+            let isDragging = false;
+
+            function findScrollableTableContainer(target) {
+                if (!target) return null;
+                // Ignore interactive controls so clicks, typing and selects work unaffected
+                if (target.closest('button, a, input, select, textarea, label, [role="button"], .dropdown-menu, .action-popover-menu, .header-more-menu, .mobile-add-trigger, .modal-close')) {
+                    return null;
+                }
+
+                const table = target.closest('table');
+                const wrap = target.closest('.table-wrap, .tab-custom-export-table-wrap, .tab-export-preview-wrap, [style*="overflow-x"], [style*="overflow-y"]');
+                if (wrap) return wrap;
+                if (!table) return null;
+
+                let el = table.parentElement;
+                while (el && el !== document.body) {
+                    const style = window.getComputedStyle(el);
+                    const isX = (style.overflowX === 'auto' || style.overflowX === 'scroll') && (el.scrollWidth > el.clientWidth);
+                    const isY = (style.overflowY === 'auto' || style.overflowY === 'scroll') && (el.scrollHeight > el.clientHeight);
+                    if (isX || isY) return el;
+                    el = el.parentElement;
+                }
+                return table.parentElement || table;
+            }
+
+            document.addEventListener('mousedown', function (e) {
+                if (e.button !== 0) return; // Left mouse button only
+
+                const container = findScrollableTableContainer(e.target);
+                if (!container) return;
+
+                activeContainer = container;
+                startX = e.pageX;
+                startY = e.pageY;
+                startScrollLeft = container.scrollLeft;
+                startScrollTop = container.scrollTop;
+                startWindowY = window.scrollY;
+                isDragging = false;
+            });
+
+            document.addEventListener('mousemove', function (e) {
+                if (!activeContainer) return;
+
+                const deltaX = e.pageX - startX;
+                const deltaY = e.pageY - startY;
+
+                if (!isDragging && (Math.abs(deltaX) > 4 || Math.abs(deltaY) > 4)) {
+                    isDragging = true;
+                    document.body.classList.add('is-table-dragging');
+                    activeContainer.classList.add('is-table-dragging');
+                }
+
+                if (isDragging) {
+                    e.preventDefault();
+
+                    // Scroll horizontal (left & right)
+                    activeContainer.scrollLeft = startScrollLeft - deltaX;
+
+                    // Scroll vertical (up & down)
+                    const style = window.getComputedStyle(activeContainer);
+                    const canScrollY = (activeContainer.scrollHeight > activeContainer.clientHeight) && style.overflowY !== 'hidden';
+                    if (canScrollY) {
+                        activeContainer.scrollTop = startScrollTop - deltaY;
+                    } else {
+                        window.scrollTo(window.scrollX, startWindowY - deltaY);
+                    }
+                }
+            });
+
+            function stopDrag() {
+                if (activeContainer) {
+                    activeContainer.classList.remove('is-table-dragging');
+                    activeContainer = null;
+                }
+                document.body.classList.remove('is-table-dragging');
+
+                if (isDragging) {
+                    const preventClick = function (ev) {
+                        ev.stopPropagation();
+                        ev.preventDefault();
+                        document.removeEventListener('click', preventClick, true);
+                    };
+                    document.addEventListener('click', preventClick, true);
+                    setTimeout(() => {
+                        document.removeEventListener('click', preventClick, true);
+                    }, 80);
+                }
+                isDragging = false;
+            }
+
+            document.addEventListener('mouseup', stopDrag);
+            window.addEventListener('blur', stopDrag);
+        })();
 
     </script>
 
