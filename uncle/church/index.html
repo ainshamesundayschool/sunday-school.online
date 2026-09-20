@@ -1619,8 +1619,8 @@
 
         select.form-select:focus,
         .form-select:focus {
-            border-color: var(--primary) !important;
-            box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.12) !important;
+            outline: none !important;
+            box-shadow: 0 4px 14px rgba(79, 70, 229, 0.12) !important;
         }
 
         [data-theme="dark"] select.form-select,
@@ -1635,6 +1635,381 @@
             padding: 8px 12px;
             font-size: 0.84rem;
             font-family: 'Cairo', sans-serif;
+        }
+
+        /* ═══════════════════════════════════════════════════════════════════
+           UNIVERSAL CUSTOM DROPDOWN SYSTEM (Stroke-Free, Soft, Smooth & Compact)
+        ═══════════════════════════════════════════════════════════════════ */
+        .custom-select-wrap {
+            position: relative;
+            display: inline-flex;
+            align-items: center;
+            vertical-align: middle;
+            width: auto;
+            max-width: 100%;
+            user-select: none;
+            box-sizing: border-box;
+            font-family: 'Cairo', 'Baloo Bhaijaan 2', sans-serif;
+            transition: transform 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .custom-select-wrap.inline-wrap {
+            display: inline-flex;
+            width: auto;
+        }
+
+        /* Full width only for explicit form layouts */
+        .custom-select-wrap.full-width,
+        .form-group > .custom-select-wrap:not(.is-compact) {
+            display: flex;
+            width: 100%;
+        }
+
+        /* Compact width for toolbars, filters, table headers, and action rows */
+        .custom-select-wrap.is-compact,
+        .toolbar .custom-select-wrap,
+        .filter-bar .custom-select-wrap,
+        .export-row .custom-select-wrap,
+        .card-header .custom-select-wrap,
+        .audit-filters .custom-select-wrap,
+        .filter-row .custom-select-wrap,
+        .table-actions .custom-select-wrap {
+            display: inline-flex !important;
+            width: auto !important;
+            min-width: 120px;
+            max-width: 195px;
+            flex: 0 1 auto !important;
+        }
+
+        @media (max-width: 768px) {
+            .toolbar .custom-select-wrap,
+            .filter-bar .custom-select-wrap {
+                min-width: 105px;
+                max-width: 155px;
+            }
+            .card-header .export-row .custom-select-wrap {
+                min-width: 90px;
+                max-width: 130px;
+            }
+        }
+
+        /* The trigger button replacing native select (Stroke-Free Design) */
+        .custom-select-trigger {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 8px;
+            width: 100%;
+            height: 38px;
+            min-height: 38px;
+            padding: 0 14px;
+            background: var(--surface-2, #f1f5f9);
+            border: none !important;
+            outline: none !important;
+            border-radius: 10px;
+            color: var(--text);
+            font-size: 0.84rem;
+            font-weight: 600;
+            cursor: pointer;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+            transition: all 0.24s cubic-bezier(0.16, 1, 0.3, 1);
+            box-sizing: border-box;
+            text-align: right;
+            direction: rtl;
+        }
+
+        /* Smooth Hover with soft ambient lift - NO STROKE */
+        .custom-select-trigger:hover {
+            border: none !important;
+            outline: none !important;
+            background: var(--surface-3, #e2e8f0);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+            transform: translateY(-1px);
+        }
+
+        /* Active, Open and Focus State - NO STROKE / NO BORDER */
+        .custom-select-wrap.is-open .custom-select-trigger,
+        .custom-select-trigger:focus,
+        .custom-select-trigger:focus-visible,
+        .custom-select-trigger:active {
+            border: none !important;
+            outline: none !important;
+            box-shadow: 0 4px 16px rgba(79, 70, 229, 0.12) !important;
+            background: var(--primary-light, rgba(79, 70, 229, 0.08)) !important;
+            color: var(--primary, #4f46e5) !important;
+            transform: translateY(-1.5px);
+        }
+
+        .custom-select-trigger .cs-text {
+            flex: 1;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            line-height: 1.4;
+            text-align: right;
+        }
+
+        .custom-select-trigger .cs-placeholder {
+            color: var(--muted, #94a3b8);
+            font-weight: 500;
+        }
+
+        /* Animated Chevron Arrow */
+        .custom-select-trigger .cs-arrow {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-3, #64748b);
+            font-size: 0.72rem;
+            transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), color 0.24s ease;
+            flex-shrink: 0;
+        }
+
+        .custom-select-wrap.is-open .custom-select-trigger .cs-arrow {
+            transform: rotate(180deg) scale(1.1);
+            color: var(--primary);
+        }
+
+        /* Dropdown popover menu (Smooth, Stroke-Free Floating Surface) */
+        .custom-select-menu {
+            position: fixed;
+            min-width: 140px;
+            max-width: 260px;
+            max-height: 280px;
+            background: var(--card, #ffffff);
+            border: none !important;
+            outline: none !important;
+            border-radius: 14px;
+            box-shadow: 0 20px 45px -8px rgba(0, 0, 0, 0.16), 0 8px 20px -4px rgba(0, 0, 0, 0.06);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            z-index: 9999999;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            opacity: 0;
+            visibility: hidden;
+            transform: translateY(-8px) scale(0.96);
+            transform-origin: top center;
+            transition: opacity 0.22s cubic-bezier(0.16, 1, 0.3, 1),
+                        transform 0.22s cubic-bezier(0.16, 1, 0.3, 1),
+                        visibility 0.22s;
+            pointer-events: none;
+            box-sizing: border-box;
+            direction: rtl;
+        }
+
+        .custom-select-menu.is-open {
+            opacity: 1;
+            visibility: visible;
+            transform: translateY(0) scale(1);
+            pointer-events: auto;
+        }
+
+        .custom-select-menu.is-dropup {
+            transform-origin: bottom center;
+            transform: translateY(8px) scale(0.96);
+        }
+
+        .custom-select-menu.is-dropup.is-open {
+            transform: translateY(0) scale(1);
+        }
+
+        /* Search input inside dropdown (Stroke-Free) */
+        .custom-select-search-wrap {
+            padding: 8px 10px;
+            background: var(--surface-1, rgba(0, 0, 0, 0.02));
+            position: relative;
+            flex-shrink: 0;
+        }
+
+        .custom-select-search-wrap i {
+            position: absolute;
+            right: 20px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 0.75rem;
+            color: var(--muted);
+            pointer-events: none;
+        }
+
+        .custom-select-search-input {
+            width: 100%;
+            height: 34px;
+            padding: 0 30px 0 10px;
+            font-family: 'Cairo', sans-serif;
+            font-size: 0.8rem;
+            font-weight: 600;
+            border: none !important;
+            outline: none !important;
+            box-shadow: none !important;
+            border-radius: 8px;
+            background: var(--surface-2, rgba(0, 0, 0, 0.05));
+            color: var(--text);
+            box-sizing: border-box;
+            direction: rtl;
+            transition: background 0.2s ease, transform 0.2s ease;
+        }
+
+        .custom-select-search-input:focus {
+            border: none !important;
+            outline: none !important;
+            box-shadow: none !important;
+            background: var(--surface-3, rgba(0, 0, 0, 0.09));
+        }
+
+        /* Options list */
+        .custom-select-options {
+            overflow-y: auto;
+            max-height: 220px;
+            padding: 6px;
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+            overscroll-behavior: contain;
+        }
+
+        .custom-select-options::-webkit-scrollbar {
+            width: 5px;
+        }
+        .custom-select-options::-webkit-scrollbar-thumb {
+            background: var(--border-strong, #cbd5e1);
+            border-radius: 999px;
+        }
+
+        /* Option Item (Stroke-Free with Smooth Slide Animation) */
+        .custom-select-option {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 8px;
+            padding: 9px 12px;
+            border: none !important;
+            outline: none !important;
+            border-radius: 8px;
+            font-size: 0.83rem;
+            font-weight: 600;
+            color: var(--text);
+            cursor: pointer;
+            transition: background 0.18s cubic-bezier(0.16, 1, 0.3, 1),
+                        transform 0.18s cubic-bezier(0.16, 1, 0.3, 1),
+                        color 0.18s ease;
+            text-align: right;
+            direction: rtl;
+            user-select: none;
+        }
+
+        .custom-select-option:hover,
+        .custom-select-option.is-highlighted {
+            border: none !important;
+            outline: none !important;
+            background: var(--surface-2, rgba(0, 0, 0, 0.05));
+            color: var(--text-1, #0f172a);
+            transform: translateX(-4px);
+        }
+
+        .custom-select-option.is-selected {
+            border: none !important;
+            outline: none !important;
+            box-shadow: none !important;
+            background: var(--primary-light, rgba(79, 70, 229, 0.09));
+            color: var(--primary, #4f46e5);
+            font-weight: 700;
+        }
+
+        .custom-select-option .cs-opt-check {
+            font-size: 0.72rem;
+            color: var(--primary);
+            opacity: 0;
+            transform: scale(0.4);
+            transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.2s ease;
+            flex-shrink: 0;
+        }
+
+        .custom-select-option.is-selected .cs-opt-check {
+            opacity: 1;
+            transform: scale(1);
+        }
+
+        .custom-select-option.is-disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+            pointer-events: none;
+        }
+
+        /* Optgroup Header */
+        .custom-select-group-header {
+            padding: 8px 12px 4px 12px;
+            font-size: 0.72rem;
+            font-weight: 800;
+            color: var(--muted, #64748b);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            pointer-events: none;
+        }
+
+        .custom-select-empty {
+            padding: 16px 12px;
+            font-size: 0.8rem;
+            color: var(--muted);
+            text-align: center;
+        }
+
+        /* Dark Theme Adaptation (Stroke-Free) */
+        [data-theme="dark"] .custom-select-trigger {
+            background: rgba(255, 255, 255, 0.07);
+            border: none !important;
+            box-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
+        }
+        [data-theme="dark"] .custom-select-trigger:hover {
+            background: rgba(255, 255, 255, 0.12);
+            box-shadow: 0 4px 14px rgba(0, 0, 0, 0.4);
+        }
+        [data-theme="dark"] .custom-select-wrap.is-open .custom-select-trigger,
+        [data-theme="dark"] .custom-select-trigger:focus,
+        [data-theme="dark"] .custom-select-trigger:active {
+            background: rgba(99, 102, 241, 0.2) !important;
+            color: #c7d2fe !important;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.5) !important;
+        }
+        [data-theme="dark"] .custom-select-menu {
+            background: var(--card, #1e293b);
+            border: none !important;
+            box-shadow: 0 24px 50px -10px rgba(0, 0, 0, 0.7), 0 8px 24px -4px rgba(0, 0, 0, 0.4);
+        }
+        [data-theme="dark"] .custom-select-search-wrap {
+            background: rgba(255, 255, 255, 0.03);
+        }
+        [data-theme="dark"] .custom-select-search-input {
+            background: rgba(255, 255, 255, 0.06);
+            color: #fff;
+        }
+        [data-theme="dark"] .custom-select-search-input:focus {
+            background: rgba(255, 255, 255, 0.1);
+        }
+        [data-theme="dark"] .custom-select-option:hover,
+        [data-theme="dark"] .custom-select-option.is-highlighted {
+            background: rgba(255, 255, 255, 0.08);
+            color: #fff;
+        }
+        [data-theme="dark"] .custom-select-option.is-selected {
+            background: rgba(99, 102, 241, 0.22);
+            color: #c7d2fe;
+        }
+
+        /* Native select styling when transformed */
+        select.has-custom-select {
+            position: absolute !important;
+            width: 1px !important;
+            height: 1px !important;
+            padding: 0 !important;
+            margin: -1px !important;
+            overflow: hidden !important;
+            clip: rect(0, 0, 0, 0) !important;
+            white-space: nowrap !important;
+            border: 0 !important;
+            opacity: 0 !important;
+            pointer-events: none !important;
         }
 
         /* ═══════════════════════════════════════════════════════════════════
@@ -3361,20 +3736,30 @@
             display: flex;
             flex-direction: column;
             gap: 20px;
+            width: 100%;
         }
 
         @media (min-width: 1024px) {
             .admin-split-layout {
                 display: grid;
-                grid-template-columns: 325px 1fr;
+                grid-template-columns: 340px 1fr;
                 gap: 20px;
                 align-items: start;
+                transition: grid-template-columns 0.3s cubic-bezier(0.4, 0, 0.2, 1);
             }
 
-            @media (min-width: 1400px) {
-                .admin-split-layout {
-                    grid-template-columns: 340px 1fr;
-                }
+            .admin-split-layout.split-collapsed {
+                grid-template-columns: 1fr !important;
+            }
+
+            .admin-split-layout.split-collapsed .split-sidebar {
+                display: none !important;
+            }
+
+            .admin-split-layout.split-collapsed .split-main {
+                grid-column: 1 / -1 !important;
+                width: 100% !important;
+                max-width: 100% !important;
             }
 
             .split-sidebar {
@@ -3386,6 +3771,8 @@
                 overflow-y: auto !important;
                 padding-bottom: 10px !important;
                 display: flex !important;
+                flex-direction: column !important;
+                gap: 14px !important;
                 /* Reset mobile properties */
                 transform: none !important;
                 opacity: 1 !important;
@@ -3403,20 +3790,83 @@
             .split-main {
                 grid-column: 2;
                 grid-row: 1;
+                min-width: 0;
+                width: 100%;
             }
 
             .split-sidebar::before {
                 display: none !important;
             }
 
-            /* On desktop, hide mobile-only controls */
-            .mobile-add-trigger {
-                display: none !important;
-            }
-
             .mobile-close-btn {
                 display: none !important;
             }
+        }
+
+        /* Sidebar top bar with collapse button */
+        .split-sidebar-top-bar {
+            display: none;
+            align-items: center;
+            justify-content: space-between;
+            padding: 8px 12px;
+            background: var(--surface-1);
+            border: 1px solid var(--border-solid);
+            border-radius: var(--radius-md, 10px);
+            margin-bottom: 4px;
+            box-shadow: var(--shadow-sm);
+        }
+
+        @media (min-width: 1024px) {
+            .split-sidebar-top-bar {
+                display: flex !important;
+            }
+        }
+
+        .split-sidebar-top-bar .sidebar-title {
+            font-size: 0.82rem;
+            font-weight: 700;
+            color: var(--text-1);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .split-sidebar-top-bar .sidebar-title i {
+            color: var(--primary);
+        }
+
+        .split-sidebar-collapse-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            padding: 4px 10px;
+            font-size: 0.78rem;
+            font-weight: 700;
+            color: var(--text-2);
+            background: var(--surface-2);
+            border: 1px solid var(--border-solid);
+            border-radius: var(--radius-sm, 6px);
+            cursor: pointer;
+            transition: all 0.15s ease;
+            font-family: inherit;
+        }
+
+        .split-sidebar-collapse-btn:hover {
+            color: var(--danger, #ef4444);
+            background: rgba(239, 68, 68, 0.08);
+            border-color: rgba(239, 68, 68, 0.3);
+        }
+
+        #bulkSelectCloseHeaderBtn {
+            background: rgba(239, 68, 68, 0.12) !important;
+            color: #ef4444 !important;
+            border: 1px solid rgba(239, 68, 68, 0.35) !important;
+            font-weight: 700 !important;
+        }
+
+        #bulkSelectCloseHeaderBtn:hover {
+            background: #ef4444 !important;
+            color: #ffffff !important;
         }
 
         /* On mobile, style sidebars with IDs as premium bottom sheets */
@@ -8127,39 +8577,6 @@
                     }
                 </style>
                 <div class="overview-shell">
-                    <div id="kidRegBanner" class="link-chip" style="display:none; margin-bottom: 20px;">
-                        <div class="link-chip-label"><i class="fas fa-link"></i> رابط تسجيل الأطفال</div>
-                        <div class="link-chip-url" id="overviewKidRegUrl"></div>
-                        <div class="link-chip-actions">
-                            <div class="share-popover-wrap">
-                                <button type="button" class="btn btn-outline btn-sm share-btn"
-                                    onclick="toggleSharePopover(this, event)">
-                                    <i class="fas fa-share-alt"></i>
-                                    <span>مشاركة</span>
-                                    <i class="fas fa-chevron-down"
-                                        style="font-size:0.65rem;margin-inline-start:3px;"></i>
-                                </button>
-                                <div class="share-popover-menu">
-                                    <button type="button" class="share-popover-item"
-                                        onclick="copyKidRegLink(document.getElementById('overviewKidRegUrl').textContent,'الكنيسة')">
-                                        <i class="fas fa-copy" style="color:var(--text-2);"></i>
-                                        <span>نسخ الرابط</span>
-                                    </button>
-                                    <button type="button" class="share-popover-item"
-                                        onclick="shareWhatsApp(document.getElementById('overviewKidRegUrl').textContent,'رابط تسجيل الأطفال')">
-                                        <i class="fab fa-whatsapp" style="color:#25D366;"></i>
-                                        <span>إرسال واتساب</span>
-                                    </button>
-                                    <button type="button" class="share-popover-item"
-                                        onclick="window.open(document.getElementById('overviewKidRegUrl').textContent,'_blank')">
-                                        <i class="fas fa-external-link-alt" style="color:var(--text-3);"></i>
-                                        <span>فتح الرابط</span>
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
                     <!-- 1. Centered Global Search Input at the top (no rectangle bg) -->
                     <div style="max-width: 800px; margin: 0 auto 24px auto; position: relative; width: 100%;">
                         <div class="input-icon-wrap" style="position:relative;">
@@ -8256,9 +8673,16 @@
 
             <!-- ── UNCLES ── -->
             <div id="uncles" class="tab-panel">
-                <div class="admin-split-layout">
+                <div class="admin-split-layout split-collapsed">
                     <!-- Sidebar -->
                     <div class="split-sidebar" id="unclesSidebar">
+                        <div class="split-sidebar-top-bar">
+                            <span class="sidebar-title"><i class="fas fa-user-plus"></i> لوحة إضافة الخادم</span>
+                            <button type="button" class="split-sidebar-collapse-btn" onclick="toggleSplitSidebar('unclesSidebar')" title="إخفاء لوحة الإضافة">
+                                <i class="fas fa-chevron-right"></i>
+                                <span>إخفاء</span>
+                            </button>
+                        </div>
                         <button type="button" class="mobile-sidebar-close-btn" onclick="closeMobileAddModal(this)"><i
                                 class="fas fa-times"></i></button>
                         <!-- UNCLE REG LINK CARD -->
@@ -8267,7 +8691,14 @@
                                 تسجيل الخدام</div>
                             <div class="link-chip-url" id="uncleDirectRegUrl"
                                 style="font-size:0.7rem; word-break:break-all;">جاري التحميل...</div>
-                            <div class="link-chip-actions" style="margin-top:8px;">
+                            <div class="link-chip-actions" style="margin-top:8px; display:flex; align-items:center; gap:6px;">
+                                <button type="button" class="btn btn-primary btn-sm"
+                                    style="font-size:0.75rem; padding:4px 10px;"
+                                    onclick="copyText(document.getElementById('uncleDirectRegUrl').textContent, 'رابط تسجيل الخدام')"
+                                    title="نسخ الرابط مباشرة">
+                                    <i class="fas fa-copy"></i>
+                                    <span>نسخ الرابط</span>
+                                </button>
                                 <div class="share-popover-wrap">
                                     <button type="button" class="btn btn-outline btn-sm share-btn"
                                         style="font-size:0.75rem; padding:4px 10px;"
@@ -8279,7 +8710,7 @@
                                     </button>
                                     <div class="share-popover-menu">
                                         <button type="button" class="share-popover-item"
-                                            onclick="copyText(document.getElementById('uncleDirectRegUrl').textContent)">
+                                            onclick="copyText(document.getElementById('uncleDirectRegUrl').textContent, 'رابط تسجيل الخدام')">
                                             <i class="fas fa-copy" style="color:var(--text-2);"></i>
                                             <span>نسخ الرابط</span>
                                         </button>
@@ -8289,7 +8720,7 @@
                                             <span>إرسال واتساب</span>
                                         </button>
                                         <button type="button" class="share-popover-item"
-                                            onclick="window.open(document.getElementById('uncleDirectRegUrl').textContent,'_blank')">
+                                            onclick="openRegistrationUrl(document.getElementById('uncleDirectRegUrl').textContent)">
                                             <i class="fas fa-external-link-alt" style="color:var(--text-3);"></i>
                                             <span>فتح الرابط</span>
                                         </button>
@@ -8388,8 +8819,8 @@
                             <div class="card-header">
                                 <div class="card-title"><i class="fas fa-users"></i> الخُدام المسجلون</div>
                                 <div class="export-row">
-                                    <button class="btn btn-primary btn-sm mobile-add-trigger"
-                                        onclick="openMobileAddModal('unclesSidebar')" title="إضافة خادم" style="display:none;"><i
+                                    <button class="btn btn-primary btn-sm split-header-add-btn"
+                                        onclick="toggleSplitSidebar('unclesSidebar')" title="إضافة خادم"><i
                                             class="fas fa-plus"></i> <span class="btn-text">إضافة خادم</span></button>
                                     <button class="btn btn-outline btn-sm" type="button"
                                         onclick="showBulkAddUnclesModal()" title="استيراد مجموعة">
@@ -8454,14 +8885,21 @@
             <!-- ── STUDENTS ── -->
             <!-- ── STUDENTS ── -->
             <div id="students" class="tab-panel">
-                <div class="admin-split-layout">
+                <div class="admin-split-layout split-collapsed">
                     <!-- Sidebar -->
                     <div class="split-sidebar" id="studentsSidebar">
+                        <div class="split-sidebar-top-bar">
+                            <span class="sidebar-title"><i class="fas fa-user-plus"></i> لوحة إضافة الطفل</span>
+                            <button type="button" class="split-sidebar-collapse-btn" onclick="toggleSplitSidebar('studentsSidebar')" title="إخفاء لوحة الإضافة">
+                                <i class="fas fa-chevron-right"></i>
+                                <span>إخفاء</span>
+                            </button>
+                        </div>
                         <button type="button" class="mobile-sidebar-close-btn" onclick="closeMobileAddModal(this)"><i
                                 class="fas fa-times"></i></button>
                         <!-- KID REG LINK -->
                         <div class="link-chip-center" id="studentsKidRegCardWrap"
-                            style="display:none; margin-bottom:12px; width:100%;">
+                            style="margin-bottom:12px; width:100%;">
                             <div id="studentsKidRegCard" class="link-chip"
                                 style="width:100%; max-width:none; margin:0;">
                                 <div class="link-chip-label" style="font-size:0.8rem;"><i class="fas fa-link"></i> رابط
@@ -8470,7 +8908,14 @@
                                     الأمور لتسجيل الأطفال مباشرة.</p>
                                 <div class="link-chip-url" id="studentsKidRegUrl"
                                     style="font-size:0.7rem; word-break:break-all;">جاري التحميل...</div>
-                                <div class="link-chip-actions" style="margin-top:8px;">
+                                <div class="link-chip-actions" style="margin-top:8px; display:flex; align-items:center; gap:6px;">
+                                    <button type="button" class="btn btn-primary btn-sm"
+                                        style="font-size:0.75rem; padding:4px 10px;"
+                                        onclick="copyKidRegLink(document.getElementById('studentsKidRegUrl').textContent,'الكنيسة')"
+                                        title="نسخ الرابط مباشرة">
+                                        <i class="fas fa-copy"></i>
+                                        <span>نسخ الرابط</span>
+                                    </button>
                                     <div class="share-popover-wrap">
                                         <button type="button" class="btn btn-outline btn-sm share-btn"
                                             style="font-size:0.75rem; padding:4px 10px;"
@@ -8492,7 +8937,7 @@
                                                 <span>إرسال واتساب</span>
                                             </button>
                                             <button type="button" class="share-popover-item"
-                                                onclick="window.open(document.getElementById('studentsKidRegUrl').textContent,'_blank')">
+                                                onclick="openRegistrationUrl(document.getElementById('studentsKidRegUrl').textContent)">
                                                 <i class="fas fa-external-link-alt" style="color:var(--text-3);"></i>
                                                 <span>فتح الرابط</span>
                                             </button>
@@ -8508,10 +8953,11 @@
                                 style="display:flex; justify-content:space-between; align-items:center; gap:8px;">
                                 <div class="card-title"><i class="fas fa-user-plus"></i> إضافة طفل جديد</div>
                                 <div style="display:flex; align-items:center; gap:6px;">
-                                    <button type="button" class="btn btn-outline btn-sm" onclick="showBulkAddModal()"
+                                    <button type="button" class="btn btn-outline btn-sm"
+                                        onclick="copyKidRegLink(document.getElementById('studentsKidRegUrl')?.textContent || getKidRegUrl(), 'الكنيسة')"
                                         style="font-size:0.75rem; padding:3px 9px; font-weight:700;"
-                                        title="إضافة مجموعة أطفال دفعة واحدة">
-                                        <i class="fas fa-upload"></i> إضافة مجموعة
+                                        title="نسخ رابط تسجيل الأطفال">
+                                        <i class="fas fa-link" style="color:var(--primary);"></i> نسخ رابط التسجيل
                                     </button>
                                     <button type="button" class="mobile-close-btn" onclick="closeMobileAddModal(this)"
                                         style="display:none; background:none; border:none; color:var(--text-3); font-size:1.2rem; cursor:pointer; padding:4px;"><i
@@ -8682,9 +9128,13 @@
                             <div class="card-header">
                                 <div class="card-title"><i class="fas fa-child"></i> قائمة الأطفال</div>
                                 <div class="export-row" style="display:flex; align-items:center; gap:8px;">
-                                    <button class="btn btn-primary btn-sm mobile-add-trigger"
-                                        onclick="openMobileAddModal('studentsSidebar')" title="إضافة طفل" style="display:none;"><i
+                                    <button class="btn btn-primary btn-sm split-header-add-btn"
+                                        onclick="toggleSplitSidebar('studentsSidebar')" title="إضافة طفل"><i
                                             class="fas fa-plus"></i> <span class="btn-text">إضافة طفل</span></button>
+                                    <button type="button" class="btn btn-danger btn-sm" id="bulkSelectCloseHeaderBtn"
+                                        onclick="disableBulkSelectMode()" title="إلغاء وضع التحديد" style="display:none;">
+                                        <i class="fas fa-times"></i> <span class="btn-text">إلغاء التحديد</span>
+                                    </button>
                                     <button type="button" class="btn btn-outline btn-sm"
                                         onclick="openTabCustomExport('students')" title="تصدير مخصص">
                                         <i class="fas fa-sliders-h"></i>
@@ -8735,8 +9185,8 @@
                                             <i class="fas fa-trash"></i> <span>حذف</span>
                                         </button>
                                         <button class="btn btn-outline btn-sm" onclick="disableBulkSelectMode()"
-                                            title="إلغاء التحديد">
-                                            إلغاء
+                                            title="إلغاء وضع التحديد" style="display:inline-flex; align-items:center; gap:4px; color:var(--danger,#ef4444); border-color:rgba(239,68,68,0.4);">
+                                            <i class="fas fa-times"></i> <span>إلغاء</span>
                                         </button>
                                     </div>
                                 </div>
@@ -8774,9 +9224,16 @@
 
             <!-- ── GRADUATES (خريجين) ── -->
             <div id="graduates" class="tab-panel">
-                <div class="admin-split-layout">
+                <div class="admin-split-layout split-collapsed">
                     <!-- Sidebar -->
-                    <div class="split-sidebar">
+                    <div class="split-sidebar" id="graduatesSidebar">
+                        <div class="split-sidebar-top-bar">
+                            <span class="sidebar-title"><i class="fas fa-info-circle"></i> معلومات وطلبات النقل</span>
+                            <button type="button" class="split-sidebar-collapse-btn" onclick="toggleSplitSidebar('graduatesSidebar')" title="إخفاء اللوحة الجانبية">
+                                <i class="fas fa-chevron-right"></i>
+                                <span>إخفاء</span>
+                            </button>
+                        </div>
                         <div class="card" id="incomingTransfersCard" style="display:none; margin-bottom:12px;">
                             <div class="card-header">
                                 <div class="card-title"><i class="fas fa-inbox"></i> طلبات نقل واردة</div>
@@ -8805,6 +9262,9 @@
                             <div class="card-header">
                                 <div class="card-title"><i class="fas fa-user-graduate"></i> خريجين</div>
                                 <div class="export-row">
+                                    <button class="btn btn-outline btn-sm split-header-add-btn"
+                                        onclick="toggleSplitSidebar('graduatesSidebar')" title="معلومات الخريجين"><i
+                                            class="fas fa-info-circle"></i> <span class="btn-text">معلومات</span></button>
                                     <button type="button" class="btn btn-outline btn-sm"
                                         onclick="openTabCustomExport('graduates')" title="تصدير مخصص">
                                         <i class="fas fa-sliders-h"></i>
@@ -8834,9 +9294,16 @@
 
             <!-- ── GUESTS ── -->
             <div id="guests" class="tab-panel">
-                <div class="admin-split-layout">
+                <div class="admin-split-layout split-collapsed">
                     <!-- Sidebar (Adding & Buttons) -->
                     <div class="split-sidebar" id="guestsSidebar">
+                        <div class="split-sidebar-top-bar">
+                            <span class="sidebar-title"><i class="fas fa-user-clock"></i> لوحة إضافة الزائر</span>
+                            <button type="button" class="split-sidebar-collapse-btn" onclick="toggleSplitSidebar('guestsSidebar')" title="إخفاء اللوحة الجانبية">
+                                <i class="fas fa-chevron-right"></i>
+                                <span>إخفاء</span>
+                            </button>
+                        </div>
                         <button type="button" class="mobile-sidebar-close-btn" onclick="closeMobileAddModal(this)"><i
                                 class="fas fa-times"></i></button>
                         <div class="card add-card">
@@ -8918,8 +9385,8 @@
                                 style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
                                 <div class="card-title"><i class="fas fa-users"></i> الزوار المسجلون</div>
                                 <div class="export-row">
-                                    <button class="btn btn-primary btn-sm mobile-add-trigger"
-                                        onclick="openMobileAddModal('guestsSidebar')" title="إضافة زائر" style="display:none;"><i
+                                    <button class="btn btn-primary btn-sm split-header-add-btn"
+                                        onclick="toggleSplitSidebar('guestsSidebar')" title="إضافة زائر"><i
                                             class="fas fa-plus"></i> <span class="btn-text">إضافة زائر</span></button>
                                     <div class="action-popover-wrap">
                                         <button type="button" class="action-popover-btn"
@@ -9140,9 +9607,16 @@
 
             <!-- ── TRIPS ── -->
             <div id="trips" class="tab-panel">
-                <div class="admin-split-layout">
+                <div class="admin-split-layout split-collapsed">
                     <!-- Sidebar (Adding & Buttons) -->
                     <div class="split-sidebar" id="tripsSidebar">
+                        <div class="split-sidebar-top-bar">
+                            <span class="sidebar-title"><i class="fas fa-route"></i> لوحة إضافة الرحلة</span>
+                            <button type="button" class="split-sidebar-collapse-btn" onclick="toggleSplitSidebar('tripsSidebar')" title="إخفاء اللوحة الجانبية">
+                                <i class="fas fa-chevron-right"></i>
+                                <span>إخفاء</span>
+                            </button>
+                        </div>
                         <button type="button" class="mobile-sidebar-close-btn" onclick="closeMobileAddModal(this)"><i
                                 class="fas fa-times"></i></button>
                         <div class="card add-card" style="margin-bottom:20px;">
@@ -9335,8 +9809,8 @@
                                 style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
                                 <div class="card-title"><i class="fas fa-list"></i> قائمة الرحلات / المؤتمرات</div>
                                 <div class="export-row">
-                                    <button class="btn btn-primary btn-sm mobile-add-trigger"
-                                        onclick="openMobileAddModal('tripsSidebar')" title="إضافة رحلة" style="display:none;"><i
+                                    <button class="btn btn-primary btn-sm split-header-add-btn"
+                                        onclick="toggleSplitSidebar('tripsSidebar')" title="إضافة رحلة"><i
                                             class="fas fa-plus"></i> <span class="btn-text">إضافة رحلة</span></button>
                                     <button type="button" class="btn btn-outline btn-sm"
                                         onclick="openTabCustomExport('trips')" title="تصدير مخصص">
@@ -10435,6 +10909,10 @@
                                     class="fas fa-sync-alt"></i> تحديث</button>
                             <button class="btn btn-success btn-sm" onclick="showUniversalRestoreModal()"><i
                                     class="fas fa-file-import"></i> استعادة البيانات</button>
+                            <button type="button" class="btn btn-danger btn-sm" id="auditBulkSelectCloseHeaderBtn"
+                                onclick="disableAuditBulkSelectMode()" title="إلغاء وضع التحديد" style="display:none;">
+                                <i class="fas fa-times"></i> <span class="btn-text">إلغاء التحديد</span>
+                            </button>
                             <div class="header-more-wrap">
                                 <button type="button" class="btn btn-outline btn-sm btn-more-dots"
                                     onclick="toggleHeaderMoreMenu(this, event)" title="المزيد من الإجراءات">
@@ -13081,12 +13559,35 @@
             document.body.classList.remove('modal-open');
         }
 
+        function toggleSplitSidebar(sidebarId, forceState) {
+            const sidebar = document.getElementById(sidebarId);
+            if (!sidebar) return;
+            const layout = sidebar.closest('.admin-split-layout');
+            if (!layout) return;
+
+            const isDesktop = window.innerWidth >= 1024;
+            if (!isDesktop) {
+                openMobileAddModal(sidebarId);
+                return;
+            }
+
+            const isCurrentlyCollapsed = layout.classList.contains('split-collapsed');
+            const shouldCollapse = forceState !== undefined ? !forceState : !isCurrentlyCollapsed;
+
+            if (shouldCollapse) {
+                layout.classList.add('split-collapsed');
+            } else {
+                layout.classList.remove('split-collapsed');
+                sidebar.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            }
+        }
+
         // Close mobile sidebar when user clicks outside
         document.addEventListener('click', function (e) {
             if (!document.body.classList.contains('modal-open')) return;
             const openSidebar = document.querySelector('.split-sidebar.open-mobile');
             if (openSidebar && !openSidebar.contains(e.target)) {
-                const isToggleBtn = e.target.closest('button') && e.target.outerHTML.includes('openMobileAddModal');
+                const isToggleBtn = e.target.closest('button') && (e.target.outerHTML.includes('openMobileAddModal') || e.target.outerHTML.includes('toggleSplitSidebar'));
                 const isIgnored = e.target.closest('.autocomplete-suggestions') ||
                     e.target.closest('.flatpickr-calendar') ||
                     e.target.closest('.swal2-container') ||
@@ -14124,6 +14625,408 @@
             }
         }
 
+        /* ═══════════════════════════════════════════════════════════════════
+           UNIVERSAL CUSTOM DROPDOWN ENGINE (Website Design, Not Browser)
+        ═══════════════════════════════════════════════════════════════════ */
+        let _activeCustomSelectMenu = null;
+
+        // Global hook for programmatic .value and .selectedIndex assignments
+        (function initSelectPrototypeHooks() {
+            if (window._selectProtoHooked) return;
+            window._selectProtoHooked = true;
+
+            const valDesc = Object.getOwnPropertyDescriptor(HTMLSelectElement.prototype, 'value');
+            if (valDesc && valDesc.set) {
+                const origValSet = valDesc.set;
+                Object.defineProperty(HTMLSelectElement.prototype, 'value', {
+                    set: function (val) {
+                        origValSet.call(this, val);
+                        if (this.dataset && this.dataset.customBound === '1') {
+                            this.dispatchEvent(new CustomEvent('custom-select-sync'));
+                        }
+                    },
+                    get: valDesc.get,
+                    configurable: true
+                });
+            }
+
+            const idxDesc = Object.getOwnPropertyDescriptor(HTMLSelectElement.prototype, 'selectedIndex');
+            if (idxDesc && idxDesc.set) {
+                const origIdxSet = idxDesc.set;
+                Object.defineProperty(HTMLSelectElement.prototype, 'selectedIndex', {
+                    set: function (idx) {
+                        origIdxSet.call(this, idx);
+                        if (this.dataset && this.dataset.customBound === '1') {
+                            this.dispatchEvent(new CustomEvent('custom-select-sync'));
+                        }
+                    },
+                    get: idxDesc.get,
+                    configurable: true
+                });
+            }
+        })();
+
+        function closeAllCustomDropdowns() {
+            if (_activeCustomSelectMenu && typeof _activeCustomSelectMenu.close === 'function') {
+                _activeCustomSelectMenu.close();
+            }
+            _activeCustomSelectMenu = null;
+        }
+
+        // Close on outside click, resize or escape key
+        document.addEventListener('click', (e) => {
+            if (!e.target.closest('.custom-select-wrap') && !e.target.closest('.custom-select-menu')) {
+                closeAllCustomDropdowns();
+            }
+        }, true);
+
+        window.addEventListener('resize', closeAllCustomDropdowns, { passive: true });
+        window.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') closeAllCustomDropdowns();
+        });
+
+        function cleanupDetachedCustomSelectMenus() {
+            document.querySelectorAll('.custom-select-menu').forEach(m => {
+                if (!m._boundWrapper || !m._boundWrapper.isConnected) {
+                    m.remove();
+                }
+            });
+        }
+
+        function bindCustomSelect(selectEl) {
+            if (!selectEl || selectEl.dataset.customBound === '1') return;
+            // Skip multiple selects or selects marked with data-no-custom="1"
+            if (selectEl.hasAttribute('multiple') || selectEl.dataset.noCustom === '1') return;
+            // Skip elements that are permanently hidden or part of templates
+            if (selectEl.closest('.template') || selectEl.closest('template')) return;
+            if (selectEl.style.display === 'none' && !selectEl.classList.contains('form-select')) return;
+
+            selectEl.dataset.customBound = '1';
+            selectEl.classList.add('has-custom-select');
+
+            // Create wrapper
+            const wrapper = document.createElement('div');
+            wrapper.className = 'custom-select-wrap';
+            if (selectEl.id) wrapper.dataset.forSelect = selectEl.id;
+
+            // Preserve width & inline layout
+            if (selectEl.style.width && selectEl.style.width !== '100%') {
+                wrapper.style.width = selectEl.style.width;
+            }
+            if (selectEl.style.minWidth) wrapper.style.minWidth = selectEl.style.minWidth;
+            if (selectEl.style.maxWidth) wrapper.style.maxWidth = selectEl.style.maxWidth;
+            if (selectEl.style.flex) wrapper.style.flex = selectEl.style.flex;
+            if (selectEl.classList.contains('inline-select') || selectEl.style.display === 'inline-block') {
+                wrapper.classList.add('inline-wrap');
+            }
+
+            const inBar = selectEl.closest('.toolbar, .filter-bar, .export-row, .card-header, .audit-filters, .table-filters, .filter-row, .inline-filters, .action-popover-wrap');
+            const inForm = selectEl.closest('.form-group, .field-group, .settings-group, .modal-body .form-group');
+
+            if (inBar) {
+                wrapper.classList.add('is-compact');
+            } else if (inForm && !selectEl.style.width) {
+                wrapper.classList.add('full-width');
+            } else if (!selectEl.style.width) {
+                wrapper.classList.add('is-compact');
+            }
+
+            // Insert wrapper right after selectEl
+            if (selectEl.parentNode) {
+                selectEl.parentNode.insertBefore(wrapper, selectEl.nextSibling);
+            }
+
+            // Create trigger button
+            const trigger = document.createElement('button');
+            trigger.type = 'button';
+            trigger.className = 'custom-select-trigger';
+            trigger.setAttribute('aria-haspopup', 'listbox');
+            trigger.setAttribute('aria-expanded', 'false');
+            if (selectEl.disabled) trigger.disabled = true;
+
+            const textSpan = document.createElement('span');
+            textSpan.className = 'cs-text';
+
+            const arrowSpan = document.createElement('span');
+            arrowSpan.className = 'cs-arrow';
+            arrowSpan.innerHTML = '<i class="fas fa-chevron-down"></i>';
+
+            trigger.appendChild(textSpan);
+            trigger.appendChild(arrowSpan);
+            wrapper.appendChild(trigger);
+
+            // Create floating dropdown menu
+            const menu = document.createElement('div');
+            menu.className = 'custom-select-menu';
+            menu.setAttribute('role', 'listbox');
+            menu._boundWrapper = wrapper;
+            document.body.appendChild(menu);
+
+            // Search box inside menu
+            const searchWrap = document.createElement('div');
+            searchWrap.className = 'custom-select-search-wrap';
+            searchWrap.style.display = 'none';
+            searchWrap.innerHTML = '<i class="fas fa-search"></i><input type="text" class="custom-select-search-input" placeholder="بحث...">';
+            const searchInput = searchWrap.querySelector('input');
+            menu.appendChild(searchWrap);
+
+            // Options container
+            const optionsContainer = document.createElement('div');
+            optionsContainer.className = 'custom-select-options';
+            menu.appendChild(optionsContainer);
+
+            function updateTriggerText() {
+                const selectedOpt = selectEl.options && selectEl.selectedIndex >= 0 ? selectEl.options[selectEl.selectedIndex] : null;
+                if (selectedOpt && selectedOpt.textContent.trim()) {
+                    textSpan.textContent = selectedOpt.textContent.trim();
+                    textSpan.classList.remove('cs-placeholder');
+                } else {
+                    textSpan.textContent = selectEl.getAttribute('placeholder') || 'اختر...';
+                    textSpan.classList.add('cs-placeholder');
+                }
+
+                if (selectEl.disabled) {
+                    trigger.disabled = true;
+                    wrapper.style.opacity = '0.6';
+                    wrapper.style.pointerEvents = 'none';
+                } else {
+                    trigger.disabled = false;
+                    wrapper.style.opacity = '';
+                    wrapper.style.pointerEvents = '';
+                }
+            }
+
+            function renderOptions(filterQuery = '') {
+                optionsContainer.innerHTML = '';
+                const options = Array.from(selectEl.options || []);
+
+                if (options.length > 7) {
+                    searchWrap.style.display = 'block';
+                } else {
+                    searchWrap.style.display = 'none';
+                }
+
+                let filtered = options;
+                if (filterQuery && filterQuery.trim()) {
+                    const q = filterQuery.trim().toLowerCase();
+                    if (typeof getMatchScore === 'function') {
+                        filtered = options.map(opt => {
+                            const score = getMatchScore(opt, q, [{ val: opt.textContent || '', weight: 1.0 }]);
+                            return { opt, score };
+                        }).filter(item => item.score > 0)
+                          .sort((a, b) => b.score - a.score)
+                          .map(item => item.opt);
+                    } else if (typeof normalizeArabic === 'function') {
+                        const normQ = normalizeArabic(q);
+                        filtered = options.filter(opt => normalizeArabic(opt.textContent || '').includes(normQ));
+                    } else {
+                        filtered = options.filter(opt => (opt.textContent || '').toLowerCase().includes(q));
+                    }
+                }
+
+                if (filtered.length === 0) {
+                    const empty = document.createElement('div');
+                    empty.className = 'custom-select-empty';
+                    empty.textContent = 'لا توجد نتائج مطابقة';
+                    optionsContainer.appendChild(empty);
+                    return;
+                }
+
+                filtered.forEach(opt => {
+                    const item = document.createElement('div');
+                    item.className = 'custom-select-option';
+                    item.setAttribute('role', 'option');
+                    item.setAttribute('data-value', opt.value);
+                    if (opt.disabled) item.classList.add('is-disabled');
+                    if (opt.selected) {
+                        item.classList.add('is-selected');
+                        item.setAttribute('aria-selected', 'true');
+                    }
+
+                    const span = document.createElement('span');
+                    span.textContent = opt.textContent;
+                    item.appendChild(span);
+
+                    const check = document.createElement('i');
+                    check.className = 'fas fa-check cs-opt-check';
+                    item.appendChild(check);
+
+                    item.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        if (opt.disabled) return;
+                        selectOption(opt.value);
+                        closeDropdown();
+                    });
+
+                    optionsContainer.appendChild(item);
+                });
+
+                updateTriggerText();
+            }
+
+            function selectOption(val) {
+                const changed = (selectEl.value !== String(val));
+                selectEl.value = val;
+                updateTriggerText();
+
+                if (changed) {
+                    selectEl.dispatchEvent(new Event('change', { bubbles: true }));
+                    selectEl.dispatchEvent(new Event('input', { bubbles: true }));
+                    if (typeof selectEl.onchange === 'function') {
+                        selectEl.onchange();
+                    }
+                }
+            }
+
+            function openDropdown() {
+                if (!wrapper.isConnected || !selectEl.isConnected) {
+                    menu.remove();
+                    return;
+                }
+                closeAllCustomDropdowns();
+                cleanupDetachedCustomSelectMenus();
+
+                const rect = trigger.getBoundingClientRect();
+                const viewportHeight = window.innerHeight;
+                const spaceBelow = viewportHeight - rect.bottom;
+
+                const menuWidth = Math.max(rect.width, 160);
+                menu.style.width = menuWidth + 'px';
+
+                // RTL aligned with viewport bounds safety
+                let leftPos = rect.right - menuWidth;
+                if (leftPos < 8) leftPos = rect.left;
+                if (leftPos + menuWidth > window.innerWidth - 8) {
+                    leftPos = window.innerWidth - menuWidth - 8;
+                }
+                if (leftPos < 8) leftPos = 8;
+                menu.style.left = leftPos + 'px';
+
+                if (spaceBelow < 220 && rect.top > spaceBelow) {
+                    menu.style.bottom = (viewportHeight - rect.top + 4) + 'px';
+                    menu.style.top = 'auto';
+                    menu.classList.add('is-dropup');
+                } else {
+                    menu.style.top = (rect.bottom + 4) + 'px';
+                    menu.style.bottom = 'auto';
+                    menu.classList.remove('is-dropup');
+                }
+
+                wrapper.classList.add('is-open');
+                menu.classList.add('is-open');
+                trigger.setAttribute('aria-expanded', 'true');
+
+                renderOptions();
+
+                if (searchWrap.style.display !== 'none') {
+                    searchInput.value = '';
+                    setTimeout(() => searchInput.focus(), 50);
+                }
+
+                const selectedEl = optionsContainer.querySelector('.is-selected');
+                if (selectedEl) {
+                    setTimeout(() => selectedEl.scrollIntoView({ block: 'nearest' }), 30);
+                }
+
+                _activeCustomSelectMenu = {
+                    wrapper,
+                    menu,
+                    close: closeDropdown
+                };
+            }
+
+            function closeDropdown() {
+                wrapper.classList.remove('is-open');
+                menu.classList.remove('is-open');
+                trigger.setAttribute('aria-expanded', 'false');
+                if (_activeCustomSelectMenu && _activeCustomSelectMenu.menu === menu) {
+                    _activeCustomSelectMenu = null;
+                }
+            }
+
+            trigger.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                if (wrapper.classList.contains('is-open')) {
+                    closeDropdown();
+                } else {
+                    openDropdown();
+                }
+            });
+
+            trigger.addEventListener('keydown', (e) => {
+                if (e.key === 'ArrowDown' || e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    if (!wrapper.classList.contains('is-open')) openDropdown();
+                }
+            });
+
+            searchInput.addEventListener('input', (e) => {
+                renderOptions(e.target.value);
+            });
+            searchInput.addEventListener('click', (e) => e.stopPropagation());
+
+            selectEl.addEventListener('change', updateTriggerText);
+            selectEl.addEventListener('custom-select-sync', updateTriggerText);
+            selectEl.addEventListener('focus', () => trigger.focus());
+
+            const form = selectEl.closest('form');
+            if (form) {
+                form.addEventListener('reset', () => {
+                    setTimeout(updateTriggerText, 15);
+                });
+            }
+
+            const optObserver = new MutationObserver(() => {
+                renderOptions();
+                updateTriggerText();
+            });
+            optObserver.observe(selectEl, { childList: true, subtree: true, attributes: true, attributeFilter: ['disabled', 'value'] });
+
+            renderOptions();
+            updateTriggerText();
+        }
+
+        function initCustomSelects(root = document) {
+            if (!root || !root.querySelectorAll) return;
+            const selects = root.querySelectorAll('select:not(.has-custom-select)');
+            selects.forEach(s => {
+                try {
+                    bindCustomSelect(s);
+                } catch (e) {
+                    console.warn('bindCustomSelect error:', e);
+                }
+            });
+        }
+
+        // Auto-observe newly added elements (modals, dynamic tabs, templates)
+        onDOMReady(() => {
+            initCustomSelects();
+
+            const bodyObserver = new MutationObserver((mutations) => {
+                let shouldScan = false;
+                for (const m of mutations) {
+                    if (m.addedNodes.length > 0) {
+                        for (const n of m.addedNodes) {
+                            if (n.nodeType === 1) {
+                                if (n.matches && n.matches('select:not(.has-custom-select)')) {
+                                    shouldScan = true; break;
+                                }
+                                if (n.querySelector && n.querySelector('select:not(.has-custom-select)')) {
+                                    shouldScan = true; break;
+                                }
+                            }
+                        }
+                    }
+                    if (shouldScan) break;
+                }
+                if (shouldScan) {
+                    initCustomSelects();
+                }
+            });
+            bodyObserver.observe(document.body, { childList: true, subtree: true });
+        });
+
         function checkIsDeveloperRole(sessObj) {
             const s = sessObj || {};
             if (s && s.role) {
@@ -14574,7 +15477,7 @@
                         }
                     })();
                 },
-                uncles: () => runDataLoad('uncles', loadUncles),
+                uncles: async () => { await runDataLoad('uncles', loadUncles); renderKidRegLinks(); },
                 students: async () => { await runDataLoad('students', loadStudents); renderKidRegLinks(); },
                 graduates: () => runDataLoad('graduates', loadGraduates),
                 guests: () => runDataLoad('guests', loadGuests),
@@ -14586,7 +15489,7 @@
                 history: () => loadAuditLogs(),
                 devChurches: async () => { await loadAllChurches(); await loadRegKeys(); await loadDevTemplates(); await loadDevRoomsTemplates(); },
                 devSongDownloads: () => runDataLoad('devSongDownloads', loadSongDownloadStats),
-                churchSettings: async () => { await loadChurchSettingsTab(); await loadAdminProfile(); }
+                churchSettings: async () => { await loadChurchSettingsTab(); await loadAdminProfile(); loadChurchInfoSettings(); }
             };
 
             // Execute loader
@@ -14606,6 +15509,7 @@
                 if (targetPanel) {
                     hidePanelSkeleton(targetPanel);
                     window.dispatchEvent(new Event('resize'));
+                    setTimeout(() => initCustomSelects(targetPanel), 50);
                 }
             }
         }
@@ -14617,7 +15521,11 @@
 
         // ── Modals ────────────────────────────────────────────────────
         function openModal(id) {
-            document.getElementById(id).classList.add('open');
+            const m = document.getElementById(id);
+            if (m) {
+                m.classList.add('open');
+                setTimeout(() => initCustomSelects(m), 50);
+            }
             if (id === 'tripDetailsModal' && window.currentTripId) {
                 updateHashParam('trip_id', window.currentTripId);
             }
@@ -21556,26 +22464,113 @@
         }
 
 
+        function closeAllPopovers() {
+            document.querySelectorAll('.export-dropdown-wrap.open, .action-popover-wrap.open, .header-more-wrap.open, .share-popover-wrap.open').forEach(w => {
+                w.classList.remove('open');
+                const b = w.querySelector('.export-dropdown-btn, .action-popover-btn, .btn-more-dots, .share-btn');
+                if (b) b.classList.remove('active');
+            });
+            document.querySelectorAll('.card.has-open-dropdown, .link-chip.has-open-dropdown, .link-chip-center.has-open-dropdown').forEach(c => c.classList.remove('has-open-dropdown'));
+        }
+
+        function isUrlLoadingOrInvalid(url) {
+            if (!url) return true;
+            const str = String(url).trim();
+            if (!str || str === '—' || str.includes('جاري التحميل') || str.includes('...') || !str.startsWith('http')) {
+                return true;
+            }
+            return false;
+        }
+
         function copyKidRegLink(url, churchName) {
+            closeAllPopovers();
+            if (isUrlLoadingOrInvalid(url)) {
+                const fallback = getKidRegUrl();
+                if (fallback && !isUrlLoadingOrInvalid(fallback)) {
+                    url = fallback;
+                } else {
+                    showToast('الرابط قيد التحميل، يرجى الانتظار لحظات...', 'warning');
+                    return;
+                }
+            }
+            const name = churchName || document.getElementById('sidebarChurchName')?.textContent || 'الكنيسة';
             navigator.clipboard.writeText(url)
-                .then(() => showToast('تم نسخ رابط تسجيل أطفال "' + churchName + '" ✅', 'success'))
-                .catch(() => showToast('تعذّر النسخ — انسخ الرابط يدوياً', 'warning'));
+                .then(() => showToast('تم نسخ رابط تسجيل أطفال "' + name + '" ✅', 'success'))
+                .catch(() => {
+                    try {
+                        const ta = document.createElement('textarea');
+                        ta.value = url;
+                        ta.style.position = 'fixed';
+                        ta.style.opacity = '0';
+                        document.body.appendChild(ta);
+                        ta.select();
+                        document.execCommand('copy');
+                        document.body.removeChild(ta);
+                        showToast('تم نسخ رابط تسجيل أطفال "' + name + '" ✅', 'success');
+                    } catch (e) {
+                        showToast('تعذّر النسخ — انسخ الرابط يدوياً', 'warning');
+                    }
+                });
         }
 
         function shareWhatsApp(url, text) {
+            closeAllPopovers();
+            if (isUrlLoadingOrInvalid(url)) {
+                if (text.includes('خدام') || text.includes('خادم')) {
+                    const code = sessionChurchCode || localStorage.getItem('churchCode') || localStorage.getItem('church_code') || '';
+                    if (code) url = window.location.origin + '/uncle/registration?church=' + encodeURIComponent(code);
+                } else {
+                    const fallback = getKidRegUrl();
+                    if (fallback && !isUrlLoadingOrInvalid(fallback)) url = fallback;
+                }
+                if (isUrlLoadingOrInvalid(url)) {
+                    showToast('الرابط قيد التحميل، يرجى الانتظار لحظات...', 'warning');
+                    return;
+                }
+            }
             const msg = encodeURIComponent(text + '\n' + url);
             window.open('https://wa.me/?text=' + msg, '_blank');
+            showToast('جاري فتح واتساب للمشاركة...', 'success');
+        }
+
+        function openRegistrationUrl(url) {
+            closeAllPopovers();
+            if (isUrlLoadingOrInvalid(url)) {
+                const code = sessionChurchCode || localStorage.getItem('churchCode') || localStorage.getItem('church_code') || '';
+                if (code) {
+                    url = window.location.origin + '/uncle/registration?church=' + encodeURIComponent(code);
+                }
+                if (isUrlLoadingOrInvalid(url)) {
+                    showToast('الرابط قيد التحميل، يرجى الانتظار لحظات...', 'warning');
+                    return;
+                }
+            }
+            window.open(url, '_blank');
+            showToast('جاري فتح الرابط في نافذة جديدة...', 'success');
         }
 
         function shareKidRegLink(url, churchName) {
+            closeAllPopovers();
+            if (isUrlLoadingOrInvalid(url)) {
+                const fallback = getKidRegUrl();
+                if (fallback && !isUrlLoadingOrInvalid(fallback)) {
+                    url = fallback;
+                } else {
+                    showToast('الرابط قيد التحميل، يرجى الانتظار لحظات...', 'warning');
+                    return;
+                }
+            }
+            const name = churchName || document.getElementById('sidebarChurchName')?.textContent || 'الكنيسة';
             if (navigator.share) {
                 navigator.share({
-                    title: 'تسجيل في ' + churchName,
-                    text: 'سجّل طفلك في ' + churchName + ' عبر هذا الرابط',
+                    title: 'تسجيل في ' + name,
+                    text: 'سجّل طفلك في ' + name + ' عبر هذا الرابط',
                     url: url
+                }).then(() => {
+                    showToast('تمت المشاركة بنجاح ✅', 'success');
                 }).catch(() => { });
             } else {
-                copyKidRegLink(url, churchName);
+                copyKidRegLink(url, name);
             }
         }
 
@@ -22437,6 +23432,7 @@
             const actionsBar = document.getElementById('auditBulkActionsBar');
             const listContainer = document.getElementById('auditLogsListContainer');
             const headCheckWrap = document.querySelector('#auditLogsListContainer .data-list-head .bulk-check-wrap');
+            const closeHeaderBtn = document.getElementById('auditBulkSelectCloseHeaderBtn');
 
             selectedAuditLogIds.clear();
 
@@ -22445,6 +23441,7 @@
                     toggleBtn.classList.add('active');
                     toggleBtn.innerHTML = '<i class="fas fa-times"></i> إلغاء التحديد';
                 }
+                if (closeHeaderBtn) closeHeaderBtn.style.display = 'inline-flex';
                 if (actionsBar) {
                     actionsBar.style.display = 'flex';
                 }
@@ -22459,6 +23456,7 @@
                     toggleBtn.classList.remove('active');
                     toggleBtn.innerHTML = '<i class="fas fa-check-circle"></i> تحديد متعدد';
                 }
+                if (closeHeaderBtn) closeHeaderBtn.style.display = 'none';
                 if (actionsBar) {
                     actionsBar.style.display = 'none';
                 }
@@ -22471,6 +23469,12 @@
             }
             updateAuditBulkUI();
             renderAuditTable(_filteredAuditLogs || auditLogsCache);
+        }
+
+        function disableAuditBulkSelectMode() {
+            if (isAuditBulkSelectMode) {
+                toggleAuditBulkSelectMode();
+            }
         }
 
         function toggleAuditLogSelection(id) {
@@ -23042,18 +24046,21 @@
             isBulkSelectMode = !isBulkSelectMode;
             const toggleBtn = document.getElementById('bulkSelectToggleBtn');
             const actionsBar = document.getElementById('bulkActionsBar');
+            const closeHeaderBtn = document.getElementById('bulkSelectCloseHeaderBtn');
 
             if (isBulkSelectMode) {
                 if (toggleBtn) {
                     toggleBtn.classList.add('active');
                     toggleBtn.innerHTML = '<i class="fas fa-times"></i> إلغاء التحديد';
                 }
+                if (closeHeaderBtn) closeHeaderBtn.style.display = 'inline-flex';
                 if (actionsBar) actionsBar.classList.add('show');
             } else {
                 if (toggleBtn) {
                     toggleBtn.classList.remove('active');
                     toggleBtn.innerHTML = '<i class="fas fa-tasks"></i> تحديد متعدد';
                 }
+                if (closeHeaderBtn) closeHeaderBtn.style.display = 'none';
                 if (actionsBar) actionsBar.classList.remove('show');
                 selectedStudentIds.clear();
                 updateBulkUI();
@@ -24697,20 +25704,28 @@
             return fetch(API_URL, { method: 'POST', body: fd }).then(r => r.json()).then(d => {
                 if (d.success) {
                     allUncles = d.uncles || [];
+                    if (d.church_code) {
+                        sessionChurchCode = d.church_code;
+                        localStorage.setItem('churchCode', d.church_code);
+                        localStorage.setItem('church_code', d.church_code);
+                    }
                     _saveLocalCache('uncles', { uncles: allUncles });
                     displayUncles(allUncles);
                     // Load classes for checkboxes (now in same section)
                     loadUncleClassCheckboxes();
                     populateAllowedUnclesCheckboxes();
+                    renderKidRegLinks();
                 } else {
                     const cached = _readLocalCache('uncles');
                     if (cached?.uncles) {
                         allUncles = cached.uncles;
                         displayUncles(allUncles);
                         populateAllowedUnclesCheckboxes();
+                        renderKidRegLinks();
                         if (_offlineSessionMode || d.offline) _showOfflineCacheToast();
                         return;
                     }
+                    renderKidRegLinks();
                     showToast('خطأ في تحميل بيانات الخُدام', 'error');
                 }
             }).catch(() => {
@@ -24719,9 +25734,11 @@
                     allUncles = cached.uncles;
                     displayUncles(allUncles);
                     populateAllowedUnclesCheckboxes();
+                    renderKidRegLinks();
                     if (_offlineSessionMode) _showOfflineCacheToast();
                     return;
                 }
+                renderKidRegLinks();
                 showToast('خطأ في تحميل بيانات الخُدام', 'error');
             });
         }
@@ -25086,40 +26103,116 @@
             document.getElementById('ust2').querySelector('div:last-child').style.color = 'var(--muted)';
         }
 
-        // ── Kid reg link helpers ─────────────────────────
+        // ── Kid & Uncle reg link helpers ─────────────────────────
         function getKidRegUrl() {
-            const code = sessionChurchCode || localStorage.getItem('churchCode') || localStorage.getItem('church_code') || '';
+            let code = sessionChurchCode || localStorage.getItem('churchCode') || localStorage.getItem('church_code') || '';
+            if (!code) {
+                const sbCodeText = document.getElementById('sidebarChurchCode')?.textContent || '';
+                const match = sbCodeText.match(/رمز:\s*([^\s]+)/);
+                if (match && match[1]) code = match[1].trim();
+            }
             if (!code) return '';
             return window.location.origin + '/user/registration?church=' + encodeURIComponent(code);
         }
 
-        function renderKidRegLinks() {
-            const code = sessionChurchCode || localStorage.getItem('churchCode') || localStorage.getItem('church_code') || '';
-            const url = code ? window.location.origin + '/user/registration?church=' + encodeURIComponent(code) : '';
-            if (!url) return;
+        function getUncleRegUrl() {
+            let code = sessionChurchCode || localStorage.getItem('churchCode') || localStorage.getItem('church_code') || '';
+            if (!code) {
+                const sbCodeText = document.getElementById('sidebarChurchCode')?.textContent || '';
+                const match = sbCodeText.match(/رمز:\s*([^\s]+)/);
+                if (match && match[1]) code = match[1].trim();
+            }
+            if (!code) return '';
+            return window.location.origin + '/uncle/registration?church=' + encodeURIComponent(code);
+        }
+
+        async function renderKidRegLinks() {
+            let code = sessionChurchCode || localStorage.getItem('churchCode') || localStorage.getItem('church_code') || '';
+
+            // If code is still not found, try to resolve from available caches, sidebar or server
+            if (!code) {
+                if (typeof allChurchesCache !== 'undefined' && allChurchesCache.length) {
+                    const targetId = (typeof devViewChurchId !== 'undefined' && devViewChurchId > 0) ? devViewChurchId : sessionChurchId;
+                    const ch = allChurchesCache.find(c => c.id == targetId);
+                    if (ch?.church_code) code = ch.church_code;
+                }
+                if (!code) {
+                    const sbCodeText = document.getElementById('sidebarChurchCode')?.textContent || '';
+                    const match = sbCodeText.match(/رمز:\s*([^\s]+)/);
+                    if (match && match[1]) code = match[1].trim();
+                }
+                if (!code && (sessionChurchId > 0 || (typeof devViewChurchId !== 'undefined' && devViewChurchId > 0))) {
+                    try {
+                        const fd = mkFd('getSessionInfo');
+                        const res = await fetch(API_URL, { method: 'POST', body: fd }).then(r => r.json());
+                        if (res.success && res.church_code) {
+                            code = res.church_code;
+                        }
+                    } catch (e) {}
+                }
+            }
+
+            if (code) {
+                sessionChurchCode = code;
+                localStorage.setItem('churchCode', code);
+                localStorage.setItem('church_code', code);
+            }
+
+            const kidUrl = code ? window.location.origin + '/user/registration?church=' + encodeURIComponent(code) : '';
+            const uncleUrl = code ? window.location.origin + '/uncle/registration?church=' + encodeURIComponent(code) : '';
 
             // Students tab
             const studWrap = document.getElementById('studentsKidRegCardWrap');
             const studEl = document.getElementById('studentsKidRegUrl');
-            if (studWrap && studEl) {
-                studEl.textContent = url;
-                studWrap.style.display = '';
+            if (studEl) {
+                if (kidUrl) {
+                    studEl.textContent = kidUrl;
+                    if (studWrap) studWrap.style.display = '';
+                } else {
+                    studEl.textContent = 'جاري التحميل...';
+                }
             }
+
             // Uncle tab — plain permanent link
             const uncleUrlEl = document.getElementById('uncleDirectRegUrl');
-            if (uncleUrlEl && code) {
-                uncleUrlEl.textContent = window.location.origin + '/uncle/registration?church=' + encodeURIComponent(code);
+            if (uncleUrlEl) {
+                if (uncleUrl) {
+                    uncleUrlEl.textContent = uncleUrl;
+                } else {
+                    uncleUrlEl.textContent = 'جاري التحميل...';
+                }
             }
         }
 
-        // renderKidRegLinks is called from sidebarChurchCode assignment and from switchTab
-
-
-
-        function copyText(url) {
+        function copyText(url, label = 'الرابط') {
+            closeAllPopovers();
+            if (isUrlLoadingOrInvalid(url)) {
+                if (label.includes('خدام') || label.includes('خادم')) {
+                    const fallback = getUncleRegUrl();
+                    if (fallback && !isUrlLoadingOrInvalid(fallback)) url = fallback;
+                }
+                if (isUrlLoadingOrInvalid(url)) {
+                    showToast('الرابط قيد التحميل، يرجى الانتظار لحظات...', 'warning');
+                    return;
+                }
+            }
             navigator.clipboard.writeText(url)
-                .then(() => showToast('تم النسخ ✅', 'success'))
-                .catch(() => showToast('تعذّر النسخ', 'warning'));
+                .then(() => showToast(`تم نسخ ${label} بنجاح ✅`, 'success'))
+                .catch(() => {
+                    try {
+                        const ta = document.createElement('textarea');
+                        ta.value = url;
+                        ta.style.position = 'fixed';
+                        ta.style.opacity = '0';
+                        document.body.appendChild(ta);
+                        ta.select();
+                        document.execCommand('copy');
+                        document.body.removeChild(ta);
+                        showToast(`تم نسخ ${label} بنجاح ✅`, 'success');
+                    } catch (e) {
+                        showToast('تعذّر النسخ', 'warning');
+                    }
+                });
         }
         // ══════════════════════════════════════════════════════
         // CHURCH INFO CARD (uncles tab)
@@ -25249,7 +26342,7 @@
         async function loadChurchInfoSettings() {
             try {
                 const fd = mkFd('getSessionInfo');
-                const d = await fetch(API_URL, { method: 'POST', body: fd }).then(r => r.json()).catch(() => ({ success: false }));
+                const d = await fetch(API_URL, { method: 'POST', body: fd, credentials: 'include' }).then(r => r.json()).catch(() => ({ success: false }));
                 const nameEl = document.getElementById('churchEditName');
                 const emailEl = document.getElementById('churchEditEmail');
                 if (nameEl) nameEl.value = d.church_name || localStorage.getItem('churchName') || '';
@@ -25266,24 +26359,34 @@
             const cid = sessionChurchId || getChurchId();
             if (!cid) { showToast('لم يتم تحديد الكنيسة', 'error'); return; }
 
-            // Update name + email
-            const fd = new FormData();
-            fd.append('action', 'updateChurch');
-            fd.append('church_id', cid);
-            fd.append('church_name', newName);
-            fd.append('admin_email', newEmail);
-            // keep existing church_type
-            const fd2get = mkFd('getSessionInfo');
-            const sess = await fetch(API_URL, { method: 'POST', body: fd2get }).then(r => r.json()).catch(() => ({}));
-            fd.append('church_type', sess.church_type || 'kids');
+            // Update name + email using mkFd to preserve developer overrides and auth credentials
+            const fd = mkFd('updateChurch');
+            fd.set('church_id', cid);
+            fd.set('church_name', newName);
+            fd.set('admin_email', newEmail);
 
-            const d = await fetch(API_URL, { method: 'POST', body: fd }).then(r => r.json()).catch(() => ({ success: false }));
+            // Fetch session info if church_type is needed
+            let currentType = 'kids';
+            try {
+                const fd2get = mkFd('getSessionInfo');
+                const sess = await fetch(API_URL, { method: 'POST', body: fd2get, credentials: 'include' }).then(r => r.json());
+                if (sess && sess.church_type) currentType = sess.church_type;
+            } catch (e) {}
+            fd.set('church_type', currentType);
+
+            const d = await fetch(API_URL, { method: 'POST', body: fd, credentials: 'include' }).then(r => r.json()).catch(() => ({ success: false }));
             if (!d.success) { showToast(d.message || 'فشل في حفظ بيانات الكنيسة', 'error'); return; }
 
             // Update sidebar + localStorage
             localStorage.setItem('churchName', newName);
             const sidebarNameEl = document.getElementById('sidebarChurchName');
             if (sidebarNameEl) sidebarNameEl.textContent = newName;
+
+            const emailEl = document.getElementById('churchEditEmail');
+            if (emailEl) emailEl.value = newEmail;
+
+            // Re-sync church info settings
+            loadChurchInfoSettings();
 
             showToast('تم حفظ بيانات الكنيسة بنجاح ✅', 'success');
         }

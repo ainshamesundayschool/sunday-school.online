@@ -144,6 +144,16 @@ function ensureChurchApprovedColumn(mysqli $conn): void
 
 }
 
+function ensureAdminEmailColumn(mysqli $conn): void
+{
+    if (defined('SCHEMA_MIGRATED')) { return; }
+    $check = $conn->query("SHOW COLUMNS FROM churches LIKE 'admin_email'");
+    if ($check && $check->num_rows > 0) {
+        return;
+    }
+    $conn->query("ALTER TABLE churches ADD COLUMN admin_email VARCHAR(255) NULL DEFAULT NULL");
+}
+
 function findChurchRow(mysqli $conn, $churchCodeOrId = '', $directId = 0): ?array
 {
     if (!$conn) return null;
@@ -14055,36 +14065,28 @@ function updateChurch()
 
 
 
-        // Ensure column exists
-
+        // Ensure columns exist
         ensureChurchTypeColumn($conn);
-
-
+        ensureAdminEmailColumn($conn);
 
         $stmt = $conn->prepare("UPDATE churches SET church_name = ?, admin_email = ?, church_type = ? WHERE id = ?");
-
+        if (!$stmt) {
+            sendJSON(['success' => false, 'message' => 'خطأ في تجهيز التحديث: ' . $conn->error]);
+            return;
+        }
         $stmt->bind_param("sssi", $churchName, $adminEmail, $churchType, $churchId);
 
-
-
         if ($stmt->execute()) {
-
             // Update session if this is the currently logged-in church
-
             if (isset($_SESSION['church_id']) && intval($_SESSION['church_id']) === $churchId) {
-
                 $_SESSION['church_type'] = $churchType;
-
                 $_SESSION['church_name'] = $churchName;
-
+                $_SESSION['admin_email'] = $adminEmail;
             }
 
-            sendJSON(['success' => true, 'message' => 'تم تحديث الكنيسة بنجاح', 'church_type' => $churchType]);
-
+            sendJSON(['success' => true, 'message' => 'تم تحديث بيانات الكنيسة بنجاح', 'church_type' => $churchType, 'admin_email' => $adminEmail]);
         } else {
-
-            sendJSON(['success' => false, 'message' => 'فشل في تحديث الكنيسة']);
-
+            sendJSON(['success' => false, 'message' => 'فشل في تحديث الكنيسة: ' . $stmt->error]);
         }
 
 
@@ -15839,7 +15841,22 @@ function getAllUncles()
 
         error_log("Found " . count($uncles) . " uncles");
 
-        sendJSON(['success' => true, 'uncles' => $uncles]);
+        $churchCode = '';
+        if ($churchId > 0) {
+            try {
+                $cStmt = $conn->prepare("SELECT church_code FROM churches WHERE id = ? LIMIT 1");
+                if ($cStmt) {
+                    $cStmt->bind_param("i", $churchId);
+                    $cStmt->execute();
+                    $cRes = $cStmt->get_result();
+                    if ($cRow = $cRes->fetch_assoc()) {
+                        $churchCode = $cRow['church_code'] ?? '';
+                    }
+                }
+            } catch (Exception $e) {}
+        }
+
+        sendJSON(['success' => true, 'uncles' => $uncles, 'church_code' => $churchCode]);
 
     } catch (Exception $e) {
         error_log("getAllUncles error: " . $e->getMessage());
@@ -34486,83 +34503,55 @@ function getSessionInfo()
 
     // If we have church_id but missing name/code/type/email, fetch from DB
 
-    if ($churchId > 0 && (empty($churchName) || empty($churchType) || $churchType === 'kids')) {
+    if ($churchId > 0 && (empty($churchName) || empty($churchCode) || empty($churchType) || $churchType === 'kids')) {
 
         try {
 
             $conn = getDBConnection();
 
             // Ensure column exists
-
             ensureChurchTypeColumn($conn);
+            ensureAdminEmailColumn($conn);
 
             $stmt = $conn->prepare("SELECT church_name, church_code, admin_email, COALESCE(church_type,'kids') AS church_type FROM churches WHERE id = ?");
-
             $stmt->bind_param("i", $churchId);
-
             $stmt->execute();
-
             if ($row = $stmt->get_result()->fetch_assoc()) {
-
                 if (empty($churchName))
-
                     $churchName = $row['church_name'];
-
                 if (empty($churchCode))
-
                     $churchCode = $row['church_code'];
-
                 $churchType = $row['church_type'] ?? 'kids';
-
                 $adminEmail = $row['admin_email'] ?? '';
 
                 // Persist back to session
-
                 $_SESSION['church_name'] = $churchName;
-
                 $_SESSION['church_code'] = $churchCode;
-
                 $_SESSION['church_type'] = $churchType;
-
+                $_SESSION['admin_email'] = $adminEmail;
             }
-
         } catch (Exception $e) {
-
             error_log("getSessionInfo DB error: " . $e->getMessage());
-
         }
-
     }
-
-
 
     if ($churchId > 0 && empty($adminEmail)) {
-
         try {
-
             $conn = getDBConnection();
-
+            ensureAdminEmailColumn($conn);
             $stmt = $conn->prepare("SELECT admin_email FROM churches WHERE id = ?");
-
-            $stmt->bind_param("i", $churchId);
-
-            $stmt->execute();
-
-            if ($row = $stmt->get_result()->fetch_assoc()) {
-
-                $adminEmail = $row['admin_email'] ?? '';
-
+            if ($stmt) {
+                $stmt->bind_param("i", $churchId);
+                $stmt->execute();
+                if ($row = $stmt->get_result()->fetch_assoc()) {
+                    $adminEmail = $row['admin_email'] ?? '';
+                    $_SESSION['admin_email'] = $adminEmail;
+                }
             }
-
         } catch (Exception $e) {
-
             error_log("getSessionInfo admin_email error: " . $e->getMessage());
-
         }
-
     }
-
-
 
     $isDev = isDeveloperRole();
     if ($churchId === 0 && $uncleId === null && !$isDev) {
@@ -34580,17 +34569,20 @@ function getSessionInfo()
         if ($churchId === 0) {
             $churchId = getChurchId();
         }
-        if ($churchId > 0 && empty($churchName)) {
+        if ($churchId > 0) {
             try {
                 $conn = getDBConnection();
+                ensureAdminEmailColumn($conn);
                 $stmt = $conn->prepare("SELECT church_name, church_code, admin_email, COALESCE(church_type,'kids') AS church_type FROM churches WHERE id = ?");
-                $stmt->bind_param("i", $churchId);
-                $stmt->execute();
-                if ($row = $stmt->get_result()->fetch_assoc()) {
-                    $churchName = $row['church_name'] ?? '';
-                    $churchCode = $row['church_code'] ?? '';
-                    $churchType = $row['church_type'] ?? 'kids';
-                    $adminEmail = $row['admin_email'] ?? '';
+                if ($stmt) {
+                    $stmt->bind_param("i", $churchId);
+                    $stmt->execute();
+                    if ($row = $stmt->get_result()->fetch_assoc()) {
+                        if (empty($churchName)) $churchName = $row['church_name'] ?? '';
+                        if (empty($churchCode)) $churchCode = $row['church_code'] ?? '';
+                        $churchType = $row['church_type'] ?? 'kids';
+                        $adminEmail = $row['admin_email'] ?? '';
+                    }
                 }
             } catch (Exception $e) {}
         }
