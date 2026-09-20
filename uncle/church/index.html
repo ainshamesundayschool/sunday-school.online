@@ -14557,14 +14557,16 @@
                     const name = d.uncle_name || d.church_name || 'المسؤول';
                     const churchName = d.church_name || '';
                     const churchCode = d.church_code || '';
+                    const adminEmail = d.admin_email || '';
 
                     if (role) { localStorage.setItem('uncleRole', role); localStorage.setItem('role', role); }
                     if (name) localStorage.setItem('uncleName', name);
                     if (churchName) localStorage.setItem('churchName', churchName);
+                    if (adminEmail) localStorage.setItem('adminEmail', adminEmail);
                     if (churchCode) { localStorage.setItem('churchCode', churchCode); localStorage.setItem('church_code', churchCode); sessionChurchCode = churchCode; }
                     if (d.login_type) localStorage.setItem('loginType', d.login_type);
 
-                    return { ok: true, role, church_id: sessionChurchId, login_type: d.login_type || '', church_name: churchName, church_code: churchCode, name };
+                    return { ok: true, role, church_id: sessionChurchId, login_type: d.login_type || '', church_name: churchName, church_code: churchCode, admin_email: adminEmail, name };
                 }
             } catch (e) {
                 console.error('[initSession] error:', e);
@@ -26350,11 +26352,32 @@
         async function loadChurchInfoSettings() {
             try {
                 const fd = mkFd('getSessionInfo');
+                const cid = sessionChurchId || getChurchId() || parseInt(localStorage.getItem('churchId') || 0);
+                if (cid > 0) fd.set('church_id', cid);
                 const d = await fetch(API_URL, { method: 'POST', body: fd, credentials: 'include' }).then(r => r.json()).catch(() => ({ success: false }));
                 const nameEl = document.getElementById('churchEditName');
                 const emailEl = document.getElementById('churchEditEmail');
-                if (nameEl) nameEl.value = d.church_name || localStorage.getItem('churchName') || '';
-                if (emailEl) emailEl.value = d.admin_email || '';
+                const finalName = d.church_name || localStorage.getItem('churchName') || '';
+                const finalEmail = (d.admin_email !== undefined && d.admin_email !== null && d.admin_email !== '') 
+                    ? d.admin_email 
+                    : (localStorage.getItem('adminEmail') || '');
+
+                if (nameEl && finalName) nameEl.value = finalName;
+                if (emailEl) emailEl.value = finalEmail;
+
+                if (finalName) {
+                    localStorage.setItem('churchName', finalName);
+                    const sidebarNameEl = document.getElementById('sidebarChurchName');
+                    if (sidebarNameEl) sidebarNameEl.textContent = finalName;
+                    const topbarChurchEl = document.getElementById('topbarChurchName');
+                    if (topbarChurchEl) topbarChurchEl.textContent = finalName;
+                    const ovCN = document.getElementById('overviewChurchName');
+                    if (ovCN) ovCN.textContent = finalName;
+                    window.sidebarChurchName = finalName;
+                }
+                if (finalEmail) {
+                    localStorage.setItem('adminEmail', finalEmail);
+                }
             } catch (e) { }
         }
 
@@ -26364,7 +26387,7 @@
 
             if (!newName) { showToast('اسم الكنيسة مطلوب', 'error'); return; }
 
-            const cid = sessionChurchId || getChurchId();
+            const cid = sessionChurchId || getChurchId() || parseInt(localStorage.getItem('churchId') || 0);
             if (!cid) { showToast('لم يتم تحديد الكنيسة', 'error'); return; }
 
             // Update name + email using mkFd to preserve developer overrides and auth credentials
@@ -26377,6 +26400,7 @@
             let currentType = 'kids';
             try {
                 const fd2get = mkFd('getSessionInfo');
+                if (cid > 0) fd2get.set('church_id', cid);
                 const sess = await fetch(API_URL, { method: 'POST', body: fd2get, credentials: 'include' }).then(r => r.json());
                 if (sess && sess.church_type) currentType = sess.church_type;
             } catch (e) {}
@@ -26385,16 +26409,23 @@
             const d = await fetch(API_URL, { method: 'POST', body: fd, credentials: 'include' }).then(r => r.json()).catch(() => ({ success: false }));
             if (!d.success) { showToast(d.message || 'فشل في حفظ بيانات الكنيسة', 'error'); return; }
 
-            // Update sidebar + localStorage
+            // Update sidebar, topbar, overview + localStorage
             localStorage.setItem('churchName', newName);
+            localStorage.setItem('adminEmail', newEmail);
+
             const sidebarNameEl = document.getElementById('sidebarChurchName');
             if (sidebarNameEl) sidebarNameEl.textContent = newName;
+            const topbarChurchEl = document.getElementById('topbarChurchName');
+            if (topbarChurchEl) topbarChurchEl.textContent = newName;
+            const ovCN = document.getElementById('overviewChurchName');
+            if (ovCN) ovCN.textContent = newName;
+            window.sidebarChurchName = newName;
 
             const emailEl = document.getElementById('churchEditEmail');
             if (emailEl) emailEl.value = newEmail;
 
             // Re-sync church info settings
-            loadChurchInfoSettings();
+            await loadChurchInfoSettings();
 
             showToast('تم حفظ بيانات الكنيسة بنجاح ✅', 'success');
         }

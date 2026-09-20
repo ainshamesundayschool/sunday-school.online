@@ -3494,7 +3494,7 @@ function autoRestoreSessionFromRequest()
         try {
             $stmt = $conn->prepare("
                 SELECT u.id, u.name, u.username, u.role, u.church_id,
-                       c.church_name, c.church_code,
+                       c.church_name, c.church_code, c.admin_email,
                        COALESCE(c.church_type, 'kids') AS church_type
                 FROM uncles u
                 LEFT JOIN churches c ON u.church_id = c.id
@@ -3519,6 +3519,7 @@ function autoRestoreSessionFromRequest()
                     $_SESSION['church_name'] = $row['church_name'];
                     $_SESSION['church_code'] = $row['church_code'];
                     $_SESSION['church_type'] = $row['church_type'];
+                    $_SESSION['admin_email'] = $row['admin_email'] ?? '';
                     $_SESSION['login_type'] = 'uncle';
                     $_SESSION['uncle_logged_in'] = true;
                     return true;
@@ -3533,7 +3534,7 @@ function autoRestoreSessionFromRequest()
         try {
             $stmt = $conn->prepare("
                 SELECT u.id, u.name, u.username, u.role, u.church_id,
-                       c.church_name, c.church_code,
+                       c.church_name, c.church_code, c.admin_email,
                        COALESCE(c.church_type, 'kids') AS church_type
                 FROM uncles u
                 LEFT JOIN churches c ON u.church_id = c.id
@@ -3558,6 +3559,7 @@ function autoRestoreSessionFromRequest()
                     $_SESSION['church_name'] = $row['church_name'];
                     $_SESSION['church_code'] = $row['church_code'];
                     $_SESSION['church_type'] = $row['church_type'];
+                    $_SESSION['admin_email'] = $row['admin_email'] ?? '';
                     $_SESSION['login_type'] = 'uncle';
                     $_SESSION['uncle_logged_in'] = true;
                     return true;
@@ -5698,42 +5700,25 @@ try {
 
                     ensureChurchApprovedColumn($conn);
 
-                    $stmt = $conn->prepare("SELECT id, church_name, church_code, COALESCE(church_type,'kids') AS church_type, COALESCE(is_approved, 1) AS is_approved FROM churches WHERE church_code = ?");
-
+                    $stmt = $conn->prepare("SELECT id, church_name, church_code, admin_email, COALESCE(church_type,'kids') AS church_type, COALESCE(is_approved, 1) AS is_approved FROM churches WHERE church_code = ?");
                     $stmt->bind_param("s", $church_code);
-
                     $stmt->execute();
-
                     $row = $stmt->get_result()->fetch_assoc();
-
                 } catch (Exception $e) {
-
                     error_log("restore_session church error: " . $e->getMessage());
-
                 }
 
-
-
                 if ($row) {
-
                     if (isset($row['is_approved']) && intval($row['is_approved']) === 0) {
-
                         sendJSON(['success' => false, 'message' => 'هذه الكنيسة معلقة وفي انتظار موافقة المطور للتفعيل']);
-
                     }
-
                     $_SESSION['church_id'] = $row['id'];
-
                     $_SESSION['church_name'] = $row['church_name'];
-
                     $_SESSION['church_code'] = $row['church_code'];
-
                     $_SESSION['church_type'] = $row['church_type'];
-
+                    $_SESSION['admin_email'] = $row['admin_email'] ?? '';
                     $_SESSION['login_type'] = 'church';
-
                     $_SESSION['uncle_role'] = 'admin';
-
                     $_SESSION['role'] = 'admin';
 
                     $_SESSION['permanent'] = true;
@@ -5789,63 +5774,35 @@ try {
                     $stmt = $conn->prepare("
 
                 SELECT u.id, u.name, u.username, u.role, u.church_id,
-
-                       c.church_name, c.church_code,
-
+                       c.church_name, c.church_code, c.admin_email,
                        COALESCE(c.church_type, 'kids') AS church_type,
-
                        COALESCE(c.is_approved, 1) AS is_approved
-
                 FROM uncles u
-
                 LEFT JOIN churches c ON u.church_id = c.id
-
                 WHERE u.username = ? AND (u.deleted IS NULL OR u.deleted = 0)
-
             ");
-
                     $stmt->bind_param("s", $username);
-
                     $stmt->execute();
-
                     $row = $stmt->get_result()->fetch_assoc();
-
                 } catch (Exception $e) {
-
                     error_log("restore_session uncle error: " . $e->getMessage());
-
                 }
 
-
-
                 if ($row) {
-
                     if (isset($row['is_approved']) && intval($row['is_approved']) === 0) {
-
                         sendJSON(['success' => false, 'message' => 'هذه الكنيسة معلقة وفي انتظار موافقة المطور للتفعيل']);
-
                     }
-
                     $_SESSION['uncle_id'] = $row['id'];
-
                     $_SESSION['uncle_name'] = $row['name'];
-
                     $_SESSION['uncle_username'] = $row['username'];
-
                     $_SESSION['uncle_role'] = $row['role'];
-
                     $_SESSION['role'] = $row['role'];
-
                     $_SESSION['church_id'] = $row['church_id'];
-
                     $_SESSION['church_name'] = $row['church_name'];
-
                     $_SESSION['church_code'] = $row['church_code'];
-
                     $_SESSION['church_type'] = $row['church_type'];
-
+                    $_SESSION['admin_email'] = $row['admin_email'] ?? '';
                     $_SESSION['login_type'] = 'uncle';
-
                     $_SESSION['permanent'] = true;
 
 
@@ -6425,11 +6382,9 @@ function handleLogin()
                 $_SESSION['church_name'] = $row['church_name'];
 
                 $_SESSION['church_code'] = $churchCode;
-
                 $_SESSION['church_type'] = $row['church_type'];
-
+                $_SESSION['admin_email'] = $row['admin_email'] ?? '';
                 $_SESSION['login_type'] = 'church';
-
                 $_SESSION['uncle_role'] = 'admin';
 
                 $_SESSION['role'] = 'admin';
@@ -14077,14 +14032,23 @@ function updateChurch()
         $stmt->bind_param("sssi", $churchName, $adminEmail, $churchType, $churchId);
 
         if ($stmt->execute()) {
-            // Update session if this is the currently logged-in church
-            if (isset($_SESSION['church_id']) && intval($_SESSION['church_id']) === $churchId) {
+            // Update session if this is the currently active church
+            $curCid = getChurchId();
+            if ($curCid === $churchId || intval($_SESSION['church_id'] ?? 0) === $churchId || !isset($_SESSION['church_id'])) {
+                $_SESSION['church_id'] = $churchId;
                 $_SESSION['church_type'] = $churchType;
                 $_SESSION['church_name'] = $churchName;
                 $_SESSION['admin_email'] = $adminEmail;
             }
 
-            sendJSON(['success' => true, 'message' => 'تم تحديث بيانات الكنيسة بنجاح', 'church_type' => $churchType, 'admin_email' => $adminEmail]);
+            sendJSON([
+                'success' => true,
+                'message' => 'تم تحديث بيانات الكنيسة بنجاح',
+                'church_id' => $churchId,
+                'church_name' => $churchName,
+                'church_type' => $churchType,
+                'admin_email' => $adminEmail
+            ]);
         } else {
             sendJSON(['success' => false, 'message' => 'فشل في تحديث الكنيسة: ' . $stmt->error]);
         }
@@ -15986,6 +15950,7 @@ function handleUncleLogin()
 
                        u.image_url, u.role, c.church_name, c.church_code,
 
+                       c.admin_email,
                        COALESCE(c.church_type, 'kids') AS church_type,
 
                        COALESCE(c.is_approved, 1) AS is_approved
@@ -16032,6 +15997,7 @@ function handleUncleLogin()
                 $_SESSION['church_code'] = $row['church_code'];
 
                 $_SESSION['church_type'] = $row['church_type'];
+                $_SESSION['admin_email'] = $row['admin_email'] ?? '';
 
                 $_SESSION['uncle_name'] = $row['name'];
 
@@ -34453,103 +34419,56 @@ function getSessionInfo()
 
 
 
-    // Church direct login
-
-    if (isset($_SESSION['church_id'])) {
-
+        // Church ID from request parameter, session, or getChurchId()
+    $requestedChurchId = intval($_POST['church_id'] ?? $_GET['church_id'] ?? 0);
+    if ($requestedChurchId > 0) {
+        $churchId = $requestedChurchId;
+    } elseif (isset($_SESSION['church_id']) && intval($_SESSION['church_id']) > 0) {
         $churchId = intval($_SESSION['church_id']);
-
-        $churchName = $_SESSION['church_name'] ?? '';
-
-        $churchCode = $_SESSION['church_code'] ?? '';
-
-        $churchType = $_SESSION['church_type'] ?? 'kids';
-
+    } else {
+        $churchId = getChurchId();
     }
+    if ($churchId < 0) $churchId = 0;
 
-
-
-    // Uncle login (also has church_id in session)
+    $churchName = $_SESSION['church_name'] ?? '';
+    $churchCode = $_SESSION['church_code'] ?? '';
+    $churchType = $_SESSION['church_type'] ?? 'kids';
+    $adminEmail = $_SESSION['admin_email'] ?? '';
 
     if (isset($_SESSION['uncle_id'])) {
-
         $uncleId = intval($_SESSION['uncle_id']);
-
         $uncleName = $_SESSION['uncle_name'] ?? '';
-
         $uncleRole = $_SESSION['uncle_role'] ?? '';
-
-        // If uncle session also has church_id, use it
-
-        if (!$churchId && isset($_SESSION['church_id'])) {
-
-            $churchId = intval($_SESSION['church_id']);
-
-            $churchName = $_SESSION['church_name'] ?? '';
-
-            $churchCode = $_SESSION['church_code'] ?? '';
-
-            $churchType = $_SESSION['church_type'] ?? 'kids';
-
-        }
-
     }
 
-
-
-    $adminEmail = '';
-
-
-
-    // If we have church_id but missing name/code/type/email, fetch from DB
-
-    if ($churchId > 0 && (empty($churchName) || empty($churchCode) || empty($churchType) || $churchType === 'kids')) {
-
+    if ($churchId > 0) {
         try {
-
             $conn = getDBConnection();
-
-            // Ensure column exists
             ensureChurchTypeColumn($conn);
             ensureAdminEmailColumn($conn);
 
             $stmt = $conn->prepare("SELECT church_name, church_code, admin_email, COALESCE(church_type,'kids') AS church_type FROM churches WHERE id = ?");
-            $stmt->bind_param("i", $churchId);
-            $stmt->execute();
-            if ($row = $stmt->get_result()->fetch_assoc()) {
-                if (empty($churchName))
-                    $churchName = $row['church_name'];
-                if (empty($churchCode))
-                    $churchCode = $row['church_code'];
-                $churchType = $row['church_type'] ?? 'kids';
-                $adminEmail = $row['admin_email'] ?? '';
-
-                // Persist back to session
-                $_SESSION['church_name'] = $churchName;
-                $_SESSION['church_code'] = $churchCode;
-                $_SESSION['church_type'] = $churchType;
-                $_SESSION['admin_email'] = $adminEmail;
-            }
-        } catch (Exception $e) {
-            error_log("getSessionInfo DB error: " . $e->getMessage());
-        }
-    }
-
-    if ($churchId > 0 && empty($adminEmail)) {
-        try {
-            $conn = getDBConnection();
-            ensureAdminEmailColumn($conn);
-            $stmt = $conn->prepare("SELECT admin_email FROM churches WHERE id = ?");
             if ($stmt) {
                 $stmt->bind_param("i", $churchId);
                 $stmt->execute();
                 if ($row = $stmt->get_result()->fetch_assoc()) {
+                    if (!empty($row['church_name'])) {
+                        $churchName = $row['church_name'];
+                        $_SESSION['church_name'] = $churchName;
+                    }
+                    if (!empty($row['church_code'])) {
+                        $churchCode = $row['church_code'];
+                        $_SESSION['church_code'] = $churchCode;
+                    }
+                    $churchType = $row['church_type'] ?? 'kids';
+                    $_SESSION['church_type'] = $churchType;
+
                     $adminEmail = $row['admin_email'] ?? '';
                     $_SESSION['admin_email'] = $adminEmail;
                 }
             }
         } catch (Exception $e) {
-            error_log("getSessionInfo admin_email error: " . $e->getMessage());
+            error_log("getSessionInfo DB error: " . $e->getMessage());
         }
     }
 
@@ -34566,8 +34485,9 @@ function getSessionInfo()
         $uncleRole = 'developer';
         $_SESSION['uncle_role'] = 'developer';
         $_SESSION['role'] = 'developer';
-        if ($churchId === 0) {
-            $churchId = getChurchId();
+        if ($churchId <= 0) {
+            $devViewCid = getChurchId();
+            if ($devViewCid > 0) $churchId = $devViewCid;
         }
         if ($churchId > 0) {
             try {
@@ -34578,8 +34498,8 @@ function getSessionInfo()
                     $stmt->bind_param("i", $churchId);
                     $stmt->execute();
                     if ($row = $stmt->get_result()->fetch_assoc()) {
-                        if (empty($churchName)) $churchName = $row['church_name'] ?? '';
-                        if (empty($churchCode)) $churchCode = $row['church_code'] ?? '';
+                        if (!empty($row['church_name'])) $churchName = $row['church_name'];
+                        if (!empty($row['church_code'])) $churchCode = $row['church_code'];
                         $churchType = $row['church_type'] ?? 'kids';
                         $adminEmail = $row['admin_email'] ?? '';
                     }
