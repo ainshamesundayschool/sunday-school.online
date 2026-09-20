@@ -26638,6 +26638,20 @@ $showSettings = $hasChurchId || $isDevOrAdmin;
                     // Update hero greeting with fresh name from DB
                     const heroEl = document.getElementById('heroName');
                     if (heroEl && r.uncle.name) heroEl.textContent = r.uncle.name;
+
+                    const chName = r.church_name || r.uncle?.church_name || '';
+                    if (chName && chName !== 'مدارس الأحد' && chName !== 'الكنيسة') {
+                        localStorage.setItem('churchName', chName);
+                        const topbarTitle = document.querySelector('.topbar-title');
+                        if (topbarTitle && (!isDeveloper || devViewChurchId <= 0)) {
+                            topbarTitle.textContent = chName;
+                        }
+                        document.title = 'Sunday School Online — ' + chName;
+                    }
+                    if (r.church_id) {
+                        localStorage.setItem('churchId', r.church_id);
+                        localStorage.setItem('church_id', r.church_id);
+                    }
                     const av = document.getElementById('uncleAvatar');
                     const ini = document.getElementById('uncleInitials');
                     const initials = _getInitials(r.uncle.name || '');
@@ -29358,7 +29372,9 @@ $showSettings = $hasChurchId || $isDevOrAdmin;
                 }
             }
             // fallback
-            const origChurchName = localStorage.getItem('churchName') || 'مدارس الأحد';
+            const storedCN = localStorage.getItem('churchName');
+            const validStored = (storedCN && storedCN !== 'مدارس الأحد' && storedCN !== 'الكنيسة') ? storedCN : '';
+            const origChurchName = validStored || (devViewChurchId <= 0 ? 'كل الكنائس' : 'مدارس الأحد');
             const topbarTitle = document.querySelector('.topbar-title');
             if (topbarTitle) topbarTitle.textContent = origChurchName;
             document.title = 'Sunday School — ' + origChurchName;

@@ -16106,7 +16106,15 @@ function getCurrentUncle()
         $conn = getDBConnection();
         ensureUnclesTableCustomInfoColumn($conn);
 
-        $stmt = $conn->prepare("SELECT id, name, username, image_url, role, custom_info, email, phone, gender, birthday FROM uncles WHERE id = ? AND (deleted IS NULL OR deleted = 0) LIMIT 1");
+        ensureChurchTypeColumn($conn);
+        $stmt = $conn->prepare("
+            SELECT u.id, u.name, u.username, u.image_url, u.role, u.custom_info, u.email, u.phone, u.gender, u.birthday, u.church_id,
+                   c.church_name, c.church_code, c.admin_email, COALESCE(c.church_type, 'kids') AS church_type
+            FROM uncles u
+            LEFT JOIN churches c ON u.church_id = c.id
+            WHERE u.id = ? AND (u.deleted IS NULL OR u.deleted = 0)
+            LIMIT 1
+        ");
 
         $stmt->bind_param("i", $uncleId);
 
@@ -16127,6 +16135,22 @@ function getCurrentUncle()
             $_SESSION['uncle_image'] = $row['image_url'];
 
             $_SESSION['uncle_role'] = $row['role'];
+
+            if (!empty($row['church_id'])) {
+                $_SESSION['church_id'] = intval($row['church_id']);
+            }
+            if (!empty($row['church_name'])) {
+                $_SESSION['church_name'] = $row['church_name'];
+            }
+            if (!empty($row['church_code'])) {
+                $_SESSION['church_code'] = $row['church_code'];
+            }
+            if (!empty($row['church_type'])) {
+                $_SESSION['church_type'] = $row['church_type'];
+            }
+            if (!empty($row['admin_email'])) {
+                $_SESSION['admin_email'] = $row['admin_email'];
+            }
 
 
 
@@ -16150,7 +16174,19 @@ function getCurrentUncle()
 
                 'success' => true,
 
+                'church_id' => $row['church_id'] ? (int)$row['church_id'] : null,
+
+                'church_name' => $row['church_name'] ?? '',
+
+                'church_code' => $row['church_code'] ?? '',
+
+                'church_type' => $row['church_type'] ?? 'kids',
+
                 'uncle' => [
+
+                    'church_id' => $row['church_id'] ? (int)$row['church_id'] : null,
+
+                    'church_name' => $row['church_name'] ?? '',
 
                     'id' => (int) $row['id'],
 
