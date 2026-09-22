@@ -31354,7 +31354,7 @@ $showSettings = $hasChurchId || $isDevOrAdmin;
                 how_it_works: "املأ بيانات الكنيسة والمنطقة وحساب المسؤول لفتح لوحة تحكم خاصة بكنيستك.",
                 location: "صفحة تسجيل كنائس جديدة",
                 keywords: ["تسجيل كنيسة", "كنيسة جديدة", "انشاء نظام", "church register", "منصة جديدة"],
-                action: "window.open('/church-register.html', '_blank')"
+                action: "window.open('/uncle/church/registration/', '_blank')"
             },
             {
                 title: "بوابة تسجيل الولاد للأهالي",

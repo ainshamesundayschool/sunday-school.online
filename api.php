@@ -41614,7 +41614,7 @@ function generateChurchRegKey()
 
         $base = $proto . '://' . ($_SERVER['HTTP_HOST'] ?? 'localhost');
 
-        $regUrl = $base . '/church-register.html?key=' . $key;
+        $regUrl = $base . '/uncle/church/registration/?key=' . $key;
 
         sendJSON(['success' => true, 'key' => $key, 'reg_url' => $regUrl, 'message' => 'تم توليد الرابط بنجاح']);
 
@@ -41680,7 +41680,7 @@ function listChurchRegKeys()
 
     while ($row = $result->fetch_assoc()) {
 
-        $row['reg_url'] = $base . '/church-register.html?key=' . $row['reg_key'];
+        $row['reg_url'] = $base . '/uncle/church/registration/?key=' . $row['reg_key'];
 
         $keys[] = $row;
 

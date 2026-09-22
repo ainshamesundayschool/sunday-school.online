@@ -125,8 +125,6 @@ def sync_online_database():
 class SundaySchoolTaranimHandler(http.server.SimpleHTTPRequestHandler):
     def __init__(self, *args, **kwargs):
         serve_dir = os.path.dirname(__file__)
-        if not os.path.exists(os.path.join(serve_dir, 'index.html')) and os.path.exists(os.path.join(serve_dir, 'public', 'index.html')):
-            serve_dir = os.path.join(serve_dir, 'public')
         super().__init__(*args, directory=serve_dir, **kwargs)
 
     def do_GET(self):

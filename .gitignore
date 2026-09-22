@@ -23,8 +23,8 @@ db_migrations/migrate_custom_fields.sql
 uncle/.DS_Store
 migration_custom_field_templates.sql
 if0_40860329_sunday_school 2026.sql
-migrations/2026-05-22_student_sibling_groups.sql
-migrations/2026-05-22_students_graduates_and_transfers.sql
+db_migrations/2026-05-22_student_sibling_groups.sql
+db_migrations/2026-05-22_students_graduates_and_transfers.sql
 db_migrations/20260527_add_guest_and_multichurch_trip_support.sql
 config.php.example
 db_migrations/20260606_migrate_domains.sql
@@ -35,4 +35,9 @@ db_migrations/20260619_add_paper_exams.sql
 # Composer
 composer.phar
 
+# Python
+__pycache__/
+*.pyc
 
+# Local Backups
+backups/
