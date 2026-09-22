@@ -1817,10 +1817,12 @@ input[type="checkbox"]:checked::after {
 .slide-line-row .repeat-tag,
 .rep-num-grey {
   color: #94a3b8 !important;
-  font-weight: 400 !important;
-  font-size: 0.95em;
-  margin: 0 3px;
-  display: inline-block;
+  font-weight: 700 !important;
+  font-size: 0.72em !important;
+  margin: 0 3px !important;
+  display: inline-block !important;
+  vertical-align: baseline !important;
+  opacity: 0.85 !important;
 }
 
 /* Un-condense Jomhuria font for wide spacious layout - SLIDES ONLY */

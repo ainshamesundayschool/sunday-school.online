@@ -13080,6 +13080,42 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
+  function formatRepetitionSpans(line, customColor) {
+    let lineStr = line;
+    if (!lineStr) return '';
+    const colorStyle = customColor ? `color:${customColor};` : 'color:#94a3b8;';
+
+    // 1. Solo line repetition marker (e.g. 2(, )2, (2), (2, 2), (x2), x2, 2x)
+    const soloMatch = lineStr.match(/^\s*(\(\s*[\d٠-٩xX×]{1,2}\s*\)|\)\s*[\d٠-٩]{1,2}\s*|[\d٠-٩]{1,2}\s*[\(\)]|\([\d٠-٩]{1,2}|[\d٠-٩]{1,2}|[xX×]\s*[\d٠-٩]{1,2}|[\d٠-٩]{1,2}\s*[xX×])\s*$/);
+    if (soloMatch && /[\(\)xX×]/.test(soloMatch[1])) {
+      return `<span class="rep-num-grey" style="${colorStyle} font-weight:700; font-size:0.72em; margin:0 3px; vertical-align:baseline; display:inline-block;">${soloMatch[1].trim()}</span>`;
+    }
+
+    // 2. Repetition prefix at start of line (e.g. 2(, (2), (2, 2), (, (x2), x2 )
+    const startRepMatch = lineStr.match(/^(\s*)([\d٠-٩]{1,2}\s*\(|\(\s*[\d٠-٩]{1,2}\s*\)|\(\s*[\d٠-٩]{1,2}|[\d٠-٩]{1,2}\s*\)|\(|\(\s*[xX×]\s*[\d٠-٩]{1,2}\s*\)|[xX×]\s*[\d٠-٩]{1,2}\s+)/);
+    if (startRepMatch) {
+      const leadingWs = startRepMatch[1];
+      const marker = startRepMatch[2].trim();
+      const rest = lineStr.substring(startRepMatch[0].length);
+      lineStr = leadingWs + `<span class="rep-num-grey" style="${colorStyle} font-weight:700; font-size:0.72em; margin-inline-end:3px; vertical-align:baseline; display:inline-block;">${marker}</span>` + rest;
+    }
+
+    // 3. Repetition suffix at end of line (e.g. )2, ) 2, 2(, (2), (2, 2), (x2), (2x), x2, 2x, ))
+    const endRepMatch = lineStr.match(/(\)\s*[\d٠-٩]{0,2}|(?:\s|^)[\d٠-٩]{1,2}\s*\(|\(\s*[\d٠-٩]{1,2}\s*\)|\(\s*[\d٠-٩]{1,2}|(?:\s|^)[\d٠-٩]{1,2}\s*\)|\(\s*[xX×]\s*[\d٠-٩]{1,2}\s*\)|\(\s*[\d٠-٩]{1,2}\s*[xX×]\s*\)|(?:\s|^)[xX×]\s*[\d٠-٩]{1,2}|(?:\s|^)[\d٠-٩]{1,2}\s*[xX×])\s*$/);
+    if (endRepMatch) {
+      const fullMatch = endRepMatch[0];
+      const matchStr = endRepMatch[1].trim();
+      const idx = lineStr.lastIndexOf(fullMatch);
+      if (idx !== -1) {
+        const before = lineStr.substring(0, idx);
+        const leadingSpace = fullMatch.substring(0, fullMatch.indexOf(matchStr));
+        lineStr = before + leadingSpace + `<span class="rep-num-grey" style="${colorStyle} font-weight:700; font-size:0.72em; margin-inline-start:3px; vertical-align:baseline; display:inline-block;">${matchStr}</span>`;
+      }
+    }
+
+    return lineStr;
+  }
+
   function updateCustomSongLivePreview() {
     if (!els.songBuilderLiveSlidesPreview) return;
 
@@ -13096,11 +13132,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const cleanLines = rawLines.map(l => String(l).trim()).filter(l => l.length > 0);
 
         const linesHtml = (cleanLines.length > 0 ? cleanLines : ['(شريحة فارغة)']).map(l => {
-          let text = escapeHtml(l);
-          if (text.startsWith('(')) {
-            text = '<span style="color:#60a5fa;">(</span>' + text.substring(1);
-          }
-          text = text.replace(/\)([\d٠-٩]*)$/, '<span style="color:#60a5fa;">)$1</span>');
+          let text = formatRepetitionSpans(escapeHtml(l), '#60a5fa');
           return `<div class="line-row-txt">${text}</div>`;
         }).join('');
 
@@ -15639,11 +15671,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const isAllInOne = Boolean(l.isAllInOne || (l.text && l.text.includes('allinone-slide-group')));
 
       const linesPreviewHtml = isAllInOne ? l.text : (l.lines || [l.text]).map((lineText, lineIdx) => {
-        let text = escapeHtml(lineText);
-        if (text.startsWith('(')) {
-          text = '<span class="rep-num-grey" style="color:#94a3b8; font-weight:600; margin-left:1px;">(</span>' + text.substring(1);
-        }
-        text = text.replace(/\)([\d٠-٩]*)$/, '<span class="rep-num-grey" style="color:#94a3b8; font-weight:600; margin-right:1px;">)$1</span>');
+        let text = formatRepetitionSpans(escapeHtml(lineText));
 
         const isHighlighted = isActive && Array.isArray(state.highlightedLineIndices) && state.highlightedLineIndices.includes(lineIdx);
         const hColor = state.highlightColor || '#ef4444';
@@ -16232,12 +16260,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const dirClass = isEnglish ? 'is-ltr' : 'is-rtl';
 
     let lineSegments = lines.map((l, idx) => {
-      let lineStr = l.trim();
+      let lineStr = formatRepetitionSpans(l.trim());
       if (!lineStr) return '';
-      if (lineStr.startsWith('(')) {
-        lineStr = '<span class="rep-num-grey" style="color:#94a3b8; font-weight:600; margin-left:1px;">(</span>' + lineStr.substring(1);
-      }
-      lineStr = lineStr.replace(/\)([\d٠-٩]*)$/, '<span class="rep-num-grey" style="color:#94a3b8; font-weight:600; margin-right:1px;">)$1</span>');
 
       const rowClass = isBible ? `obs-line-row is-bible-row ${dirClass}` : `obs-line-row ${dirClass}`;
       const textAlignStyle = state.styleOptions?.textAlign || 'center';
