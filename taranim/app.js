@@ -14687,7 +14687,7 @@ document.addEventListener('DOMContentLoaded', () => {
     return [firstHalf, secondHalf];
   }
 
-  function balanceTextIntoEvenLines(text, forcedLineCount = 0) {
+  function balanceTextIntoEvenLines(text, forcedLineCount = 0, isBible = false) {
     if (!text || !text.trim()) return [''];
     const clean = text.trim().replace(/\s+/g, ' ');
     const words = clean.split(' ').filter(Boolean);
@@ -14698,14 +14698,32 @@ document.addEventListener('DOMContentLoaded', () => {
 
     let lineCount = forcedLineCount;
     if (!lineCount || lineCount < 1) {
-      if (totalWords <= 8) {
-        lineCount = 2;
-      } else if (totalWords <= 16) {
-        lineCount = 3;
-      } else if (totalWords <= 26) {
-        lineCount = 4;
+      if (isBible) {
+        // BIBLE PROSE BALANCING:
+        // Use widescreen horizontal width generously!
+        // Bible lines should be wide (10-16 words per line, 55-85 chars per line).
+        // Avoid squishing verses into 4-6 narrow vertical lines that leave left/right empty.
+        if (totalWords <= 11 && totalChars <= 75) {
+          lineCount = 1;
+        } else if (totalWords <= 26 && totalChars <= 180) {
+          lineCount = 2;
+        } else if (totalWords <= 42 && totalChars <= 290) {
+          lineCount = 3;
+        } else if (totalWords <= 60) {
+          lineCount = 4;
+        } else {
+          lineCount = Math.max(4, Math.ceil(totalWords / 15));
+        }
       } else {
-        lineCount = Math.max(4, Math.round(totalWords / 6.5));
+        if (totalWords <= 8) {
+          lineCount = 2;
+        } else if (totalWords <= 16) {
+          lineCount = 3;
+        } else if (totalWords <= 26) {
+          lineCount = 4;
+        } else {
+          lineCount = Math.max(4, Math.round(totalWords / 6.5));
+        }
       }
     }
 
@@ -14725,12 +14743,17 @@ document.addEventListener('DOMContentLoaded', () => {
       const charDiff = lineCharCount - targetCharsPerLine;
       let cost = (wordDiff * wordDiff * 6) + (charDiff * charDiff * 1.5);
 
-      if (lineWordCount < 2) cost += 500;
-      if (lineWordCount < 3 && totalWords >= 8) cost += 150;
+      if (isBible) {
+        if (lineWordCount < 4 && totalWords >= 10) cost += 400;
+        if (lineWordCount < 6 && totalWords >= 18) cost += 200;
+      } else {
+        if (lineWordCount < 2) cost += 500;
+        if (lineWordCount < 3 && totalWords >= 8) cost += 150;
+      }
 
       const lastWord = words[j];
       if (/[،؛:!\?\.؟\-]$/.test(lastWord)) {
-        cost -= 35;
+        cost -= isBible ? 50 : 35;
       }
 
       return cost;
@@ -14783,18 +14806,23 @@ document.addEventListener('DOMContentLoaded', () => {
     const cleanLines = linesArray.map(l => String(l).trim()).filter(Boolean);
     if (cleanLines.length === 0) return [''];
 
-    // Rule 2: If it's all in one line, break it evenly into good looking 4, 3, or 2 lines
+    // Rule 2: If it's all in one line, break it evenly into good looking wide lines
     if (cleanLines.length === 1) {
-      return balanceTextIntoEvenLines(cleanLines[0]);
+      return balanceTextIntoEvenLines(cleanLines[0], 0, isBible);
     }
 
     // Rule 1: If it's a long line in a multi-line slide, break it evenly
     const result = [];
+    const thresholdWords = isBible ? 22 : 8;
+    const thresholdChars = isBible ? 120 : 42;
+
     cleanLines.forEach(line => {
       const words = line.split(/\s+/).filter(Boolean);
-      if (words.length >= 8 || line.length >= 42) {
-        const targetSubLines = words.length >= 16 ? 3 : 2;
-        const sub = balanceTextIntoEvenLines(line, targetSubLines);
+      if (words.length >= thresholdWords || line.length >= thresholdChars) {
+        const targetSubLines = isBible
+          ? (words.length >= 38 ? 3 : 2)
+          : (words.length >= 16 ? 3 : 2);
+        const sub = balanceTextIntoEvenLines(line, targetSubLines, isBible);
         result.push(...sub);
       } else {
         result.push(line);
@@ -14805,11 +14833,11 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function splitBibleVerseIntoBalancedLines(text) {
-    return balanceTextIntoEvenLines(text);
+    return balanceTextIntoEvenLines(text, 0, true);
   }
 
   function splitBibleTextIntoLines(text) {
-    return balanceTextIntoEvenLines(text);
+    return balanceTextIntoEvenLines(text, 0, true);
   }
 
   function ensureSongVerses(song) {

@@ -3847,15 +3847,18 @@ input[type="checkbox"]:checked::after {
 }
 
 .obs-lines-wrapper.is-bible-lines {
-  text-align: center !important;
-  direction: rtl !important;
+  width: 100% !important;
+  direction: rtl;
+}
+
+.obs-lines-wrapper.is-bible-lines.is-ltr {
+  direction: ltr !important;
 }
 
 .obs-line-row.is-bible-row {
   display: block !important;
   width: 100% !important;
-  text-align: center !important;
-  margin-bottom: 0.35em !important;
+  margin-bottom: 0.2em !important;
 }
 
 .standby-branding {
