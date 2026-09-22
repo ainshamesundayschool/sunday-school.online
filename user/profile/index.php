@@ -3336,6 +3336,66 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'logou
     }
 
     /* First-time multi-account modal */
+    .ft-avatars-wrap {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      direction: ltr; /* Keeps overlap visually uniform */
+      margin: 0 auto 16px;
+      padding: 4px;
+    }
+
+    .ft-avatar-circle {
+      width: 66px;
+      height: 66px;
+      border-radius: 50%;
+      border: 3.5px solid var(--surf);
+      background: var(--s3);
+      overflow: hidden;
+      position: relative;
+      margin-left: -18px;
+      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.12);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: transform var(--fast), z-index var(--fast);
+      flex-shrink: 0;
+      animation: avatarPop 0.5s var(--spring) both;
+    }
+
+    .ft-avatars-wrap .ft-avatar-circle:first-child {
+      margin-left: 0;
+    }
+
+    .ft-avatar-circle:hover {
+      transform: translateY(-4px) scale(1.08);
+      z-index: 10 !important;
+    }
+
+    .ft-avatar-circle img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+
+    .ft-avatar-circle.ft-avatar-fallback {
+      background: linear-gradient(135deg, var(--brand), #8b5cf6);
+      color: #fff;
+      font-weight: 800;
+      font-size: 1.4rem;
+      user-select: none;
+    }
+
+    .ft-avatar-circle.ft-avatar-extra {
+      background: linear-gradient(135deg, #8b5cf6, var(--brand-d));
+      color: #fff;
+      font-weight: 900;
+      font-size: 1.12rem;
+      letter-spacing: -0.5px;
+      user-select: none;
+    }
+
     .ft-icon-ring {
       width: 64px;
       height: 64px;
@@ -3434,6 +3494,159 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'logou
     .ft-btn-secondary:hover {
       background: var(--s2);
       color: var(--t1);
+    }
+
+    /* Separate accounts modal styling */
+    .sep-acc-card {
+      background: var(--s2);
+      border: 1px solid var(--bdr);
+      border-radius: var(--r-lg);
+      padding: 14px 16px;
+      transition: border-color var(--fast), box-shadow var(--fast);
+    }
+    .sep-acc-card:focus-within {
+      border-color: var(--brand);
+      box-shadow: 0 0 0 3px var(--brand-glow);
+    }
+    .sep-card-head {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 12px;
+      padding-bottom: 10px;
+      border-bottom: 1px dashed var(--bdr2);
+    }
+    .sep-card-av {
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      overflow: hidden;
+      background: var(--brand-bg);
+      color: var(--brand);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 800;
+      font-size: 1.05rem;
+      flex-shrink: 0;
+      border: 2px solid var(--surf);
+      box-shadow: var(--sh-sm);
+    }
+    .sep-card-av img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+    .sep-card-info {
+      flex: 1;
+      min-width: 0;
+    }
+    .sep-card-name {
+      font-size: .96rem;
+      font-weight: 800;
+      color: var(--t1);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .sep-card-meta {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-top: 3px;
+      flex-wrap: wrap;
+    }
+    .sep-class-tag {
+      font-size: .74rem;
+      color: var(--t3);
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .sep-status-badge {
+      font-size: .72rem;
+      font-weight: 800;
+      padding: 2px 8px;
+      border-radius: var(--r-full);
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .sep-status-badge.has-pass {
+      background: rgba(16, 185, 129, .12);
+      color: #10b981;
+    }
+    .sep-status-badge.no-pass {
+      background: rgba(239, 68, 68, .12);
+      color: #ef4444;
+      animation: pulse 2s infinite;
+    }
+    .sep-field-group {
+      margin-top: 10px;
+    }
+    .sep-field-label {
+      display: block;
+      font-size: .78rem;
+      font-weight: 700;
+      color: var(--t2);
+      margin-bottom: 5px;
+    }
+    .sep-field-input {
+      width: 100%;
+      padding: 9px 12px;
+      border-radius: var(--r-md);
+      border: 1.5px solid var(--bdr);
+      background: var(--surf);
+      color: var(--t1);
+      font-family: inherit;
+      font-size: .88rem;
+      outline: none;
+      transition: all var(--fast);
+      box-sizing: border-box;
+    }
+    .sep-field-input:focus {
+      border-color: var(--brand);
+      box-shadow: 0 0 0 3px var(--brand-glow);
+    }
+    .sep-field-input.input-error {
+      border-color: var(--danger) !important;
+      background: var(--danger-bg) !important;
+    }
+    .sep-pass-wrap {
+      position: relative;
+    }
+    .sep-pass-wrap input {
+      padding-left: 40px;
+    }
+    .sep-pass-toggle {
+      position: absolute;
+      left: 10px;
+      top: 50%;
+      transform: translateY(-50%);
+      background: none;
+      border: none;
+      color: var(--t3);
+      cursor: pointer;
+      padding: 4px;
+      font-size: .88rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: color var(--fast);
+    }
+    .sep-pass-toggle:hover {
+      color: var(--brand);
+    }
+    .sep-field-hint {
+      font-size: .72rem;
+      color: var(--t3);
+      margin-top: 4px;
+      line-height: 1.4;
+    }
+    .sep-field-hint.required {
+      color: #ef4444;
+      font-weight: 700;
     }
 
     /* ══ LOADING / TOAST / EMPTY ═════════════════════════ */
@@ -5601,10 +5814,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'logou
             <div class="as-head-sub-text">اضغط على أي حساب للتبديل السريع إليه</div>
           </div>
         </div>
-        <button type="button" class="as-open-all-btn" onclick="openOv('switchOv')">
-          <span>عرض الكل</span>
-          <i class="fas fa-chevron-left" style="font-size:.7rem;"></i>
-        </button>
+        <div style="display:flex; align-items:center; gap:6px;">
+          <button type="button" class="as-open-all-btn" style="background:var(--s2); color:var(--brand); border:1px solid var(--bdr);" onclick="openSeparateAccountsModal()" title="فصل الحسابات">
+            <i class="fas fa-user-slash"></i>
+            <span>فصل الحسابات</span>
+          </button>
+          <button type="button" class="as-open-all-btn" onclick="openOv('switchOv')">
+            <span>عرض الكل</span>
+            <i class="fas fa-chevron-left" style="font-size:.7rem;"></i>
+          </button>
+        </div>
       </div>
 
       <div class="acc-cards-grid" id="accCardsGrid">
@@ -6327,6 +6546,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'logou
         </div>
       </div>
       <div id="switchList" style="padding:10px 16px;"></div>
+      <div style="padding:4px 16px 10px;">
+        <button type="button" class="btn" style="width:100%; display:flex; align-items:center; justify-content:center; gap:8px; background:var(--s2); color:var(--brand); border:1px solid var(--bdr); font-weight:700; border-radius:var(--r-md); padding:10px;" onclick="closeOv('switchOv'); openSeparateAccountsModal();">
+          <i class="fas fa-user-slash"></i>
+          <span>فصل الحسابات وتغيير الأرقام</span>
+        </button>
+      </div>
       <button class="ss-close-btn" onclick="closeOv('switchOv')">إغلاق</button>
     </div>
   </div>
@@ -6334,8 +6559,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'logou
   <!-- ══ FIRST TIME MULTI-ACCOUNT MODAL ══ -->
   <div class="overlay settings-overlay" id="firstTimeMultiAccModal" style="z-index:99999;">
     <div class="settings-sheet ft-sheet" style="max-width:440px; text-align:center; padding:24px 20px 20px; margin:auto; border-radius:var(--r-xl); direction:rtl;">
-      <div class="ft-icon-ring">
-        <i class="fas fa-users-cog"></i>
+      <div class="ft-avatars-wrap" id="ftAvatarsWrap">
+        <!-- Dynamic overlapping avatars -->
       </div>
       <h3 class="ft-title" id="ftModalTitle">يوجد حسابان مرتبطان بهذا الرقم</h3>
       <p class="ft-desc" id="ftModalDesc">
@@ -6345,11 +6570,57 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'logou
         <!-- Chips with kid names -->
       </div>
       <div class="ft-actions">
-        <button type="button" class="ft-btn-primary" onclick="closeFirstTimeModalAndHighlight()">
-          <i class="fas fa-hand-point-down"></i> مشاهدة منطقة التبديل
+        <button type="button" class="ft-btn-primary" onclick="openSeparateAccountsModal()">
+          <i class="fas fa-user-slash"></i> فصل الحسابات
         </button>
         <button type="button" class="ft-btn-secondary" onclick="dismissFirstTimeModalOnly()">
           حسناً، فهمت
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ SEPARATE ACCOUNTS MODAL ══ -->
+  <div class="overlay settings-overlay" id="separateAccountsModal" style="z-index:999999;">
+    <div class="settings-sheet sep-sheet" style="max-width:520px; width:100%; max-height:88vh; margin:auto; border-radius:var(--r-xl); direction:rtl; display:flex; flex-direction:column; overflow:hidden; background:var(--surf);">
+      <div class="ss-handle"></div>
+      
+      <!-- Modal Header -->
+      <div style="padding:16px 20px 14px; border-bottom:1px solid var(--bdr2); display:flex; align-items:center; justify-content:space-between; flex-shrink:0;">
+        <div style="display:flex; align-items:center; gap:12px;">
+          <div style="width:40px; height:40px; border-radius:var(--r-md); background:var(--brand-bg); color:var(--brand); display:flex; align-items:center; justify-content:center; font-size:1.15rem; flex-shrink:0;">
+            <i class="fas fa-user-slash"></i>
+          </div>
+          <div>
+            <div style="font-size:1.06rem; font-weight:800; color:var(--t1);">فصل الحسابات وتغيير الأرقام</div>
+            <div style="font-size:.76rem; color:var(--t3); margin-top:2px;">تعيين رقم هاتف وكلمة مرور مستقلة لكل حساب</div>
+          </div>
+        </div>
+        <button type="button" class="close-btn" onclick="closeOv('separateAccountsModal')" aria-label="إغلاق" style="width:34px; height:34px; border-radius:50%; background:var(--s2); border:none; color:var(--t2); cursor:pointer; display:flex; align-items:center; justify-content:center; font-size:1rem; transition:all var(--fast);">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+
+      <!-- Modal Body -->
+      <div id="separateAccountsBody" style="padding:16px 20px; overflow-y:auto; flex:1;">
+        <div style="background:var(--s2); border:1px solid var(--bdr); border-radius:var(--r-md); padding:12px 14px; margin-bottom:16px; display:flex; align-items:flex-start; gap:10px; font-size:.82rem; color:var(--t2); line-height:1.55;">
+          <i class="fas fa-info-circle" style="color:var(--brand); font-size:1.05rem; margin-top:2px; flex-shrink:0;"></i>
+          <span>يمكنك تخصيص رقم هاتف مستقل لكل طفل ليصبح حسابه منفصلاً تماماً. <strong>الحسابات التي ليس لها كلمة مرور تتطلب تعيين كلمة مرور جديدة</strong> لتتمكن من تسجيل الدخول إليها مستقبلاً.</span>
+        </div>
+
+        <div id="sepAccountsList" style="display:flex; flex-direction:column; gap:14px;">
+          <!-- Dynamically populated via JS -->
+        </div>
+      </div>
+
+      <!-- Modal Footer -->
+      <div style="padding:14px 20px; border-top:1px solid var(--bdr2); background:var(--surf); display:flex; gap:10px; flex-shrink:0;">
+        <button type="button" class="ft-btn-primary" id="btnSaveSeparateAccounts" style="flex:1;" onclick="saveSeparateAccounts()">
+          <i class="fas fa-save"></i>
+          <span>حفظ جميع الحسابات</span>
+        </button>
+        <button type="button" class="ft-btn-secondary" style="width:auto; min-width:85px;" onclick="closeOv('separateAccountsModal')">
+          إلغاء
         </button>
       </div>
     </div>
@@ -7443,11 +7714,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'logou
       document.getElementById('notifBtnTop').style.display = 'flex';
       document.getElementById('avatarEdit').classList.add('show');
 
-      // edit form prefill
-      document.getElementById('eN').value = s.name;
-      document.getElementById('eA').value = s.address;
-      document.getElementById('eP').value = s.phone;
-      document.getElementById('eB').value = s.birthday;
+      // edit form prefill & settings sheet sync
+      syncSettingsSheet(s);
+
       document.getElementById('statsBar').style.display = 'grid';
       document.getElementById('sbC').textContent = s.coupons;
       loadAtt();
@@ -7457,6 +7726,41 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'logou
       renderPaperExams(s);
       showMain();
       syncViewMode();
+    }
+
+    // ── Sync Settings Sheet & Edit Form ───────────────────────────────
+    function syncSettingsSheet(s = student) {
+      if (!s) return;
+      const ssN = document.getElementById('ssName');
+      const ssCls = document.getElementById('ssClass');
+      const ssAv = document.getElementById('ssAvatar');
+      if (ssN) ssN.textContent = s.name || '—';
+      if (ssCls) ssCls.textContent = s.class || '—';
+      if (ssAv) {
+        if (s.image_url) {
+          ssAv.innerHTML = `<img src="${esc(s.image_url)}" alt="${esc(s.name || '')}" onerror="this.parentElement.innerHTML='<i class=\\'fas fa-user\\'></i>'">`;
+        } else {
+          ssAv.innerHTML = `<i class="fas fa-user"></i>`;
+        }
+      }
+
+      // Prefill edit form inputs
+      const eN = document.getElementById('eN');
+      const eA = document.getElementById('eA');
+      const eP = document.getElementById('eP');
+      const eB = document.getElementById('eB');
+      if (eN) eN.value = s.name || '';
+      if (eA) eA.value = s.address || '';
+      if (eP) eP.value = s.phone || '';
+      if (eB) eB.value = s.birthday || '';
+
+      // Reset photo upload overlay
+      if (typeof resetPhoto === 'function') {
+        resetPhoto();
+      }
+
+      // Sync password overlay
+      syncPassOverlay();
     }
 
     // ── Hero ──────────────────────────────────────────────────────────
@@ -7492,12 +7796,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'logou
         }
       }
       // Populate settings sheet
-      const ssN = document.getElementById('ssName');
-      const ssCls = document.getElementById('ssClass');
-      const ssAv = document.getElementById('ssAvatar');
-      if (ssN) ssN.textContent = s.name;
-      if (ssCls) ssCls.textContent = s.class || '—';
-      if (ssAv && s.image_url) ssAv.innerHTML = `<img src="${esc(s.image_url)}" alt="" onerror="this.innerHTML='<i class=\\'fas fa-user\\'></i>'">`;
+      syncSettingsSheet(s);
       // Load class uncles — always try, API resolves class_id→name server-side
       if (s.church_id && (s.class || s.class_id)) {
         loadClassUncles(s.church_id, s.class || '', s.class_id || 0);
@@ -9958,6 +10257,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'logou
       const title = document.getElementById('ftModalTitle');
       const desc = document.getElementById('ftModalDesc');
       const preview = document.getElementById('ftKidsPreview');
+      const avatarsWrap = document.getElementById('ftAvatarsWrap');
 
       if (!modal) return;
 
@@ -9969,9 +10269,39 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'logou
       }
       if (desc) {
         desc.innerHTML = count === 2
-          ? `مرحباً بك! لاحظنا وجود <strong>حسابين مسجلين</strong> برقم هاتفك. يمكنك التبديل بين حسابات أولادك بكل سهولة في أي وقت من منطقة <strong>"الحسابات المرتبطة"</strong> في الصفحة الرئيسية مباشرة أو من زر التبديل بالأعلى.`
-          : `مرحباً بك! لاحظنا وجود <strong>${count} حسابات مسجلة</strong> برقم هاتفك. يمكنك التبديل بين حسابات أبنائك بكل سهولة في أي وقت من منطقة <strong>"الحسابات المرتبطة"</strong> في الصفحة الرئيسية مباشرة أو من زر التبديل بالأعلى.`;
+          ? `مرحباً بك! لاحظنا وجود <strong>حسابين مسجلين</strong> برقم هاتفك. يمكنك التبديل بين حسابات أولادك بكل سهولة في أي وقت أو فصل الحسابات وتخصيص رقم هاتف لكل حساب.`
+          : `مرحباً بك! لاحظنا وجود <strong>${count} حسابات مسجلة</strong> برقم هاتفك. يمكنك التبديل بين حسابات أبنائك بكل سهولة في أي وقت أو فصل الحسابات وتخصيص رقم هاتف لكل حساب.`;
       }
+
+      // Overlapping avatars with white border cutout
+      if (avatarsWrap) {
+        const maxShown = 3;
+        const shownAccounts = allAccounts.slice(0, maxShown);
+        const extraCount = allAccounts.length - maxShown;
+
+        let avatarsHtml = shownAccounts.map((a, idx) => {
+          const avImg = a.image_url
+            ? `<img src="${esc(a.image_url)}" alt="${esc(a.name)}" onerror="this.onerror=null; this.parentElement.classList.add('ft-avatar-fallback'); this.parentElement.innerHTML='<span>${esc(a.name ? a.name.charAt(0) : '👤')}</span>';">`
+            : `<span>${esc(a.name ? a.name.charAt(0) : '👤')}</span>`;
+          const isFallback = !a.image_url ? ' ft-avatar-fallback' : '';
+          return `
+            <div class="ft-avatar-circle${isFallback}" style="z-index:${maxShown - idx};" title="${esc(a.name)}">
+              ${avImg}
+            </div>
+          `;
+        }).join('');
+
+        if (extraCount > 0) {
+          avatarsHtml += `
+            <div class="ft-avatar-circle ft-avatar-extra" style="z-index:0;" title="${extraCount} حسابات إضافية">
+              +${extraCount}
+            </div>
+          `;
+        }
+
+        avatarsWrap.innerHTML = avatarsHtml;
+      }
+
       if (preview) {
         preview.innerHTML = allAccounts.map(a => `
           <div class="ft-kid-chip">
@@ -9998,28 +10328,228 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'logou
       }
     }
 
-    function closeFirstTimeModalAndHighlight() {
-      const phoneOrUser = student?.phone || localStorage.getItem('savedUsername') || (student ? String(student.id) : '');
-      localStorage.setItem('multiAccModalSeen_' + phoneOrUser, 'true');
-      closeOv('firstTimeMultiAccModal');
-
-      // Scroll to account switcher on main page & pulse
-      const switcher = document.getElementById('scAccountSwitcher');
-      if (switcher) {
-        switcher.style.display = 'block';
-        setTimeout(() => {
-          switcher.scrollIntoView({ behavior: 'smooth', block: 'center' });
-          switcher.classList.remove('highlight-pulse');
-          void switcher.offsetWidth;
-          switcher.classList.add('highlight-pulse');
-        }, 150);
-      }
-    }
-
     function dismissFirstTimeModalOnly() {
       const phoneOrUser = student?.phone || localStorage.getItem('savedUsername') || (student ? String(student.id) : '');
       localStorage.setItem('multiAccModalSeen_' + phoneOrUser, 'true');
       closeOv('firstTimeMultiAccModal');
+    }
+
+    async function openSeparateAccountsModal() {
+      closeOv('firstTimeMultiAccModal');
+      const listEl = document.getElementById('sepAccountsList');
+      if (!listEl) return;
+
+      listEl.innerHTML = `
+        <div style="text-align:center; padding:30px 10px; color:var(--t3);">
+          <i class="fas fa-spinner fa-spin" style="font-size:1.8rem; color:var(--brand); margin-bottom:12px;"></i>
+          <div style="font-weight:700;">جاري تحميل بيانات الحسابات...</div>
+        </div>
+      `;
+      openOv('separateAccountsModal');
+
+      let targetAccounts = allAccounts || [];
+
+      try {
+        if (student?.id) {
+          const resp = await api({
+            action: 'getAccountsSeparationInfo',
+            callerStudentId: student.id,
+            accountIds: JSON.stringify(targetAccounts.map(a => a.id))
+          });
+          if (resp && resp.success && Array.isArray(resp.accounts) && resp.accounts.length > 0) {
+            targetAccounts = resp.accounts.map(serverAcc => {
+              const localAcc = allAccounts.find(a => Number(a.id) === Number(serverAcc.id)) || {};
+              return { ...localAcc, ...serverAcc };
+            });
+          }
+        }
+      } catch (err) {
+        console.warn('Could not fetch server separation info, using local accounts', err);
+      }
+
+      renderSeparateAccountsList(targetAccounts);
+    }
+
+    function renderSeparateAccountsList(accountsList) {
+      const listEl = document.getElementById('sepAccountsList');
+      if (!listEl) return;
+
+      if (!accountsList || accountsList.length === 0) {
+        listEl.innerHTML = `<div style="text-align:center; padding:20px; color:var(--t3);">لا توجد حسابات مرتبطة لعرضها</div>`;
+        return;
+      }
+
+      listEl.innerHTML = accountsList.map(a => {
+        const hasPass = Boolean(a.has_password);
+        const av = a.image_url
+          ? `<img src="${esc(a.image_url)}" alt="${esc(a.name)}" onerror="this.onerror=null; this.parentElement.textContent='${esc(a.name ? a.name.charAt(0) : '👤')}'">`
+          : esc(a.name ? a.name.charAt(0) : '👤');
+
+        return `
+          <div class="sep-acc-card" data-id="${a.id}">
+            <div class="sep-card-head">
+              <div class="sep-card-av">${av}</div>
+              <div class="sep-card-info">
+                <div class="sep-card-name" title="${esc(a.name)}">${esc(a.name)}</div>
+                <div class="sep-card-meta">
+                  <span class="sep-class-tag"><i class="fas fa-graduation-cap"></i> ${esc(a.class || '—')}</span>
+                  ${hasPass
+                    ? '<span class="sep-status-badge has-pass"><i class="fas fa-check-circle"></i> محمي بكلمة مرور</span>'
+                    : '<span class="sep-status-badge no-pass"><i class="fas fa-exclamation-triangle"></i> يحتاج كلمة مرور</span>'
+                  }
+                </div>
+              </div>
+            </div>
+
+            <div class="sep-field-group">
+              <label class="sep-field-label" for="sepPhone_${a.id}">
+                رقم الهاتف الخاص بهذا الحساب <span style="color:var(--danger);">*</span>
+              </label>
+              <input type="tel" id="sepPhone_${a.id}" class="sep-field-input" value="${esc(a.phone || '')}" placeholder="أدخل رقم الهاتف (مثال: 010...)" dir="ltr" inputmode="tel" data-initial="${esc(a.phone || '')}">
+            </div>
+
+            <div class="sep-field-group">
+              <label class="sep-field-label" for="sepPass_${a.id}">
+                ${hasPass
+                  ? 'تغيير كلمة المرور (اختياري)'
+                  : 'تعيين كلمة مرور خاصة بهذا الحساب <span style="color:var(--danger);">*</span>'
+                }
+              </label>
+              <div class="sep-pass-wrap">
+                <input type="password" id="sepPass_${a.id}" class="sep-field-input" placeholder="${hasPass ? 'اتركه فارغاً للاحتفاظ بكلمة المرور الحالية' : 'أدخل كلمة مرور جديدة (4 خانات على الأقل)'}" data-has-pass="${hasPass ? '1' : '0'}" autocomplete="new-password">
+                <button type="button" class="sep-pass-toggle" onclick="toggleSepPassVisibility('sepPass_${a.id}', this)" title="إظهار/إخفاء">
+                  <i class="fas fa-eye"></i>
+                </button>
+              </div>
+              <div class="sep-field-hint${hasPass ? '' : ' required'}">
+                ${hasPass
+                  ? 'الحساب يمتلك كلمة مرور حالياً. اتركه فارغاً إذا كنت لا ترغب بتغييرها.'
+                  : 'يجب تعيين كلمة مرور لهذا الحساب حتى يتمكن من تسجيل الدخول بعد تغيير رقمه.'
+                }
+              </div>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function toggleSepPassVisibility(inputId, btn) {
+      const input = document.getElementById(inputId);
+      if (!input) return;
+      const isPass = input.type === 'password';
+      input.type = isPass ? 'text' : 'password';
+      const icon = btn.querySelector('i');
+      if (icon) {
+        icon.className = isPass ? 'fas fa-eye-slash' : 'fas fa-eye';
+      }
+    }
+
+    async function saveSeparateAccounts() {
+      const cards = document.querySelectorAll('#sepAccountsList .sep-acc-card');
+      if (!cards || cards.length === 0) return;
+
+      const payloadAccounts = [];
+      let hasError = false;
+
+      document.querySelectorAll('#sepAccountsList .sep-field-input').forEach(inp => inp.classList.remove('input-error'));
+
+      for (const card of cards) {
+        const id = parseInt(card.dataset.id);
+        const name = card.querySelector('.sep-card-name')?.textContent || 'الطفل';
+        const phoneInput = card.querySelector(`#sepPhone_${id}`);
+        const passInput = card.querySelector(`#sepPass_${id}`);
+
+        const rawPhone = phoneInput ? phoneInput.value.trim() : '';
+        const cleanPhone = rawPhone.replace(/[^\d]/g, '');
+        const hasExistingPass = passInput ? (passInput.dataset.hasPass === '1') : false;
+        const enteredPass = passInput ? passInput.value.trim() : '';
+
+        if (!cleanPhone || cleanPhone.length < 8) {
+          toast(`يرجى إدخال رقم هاتف صحيح لـ ${name}`, 'err');
+          if (phoneInput) {
+            phoneInput.classList.add('input-error');
+            phoneInput.focus();
+          }
+          hasError = true;
+          break;
+        }
+
+        if (!hasExistingPass && !enteredPass) {
+          toast(`يجب تعيين كلمة مرور لـ ${name} لأنه لا يمتلك كلمة مرور`, 'err');
+          if (passInput) {
+            passInput.classList.add('input-error');
+            passInput.focus();
+          }
+          hasError = true;
+          break;
+        }
+
+        if (enteredPass && enteredPass.length < 4) {
+          toast(`كلمة المرور لـ ${name} يجب ألا تقل عن 4 خانات`, 'err');
+          if (passInput) {
+            passInput.classList.add('input-error');
+            passInput.focus();
+          }
+          hasError = true;
+          break;
+        }
+
+        payloadAccounts.push({
+          id: id,
+          phone: cleanPhone,
+          password: enteredPass
+        });
+      }
+
+      if (hasError) return;
+
+      const btnSave = document.getElementById('btnSaveSeparateAccounts');
+      const origText = btnSave ? btnSave.innerHTML : '';
+      if (btnSave) {
+        btnSave.disabled = true;
+        btnSave.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري حفظ التغييرات...';
+      }
+
+      try {
+        const res = await api({
+          action: 'separateKidAccounts',
+          callerStudentId: student ? student.id : 0,
+          accounts: JSON.stringify(payloadAccounts)
+        });
+
+        if (res && res.success) {
+          toast(res.message || 'تم حفظ جميع الحسابات بنجاح', 'ok');
+
+          if (student) {
+            const activeUpdate = payloadAccounts.find(a => a.id === student.id);
+            if (activeUpdate && activeUpdate.phone) {
+              student.phone = activeUpdate.phone;
+              localStorage.setItem('savedUsername', activeUpdate.phone);
+              if (activeUpdate.password) {
+                localStorage.setItem('savedPassword', activeUpdate.password);
+              }
+            }
+          }
+
+          const phoneOrUser = student?.phone || localStorage.getItem('savedUsername') || (student ? String(student.id) : '');
+          localStorage.setItem('multiAccModalSeen_' + phoneOrUser, 'true');
+
+          closeOv('separateAccountsModal');
+
+          setTimeout(() => {
+            window.location.reload();
+          }, 800);
+        } else {
+          toast(res?.message || 'فشل في حفظ التغييرات', 'err');
+        }
+      } catch (err) {
+        toast('خطأ في الاتصال بالسيرفر: ' + err.message, 'err');
+      } finally {
+        if (btnSave) {
+          btnSave.disabled = false;
+          btnSave.innerHTML = origText;
+        }
+      }
     }
 
     async function pickAcc(id) {
@@ -10051,6 +10581,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'logou
         allAccounts = allAccounts.filter(a => doAccountsShareCommonPhone(student, a));
         await loadChurchSettings();
         renderPrivate(student);
+        syncSettingsSheet(student);
         switchTab(getInitialTab());
         renderAccountSwitcher();
         loadSiblings();
@@ -10084,8 +10615,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'logou
         toast('غير مسموح في وضع المعاينة', 'err');
         return;
       }
+      if (id === 'settingsOv' || id === 'editOv') {
+        syncSettingsSheet(student);
+      }
       if (id === 'switchOv') {
         populateSwitchModal();
+      }
+      if (id === 'passOv') {
+        syncPassOverlay();
+        const po = document.getElementById('po'); if (po) po.value = '';
+        const pn = document.getElementById('pn'); if (pn) pn.value = '';
+        const pc = document.getElementById('pc'); if (pc) pc.value = '';
+      }
+      if (id === 'photoOv') {
+        if (typeof resetPhoto === 'function') resetPhoto();
       }
       const ov = document.getElementById(id);
       if (!ov) return;

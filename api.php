@@ -4683,6 +4683,14 @@ try {
             changeStudentPassword();
             break;
 
+        case 'getAccountsSeparationInfo':
+            getAccountsSeparationInfo();
+            break;
+
+        case 'separateKidAccounts':
+            separateKidAccounts();
+            break;
+
 
         case 'updateStudentInfo':
 
@@ -21485,7 +21493,230 @@ function changeStudentPassword()
 
 }
 
+// ===== GET ACCOUNTS SEPARATION INFO =====
+function getAccountsSeparationInfo() {
+    try {
+        $callerStudentId = intval($_POST['callerStudentId'] ?? 0);
+        if ($callerStudentId === 0) {
+            sendJSON(['success' => false, 'message' => 'معرف الطالب مطلوب']);
+            return;
+        }
 
+        $conn = getDBConnection();
+        $callerStmt = $conn->prepare("SELECT id, name, phone, emergency_phone, parent_phones, custom_info, church_id FROM students WHERE id = ?");
+        $callerStmt->bind_param("i", $callerStudentId);
+        $callerStmt->execute();
+        $caller = $callerStmt->get_result()->fetch_assoc();
+        if (!$caller) {
+            sendJSON(['success' => false, 'message' => 'لم يتم العثور على الحساب']);
+            return;
+        }
+
+        $phoneToSearch = !empty($caller['phone']) ? $caller['phone'] : ($caller['emergency_phone'] ?? '');
+        $candidates = findStudentsByPhoneOrSiblings($conn, $phoneToSearch, true);
+        if (!isset($candidates[$callerStudentId])) {
+            $candidates[$callerStudentId] = $caller;
+        }
+
+        $accountIdsRaw = $_POST['accountIds'] ?? '';
+        $targetIds = [];
+        if (!empty($accountIdsRaw)) {
+            $decoded = json_decode($accountIdsRaw, true);
+            if (is_array($decoded)) {
+                $targetIds = array_map('intval', $decoded);
+            }
+        }
+
+        $results = [];
+        foreach ($candidates as $cId => $cand) {
+            $cId = (int)$cId;
+            if (!empty($targetIds) && !in_array($cId, $targetIds)) {
+                continue;
+            }
+
+            $sStmt = $conn->prepare("
+                SELECT s.id, s.name, s.phone, s.emergency_phone, s.image_url, s.password_hash,
+                       COALESCE(cc.arabic_name, cl.arabic_name, s.class) AS class
+                FROM students s
+                LEFT JOIN church_classes cc ON cc.id = s.class_id AND cc.church_id = s.church_id
+                LEFT JOIN classes cl ON cl.id = s.class_id
+                WHERE s.id = ?
+            ");
+            $sStmt->bind_param("i", $cId);
+            $sStmt->execute();
+            $sRow = $sStmt->get_result()->fetch_assoc();
+            if ($sRow) {
+                $hasPassword = !empty($sRow['password_hash']);
+                $results[] = [
+                    'id' => (int)$sRow['id'],
+                    'name' => $sRow['name'] ?? '',
+                    'phone' => $sRow['phone'] ?? '',
+                    'image_url' => $sRow['image_url'] ?? '',
+                    'class' => $sRow['class'] ?? '---',
+                    'has_password' => $hasPassword
+                ];
+            }
+        }
+
+        sendJSON([
+            'success' => true,
+            'accounts' => $results
+        ]);
+    } catch (Throwable $e) {
+        error_log("getAccountsSeparationInfo error: " . $e->getMessage());
+        sendJSON(['success' => false, 'message' => 'خطأ في جلب بيانات الحسابات: ' . $e->getMessage()]);
+    }
+}
+
+// ===== SEPARATE KID ACCOUNTS =====
+function separateKidAccounts() {
+    try {
+        $callerStudentId = intval($_POST['callerStudentId'] ?? 0);
+        $accountsJson = $_POST['accounts'] ?? '';
+
+        if ($callerStudentId === 0 || empty($accountsJson)) {
+            sendJSON(['success' => false, 'message' => 'البيانات غير مكتملة']);
+            return;
+        }
+
+        $accounts = json_decode($accountsJson, true);
+        if (!is_array($accounts) || empty($accounts)) {
+            sendJSON(['success' => false, 'message' => 'قائمة الحسابات غير صالحة']);
+            return;
+        }
+
+        $conn = getDBConnection();
+
+        $callerStmt = $conn->prepare("SELECT id, name, phone, emergency_phone, parent_phones, custom_info FROM students WHERE id = ?");
+        $callerStmt->bind_param("i", $callerStudentId);
+        $callerStmt->execute();
+        $caller = $callerStmt->get_result()->fetch_assoc();
+        if (!$caller) {
+            sendJSON(['success' => false, 'message' => 'لم يتم العثور على الحساب الأساسي']);
+            return;
+        }
+
+        $phoneToSearch = !empty($caller['phone']) ? $caller['phone'] : ($caller['emergency_phone'] ?? '');
+        $candidates = findStudentsByPhoneOrSiblings($conn, $phoneToSearch, true);
+        $allowedIds = array_keys($candidates);
+        $allowedIds[] = $callerStudentId;
+
+        $validatedAccounts = [];
+        foreach ($accounts as $acc) {
+            $accId = intval($acc['id'] ?? 0);
+            if ($accId === 0 || !in_array($accId, $allowedIds)) {
+                sendJSON(['success' => false, 'message' => 'غير مصرح بتعديل أحد الحسابات المحددة']);
+                return;
+            }
+
+            $cleanPhone = preg_replace('/[^\d]/', '', strval($acc['phone'] ?? ''));
+            if (empty($cleanPhone) || strlen($cleanPhone) < 8) {
+                $nmStmt = $conn->prepare("SELECT name FROM students WHERE id = ?");
+                $nmStmt->bind_param("i", $accId);
+                $nmStmt->execute();
+                $nmRow = $nmStmt->get_result()->fetch_assoc();
+                $accName = $nmRow['name'] ?? 'الطفل';
+                sendJSON(['success' => false, 'message' => "يرجى إدخال رقم هاتف صحيح لحساب {$accName}"]);
+                return;
+            }
+
+            $pStmt = $conn->prepare("SELECT name, phone, password_hash, custom_info FROM students WHERE id = ?");
+            $pStmt->bind_param("i", $accId);
+            $pStmt->execute();
+            $currRow = $pStmt->get_result()->fetch_assoc();
+            $accName = $currRow['name'] ?? 'الطفل';
+            $hasExistingPass = !empty($currRow['password_hash']);
+
+            $newPass = trim(strval($acc['password'] ?? ''));
+
+            if (!$hasExistingPass && empty($newPass)) {
+                sendJSON([
+                    'success' => false,
+                    'message' => "حساب {$accName} لا يمتلك كلمة مرور حالياً. يرجى تعيين كلمة مرور له لحفظ التغييرات."
+                ]);
+                return;
+            }
+
+            if (!empty($newPass) && strlen($newPass) < 4) {
+                sendJSON([
+                    'success' => false,
+                    'message' => "كلمة المرور لحساب {$accName} يجب ألا تقل عن 4 خانات"
+                ]);
+                return;
+            }
+
+            $validatedAccounts[] = [
+                'id' => $accId,
+                'name' => $accName,
+                'cleanPhone' => $cleanPhone,
+                'newPass' => $newPass,
+                'oldPhone' => $currRow['phone'] ?? '',
+                'customInfo' => $currRow['custom_info'] ?? null
+            ];
+        }
+
+        foreach ($validatedAccounts as $v) {
+            $accId = $v['id'];
+            $cleanPhone = $v['cleanPhone'];
+            $newPass = $v['newPass'];
+
+            $updPhone = $conn->prepare("UPDATE students SET phone = ?, updated_at = NOW() WHERE id = ?");
+            $updPhone->bind_param("si", $cleanPhone, $accId);
+            $updPhone->execute();
+
+            if (!empty($newPass)) {
+                $newHash = hash('sha256', $newPass);
+                $updPass = $conn->prepare("UPDATE students SET password_hash = ?, updated_at = NOW() WHERE id = ?");
+                $updPass->bind_param("si", $newHash, $accId);
+                $updPass->execute();
+            }
+
+            if ($v['oldPhone'] !== $cleanPhone) {
+                $delSib = $conn->prepare("DELETE FROM student_sibling_group_members WHERE student_id = ?");
+                $delSib->bind_param("i", $accId);
+                $delSib->execute();
+
+                $updEm = $conn->prepare("UPDATE students SET emergency_phone = NULL WHERE id = ? AND emergency_phone = ?");
+                $updEm->bind_param("is", $accId, $v['oldPhone']);
+                $updEm->execute();
+
+                if (!empty($v['customInfo'])) {
+                    $ci = is_string($v['customInfo']) ? json_decode($v['customInfo'], true) : $v['customInfo'];
+                    if (is_array($ci)) {
+                        $ciChanged = false;
+                        if (isset($ci['phone'])) {
+                            $ci['phone'] = $cleanPhone;
+                            $ciChanged = true;
+                        }
+                        if (isset($ci['parent_phones'])) {
+                            $ci['parent_phones'] = $cleanPhone;
+                            $ciChanged = true;
+                        }
+                        if (isset($ci['emergency_phone']) && $ci['emergency_phone'] === $v['oldPhone']) {
+                            unset($ci['emergency_phone']);
+                            $ciChanged = true;
+                        }
+                        if ($ciChanged) {
+                            $ciJson = json_encode($ci, JSON_UNESCAPED_UNICODE);
+                            $updCi = $conn->prepare("UPDATE students SET custom_info = ? WHERE id = ?");
+                            $updCi->bind_param("si", $ciJson, $accId);
+                            $updCi->execute();
+                        }
+                    }
+                }
+            }
+        }
+
+        sendJSON([
+            'success' => true,
+            'message' => 'تم فصل الحسابات وتحديث البيانات بنجاح'
+        ]);
+
+    } catch (Throwable $e) {
+        error_log("separateKidAccounts error: " . $e->getMessage());
+        sendJSON(['success' => false, 'message' => 'خطأ أثناء فصل الحسابات: ' . $e->getMessage()]);
+    }
+}
 
 function kidLoginByPhoneWithPassword() {
     try {

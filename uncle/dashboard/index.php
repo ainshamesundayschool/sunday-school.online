@@ -15170,16 +15170,24 @@ $showSettings = $hasChurchId || $isDevOrAdmin;
             applyTheme(saved);
         })();
 
+        // ── PHP SESSION DATA ───
+        window.phpChurchType = <?php echo json_encode($churchType); ?>;
+        window.phpChurchName = <?php echo json_encode($churchName); ?>;
+        window.phpUncleName = <?php echo json_encode($uncleName); ?>;
+        window.phpUncleRole = <?php echo json_encode($uncleRole); ?>;
+        window.phpChurchCode = <?php echo json_encode($churchCode); ?>;
+        window.phpChurchId = <?php echo isset($_SESSION['church_id']) ? (int) $_SESSION['church_id'] : '""'; ?>;
+        window.phpUncleId = <?php echo isset($_SESSION['uncle_id']) ? (int) $_SESSION['uncle_id'] : '""'; ?>;
+        var phpChurchType = window.phpChurchType;
+        var phpChurchName = window.phpChurchName;
+        var phpUncleName = window.phpUncleName;
+        var phpUncleRole = window.phpUncleRole;
+        var phpChurchCode = window.phpChurchCode;
+        var phpChurchId = window.phpChurchId;
+        var phpUncleId = window.phpUncleId;
+
         // ── SYNC PHP SESSION DATA → localStorage on every page load ───
         (function _syncSessionToStorage() {
-            const phpChurchType = <?php echo json_encode($churchType); ?>;
-            const phpChurchName = <?php echo json_encode($churchName); ?>;
-            const phpUncleName = <?php echo json_encode($uncleName); ?>;
-            const phpUncleRole = <?php echo json_encode($uncleRole); ?>;
-            const phpChurchCode = <?php echo json_encode($churchCode); ?>;
-            const phpChurchId = <?php echo isset($_SESSION['church_id']) ? (int) $_SESSION['church_id'] : '""'; ?>;
-            const phpUncleId = <?php echo isset($_SESSION['uncle_id']) ? (int) $_SESSION['uncle_id'] : '""'; ?>;
-
             // Detect account switch: if stored identity differs from what PHP says,
             // clear account-scoped cached data so another church or uncle's data is not shown.
             const storedType = localStorage.getItem('churchType');
@@ -15247,8 +15255,9 @@ $showSettings = $hasChurchId || $isDevOrAdmin;
                     finalName = stored;
                 }
             }
-            if (phpChurchName && phpChurchName !== 'الكنيسة' && phpChurchName !== 'مدارس الأحد') {
-                finalName = phpChurchName;
+            const activePhpChurchName = (typeof phpChurchName !== 'undefined' && phpChurchName) ? phpChurchName : (window.phpChurchName || '');
+            if (activePhpChurchName && activePhpChurchName !== 'الكنيسة' && activePhpChurchName !== 'مدارس الأحد') {
+                finalName = activePhpChurchName;
             }
             if (finalName) {
                 const titleEl = document.querySelector('.topbar-title');
@@ -28480,9 +28489,11 @@ $showSettings = $hasChurchId || $isDevOrAdmin;
                     try {
                         const cache = await caches.open('sunday-school-v31');
                         photosToCache.slice(0, 150).forEach(imgUrl => {
-                            fetch(imgUrl, { cache: 'no-store' }).then(res => {
-                                if (res && res.ok) cache.put(imgUrl, res);
-                            }).catch(() => {});
+                            try {
+                                fetch(imgUrl, { mode: 'no-cors', cache: 'no-store' }).then(res => {
+                                    if (res) cache.put(imgUrl, res).catch(() => {});
+                                }).catch(() => {});
+                            } catch (e) {}
                         });
                     } catch (e) {}
                 }
