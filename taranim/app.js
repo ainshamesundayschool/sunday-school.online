@@ -6080,7 +6080,7 @@ document.addEventListener('DOMContentLoaded', () => {
         { url: './manifest.json', size: 800 },
         { url: './manifest.webmanifest', size: 800 },
         { url: './templates.json', size: 12000 },
-        { url: './songs_catalog.json', size: 23528339 },
+        { url: './songs_catalog.json', size: 34046075 },
         { url: './bible_chapters_data.json', size: 17842105 },
         { url: './arabic_dictionary.json', size: 208186 },
         { url: './playlists.json', size: 100 },
@@ -6167,7 +6167,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         updateProgress(100, 'تم إكتمال التحميل 100%');
         localStorage.setItem('taranim_pwa_initial_download_done', 'true');
-        const finalCount = (state.allSongs && state.allSongs.length > 0) ? state.allSongs.length : 11611;
+        const finalCount = (state.allSongs && state.allSongs.length > 0) ? state.allSongs.length : 11697;
         localStorage.setItem('taranim_offline_installed_count', String(finalCount));
 
         // Hide install button immediately once all taranim are offline and up to date
@@ -12230,7 +12230,7 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     if (els.totalSongsCount) {
-      const formatted = Number(11611).toLocaleString('ar-EG');
+      const formatted = Number(11697).toLocaleString('ar-EG');
       els.totalSongsCount.innerHTML = `<i class="fa-solid fa-music"></i> <span>${formatted} ترنيمة</span>`;
     }
 
@@ -12261,7 +12261,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const pathDir = window.location.pathname.replace(/\/[^\/]*$/, '/');
       const fetchCatalog = (async () => {
         try {
-          const r = await fetch('./songs_catalog.json');
+          const r = await fetch('./songs_catalog.json', { cache: 'no-cache' });
           if (r && r.ok) return await r.json();
         } catch(e) {}
         // Fallback: Check caches explicitly

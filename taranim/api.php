@@ -702,7 +702,7 @@ if (isset($_GET['action']) && $_GET['action'] === 'custom_catalog') {
 
 // CATALOG STATS ENDPOINT FOR OFFLINE / UPDATE CHECKS
 if (isset($_GET['action']) && $_GET['action'] === 'catalog_stats') {
-    $songCount = 11611;
+    $songCount = 11697;
     $catalogFile = __DIR__ . '/songs_catalog.json';
     $catalogSize = file_exists($catalogFile) ? filesize($catalogFile) : 0;
     $catalogMtime = file_exists($catalogFile) ? filemtime($catalogFile) : 0;
@@ -992,12 +992,12 @@ if (isset($_GET['action']) && ($_GET['action'] === 'sync' || $_GET['action'] ===
     }
 
     $res = syncOnlineTasbe7naDatabase($pdo, true);
-    $totalCount = 11611;
+    $totalCount = 11697;
     if ($pdo) {
         try {
             $stmt = $pdo->query("SELECT COUNT(*) FROM songs");
             $c = (int)$stmt->fetchColumn();
-            if ($c > 0 && $c <= 11650) $totalCount = $c;
+            if ($c > 0) $totalCount = $c;
         } catch (Exception $e) {}
     }
     echo json_encode([
@@ -1016,7 +1016,7 @@ if ($pdo && rand(1, 3) === 1) {
 // SEARCH SONGS ENDPOINT
 if (strpos($parsedUrl, '/api/songs') !== false || (isset($_GET['action']) && $_GET['action'] === 'songs') || isset($_GET['q'])) {
     if (!$pdo) {
-        echo json_encode(['songs' => [], 'total_songs' => 11611]);
+        echo json_encode(['songs' => [], 'total_songs' => 11697]);
         exit;
     }
 
@@ -1151,11 +1151,11 @@ if (strpos($parsedUrl, '/api/songs') !== false || (isset($_GET['action']) && $_G
 
     $allResults = array_merge($bibleChapters, $songs);
 
-    $totalCount = 11611;
+    $totalCount = 11697;
     try {
         $cStmt = $pdo->query("SELECT COUNT(*) FROM songs");
         $c = (int)$cStmt->fetchColumn();
-        if ($c > 0 && $c <= 11650) $totalCount = $c;
+        if ($c > 0) $totalCount = $c;
     } catch (Exception $e) {}
 
     echo json_encode(['songs' => $allResults, 'total' => count($allResults), 'total_songs' => $totalCount, 'db_type' => $isMysql ? 'mysql' : 'sqlite']);
