@@ -1728,6 +1728,29 @@
         appliedFontSize = curS;
         _uniformFontSize = curS;
       }
+
+      // Ensure verse badge never clips outside presentation box
+      if (textEl && box) {
+        const badge = textEl.querySelector('.slide-badge-layer');
+        if (badge) {
+          badge.style.transform = 'none';
+          const boxRect = box.getBoundingClientRect();
+          const badgeRect = badge.getBoundingClientRect();
+          if (boxRect.width > 0 && badgeRect.width > 0) {
+            const pad = 6;
+            let shiftX = 0;
+            if (badgeRect.right > boxRect.right - pad) {
+              shiftX = (boxRect.right - pad) - badgeRect.right;
+            } else if (badgeRect.left < boxRect.left + pad) {
+              shiftX = (boxRect.left + pad) - badgeRect.left;
+            }
+            if (Math.abs(shiftX) > 0.5) {
+              badge.style.transform = `translateX(${Math.round(shiftX)}px)`;
+            }
+          }
+        }
+      }
+
       applyDynamicShadow();
     }
 

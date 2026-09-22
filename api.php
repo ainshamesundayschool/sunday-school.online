@@ -3705,6 +3705,14 @@ try {
         case 'remote_get_state':
         case 'remote_send_command':
         case 'remote_poll_commands':
+        case 'remote_host_ip':
+        case 'remote_hotspot_info':
+        case 'remote_hotspot_ping':
+        case 'remote_hotspot_devices':
+        case 'host_ip':
+        case 'hotspot_info':
+        case 'hotspot_ping':
+        case 'hotspot_devices':
             require __DIR__ . '/taranim/remote_sync.php';
             exit;
 

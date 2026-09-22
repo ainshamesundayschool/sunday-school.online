@@ -3473,50 +3473,72 @@ document.addEventListener('DOMContentLoaded', () => {
     return null;
   }
 
+  let _initRemoteHostPromise = null;
   async function initRemoteHost(forceNew = false) {
-    let existingSession = null;
-    if (!forceNew) {
+    if (!forceNew && _initRemoteHostPromise) {
+      return _initRemoteHostPromise;
+    }
+    if (!forceNew && remoteHostSession && hostPeer && !hostPeer.destroyed) {
+      return remoteHostSession;
+    }
+
+    _initRemoteHostPromise = (async () => {
       try {
-        const saved = localStorage.getItem('sunday_school_remote_host_session');
-        if (saved) existingSession = JSON.parse(saved);
-      } catch(e) {}
-    }
+        let existingSession = null;
+        if (!forceNew) {
+          try {
+            const saved = localStorage.getItem('sunday_school_remote_host_session');
+            if (saved) existingSession = JSON.parse(saved);
+          } catch(e) {}
+        }
 
-    const payload = { action: 'create_room' };
-    if (existingSession && existingSession.roomId && existingSession.roomPin && existingSession.hostKey && !forceNew) {
-      payload.roomId = existingSession.roomId;
-      payload.roomPin = existingSession.roomPin;
-      payload.hostKey = existingSession.hostKey;
-    }
+        const payload = { action: 'create_room' };
+        if (existingSession && existingSession.roomId && existingSession.roomPin && existingSession.hostKey && !forceNew) {
+          payload.roomId = existingSession.roomId;
+          payload.roomPin = existingSession.roomPin;
+          payload.hostKey = existingSession.hostKey;
+        }
 
-    const data = await requestRemoteHostApi('create_room', payload);
-    if (data && data.success) {
-      remoteHostSession = {
-        roomId: data.roomId,
-        roomPin: data.roomPin,
-        hostKey: data.hostKey
-      };
-      try {
-        localStorage.setItem('sunday_school_remote_host_session', JSON.stringify(remoteHostSession));
-      } catch(e) {}
-    } else if (existingSession) {
-      remoteHostSession = existingSession;
-    }
+        const data = await requestRemoteHostApi('create_room', payload);
+        if (data && data.success) {
+          remoteHostSession = {
+            roomId: data.roomId,
+            roomPin: data.roomPin,
+            hostKey: data.hostKey
+          };
+          try {
+            localStorage.setItem('sunday_school_remote_host_session', JSON.stringify(remoteHostSession));
+          } catch(e) {}
+        } else if (existingSession) {
+          remoteHostSession = existingSession;
+        }
 
-    if (remoteHostSession) {
-      renderRemotePairingUI();
-      initWebRtcHost(remoteHostSession.roomPin);
-      pushRemoteHostState();
-      startHostInstantLongPoll();
-    }
+        if (remoteHostSession) {
+          renderRemotePairingUI();
+          initWebRtcHost(remoteHostSession.roomPin);
+          pushRemoteHostState();
+          startHostInstantLongPoll();
+        }
+        return remoteHostSession;
+      } finally {
+        _initRemoteHostPromise = null;
+      }
+    })();
+
+    return _initRemoteHostPromise;
   }
 
   // 1. WEBRTC DIRECT PEER HOST LISTENER (TRUE 0MS SOCKET)
   function initWebRtcHost(roomPin) {
     if (!window.Peer || !roomPin) return;
+    const hostPeerId = 'sstaranim_' + roomPin;
+    if (hostPeer && !hostPeer.destroyed && hostPeer.id === hostPeerId) {
+      return;
+    }
     try {
-      if (hostPeer) hostPeer.destroy();
-      const hostPeerId = 'sstaranim_' + roomPin;
+      if (hostPeer && !hostPeer.destroyed) {
+        try { hostPeer.destroy(); } catch(e) {}
+      }
       hostPeer = new window.Peer(hostPeerId, {
         debug: 0,
         config: {
@@ -4172,7 +4194,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // 1. Check local server API endpoints (only accept genuine private LAN IPs)
-    const testEndpoints = ['/api/host_ip', 'api/host_ip', '/api.php?action=host_ip', 'api.php?action=host_ip'];
+    const testEndpoints = ['api.php?action=host_ip', '/api.php?action=host_ip'];
     for (const ep of testEndpoints) {
       try {
         const res = await fetch(ep, { cache: 'no-cache' });
@@ -4490,7 +4512,7 @@ document.addEventListener('DOMContentLoaded', () => {
     async function poll() {
       if (!state.isHotspotMode) return;
       try {
-        let res = await fetch('/api/hotspot_devices', { cache: 'no-cache' });
+        let res = await fetch('api.php?action=hotspot_devices', { cache: 'no-cache' });
         if (!res.ok) {
           res = await fetch('/api.php?action=hotspot_devices', { cache: 'no-cache' });
         }
@@ -4520,7 +4542,7 @@ document.addEventListener('DOMContentLoaded', () => {
       clientName: 'لوحة تحكم',
       userAgent: navigator.userAgent
     });
-    fetch('/api/hotspot_ping', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: payload })
+    fetch('api.php?action=hotspot_ping', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: payload })
       .catch(() => {
         fetch('/api.php?action=hotspot_ping', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: payload }).catch(() => {});
       });
@@ -4628,7 +4650,7 @@ document.addEventListener('DOMContentLoaded', () => {
       try {
         const ctrl = new AbortController();
         const tid = setTimeout(() => ctrl.abort(), 1200);
-        await fetch(`http://${lanIp}:${window.location.port || 8080}/api/host_ip`, {
+        await fetch(`http://${lanIp}:${window.location.port || 8080}/api.php?action=host_ip`, {
           signal: ctrl.signal,
           cache: 'no-cache',
           mode: 'no-cors'
@@ -4838,10 +4860,10 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // Local / server fallback
-    fetch('/api/hotspot_push', {
+    fetch('api.php?action=send_command', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(cmd)
+      body: JSON.stringify({ command: cmd, roomId: state.hotspotHostId || '' })
     }).catch(() => {
       fetch('/api.php?action=send_command', {
         method: 'POST',
@@ -14433,21 +14455,21 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!text || !text.trim()) return [''];
     const clean = text.trim().replace(/\s+/g, ' ');
     const words = clean.split(' ').filter(Boolean);
-    if (words.length <= 4) return [clean];
+    if (words.length <= 3) return [clean];
 
     const totalWords = words.length;
     const totalChars = clean.length;
 
     let lineCount = forcedLineCount;
     if (!lineCount || lineCount < 1) {
-      if (totalWords <= 14) {
+      if (totalWords <= 8) {
         lineCount = 2;
-      } else if (totalWords <= 24) {
+      } else if (totalWords <= 16) {
         lineCount = 3;
-      } else if (totalWords <= 36) {
+      } else if (totalWords <= 26) {
         lineCount = 4;
       } else {
-        lineCount = Math.max(4, Math.round(totalWords / 7.5));
+        lineCount = Math.max(4, Math.round(totalWords / 6.5));
       }
     }
 
@@ -14465,10 +14487,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
       const wordDiff = lineWordCount - targetWordsPerLine;
       const charDiff = lineCharCount - targetCharsPerLine;
-      let cost = (wordDiff * wordDiff * 5) + (charDiff * charDiff * 1.5);
+      let cost = (wordDiff * wordDiff * 6) + (charDiff * charDiff * 1.5);
 
-      if (lineWordCount < 2) cost += 600;
-      if (lineWordCount < 3 && totalWords >= 9) cost += 180;
+      if (lineWordCount < 2) cost += 500;
+      if (lineWordCount < 3 && totalWords >= 8) cost += 150;
 
       const lastWord = words[j];
       if (/[،؛:!\?\.؟\-]$/.test(lastWord)) {
@@ -14525,34 +14547,25 @@ document.addEventListener('DOMContentLoaded', () => {
     const cleanLines = linesArray.map(l => String(l).trim()).filter(Boolean);
     if (cleanLines.length === 0) return [''];
 
-    // Combine all words of the slide
-    const allText = cleanLines.join(' ').replace(/\s+/g, ' ').trim();
-    const words = allText.split(' ').filter(Boolean);
-    if (words.length <= 4) return [allText];
-
-    // If slide arrived as 1 single line: break evenly into aesthetic lines
+    // Rule 2: If it's all in one line, break it evenly into good looking 4, 3, or 2 lines
     if (cleanLines.length === 1) {
-      return balanceTextIntoEvenLines(allText);
+      return balanceTextIntoEvenLines(cleanLines[0]);
     }
 
-    // If slide arrived as multiple lines: check if they are already evenly distributed
-    const lineLengths = cleanLines.map(l => l.length);
-    const lineWordCounts = cleanLines.map(l => l.split(/\s+/).filter(Boolean).length);
-    const maxWords = Math.max(...lineWordCounts);
-    const minWords = Math.min(...lineWordCounts);
-    const maxLen = Math.max(...lineLengths);
-    const minLen = Math.min(...lineLengths);
+    // Rule 1: If it's a long line in a multi-line slide, break it evenly
+    const result = [];
+    cleanLines.forEach(line => {
+      const words = line.split(/\s+/).filter(Boolean);
+      if (words.length >= 8 || line.length >= 42) {
+        const targetSubLines = words.length >= 16 ? 3 : 2;
+        const sub = balanceTextIntoEvenLines(line, targetSubLines);
+        result.push(...sub);
+      } else {
+        result.push(line);
+      }
+    });
 
-    // Check if lines are uneven, or any line is overlong, or too many lines for total words
-    const isUneven = (maxWords - minWords >= 3) || (maxLen - minLen >= 14) || (maxLen / Math.max(1, minLen) >= 1.6);
-    const hasOverlongLine = (maxWords >= 9) || (maxLen >= 44);
-    const isTooFragmented = (cleanLines.length >= 3 && words.length <= 14);
-
-    if (isUneven || hasOverlongLine || isTooFragmented || isBible) {
-      return balanceTextIntoEvenLines(allText);
-    }
-
-    return cleanLines;
+    return result.length > 0 ? result : cleanLines;
   }
 
   function splitBibleVerseIntoBalancedLines(text) {
@@ -17036,8 +17049,8 @@ document.addEventListener('DOMContentLoaded', () => {
           }
 
           // Safe area inside 16:9 box with small margin so letters never touch edges or get cut off
-          const padX = isPortrait ? Math.max(8, Math.round(boxW * 0.022)) : Math.max(16, Math.round(boxW * 0.022));
-          const padY = isPortrait ? Math.max(6, Math.round(boxH * 0.03)) : Math.max(12, Math.round(boxH * 0.03));
+          const padX = isPortrait ? Math.max(10, Math.round(boxW * 0.035)) : Math.max(20, Math.round(boxW * 0.025));
+          const padY = isPortrait ? Math.max(8, Math.round(boxH * 0.05)) : Math.max(16, Math.round(boxH * 0.04));
           const safeW = Math.max(200, boxW - (padX * 2));
           const safeH = Math.max(120, boxH - (padY * 2));
 
@@ -17052,26 +17065,23 @@ document.addEventListener('DOMContentLoaded', () => {
             els.obsLowerThirdBox.style.overflow = 'hidden';
           }
 
-          const minFont = isPortrait ? 18 : 20;
-          const maxFont = Math.max(minFont + 1, Math.min(260, Math.floor(safeH * 0.85)));
+          const minFont = isPortrait ? 15 : 20;
+          const maxFont = Math.max(minFont + 1, Math.min(260, Math.floor(safeH * 0.75)));
 
           const checkFitsElement = (el, size) => {
             el.style.fontSize = `${size}px`;
             const rect = el.getBoundingClientRect();
             const scrollH = el.scrollHeight || 0;
+            const scrollW = el.scrollWidth || 0;
             const totalH = Math.max(rect.height, scrollH);
             if (totalH > safeH) return false;
+            if (scrollW > safeW + 1 || rect.width > safeW + 1) return false;
 
             const elSegs = el.querySelectorAll('.obs-line-segment');
-            if (elSegs.length > 0) {
-              for (let i = 0; i < elSegs.length; i++) {
-                const seg = elSegs[i];
-                const segW = Math.max(seg.scrollWidth || 0, seg.offsetWidth || 0, seg.getBoundingClientRect().width);
-                if (segW > safeW) return false;
-              }
-            } else {
-              const scrollW = el.scrollWidth || 0;
-              if (scrollW > safeW + 1 || rect.width > safeW + 1) return false;
+            for (let i = 0; i < elSegs.length; i++) {
+              const seg = elSegs[i];
+              const segW = Math.max(seg.scrollWidth || 0, seg.offsetWidth || 0, seg.getBoundingClientRect().width);
+              if (segW > safeW) return false;
             }
             return true;
           };
@@ -17240,8 +17250,7 @@ document.addEventListener('DOMContentLoaded', () => {
             for (let i = 0; i < liveSegments.length; i++) {
               const seg = liveSegments[i];
               const segW = Math.max(seg.scrollWidth || 0, seg.offsetWidth || 0, seg.getBoundingClientRect().width);
-              const maxAllowed = seg.classList.contains('obs-first-line') ? (boxW - 4) : safeW;
-              if (segW > maxAllowed) {
+              if (segW > safeW) {
                 segOverflow = true;
                 break;
               }
@@ -17257,6 +17266,28 @@ document.addEventListener('DOMContentLoaded', () => {
           if (curS < appliedFontSize) {
             appliedFontSize = curS;
             state._uniformFontSize = curS;
+          }
+
+          // Ensure verse badge never clips outside presentation box
+          if (els.obsLineText && els.obsLowerThirdBox) {
+            const badge = els.obsLineText.querySelector('.slide-badge-layer');
+            if (badge) {
+              badge.style.transform = 'translateY(-50%)';
+              const boxRect = els.obsLowerThirdBox.getBoundingClientRect();
+              const badgeRect = badge.getBoundingClientRect();
+              if (boxRect.width > 0 && badgeRect.width > 0) {
+                const pad = 6;
+                let shiftX = 0;
+                if (badgeRect.right > boxRect.right - pad) {
+                  shiftX = (boxRect.right - pad) - badgeRect.right;
+                } else if (badgeRect.left < boxRect.left + pad) {
+                  shiftX = (boxRect.left + pad) - badgeRect.left;
+                }
+                if (Math.abs(shiftX) > 0.5) {
+                  badge.style.transform = `translate(${Math.round(shiftX)}px, -50%)`;
+                }
+              }
+            }
           }
           
           // Re-apply highlights after formatting
