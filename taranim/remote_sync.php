@@ -304,16 +304,25 @@ switch ($action) {
                 }
             } catch(Exception $e) {}
         }
-        if (!$lanIp || $lanIp === '127.0.0.1' || $lanIp === '::1') {
-            $lanIp = $clientIp;
+        $isPrivate = false;
+        if (!empty($lanIp) && filter_var($lanIp, FILTER_VALIDATE_IP, FILTER_FLAG_IPV4)) {
+            if (strpos($lanIp, '192.168.') === 0 || strpos($lanIp, '10.') === 0 || preg_match('/^172\.(1[6-9]|2[0-9]|3[0-1])\./', $lanIp)) {
+                $isPrivate = true;
+            }
+        }
+        if (!$isPrivate) {
+            $lanIp = '';
         }
         $port = $_SERVER['SERVER_PORT'] ?? 80;
+        $hostDomain = $_SERVER['HTTP_HOST'] ?? ($_SERVER['SERVER_NAME'] ?? '');
+        $protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
+        $fullUrl = $hostDomain ? "{$protocol}://{$hostDomain}/taranim/index.html" : ($lanIp ? "http://{$lanIp}:{$port}/taranim/index.html" : "");
         echo json_encode([
             'success' => true,
             'ip' => $clientIp,
             'lan_ip' => $lanIp,
             'port' => $port,
-            'url' => "http://{$lanIp}:{$port}/index.html"
+            'url' => $fullUrl
         ], JSON_UNESCAPED_UNICODE);
         break;
 

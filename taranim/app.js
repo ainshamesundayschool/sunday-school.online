@@ -4156,48 +4156,57 @@ document.addEventListener('DOMContentLoaded', () => {
     renderScreenOptions();
   }
 
+  function isPrivateLanIp(ip) {
+    if (!ip || typeof ip !== 'string') return false;
+    ip = ip.trim();
+    if (ip.startsWith('192.168.')) return true;
+    if (ip.startsWith('10.')) return true;
+    if (/^172\.(1[6-9]|2[0-9]|3[0-1])\./.test(ip)) return true;
+    return false;
+  }
+
   async function detectLocalOrPublicIp() {
     const hostname = window.location.hostname;
-    if (hostname && /^(\d{1,3}\.){3}\d{1,3}$/.test(hostname) && !hostname.startsWith('127.')) {
+    if (hostname && isPrivateLanIp(hostname)) {
       return hostname;
     }
 
-    // 1. Check local server API endpoints (resolves LAN IP on router with 0 internet)
-    const testEndpoints = ['/api/host_ip', 'api/host_ip', '/api.php?action=host_ip', 'api.php?action=host_ip', '/api.php?action=get_my_ip'];
+    // 1. Check local server API endpoints (only accept genuine private LAN IPs)
+    const testEndpoints = ['/api/host_ip', 'api/host_ip', '/api.php?action=host_ip', 'api.php?action=host_ip'];
     for (const ep of testEndpoints) {
       try {
         const res = await fetch(ep, { cache: 'no-cache' });
         if (res.ok) {
           const d = await res.json();
-          if (d && d.lan_ip && /^(\d{1,3}\.){3}\d{1,3}$/.test(d.lan_ip) && !d.lan_ip.startsWith('127.')) {
+          if (d && d.lan_ip && isPrivateLanIp(d.lan_ip)) {
             return d.lan_ip;
           }
-          if (d && d.ip && /^(\d{1,3}\.){3}\d{1,3}$/.test(d.ip) && !d.ip.startsWith('127.')) {
+          if (d && d.ip && isPrivateLanIp(d.ip)) {
             return d.ip;
           }
         }
       } catch(e) {}
     }
 
-    // 2. Fallback to WebRTC local ICE candidate discovery (works 100% offline)
+    // 2. Fallback to WebRTC local ICE candidate discovery (works 100% offline and extracts local private IP)
     return new Promise((resolve) => {
       let resolved = false;
       try {
         const RTCPeer = window.RTCPeerConnection || window.webkitRTCPeerConnection || window.mozRTCPeerConnection;
         if (!RTCPeer) {
-          resolve(window.location.hostname || '127.0.0.1');
+          resolve(isPrivateLanIp(hostname) ? hostname : '');
           return;
         }
         const pc = new RTCPeer({ iceServers: [] });
         pc.createDataChannel('');
         pc.createOffer().then(o => pc.setLocalDescription(o)).catch(() => {
-          if (!resolved) { resolved = true; resolve(window.location.hostname || '127.0.0.1'); }
+          if (!resolved) { resolved = true; resolve(isPrivateLanIp(hostname) ? hostname : ''); }
         });
         pc.onicecandidate = (e) => {
           if (resolved) return;
           if (!e || !e.candidate || !e.candidate.candidate) return;
           const match = /([0-9]{1,3}(\.[0-9]{1,3}){3})/.exec(e.candidate.candidate);
-          if (match && match[1] && !match[1].startsWith('127.')) {
+          if (match && match[1] && isPrivateLanIp(match[1])) {
             resolved = true;
             try { pc.close(); } catch(err) {}
             resolve(match[1]);
@@ -4207,19 +4216,26 @@ document.addEventListener('DOMContentLoaded', () => {
           if (!resolved) {
             resolved = true;
             try { pc.close(); } catch(err) {}
-            resolve(window.location.hostname || '127.0.0.1');
+            resolve(isPrivateLanIp(hostname) ? hostname : '');
           }
         }, 800);
       } catch(err) {
-        resolve(window.location.hostname || '127.0.0.1');
+        resolve(isPrivateLanIp(hostname) ? hostname : '');
       }
     });
   }
 
   function getHotspotControllerUrl(hostIp) {
     const loc = window.location;
-    let targetHost = (hostIp && hostIp !== '127.0.0.1' && hostIp !== 'localhost') ? hostIp : loc.hostname;
-    const portStr = loc.port ? `:${loc.port}` : '';
+    let targetHost = loc.host; // Always default to current domain/origin (e.g. sunday-school.rf.gd)
+
+    // Only use raw IP when running locally on localhost/127.0.0.1 AND a private Wi-Fi LAN IP is present
+    const isLocalhost = (loc.hostname === 'localhost' || loc.hostname === '127.0.0.1' || loc.hostname === '::1');
+    if (isLocalhost && hostIp && isPrivateLanIp(hostIp)) {
+      const portStr = loc.port ? `:${loc.port}` : '';
+      targetHost = `${hostIp}${portStr}`;
+    }
+
     let path = loc.pathname;
     if (path.endsWith('.html') || path.endsWith('.php')) {
       path = path.substring(0, path.lastIndexOf('/') + 1);
@@ -4229,7 +4245,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const protocol = loc.protocol;
     const pin = remoteHostSession?.roomPin || state.hotspotHostPin || '123456';
     const hostId = remoteHostSession?.roomId || state.hotspotHostId || 'hotspot_host';
-    return `${protocol}//${targetHost}${portStr}${path}index.html?hotspot_ctrl=1&pin=${encodeURIComponent(pin)}&host_id=${encodeURIComponent(hostId)}&lan_ip=${encodeURIComponent(hostIp || '')}`;
+    const safeLanIp = (hostIp && isPrivateLanIp(hostIp)) ? hostIp : '';
+    return `${protocol}//${targetHost}${path}index.html?hotspot_ctrl=1&pin=${encodeURIComponent(pin)}&host_id=${encodeURIComponent(hostId)}${safeLanIp ? `&lan_ip=${encodeURIComponent(safeLanIp)}` : ''}`;
   }
 
   function renderHotspotBannerQr(url) {
@@ -4517,7 +4534,11 @@ document.addEventListener('DOMContentLoaded', () => {
     state.hotspotHostIp = detectedIp;
 
     if (els.hotspotHostIpPill) {
-      els.hotspotHostIpPill.textContent = `IP: ${detectedIp}`;
+      if (detectedIp && isPrivateLanIp(detectedIp)) {
+        els.hotspotHostIpPill.textContent = `IP: ${detectedIp}`;
+      } else {
+        els.hotspotHostIpPill.textContent = window.location.hostname || 'أونلاين';
+      }
     }
 
     const ctrlUrl = getHotspotControllerUrl(detectedIp);
@@ -4601,9 +4622,9 @@ document.addEventListener('DOMContentLoaded', () => {
       if (els.btnRetryWaitingRequest) els.btnRetryWaitingRequest.classList.add('hidden');
     }
 
-    // Fast local network probe (triggers Chrome private/local network access prompt)
+    // Fast local network probe (triggers Chrome private/local network access prompt only on private LAN)
     let isSameNet = false;
-    if (lanIp && !lanIp.startsWith('127.')) {
+    if (lanIp && isPrivateLanIp(lanIp)) {
       try {
         const ctrl = new AbortController();
         const tid = setTimeout(() => ctrl.abort(), 1200);
