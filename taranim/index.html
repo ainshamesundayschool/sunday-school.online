@@ -587,11 +587,17 @@
 
             <!-- INTERACTIVE TEXT TRANSFORM CONTROLS -->
             <div class="style-card" id="text-transform-card" style="margin-top:10px;">
-              <div class="style-card-title" style="display:flex; align-items:center; justify-content:space-between;">
+              <div class="style-card-title" style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:6px;">
                 <span><i class="fa-solid fa-arrows-up-down-left-right"></i> أبعاد وموضع النص</span>
-                <button type="button" id="btn-reset-text-transform" class="btn btn-sm btn-secondary" style="font-size:0.75rem; padding:3px 8px; border-radius:6px;" title="إعادة تعيين للأبعاد الافتراضية">
-                  <i class="fa-solid fa-rotate-left"></i> إعادة ضبط
-                </button>
+                <div style="display:flex; align-items:center; gap:6px;">
+                  <button type="button" id="btn-toggle-lock-safe-area" class="btn btn-sm active" style="font-size:0.75rem; padding:3px 9px; border-radius:6px; font-weight:700; display:inline-flex; align-items:center; gap:5px; background:rgba(16, 185, 129, 0.15); color:#10b981; border:1px solid rgba(16, 185, 129, 0.3);" title="قفل الحجم لعدم تجاوز المنطقة الآمنة">
+                    <i class="fa-solid fa-lock" id="icon-lock-safe-area"></i>
+                    <span id="text-lock-safe-area">المنطقة الآمنة: مقفل</span>
+                  </button>
+                  <button type="button" id="btn-reset-text-transform" class="btn btn-sm btn-secondary" style="font-size:0.75rem; padding:3px 8px; border-radius:6px;" title="إعادة تعيين للأبعاد الافتراضية">
+                    <i class="fa-solid fa-rotate-left"></i> إعادة ضبط
+                  </button>
+                </div>
               </div>
 
               <div class="style-grid-2" style="margin-top:8px;">
@@ -600,7 +606,7 @@
                     <label>حجم الصندوق (Scale)</label>
                     <span id="transform-scale-badge" class="counter-text-chip">100%</span>
                   </div>
-                  <input type="range" id="transform-scale-range" min="50" max="200" step="1" value="100" class="slider-input">
+                  <input type="range" id="transform-scale-range" min="1" max="300" step="1" value="100" class="slider-input">
                 </div>
 
                 <div class="control-field">

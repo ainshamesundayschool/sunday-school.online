@@ -1756,8 +1756,10 @@ document.addEventListener('DOMContentLoaded', () => {
       scale: 100,
       posX: 0,
       posY: 0,
-      rotation: 0
+      rotation: 0,
+      lockSafeArea: localStorage.getItem('sunday_school_lock_scale_safe_area') !== 'false'
     },
+    lockScaleToSafeArea: localStorage.getItem('sunday_school_lock_scale_safe_area') !== 'false',
     availableTemplates: [
       {
         id: 'tmpl-default-black',
@@ -2319,6 +2321,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
     textTransformCard: document.getElementById('text-transform-card'),
     btnResetTextTransform: document.getElementById('btn-reset-text-transform'),
+    btnToggleLockSafeArea: document.getElementById('btn-toggle-lock-safe-area'),
+    iconLockSafeArea: document.getElementById('icon-lock-safe-area'),
+    textLockSafeArea: document.getElementById('text-lock-safe-area'),
     transformScaleRange: document.getElementById('transform-scale-range'),
     transformScaleBadge: document.getElementById('transform-scale-badge'),
     transformRotRange: document.getElementById('transform-rot-range'),
@@ -8926,21 +8931,62 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
     // --- 2. TEXT TRANSFORM CONTROLS ---
+    const updateSafeAreaLockButtonUI = () => {
+      const btn = els.btnToggleLockSafeArea || document.getElementById('btn-toggle-lock-safe-area');
+      const icon = els.iconLockSafeArea || document.getElementById('icon-lock-safe-area');
+      const label = els.textLockSafeArea || document.getElementById('text-lock-safe-area');
+      const isLocked = state.lockScaleToSafeArea !== false;
+      if (btn) {
+        btn.classList.toggle('active', isLocked);
+        if (isLocked) {
+          btn.style.background = 'rgba(16, 185, 129, 0.15)';
+          btn.style.color = '#10b981';
+          btn.style.borderColor = 'rgba(16, 185, 129, 0.3)';
+          if (icon) icon.className = 'fa-solid fa-lock';
+          if (label) label.textContent = 'المنطقة الآمنة: مقفل';
+          btn.title = 'قفل الحجم لعدم تجاوز المنطقة الآمنة (مفعل)';
+        } else {
+          btn.style.background = 'rgba(239, 68, 68, 0.15)';
+          btn.style.color = '#ef4444';
+          btn.style.borderColor = 'rgba(239, 68, 68, 0.3)';
+          if (icon) icon.className = 'fa-solid fa-lock-open';
+          if (label) label.textContent = 'المنطقة الآمنة: حر';
+          btn.title = 'قفل الحجم معطل: حر لتجاوز المنطقة الآمنة';
+        }
+      }
+    };
+
     const updateTextTransformUI = () => {
       const tf = state.textTransform || { scale: 100, posX: 0, posY: 0, rotation: 0 };
-      if (els.transformScaleRange) els.transformScaleRange.value = tf.scale || 100;
-      if (els.transformScaleBadge) els.transformScaleBadge.textContent = `${tf.scale || 100}%`;
+      const curScale = tf.scale !== undefined ? tf.scale : 100;
+      if (els.transformScaleRange) els.transformScaleRange.value = curScale;
+      if (els.transformScaleBadge) els.transformScaleBadge.textContent = `${curScale}%`;
       if (els.transformRotRange) els.transformRotRange.value = tf.rotation || 0;
       if (els.transformRotBadge) els.transformRotBadge.textContent = `${tf.rotation || 0}°`;
       if (els.transformPosxRange) els.transformPosxRange.value = tf.posX || 0;
       if (els.transformPosxBadge) els.transformPosxBadge.textContent = `${tf.posX || 0}%`;
       if (els.transformPosyRange) els.transformPosyRange.value = tf.posY || 0;
       if (els.transformPosyBadge) els.transformPosyBadge.textContent = `${tf.posY || 0}%`;
+      updateSafeAreaLockButtonUI();
     };
+
+    const btnToggleLock = els.btnToggleLockSafeArea || document.getElementById('btn-toggle-lock-safe-area');
+    if (btnToggleLock) {
+      btnToggleLock.addEventListener('click', () => {
+        state.lockScaleToSafeArea = !(state.lockScaleToSafeArea !== false);
+        if (!state.textTransform) state.textTransform = { scale: 100, posX: 0, posY: 0, rotation: 0 };
+        state.textTransform.lockSafeArea = state.lockScaleToSafeArea;
+        try { localStorage.setItem('sunday_school_lock_scale_safe_area', String(state.lockScaleToSafeArea)); } catch(e) {}
+        updateSafeAreaLockButtonUI();
+        saveMediaConfig();
+        syncLiveState();
+        showToast(state.lockScaleToSafeArea ? 'تم تفعيل قفل الحجم: لا يتجاوز المنطقة الآمنة 🔒' : 'تم إيقاف قفل الحجم: حر لتجاوز المنطقة الآمنة 🔓');
+      });
+    }
 
     if (els.transformScaleRange) {
       els.transformScaleRange.addEventListener('input', (e) => {
-        const val = parseInt(e.target.value) || 100;
+        const val = Number.isFinite(parseInt(e.target.value, 10)) ? Math.max(1, parseInt(e.target.value, 10)) : 100;
         state.textTransform.scale = val;
         if (els.transformScaleBadge) els.transformScaleBadge.textContent = `${val}%`;
         saveMediaConfig();
@@ -8980,7 +9026,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (els.btnResetTextTransform) {
       els.btnResetTextTransform.addEventListener('click', () => {
-        state.textTransform = { scale: 100, posX: 0, posY: 0, rotation: 0 };
+        state.textTransform = {
+          scale: 100,
+          posX: 0,
+          posY: 0,
+          rotation: 0,
+          lockSafeArea: state.lockScaleToSafeArea !== false
+        };
         updateTextTransformUI();
         saveMediaConfig();
         syncLiveState();
@@ -16389,6 +16441,7 @@ document.addEventListener('DOMContentLoaded', () => {
       slidesBgConfig: state.slidesBgConfig,
       transitionConfig: state.transitionConfig,
       textTransform: state.textTransform,
+      lockScaleToSafeArea: state.lockScaleToSafeArea !== false,
       transitionType: state.transitionConfig ? state.transitionConfig.type : 'fade',
       stingerMediaUrl: state.transitionConfig ? state.transitionConfig.stingerUrl : '',
       stingerCutPointMs: state.transitionConfig ? state.transitionConfig.cutPointMs : 1200,
@@ -16526,10 +16579,25 @@ document.addEventListener('DOMContentLoaded', () => {
         const posX = tf.posX !== undefined ? `${tf.posX}%` : '0%';
         const posY = tf.posY !== undefined ? `${tf.posY}%` : '0%';
         const rot = tf.rotation !== undefined ? `${tf.rotation}deg` : '0deg';
+        const isLocked = state.lockScaleToSafeArea !== false && tf.lockSafeArea !== false;
+
         els.obsLowerThirdBox.style.setProperty('--text-scale', `${scale}`);
         els.obsLowerThirdBox.style.setProperty('--text-pos-x', `${posX}`);
         els.obsLowerThirdBox.style.setProperty('--text-pos-y', `${posY}`);
         els.obsLowerThirdBox.style.setProperty('--text-rot', `${rot}`);
+        els.obsLowerThirdBox.style.setProperty('transform', `translate(calc(-50% + ${posX}), calc(-50% + ${posY})) scale(${scale}) rotate(${rot})`, 'important');
+        els.obsLowerThirdBox.style.setProperty('transform-origin', 'center center', 'important');
+
+        if (!isLocked) {
+          els.obsLowerThirdBox.style.setProperty('overflow', 'visible', 'important');
+          els.obsLowerThirdBox.style.setProperty('max-width', 'none', 'important');
+          els.obsLowerThirdBox.style.setProperty('max-height', 'none', 'important');
+        } else {
+          els.obsLowerThirdBox.style.setProperty('overflow', 'hidden', 'important');
+          els.obsLowerThirdBox.style.removeProperty('max-width');
+          els.obsLowerThirdBox.style.removeProperty('max-height');
+        }
+
         document.documentElement.style.setProperty('--text-scale', `${scale}`);
         document.documentElement.style.setProperty('--text-pos-x', `${posX}`);
         document.documentElement.style.setProperty('--text-pos-y', `${posY}`);
@@ -17073,15 +17141,22 @@ document.addEventListener('DOMContentLoaded', () => {
           const safeW = Math.max(200, boxW - (padX * 2));
           const safeH = Math.max(120, boxH - (padY * 2));
 
+          const isLocked = state.lockScaleToSafeArea !== false && (!state.textTransform || state.textTransform.lockSafeArea !== false);
           if (els.obsLowerThirdBox) {
             els.obsLowerThirdBox.style.width = `${boxW}px`;
-            els.obsLowerThirdBox.style.maxWidth = `${boxW}px`;
             els.obsLowerThirdBox.style.height = `${boxH}px`;
-            els.obsLowerThirdBox.style.maxHeight = `${boxH}px`;
             els.obsLowerThirdBox.style.aspectRatio = '16 / 9';
             els.obsLowerThirdBox.style.padding = '0';
             els.obsLowerThirdBox.style.margin = 'auto';
-            els.obsLowerThirdBox.style.overflow = 'hidden';
+            if (isLocked) {
+              els.obsLowerThirdBox.style.maxWidth = `${boxW}px`;
+              els.obsLowerThirdBox.style.maxHeight = `${boxH}px`;
+              els.obsLowerThirdBox.style.overflow = 'hidden';
+            } else {
+              els.obsLowerThirdBox.style.maxWidth = 'none';
+              els.obsLowerThirdBox.style.maxHeight = 'none';
+              els.obsLowerThirdBox.style.overflow = 'visible';
+            }
           }
 
           const minFont = isPortrait ? 15 : 20;
@@ -17393,8 +17468,8 @@ document.addEventListener('DOMContentLoaded', () => {
         const posX = tf.posX !== undefined ? `${tf.posX}%` : '0%';
         const posY = tf.posY !== undefined ? `${tf.posY}%` : '0%';
         const rot = tf.rotation !== undefined ? `${tf.rotation}deg` : '0deg';
-        els.obsLowerThirdBox.style.transform = `translate(calc(-50% + ${posX}), calc(-50% + ${posY})) scale(${scale}) rotate(${rot})`;
-        els.obsLowerThirdBox.style.transformOrigin = 'center center';
+        els.obsLowerThirdBox.style.setProperty('transform', `translate(calc(-50% + ${posX}), calc(-50% + ${posY})) scale(${scale}) rotate(${rot})`, 'important');
+        els.obsLowerThirdBox.style.setProperty('transform-origin', 'center center', 'important');
       }
     }
 

@@ -242,7 +242,8 @@
       top: 30px !important;
       bottom: 30px !important;
       left: 50% !important;
-      transform: translateX(-50%) !important;
+      transform: translate(calc(-50% + var(--text-pos-x, 0%)), var(--text-pos-y, 0%)) scale(var(--text-scale, 1)) rotate(var(--text-rot, 0deg)) !important;
+      transform-origin: center center !important;
       width: 96vw !important;
       max-width: 96vw !important;
       height: calc(100vh - 60px) !important;
@@ -316,10 +317,11 @@
       }
       .lower-third-container,
       #presenter-box {
-        position: relative !important;
-        top: auto !important;
-        left: auto !important;
-        transform: none !important;
+        position: absolute !important;
+        top: 50% !important;
+        left: 50% !important;
+        transform: translate(calc(-50% + var(--text-pos-x, 0%)), calc(-50% + var(--text-pos-y, 0%))) scale(var(--text-scale, 1)) rotate(var(--text-rot, 0deg)) !important;
+        transform-origin: center center !important;
         width: 100vw !important;
         max-width: 100vw !important;
         aspect-ratio: 16 / 9 !important;
@@ -1512,16 +1514,23 @@
       const safeW = Math.max(200, boxW - (padX * 2));
       const safeH = Math.max(120, boxH - (padY * 2));
 
+      const isLocked = (!lastStyleData || (lastStyleData.lockScaleToSafeArea !== false && (!lastStyleData.textTransform || lastStyleData.textTransform.lockSafeArea !== false)));
       const box = document.getElementById('presenter-box') || document.querySelector('.lower-third-container');
       if (box) {
         box.style.width = `${boxW}px`;
-        box.style.maxWidth = `${boxW}px`;
         box.style.height = `${boxH}px`;
-        box.style.maxHeight = `${boxH}px`;
         box.style.aspectRatio = '16 / 9';
         box.style.padding = '0';
         box.style.margin = 'auto';
-        box.style.overflow = 'hidden';
+        if (isLocked) {
+          box.style.maxWidth = `${boxW}px`;
+          box.style.maxHeight = `${boxH}px`;
+          box.style.overflow = 'hidden';
+        } else {
+          box.style.maxWidth = 'none';
+          box.style.maxHeight = 'none';
+          box.style.overflow = 'visible';
+        }
       }
 
       const minFont = isPortrait ? 15 : 20;
@@ -2389,6 +2398,7 @@
         const posX = tf.posX !== undefined ? `${tf.posX}%` : '0%';
         const posY = tf.posY !== undefined ? `${tf.posY}%` : '0%';
         const rot = tf.rotation !== undefined ? `${tf.rotation}deg` : '0deg';
+        const isLocked = (tf.lockSafeArea !== false && data.lockScaleToSafeArea !== false);
         document.documentElement.style.setProperty('--text-scale', `${scale}`);
         document.documentElement.style.setProperty('--text-pos-x', `${posX}`);
         document.documentElement.style.setProperty('--text-pos-y', `${posY}`);
@@ -2399,8 +2409,17 @@
           presenterBox.style.setProperty('--text-pos-x', `${posX}`);
           presenterBox.style.setProperty('--text-pos-y', `${posY}`);
           presenterBox.style.setProperty('--text-rot', `${rot}`);
-          presenterBox.style.transform = `translate(calc(-50% + ${posX}), calc(-50% + ${posY})) scale(${scale}) rotate(${rot})`;
-          presenterBox.style.transformOrigin = 'center center';
+          presenterBox.style.setProperty('transform', `translate(calc(-50% + ${posX}), calc(-50% + ${posY})) scale(${scale}) rotate(${rot})`, 'important');
+          presenterBox.style.setProperty('transform-origin', 'center center', 'important');
+          if (!isLocked) {
+            presenterBox.style.setProperty('overflow', 'visible', 'important');
+            presenterBox.style.setProperty('max-width', 'none', 'important');
+            presenterBox.style.setProperty('max-height', 'none', 'important');
+          } else {
+            presenterBox.style.setProperty('overflow', 'hidden', 'important');
+            presenterBox.style.removeProperty('max-width');
+            presenterBox.style.removeProperty('max-height');
+          }
         }
       }
 
