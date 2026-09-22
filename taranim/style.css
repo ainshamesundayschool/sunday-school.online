@@ -6084,11 +6084,57 @@ input[type="range"]:active::-moz-range-thumb {
 }
 
 .controls-hidden .btn-close-overlay-left,
+.controls-hidden .btn-overlay-highlight,
 .controls-hidden .presenter-footer-bar,
 .controls-hidden .presenter-slide-counter {
   display: none !important;
   opacity: 0 !important;
   pointer-events: none !important;
+}
+
+.btn-overlay-highlight {
+  position: fixed !important;
+  bottom: 12px !important;
+  left: 54px !important;
+  right: auto !important;
+  width: 34px !important;
+  height: 34px !important;
+  background: transparent !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  border: none !important;
+  color: rgba(255, 255, 255, 0.45) !important;
+  border-radius: 50% !important;
+  font-size: 0.9rem !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  cursor: pointer !important;
+  z-index: 99999 !important;
+  transition: all 0.2s ease !important;
+  box-shadow: none !important;
+  pointer-events: auto !important;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  opacity: 0.7;
+}
+
+.btn-overlay-highlight:hover {
+  background: rgba(255, 255, 255, 0.12) !important;
+  color: rgba(255, 255, 255, 0.95) !important;
+  opacity: 1;
+}
+
+.btn-overlay-highlight.active {
+  background: var(--highlight-bg, #ef4444) !important;
+  color: #ffffff !important;
+  opacity: 1 !important;
+  box-shadow: 0 0 14px var(--highlight-bg, rgba(239, 68, 68, 0.65)) !important;
+}
+
+.obs-overlay.highlight-mode-active .obs-line-segment,
+.obs-overlay.highlight-mode-active .obs-line-row {
+  cursor: pointer !important;
 }
 
 .obs-line-row {

@@ -3102,6 +3102,8 @@
         JSON.stringify(data.standbyConfig || {}),
         JSON.stringify(data.textTransform || {}),
         JSON.stringify(data.highlightedLines || []),
+        data.highlightColor || '',
+        Boolean(data.isHighlightMode),
         data.activeGroupIndex || 0,
         data.scrollRatio || 0,
         data.bibleRef || '',

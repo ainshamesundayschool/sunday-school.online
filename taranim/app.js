@@ -3683,6 +3683,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const targetSong = state.liveSong || state.activeSong;
     const targetIdx = (state.liveLineIndex >= 0) ? state.liveLineIndex : (state.currentLineIndex >= 0 ? state.currentLineIndex : 0);
 
+    const currentHighlights = state.isHighlightMode ? (state.highlightedLineIndices || []) : [];
     const stateObj = {
       activeSong: targetSong,
       liveSong: targetSong,
@@ -3692,6 +3693,10 @@ document.addEventListener('DOMContentLoaded', () => {
       presentationLines: currentLines,
       isBlank: Boolean(state.isBlank),
       isStandbyMode: Boolean(state.isStandbyMode),
+      isHighlightMode: Boolean(state.isHighlightMode),
+      highlightedLines: currentHighlights,
+      highlightedLineIndices: currentHighlights,
+      highlightColor: state.highlightColor || '#ef4444',
       sessionRecents: (state.sessionRecents || []).slice(0, 30),
       theme: state.userSettings?.selectedTemplateId || 'default'
     };
@@ -3864,11 +3869,47 @@ document.addEventListener('DOMContentLoaded', () => {
         state.isStandbyMode = Boolean(cmd.isStandbyMode);
         if (els.btnToggleStandby) els.btnToggleStandby.classList.toggle('active', state.isStandbyMode);
       }
+      if (cmd.isHighlightMode !== undefined) {
+        state.isHighlightMode = Boolean(cmd.isHighlightMode);
+      }
+      if (cmd.highlightedLines !== undefined) {
+        state.highlightedLineIndices = Array.isArray(cmd.highlightedLines) ? [...cmd.highlightedLines] : [];
+      } else if (cmd.highlightedLineIndices !== undefined) {
+        state.highlightedLineIndices = Array.isArray(cmd.highlightedLineIndices) ? [...cmd.highlightedLineIndices] : [];
+      }
+      if (cmd.highlightColor) {
+        state.highlightColor = cmd.highlightColor;
+      }
+      if (typeof updateHighlightCircleUI === 'function') {
+        updateHighlightCircleUI();
+      }
       renderPresentationLinesList();
       syncLiveState();
       if (typeof scrollActiveSlideToTop === 'function') {
         scrollActiveSlideToTop(false);
       }
+    } else if (cmd.type === 'TOGGLE_HIGHLIGHT' || cmd.type === 'SET_HIGHLIGHT_MODE') {
+      if (cmd.isHighlightMode !== undefined) {
+        state.isHighlightMode = Boolean(cmd.isHighlightMode);
+      } else {
+        state.isHighlightMode = !state.isHighlightMode;
+      }
+      if (cmd.highlightColor) state.highlightColor = cmd.highlightColor;
+      if (cmd.highlightedLines !== undefined) {
+        state.highlightedLineIndices = Array.isArray(cmd.highlightedLines) ? [...cmd.highlightedLines] : [];
+      }
+      if (typeof updateHighlightCircleUI === 'function') updateHighlightCircleUI();
+      renderPresentationLinesList();
+      syncLiveState();
+    } else if (cmd.type === 'SET_HIGHLIGHT_LINES') {
+      if (cmd.highlightedLines !== undefined) {
+        state.highlightedLineIndices = Array.isArray(cmd.highlightedLines) ? [...cmd.highlightedLines] : [];
+      }
+      if (cmd.highlightColor) state.highlightColor = cmd.highlightColor;
+      if (cmd.isHighlightMode !== undefined) state.isHighlightMode = Boolean(cmd.isHighlightMode);
+      if (typeof updateHighlightCircleUI === 'function') updateHighlightCircleUI();
+      renderPresentationLinesList();
+      syncLiveState();
     } else if (cmd.type === 'TOGGLE_BLANK') {
       toggleBlank();
     } else if (cmd.type === 'SET_BLANK') {
@@ -4834,6 +4875,20 @@ document.addEventListener('DOMContentLoaded', () => {
       state.isStandbyMode = Boolean(hostState.isStandbyMode);
       if (els.btnToggleStandby) els.btnToggleStandby.classList.toggle('active', state.isStandbyMode);
     }
+    if (hostState.isHighlightMode !== undefined) {
+      state.isHighlightMode = Boolean(hostState.isHighlightMode);
+    }
+    if (hostState.highlightedLines !== undefined) {
+      state.highlightedLineIndices = Array.isArray(hostState.highlightedLines) ? [...hostState.highlightedLines] : [];
+    } else if (hostState.highlightedLineIndices !== undefined) {
+      state.highlightedLineIndices = Array.isArray(hostState.highlightedLineIndices) ? [...hostState.highlightedLineIndices] : [];
+    }
+    if (hostState.highlightColor) {
+      state.highlightColor = hostState.highlightColor;
+    }
+    if (typeof updateHighlightCircleUI === 'function') {
+      updateHighlightCircleUI();
+    }
     if (hostState.sessionRecents && Array.isArray(hostState.sessionRecents)) {
       state.sessionRecents = hostState.sessionRecents;
       renderRecentSession();
@@ -4844,6 +4899,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (typeof scrollActiveSlideToTop === 'function') {
       scrollActiveSlideToTop(false);
     }
+    syncLiveState(false, false, { skipHotspotCommand: true });
   }
 
   function sendHotspotCommand(cmd) {
@@ -5930,26 +5986,52 @@ document.addEventListener('DOMContentLoaded', () => {
         highlightCustomColor.value = (activeColor.startsWith('#') && activeColor.length === 7) ? activeColor : '#ef4444';
       }
 
+      if (btnToggleHighlight) {
+        btnToggleHighlight.classList.toggle('active', Boolean(state.isHighlightMode));
+      }
+      const btnOverlayHighlight = document.getElementById('btn-overlay-toggle-highlight');
+      if (btnOverlayHighlight) {
+        btnOverlayHighlight.classList.toggle('active', Boolean(state.isHighlightMode));
+        btnOverlayHighlight.style.setProperty('--highlight-bg', activeColor);
+      }
+      if (els.obsOverlay) {
+        els.obsOverlay.classList.toggle('highlight-mode-active', Boolean(state.isHighlightMode));
+      }
+      document.body.classList.toggle('highlight-mode-active', Boolean(state.isHighlightMode));
+
       document.querySelectorAll('.highlight-color-pill').forEach(pill => {
         pill.classList.toggle('active', pill.dataset.color === activeColor);
       });
     }
 
+    function toggleHighlightMode(explicitVal = null) {
+      if (explicitVal !== null) {
+        state.isHighlightMode = Boolean(explicitVal);
+      } else {
+        state.isHighlightMode = !state.isHighlightMode;
+      }
+      if (!state.isHighlightMode) {
+        if (popoverHighlightColor) popoverHighlightColor.classList.add('hidden');
+      }
+      updateHighlightCircleUI();
+      renderPresentationLinesList();
+      syncLiveState();
+    }
+    window.toggleHighlightMode = toggleHighlightMode;
+    window.updateHighlightCircleUI = updateHighlightCircleUI;
+
     if (btnToggleHighlight) {
       btnToggleHighlight.addEventListener('click', (e) => {
         e.stopPropagation();
-        state.isHighlightMode = !state.isHighlightMode;
-        btnToggleHighlight.classList.toggle('active', state.isHighlightMode);
-        if (colorPickerWrap) {
-          colorPickerWrap.classList.toggle('hidden', !state.isHighlightMode);
-        }
-        if (!state.isHighlightMode) {
-          if (popoverHighlightColor) popoverHighlightColor.classList.add('hidden');
-        } else {
-          updateHighlightCircleUI();
-        }
-        renderPresentationLinesList();
-        syncLiveState();
+        toggleHighlightMode();
+      });
+    }
+
+    const btnOverlayToggleHighlight = document.getElementById('btn-overlay-toggle-highlight');
+    if (btnOverlayToggleHighlight) {
+      btnOverlayToggleHighlight.addEventListener('click', (e) => {
+        e.stopPropagation();
+        toggleHighlightMode();
       });
     }
 
@@ -11195,13 +11277,40 @@ document.addEventListener('DOMContentLoaded', () => {
       let overlayLastTouchTime = 0;
 
       els.obsOverlay.addEventListener('click', (e) => {
-        if (e.target && e.target.closest && e.target.closest('#btn-close-presentation-overlay, .btn-close-overlay-left, button, a')) return;
+        if (e.target && e.target.closest && e.target.closest('#btn-close-presentation-overlay, .btn-close-overlay-left, #btn-overlay-toggle-highlight, button, a')) return;
         if (Date.now() - overlayLastTouchTime < 500) return;
+
+        // If in highlight mode, toggle line highlight instead of advancing slide
+        if (state.isHighlightMode) {
+          const seg = (e.target && e.target.closest) ? e.target.closest('.obs-line-segment, .obs-line-row') : null;
+          if (seg) {
+            const targetSeg = seg.classList.contains('obs-line-segment') ? seg : seg.querySelector('.obs-line-segment');
+            const rowEl = seg.closest('.obs-line-row') || seg;
+            let lineIdx = targetSeg && targetSeg.dataset.lineIdx !== undefined ? parseInt(targetSeg.dataset.lineIdx) : parseInt(rowEl.dataset.lineIdx);
+            if (isNaN(lineIdx) && targetSeg && els.obsLineText) {
+              const allSegs = Array.from(els.obsLineText.querySelectorAll('.obs-line-segment'));
+              lineIdx = allSegs.indexOf(targetSeg);
+            }
+            if (!isNaN(lineIdx) && lineIdx >= 0) {
+              if (!Array.isArray(state.highlightedLineIndices)) state.highlightedLineIndices = [];
+              const pos = state.highlightedLineIndices.indexOf(lineIdx);
+              if (pos >= 0) {
+                state.highlightedLineIndices.splice(pos, 1);
+              } else {
+                state.highlightedLineIndices.push(lineIdx);
+              }
+              renderPresentationLinesList();
+              syncLiveState();
+              return;
+            }
+          }
+        }
+
         nextLine();
       });
 
       els.obsOverlay.addEventListener('touchstart', (e) => {
-        if (e.target && e.target.closest && e.target.closest('#btn-close-presentation-overlay, .btn-close-overlay-left, button, a')) return;
+        if (e.target && e.target.closest && e.target.closest('#btn-close-presentation-overlay, .btn-close-overlay-left, #btn-overlay-toggle-highlight, button, a')) return;
         if (e.touches && e.touches.length > 0) {
           overlayTouchStartX = e.touches[0].clientX;
           overlayTouchStartY = e.touches[0].clientY;
@@ -11210,7 +11319,7 @@ document.addEventListener('DOMContentLoaded', () => {
       }, { passive: true });
 
       els.obsOverlay.addEventListener('touchend', (e) => {
-        if (e.target && e.target.closest && e.target.closest('#btn-close-presentation-overlay, .btn-close-overlay-left, button, a')) return;
+        if (e.target && e.target.closest && e.target.closest('#btn-close-presentation-overlay, .btn-close-overlay-left, #btn-overlay-toggle-highlight, button, a')) return;
         if (!e.changedTouches || e.changedTouches.length === 0) return;
 
         overlayLastTouchTime = Date.now();
@@ -11222,6 +11331,30 @@ document.addEventListener('DOMContentLoaded', () => {
         if (elapsed > 700) return;
 
         if (Math.abs(deltaX) < 15 && Math.abs(deltaY) < 15) {
+          if (state.isHighlightMode) {
+            const seg = (e.target && e.target.closest) ? e.target.closest('.obs-line-segment, .obs-line-row') : null;
+            if (seg) {
+              const targetSeg = seg.classList.contains('obs-line-segment') ? seg : seg.querySelector('.obs-line-segment');
+              const rowEl = seg.closest('.obs-line-row') || seg;
+              let lineIdx = targetSeg && targetSeg.dataset.lineIdx !== undefined ? parseInt(targetSeg.dataset.lineIdx) : parseInt(rowEl.dataset.lineIdx);
+              if (isNaN(lineIdx) && targetSeg && els.obsLineText) {
+                const allSegs = Array.from(els.obsLineText.querySelectorAll('.obs-line-segment'));
+                lineIdx = allSegs.indexOf(targetSeg);
+              }
+              if (!isNaN(lineIdx) && lineIdx >= 0) {
+                if (!Array.isArray(state.highlightedLineIndices)) state.highlightedLineIndices = [];
+                const pos = state.highlightedLineIndices.indexOf(lineIdx);
+                if (pos >= 0) {
+                  state.highlightedLineIndices.splice(pos, 1);
+                } else {
+                  state.highlightedLineIndices.push(lineIdx);
+                }
+                renderPresentationLinesList();
+                syncLiveState();
+                return;
+              }
+            }
+          }
           nextLine();
           return;
         }
@@ -11446,6 +11579,11 @@ document.addEventListener('DOMContentLoaded', () => {
           hideExternalFullscreenNotice();
         }
         handleFullscreenLaunch();
+      } else if (e.key === 'h' || e.key === 'H' || e.key === 'ا' || e.code === 'KeyH') {
+        e.preventDefault();
+        if (typeof toggleHighlightMode === 'function') {
+          toggleHighlightMode();
+        }
       }
     }, { capture: true });
   }
@@ -16514,6 +16652,7 @@ document.addEventListener('DOMContentLoaded', () => {
       boxRadius: state.styleOptions.boxRadius,
       boxPadding: state.styleOptions.boxPadding,
       hideControls: Boolean(state.hideControls),
+      isHighlightMode: Boolean(state.isHighlightMode),
       highlightedLines: state.isHighlightMode ? (state.highlightedLineIndices || []) : [],
       highlightColor: state.highlightColor || '#ef4444',
       songMaxLines: (targetSong && targetSong._maxSlideLines) || 2,
@@ -16539,14 +16678,20 @@ document.addEventListener('DOMContentLoaded', () => {
     try { localStorage.setItem('sunday_school_taranim_live_presentation', JSON.stringify(payload)); } catch(e) {}
 
     // 1.1 SYNC STATE TO HOST WHEN IN HOTSPOT CONTROLLER MODE
+    const skipHotspot = Boolean(extraOptions && extraOptions.skipHotspotCommand);
     if (state.isHotspotControllerMode && typeof sendHotspotCommand === 'function') {
-      sendHotspotCommand({
-        type: 'SYNC_STATE',
-        currentLineIndex: targetIndex,
-        activeSong: targetSong,
-        isBlank: state.isBlank,
-        isStandbyMode: isEndingStandby
-      });
+      if (!skipHotspot) {
+        sendHotspotCommand({
+          type: 'SYNC_STATE',
+          currentLineIndex: targetIndex,
+          activeSong: targetSong,
+          isBlank: state.isBlank,
+          isStandbyMode: isEndingStandby,
+          isHighlightMode: Boolean(state.isHighlightMode),
+          highlightedLines: state.isHighlightMode ? (state.highlightedLineIndices || []) : [],
+          highlightColor: state.highlightColor || '#ef4444'
+        });
+      }
     } else if (!state.isHotspotControllerMode && typeof pushRemoteHostState === 'function') {
       pushRemoteHostState();
     }
@@ -17016,8 +17161,9 @@ document.addEventListener('DOMContentLoaded', () => {
         // EXACT matching segment & row structure to present.html
         const obsSegments = Array.from(els.obsLineText.querySelectorAll('.obs-line-segment'));
         obsSegments.forEach(s => {
-          s.style.display = 'block';
-          s.style.width = '100%';
+          s.style.display = 'inline-block';
+          s.style.width = 'auto';
+          s.style.maxWidth = '100%';
           s.style.whiteSpace = 'pre-wrap';
           s.style.wordBreak = 'break-word';
           s.style.overflowWrap = 'break-word';
@@ -17125,6 +17271,15 @@ document.addEventListener('DOMContentLoaded', () => {
             }
           }
         });
+
+        const btnOverlayHighlight = document.getElementById('btn-overlay-toggle-highlight');
+        if (btnOverlayHighlight) {
+          btnOverlayHighlight.classList.toggle('active', Boolean(state.isHighlightMode));
+          btnOverlayHighlight.style.setProperty('--highlight-bg', hColor);
+        }
+        if (els.obsOverlay) {
+          els.obsOverlay.classList.toggle('highlight-mode-active', Boolean(state.isHighlightMode));
+        }
 
       // 4. ACCURATE FONT APPLICATION & HIGHLIGHT RENDERING
       const snapText = text;
@@ -17465,6 +17620,15 @@ document.addEventListener('DOMContentLoaded', () => {
               }
             }
           });
+
+          const btnOverlayH = document.getElementById('btn-overlay-toggle-highlight');
+          if (btnOverlayH) {
+            btnOverlayH.classList.toggle('active', Boolean(state.isHighlightMode));
+            btnOverlayH.style.setProperty('--highlight-bg', hColor);
+          }
+          if (els.obsOverlay) {
+            els.obsOverlay.classList.toggle('highlight-mode-active', Boolean(state.isHighlightMode));
+          }
 
           // Synchronize embedded OBS preview card
           const obsPreviewCanvas = document.getElementById('obs-preview-embedded-canvas');
