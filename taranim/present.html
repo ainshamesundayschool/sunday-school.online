@@ -224,13 +224,13 @@
       .obs-line-segment {
         width: auto;
         max-width: 100%;
-        white-space: normal;
+        white-space: nowrap;
         word-break: normal;
         overflow-wrap: normal;
         display: inline-block;
         text-align: center;
-        margin-top: 0.15em;
-        margin-bottom: 0.15em;
+        margin-top: 0;
+        margin-bottom: 0;
       }
     }
 
@@ -327,7 +327,7 @@
         min-height: calc(100vw * 9 / 16) !important;
         max-height: calc(100vw * 9 / 16) !important;
         margin: auto !important;
-        padding: 4px 8px !important;
+        padding: 0 !important;
         display: flex !important;
         flex-direction: column !important;
         align-items: center !important;
@@ -349,13 +349,13 @@
       .obs-line-segment {
         width: auto !important;
         max-width: 100% !important;
-        white-space: normal !important;
+        white-space: nowrap !important;
         word-break: normal !important;
         overflow-wrap: normal !important;
         display: inline-block !important;
         text-align: center !important;
-        margin-top: 0.12em !important;
-        margin-bottom: 0.12em !important;
+        margin-top: 0 !important;
+        margin-bottom: 0 !important;
       }
     }
 
@@ -1440,14 +1440,31 @@
       currentIsBible = isBible;
 
       const container = document.getElementById('obs-overlay-container') || document.body;
-      const curW = Math.max(320, container.clientWidth || window.innerWidth || 1920);
-      const curH = Math.max(240, container.clientHeight || window.innerHeight || 1080);
+      const winW = Math.max(300, container.clientWidth || window.innerWidth || 1920);
+      const winH = Math.max(200, container.clientHeight || window.innerHeight || 1080);
 
-      // Dynamic resize: clear cached font size whenever window dimensions change
-      if (_uniformWindowW !== curW || _uniformWindowH !== curH) {
+      // In vertical mobile mode (portrait), presentation MUST be a horizontal 16:9 box fit to mobile width
+      const isPortrait = (winH > winW) || (winW <= 768 && winH >= winW);
+      let boxW, boxH;
+      if (isPortrait) {
+        boxW = winW;
+        boxH = Math.floor(boxW * (9 / 16));
+      } else {
+        const screenAspect = winW / winH;
+        if (screenAspect >= (16 / 9)) {
+          boxH = winH;
+          boxW = Math.floor(winH * (16 / 9));
+        } else {
+          boxW = winW;
+          boxH = Math.floor(winW * (9 / 16));
+        }
+      }
+
+      // Dynamic resize: clear cached font size whenever presentation dimensions change
+      if (_uniformWindowW !== boxW || _uniformWindowH !== boxH) {
         _uniformFontSize = null;
-        _uniformWindowW = curW;
-        _uniformWindowH = curH;
+        _uniformWindowW = boxW;
+        _uniformWindowH = boxH;
       }
 
       const baseSize = (lastStyleData && lastStyleData.fontSize) || stateFontSize || 105;
@@ -1473,26 +1490,8 @@
       textEl.style.fontStyle = fStyle;
       textEl.style.textDecoration = tDeco;
 
-      const segments = Array.from(textEl.querySelectorAll('.obs-line-segment'));
-      segments.forEach(s => {
-        s.style.display = 'inline-block';
-        s.style.width = 'auto';
-        s.style.maxWidth = '100%';
-        s.style.whiteSpace = 'normal'; // Allow clean word wrap if text reaches edge
-        s.style.wordBreak = 'normal';
-        s.style.overflowWrap = 'break-word';
-        s.style.wordSpacing = 'normal';
-        s.style.textAlign = align === 'justify' ? 'justify' : align;
-        s.style.textJustify = align === 'justify' ? 'inter-word' : 'auto';
-        s.style.textAlignLast = align === 'justify' ? 'center' : align;
-      });
-
       const finalLineHeight = lHeight !== undefined ? lHeight : 1.35;
       textEl.style.lineHeight = `${finalLineHeight}`;
-      const lineRows = textEl.querySelectorAll('.obs-line-row');
-      lineRows.forEach(r => {
-        r.style.lineHeight = `${finalLineHeight}`;
-      });
 
       if (isJomhuria) {
         textEl.style.fontFamily = 'Jomhuria, Arial, sans-serif';
@@ -1506,55 +1505,41 @@
         textEl.style.fontWeight = fWeight;
       }
 
-      // Full viewport bounds with minimal edge padding so text never touches bezels
-      const padX = curW <= 600 ? 14 : (curW <= 1024 ? 20 : 28);
-      const padY = curH <= 600 ? 14 : (curH <= 1024 ? 20 : 28);
-      const safeW = Math.max(260, curW - (padX * 2));
-      const safeH = Math.max(160, curH - (padY * 2));
+      // Safe area inside 16:9 box with small margin so letters never touch edges or get cut off
+      const padX = isPortrait ? Math.max(10, Math.round(boxW * 0.035)) : Math.max(20, Math.round(boxW * 0.025));
+      const padY = isPortrait ? Math.max(8, Math.round(boxH * 0.05)) : Math.max(16, Math.round(boxH * 0.04));
+      const safeW = Math.max(200, boxW - (padX * 2));
+      const safeH = Math.max(120, boxH - (padY * 2));
 
       const box = document.getElementById('presenter-box') || document.querySelector('.lower-third-container');
       if (box) {
-        box.style.maxWidth = `${curW}px`;
-        box.style.maxHeight = `${curH}px`;
+        box.style.width = `${boxW}px`;
+        box.style.maxWidth = `${boxW}px`;
+        box.style.height = `${boxH}px`;
+        box.style.maxHeight = `${boxH}px`;
+        box.style.aspectRatio = '16 / 9';
         box.style.padding = '0';
+        box.style.margin = 'auto';
+        box.style.overflow = 'hidden';
       }
 
-      textEl.style.maxWidth = `${safeW}px`;
-      textEl.style.width = '100%';
-      textEl.style.boxSizing = 'border-box';
-
-      const wrapper = textEl.querySelector('.obs-slide-wrapper') || textEl;
-      wrapper.style.transform = 'none';
-      wrapper.style.maxWidth = `${safeW}px`;
-      wrapper.style.width = '100%';
-      wrapper.style.boxSizing = 'border-box';
-
-      lineRows.forEach(r => {
-        r.style.lineHeight = `${finalLineHeight}`;
-        r.style.maxWidth = '100%';
-        r.style.width = '100%';
-        r.style.boxSizing = 'border-box';
-      });
-
-      const minFont = curW <= 600 ? 16 : 22;
-      const maxFont = Math.max(minFont + 1, Math.min(320, Math.floor(safeH * 0.96)));
+      const minFont = isPortrait ? 15 : 20;
+      const maxFont = Math.max(minFont + 1, Math.min(260, Math.floor(safeH * 0.75)));
 
       const checkFitsElement = (el, size) => {
         el.style.fontSize = `${size}px`;
-        const elWrap = el.querySelector('.obs-slide-wrapper') || el;
-        let totalH = 0;
-        const rows = el.querySelectorAll('.obs-line-row, .slide-line-row');
-        if (rows.length > 0) {
-          rows.forEach(r => { totalH += (r.offsetHeight || r.scrollHeight || 0); });
-        } else {
-          totalH = Math.max(el.offsetHeight || 0, el.scrollHeight || 0, elWrap.offsetHeight || 0, elWrap.scrollHeight || 0);
-        }
+        const rect = el.getBoundingClientRect();
+        const scrollH = el.scrollHeight || 0;
+        const scrollW = el.scrollWidth || 0;
+        const totalH = Math.max(rect.height, scrollH);
         if (totalH > safeH) return false;
-        const elSegs = Array.from(el.querySelectorAll('.obs-line-segment'));
+        if (scrollW > safeW + 1 || rect.width > safeW + 1) return false;
+
+        const elSegs = el.querySelectorAll('.obs-line-segment');
         for (let i = 0; i < elSegs.length; i++) {
           const seg = elSegs[i];
-          const segWidth = Math.max(seg.scrollWidth || 0, seg.offsetWidth || 0);
-          if (segWidth > safeW + 2) return false;
+          const segW = Math.max(seg.scrollWidth || 0, seg.offsetWidth || 0, seg.getBoundingClientRect().width);
+          if (segW > safeW) return false;
         }
         return true;
       };
@@ -1573,15 +1558,16 @@
         targetEl.style.textAlign = textEl.style.textAlign || 'center';
         targetEl.style.fontStyle = fStyle;
         targetEl.style.textDecoration = tDeco;
-        targetEl.style.whiteSpace = 'normal';
-        targetEl.style.wordBreak = 'normal';
-        targetEl.style.overflowWrap = 'break-word';
+        targetEl.style.margin = '0 auto';
+        targetEl.style.padding = '0';
 
         const w = targetEl.querySelector('.obs-slide-wrapper') || targetEl;
         w.style.transform = 'none';
         w.style.maxWidth = `${safeW}px`;
         w.style.width = '100%';
         w.style.boxSizing = 'border-box';
+        w.style.margin = '0 auto';
+        w.style.padding = '0';
 
         const rows = targetEl.querySelectorAll('.obs-line-row');
         rows.forEach(r => {
@@ -1589,6 +1575,8 @@
           r.style.maxWidth = '100%';
           r.style.width = '100%';
           r.style.boxSizing = 'border-box';
+          r.style.margin = '0';
+          r.style.padding = '0';
         });
 
         const segs = Array.from(targetEl.querySelectorAll('.obs-line-segment'));
@@ -1596,10 +1584,12 @@
           s.style.display = 'inline-block';
           s.style.width = 'auto';
           s.style.maxWidth = '100%';
-          s.style.whiteSpace = 'normal';
+          s.style.whiteSpace = 'nowrap';
           s.style.wordBreak = 'normal';
-          s.style.overflowWrap = 'break-word';
+          s.style.overflowWrap = 'normal';
           s.style.lineHeight = `${finalLineHeight}`;
+          s.style.margin = '0';
+          s.style.padding = '0';
         });
 
         let low = minFont;
@@ -1620,7 +1610,7 @@
       // UNIFORM TARNIMA & BIBLE FONT SIZE ENGINE
       const currentMode = (lastStyleData && (lastStyleData.presentationMode || lastStyleData.mode)) || 'fullslide';
       const itemKey = (lastStyleData && (lastStyleData.songKey || lastStyleData.songTitle || (isBible ? ('bible_' + (lastStyleData.bibleRef || '')) : ''))) || 'item';
-      const currentSongKey = `${itemKey}__mode_${currentMode}__font_${currentFont}__${curW}x${curH}`;
+      const currentSongKey = `${itemKey}__mode_${currentMode}__font_${currentFont}__${boxW}x${boxH}`;
 
       let appliedFontSize = minFont;
 
@@ -1639,7 +1629,7 @@
             if (!sandbox) {
               sandbox = document.createElement('div');
               sandbox.id = 'obs-fit-sandbox';
-              sandbox.style.cssText = 'position: fixed; top: -99999px; left: -99999px; visibility: hidden; pointer-events: none; opacity: 0; z-index: -99999;';
+              sandbox.style.cssText = 'position: fixed; top: -99999px; left: -99999px; visibility: hidden; pointer-events: none; opacity: 0; z-index: -99999; margin: 0; padding: 0; box-sizing: border-box;';
               document.body.appendChild(sandbox);
             }
 
@@ -1669,32 +1659,68 @@
       }
 
       textEl.style.fontSize = `${appliedFontSize}px`;
+      textEl.style.maxWidth = `${safeW}px`;
+      textEl.style.width = '100%';
+      textEl.style.boxSizing = 'border-box';
+      textEl.style.lineHeight = `${finalLineHeight}`;
+
+      const wrapper = textEl.querySelector('.obs-slide-wrapper') || textEl;
+      wrapper.style.transform = 'none';
+      wrapper.style.maxWidth = `${safeW}px`;
+      wrapper.style.width = '100%';
+      wrapper.style.boxSizing = 'border-box';
+      wrapper.style.margin = '0 auto';
+      wrapper.style.padding = '0';
+
+      const lineRows = textEl.querySelectorAll('.obs-line-row');
+      lineRows.forEach(r => {
+        r.style.lineHeight = `${finalLineHeight}`;
+        r.style.maxWidth = '100%';
+        r.style.width = '100%';
+        r.style.boxSizing = 'border-box';
+        r.style.margin = '0';
+        r.style.padding = '0';
+      });
+
+      const liveSegments = Array.from(textEl.querySelectorAll('.obs-line-segment'));
+      liveSegments.forEach(s => {
+        s.style.display = 'inline-block';
+        s.style.width = 'auto';
+        s.style.maxWidth = '100%';
+        s.style.whiteSpace = 'nowrap';
+        s.style.wordBreak = 'normal';
+        s.style.overflowWrap = 'normal';
+        s.style.wordSpacing = 'normal';
+        s.style.lineHeight = `${finalLineHeight}`;
+        s.style.margin = '0';
+        s.style.padding = '0';
+        s.style.textAlign = align === 'justify' ? 'justify' : align;
+        s.style.textJustify = align === 'justify' ? 'inter-word' : 'auto';
+        s.style.textAlignLast = align === 'justify' ? 'center' : align;
+      });
 
       // Safety step-down loop: if any slide steps down, keep all slides in sync
       let safetyIter = 0;
       let curS = appliedFontSize;
-      const elWrap = textEl.querySelector('.obs-slide-wrapper') || textEl;
-      while (curS > 18 && safetyIter < 20) {
+      while (curS > minFont && safetyIter < 25) {
+        const liveRect = textEl.getBoundingClientRect();
+        const liveH = Math.max(liveRect.height, textEl.scrollHeight || 0, textEl.offsetHeight || 0);
+        const liveW = Math.max(liveRect.width, textEl.scrollWidth || 0, textEl.offsetWidth || 0);
+
         let segOverflow = false;
-        const segs = textEl.querySelectorAll('.obs-line-segment');
-        for (let i = 0; i < segs.length; i++) {
-          if ((segs[i].scrollWidth || 0) > safeW + 2 || (segs[i].offsetWidth || 0) > safeW + 2) {
+        for (let i = 0; i < liveSegments.length; i++) {
+          const seg = liveSegments[i];
+          const segW = Math.max(seg.scrollWidth || 0, seg.offsetWidth || 0, seg.getBoundingClientRect().width);
+          if (segW > safeW) {
             segOverflow = true;
             break;
           }
         }
-        let totalH = 0;
-        const rows = textEl.querySelectorAll('.obs-line-row, .slide-line-row');
-        if (rows.length > 0) {
-          rows.forEach(r => { totalH += (r.offsetHeight || r.scrollHeight || 0); });
-        } else {
-          totalH = Math.max(textEl.offsetHeight || 0, textEl.scrollHeight || 0, elWrap.offsetHeight || 0, elWrap.scrollHeight || 0);
-        }
-        if (totalH <= safeH && !segOverflow) {
+
+        if (liveH <= safeH && liveW <= safeW + 2 && !segOverflow) {
           break;
         }
-        const step = Math.max(1, Math.ceil(curS * 0.05));
-        curS -= step;
+        curS -= 1;
         textEl.style.fontSize = `${curS}px`;
         safetyIter++;
       }

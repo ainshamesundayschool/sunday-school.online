@@ -15481,9 +15481,10 @@ document.addEventListener('DOMContentLoaded', () => {
       const containerRect = container.getBoundingClientRect();
       const targetRect = targetEl.getBoundingClientRect();
       const delta = targetRect.top - containerRect.top - (container.clientTop || 0);
-      const targetScrollTop = container.scrollTop + delta;
+      const maxScroll = Math.max(0, container.scrollHeight - container.clientHeight);
+      const targetScrollTop = Math.min(maxScroll, Math.max(0, container.scrollTop + delta));
       container.scrollTo({
-        top: Math.max(0, targetScrollTop),
+        top: targetScrollTop,
         behavior: smooth ? 'smooth' : 'auto'
       });
     }
@@ -16998,58 +16999,67 @@ document.addEventListener('DOMContentLoaded', () => {
       const snapText = text;
       requestAnimationFrame(() => {
         if (els.obsLineText && snapText.trim() && els.obsLineText.style.display !== 'none') {
-          const curW = Math.max(300, (els.obsOverlay && els.obsOverlay.clientWidth) || window.innerWidth);
-          const curH = Math.max(200, (els.obsOverlay && els.obsOverlay.clientHeight) || window.innerHeight);
+          const winW = Math.max(300, (els.obsOverlay && els.obsOverlay.clientWidth) || window.innerWidth);
+          const winH = Math.max(200, (els.obsOverlay && els.obsOverlay.clientHeight) || window.innerHeight);
 
-          // Full viewport utilization with minimal safe margin around screen edges
-          const padX = curW <= 600 ? 14 : (curW <= 1024 ? 20 : 28);
-          const padY = curH <= 600 ? 14 : (curH <= 1024 ? 20 : 28);
-          const safeW = Math.max(260, curW - (padX * 2));
-          const safeH = Math.max(160, curH - (padY * 2));
-
-          if (els.obsLowerThirdBox) {
-            els.obsLowerThirdBox.style.maxWidth = `${curW}px`;
-            els.obsLowerThirdBox.style.maxHeight = `${curH}px`;
-            els.obsLowerThirdBox.style.padding = '0';
+          // In vertical mobile mode (portrait), presentation MUST be a horizontal 16:9 box fit to mobile width
+          const isPortrait = (winH > winW) || (winW <= 768 && winH >= winW);
+          let boxW, boxH;
+          if (isPortrait) {
+            boxW = winW;
+            boxH = Math.floor(boxW * (9 / 16));
+          } else {
+            const screenAspect = winW / winH;
+            if (screenAspect >= (16 / 9)) {
+              boxH = winH;
+              boxW = Math.floor(winH * (16 / 9));
+            } else {
+              boxW = winW;
+              boxH = Math.floor(winW * (9 / 16));
+            }
           }
 
-          els.obsLineText.style.maxWidth = `${safeW}px`;
-          els.obsLineText.style.width = '100%';
-          els.obsLineText.style.boxSizing = 'border-box';
+          // Dynamic resize: clear cached font size whenever presentation dimensions change
+          if (state._uniformWindowW !== boxW || state._uniformWindowH !== boxH) {
+            state._uniformFontSize = null;
+            state._uniformWindowW = boxW;
+            state._uniformWindowH = boxH;
+          }
 
-          const wrapper = els.obsLineText.querySelector('.obs-slide-wrapper') || els.obsLineText;
-          wrapper.style.transform = 'none';
-          wrapper.style.maxWidth = `${safeW}px`;
-          wrapper.style.width = '100%';
-          wrapper.style.boxSizing = 'border-box';
+          // Safe area inside 16:9 box with small margin so letters never touch edges or get cut off
+          const padX = isPortrait ? Math.max(10, Math.round(boxW * 0.035)) : Math.max(20, Math.round(boxW * 0.025));
+          const padY = isPortrait ? Math.max(8, Math.round(boxH * 0.05)) : Math.max(16, Math.round(boxH * 0.04));
+          const safeW = Math.max(200, boxW - (padX * 2));
+          const safeH = Math.max(120, boxH - (padY * 2));
 
-          const lineRows = els.obsLineText.querySelectorAll('.obs-line-row');
-          lineRows.forEach(r => {
-            r.style.lineHeight = `${finalLineHeight}`;
-            r.style.maxWidth = '100%';
-            r.style.width = '100%';
-            r.style.boxSizing = 'border-box';
-          });
+          if (els.obsLowerThirdBox) {
+            els.obsLowerThirdBox.style.width = `${boxW}px`;
+            els.obsLowerThirdBox.style.maxWidth = `${boxW}px`;
+            els.obsLowerThirdBox.style.height = `${boxH}px`;
+            els.obsLowerThirdBox.style.maxHeight = `${boxH}px`;
+            els.obsLowerThirdBox.style.aspectRatio = '16 / 9';
+            els.obsLowerThirdBox.style.padding = '0';
+            els.obsLowerThirdBox.style.margin = 'auto';
+            els.obsLowerThirdBox.style.overflow = 'hidden';
+          }
 
-          const minFont = curW <= 600 ? 16 : 22;
-          const maxFont = Math.max(minFont + 1, Math.min(320, Math.floor(safeH * 0.96)));
+          const minFont = isPortrait ? 15 : 20;
+          const maxFont = Math.max(minFont + 1, Math.min(260, Math.floor(safeH * 0.75)));
 
           const checkFitsElement = (el, size) => {
             el.style.fontSize = `${size}px`;
-            const elWrap = el.querySelector('.obs-slide-wrapper') || el;
-            let totalH = 0;
-            const rows = el.querySelectorAll('.obs-line-row, .slide-line-row');
-            if (rows.length > 0) {
-              rows.forEach(r => { totalH += (r.offsetHeight || r.scrollHeight || 0); });
-            } else {
-              totalH = Math.max(el.offsetHeight || 0, el.scrollHeight || 0, elWrap.offsetHeight || 0, elWrap.scrollHeight || 0);
-            }
+            const rect = el.getBoundingClientRect();
+            const scrollH = el.scrollHeight || 0;
+            const scrollW = el.scrollWidth || 0;
+            const totalH = Math.max(rect.height, scrollH);
             if (totalH > safeH) return false;
-            const elSegs = Array.from(el.querySelectorAll('.obs-line-segment'));
+            if (scrollW > safeW + 1 || rect.width > safeW + 1) return false;
+
+            const elSegs = el.querySelectorAll('.obs-line-segment');
             for (let i = 0; i < elSegs.length; i++) {
               const seg = elSegs[i];
-              const segWidth = Math.max(seg.scrollWidth || 0, seg.offsetWidth || 0);
-              if (segWidth > safeW + 2) return false;
+              const segW = Math.max(seg.scrollWidth || 0, seg.offsetWidth || 0, seg.getBoundingClientRect().width);
+              if (segW > safeW) return false;
             }
             return true;
           };
@@ -17067,15 +17077,16 @@ document.addEventListener('DOMContentLoaded', () => {
             targetEl.style.textAlign = align === 'justify' ? 'justify' : align;
             targetEl.style.fontStyle = fStyle;
             targetEl.style.textDecoration = tDeco;
-            targetEl.style.whiteSpace = 'normal';
-            targetEl.style.wordBreak = 'normal';
-            targetEl.style.overflowWrap = 'break-word';
+            targetEl.style.margin = '0 auto';
+            targetEl.style.padding = '0';
 
             const w = targetEl.querySelector('.obs-slide-wrapper') || targetEl;
             w.style.transform = 'none';
             w.style.maxWidth = `${safeW}px`;
             w.style.width = '100%';
             w.style.boxSizing = 'border-box';
+            w.style.margin = '0 auto';
+            w.style.padding = '0';
 
             const rows = targetEl.querySelectorAll('.obs-line-row');
             rows.forEach(r => {
@@ -17083,6 +17094,8 @@ document.addEventListener('DOMContentLoaded', () => {
               r.style.maxWidth = '100%';
               r.style.width = '100%';
               r.style.boxSizing = 'border-box';
+              r.style.margin = '0';
+              r.style.padding = '0';
             });
 
             const segs = Array.from(targetEl.querySelectorAll('.obs-line-segment'));
@@ -17090,10 +17103,12 @@ document.addEventListener('DOMContentLoaded', () => {
               s.style.display = 'inline-block';
               s.style.width = 'auto';
               s.style.maxWidth = '100%';
-              s.style.whiteSpace = 'normal';
+              s.style.whiteSpace = 'nowrap';
               s.style.wordBreak = 'normal';
-              s.style.overflowWrap = 'break-word';
+              s.style.overflowWrap = 'normal';
               s.style.lineHeight = `${finalLineHeight}`;
+              s.style.margin = '0';
+              s.style.padding = '0';
             });
 
             let low = minFont;
@@ -17115,7 +17130,7 @@ document.addEventListener('DOMContentLoaded', () => {
           let appliedFontSize = minFont;
           const currentMode = state.presentationMode || 'fullslide';
           const itemKey = (targetSong && (targetSong.id || targetSong.key || targetSong.title || (isBible ? ('bible_' + (targetSong.book_name || '') + '_' + (targetSong.chapter_number || '')) : ''))) || 'item';
-          const currentSongKey = `${itemKey}__mode_${currentMode}__font_${state.selectedFont}__${curW}x${curH}`;
+          const currentSongKey = `${itemKey}__mode_${currentMode}__font_${state.selectedFont}__${boxW}x${boxH}`;
 
           if (currentSongKey) {
             if (state._uniformSongKey === currentSongKey && state._uniformFontSize !== null && state._uniformFontSize !== undefined) {
@@ -17131,7 +17146,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (!sandbox) {
                   sandbox = document.createElement('div');
                   sandbox.id = 'obs-fit-sandbox';
-                  sandbox.style.cssText = 'position: fixed; top: -99999px; left: -99999px; visibility: hidden; pointer-events: none; opacity: 0; z-index: -99999;';
+                  sandbox.style.cssText = 'position: fixed; top: -99999px; left: -99999px; visibility: hidden; pointer-events: none; opacity: 0; z-index: -99999; margin: 0; padding: 0; box-sizing: border-box;';
                   document.body.appendChild(sandbox);
                 }
                 for (let i = 0; i < allSlides.length; i++) {
@@ -17161,16 +17176,41 @@ document.addEventListener('DOMContentLoaded', () => {
 
           // Apply font size and restore segment styling on live element
           els.obsLineText.style.fontSize = `${appliedFontSize}px`;
+          els.obsLineText.style.maxWidth = `${safeW}px`;
+          els.obsLineText.style.width = '100%';
+          els.obsLineText.style.boxSizing = 'border-box';
+          els.obsLineText.style.lineHeight = `${finalLineHeight}`;
 
-          const segments = Array.from(els.obsLineText.querySelectorAll('.obs-line-segment'));
-          segments.forEach(s => {
+          const wrapper = els.obsLineText.querySelector('.obs-slide-wrapper') || els.obsLineText;
+          wrapper.style.transform = 'none';
+          wrapper.style.maxWidth = `${safeW}px`;
+          wrapper.style.width = '100%';
+          wrapper.style.boxSizing = 'border-box';
+          wrapper.style.margin = '0 auto';
+          wrapper.style.padding = '0';
+
+          const lineRows = els.obsLineText.querySelectorAll('.obs-line-row');
+          lineRows.forEach(r => {
+            r.style.lineHeight = `${finalLineHeight}`;
+            r.style.maxWidth = '100%';
+            r.style.width = '100%';
+            r.style.boxSizing = 'border-box';
+            r.style.margin = '0';
+            r.style.padding = '0';
+          });
+
+          const liveSegments = Array.from(els.obsLineText.querySelectorAll('.obs-line-segment'));
+          liveSegments.forEach(s => {
             s.style.display = 'inline-block';
             s.style.width = 'auto';
             s.style.maxWidth = '100%';
-            s.style.whiteSpace = 'normal';
+            s.style.whiteSpace = 'nowrap';
             s.style.wordBreak = 'normal';
-            s.style.overflowWrap = 'break-word';
+            s.style.overflowWrap = 'normal';
             s.style.wordSpacing = 'normal';
+            s.style.lineHeight = `${finalLineHeight}`;
+            s.style.margin = '0';
+            s.style.padding = '0';
             s.style.textAlign = align === 'justify' ? 'justify' : align;
             s.style.textJustify = align === 'justify' ? 'inter-word' : 'auto';
             s.style.textAlignLast = align === 'justify' ? 'center' : align;
@@ -17179,27 +17219,25 @@ document.addEventListener('DOMContentLoaded', () => {
           // Safety step-down loop: if any slide steps down, keep all slides in sync
           let safetyIter = 0;
           let curS = appliedFontSize;
-          const elWrap = els.obsLineText.querySelector('.obs-slide-wrapper') || els.obsLineText;
-          while (curS > 18 && safetyIter < 20) {
+          while (curS > minFont && safetyIter < 25) {
+            const liveRect = els.obsLineText.getBoundingClientRect();
+            const liveH = Math.max(liveRect.height, els.obsLineText.scrollHeight || 0, els.obsLineText.offsetHeight || 0);
+            const liveW = Math.max(liveRect.width, els.obsLineText.scrollWidth || 0, els.obsLineText.offsetWidth || 0);
+
             let segOverflow = false;
-            for (let i = 0; i < segments.length; i++) {
-              if ((segments[i].scrollWidth || 0) > safeW + 2 || (segments[i].offsetWidth || 0) > safeW + 2) {
+            for (let i = 0; i < liveSegments.length; i++) {
+              const seg = liveSegments[i];
+              const segW = Math.max(seg.scrollWidth || 0, seg.offsetWidth || 0, seg.getBoundingClientRect().width);
+              if (segW > safeW) {
                 segOverflow = true;
                 break;
               }
             }
-            let totalH = 0;
-            const rows = els.obsLineText.querySelectorAll('.obs-line-row, .slide-line-row');
-            if (rows.length > 0) {
-              rows.forEach(r => { totalH += (r.offsetHeight || r.scrollHeight || 0); });
-            } else {
-              totalH = Math.max(els.obsLineText.offsetHeight || 0, els.obsLineText.scrollHeight || 0, elWrap.offsetHeight || 0, elWrap.scrollHeight || 0);
-            }
-            if (totalH <= safeH && !segOverflow) {
+
+            if (liveH <= safeH && liveW <= safeW + 2 && !segOverflow) {
               break;
             }
-            const step = Math.max(1, Math.ceil(curS * 0.05));
-            curS -= step;
+            curS -= 1;
             els.obsLineText.style.fontSize = `${curS}px`;
             safetyIter++;
           }
