@@ -809,6 +809,9 @@ position: absolute;
             localStorage.setItem('churchName',    data.church_name      || '');
             localStorage.setItem('churchCode',    data.church_code      || '');
         }
+        if (data.auth_token) {
+            localStorage.setItem('authToken', data.auth_token);
+        }
     }
 
     function getRedirectTarget() {

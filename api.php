@@ -37,7 +37,13 @@ if (!headers_sent()) {
 
 header('Content-Type: application/json; charset=utf-8');
 
-header('Access-Control-Allow-Origin: *');
+$origin = $_SERVER['HTTP_ORIGIN'] ?? '';
+if (!empty($origin)) {
+    header("Access-Control-Allow-Origin: $origin");
+    header("Access-Control-Allow-Credentials: true");
+} else {
+    header('Access-Control-Allow-Origin: *');
+}
 
 header('Access-Control-Allow-Methods: POST, GET, OPTIONS');
 
@@ -3464,7 +3470,84 @@ function saveEnhancedImage($image, $outputPath, $quality = 85)
 
 
 
-function autoRestoreSessionFromRequest()
+function ensureAuthTokensTable($conn): void
+{
+    static $ensured = false;
+    if ($ensured) return;
+    $ensured = true;
+    @$conn->query("CREATE TABLE IF NOT EXISTS `user_auth_tokens` (
+        `id` INT AUTO_INCREMENT PRIMARY KEY,
+        `user_type` VARCHAR(20) NOT NULL,
+        `user_id` INT NOT NULL,
+        `token_hash` VARCHAR(64) NOT NULL,
+        `expires_at` DATETIME NOT NULL,
+        `created_at` DATETIME DEFAULT CURRENT_TIMESTAMP,
+        UNIQUE KEY `idx_token_hash` (`token_hash`),
+        INDEX `idx_user` (`user_type`, `user_id`)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+}
+
+function issueAuthToken(string $userType, int $userId): string
+{
+    try {
+        $conn = getDBConnection();
+        ensureAuthTokensTable($conn);
+        $token = bin2hex(random_bytes(32));
+        $tokenHash = hash('sha256', $token);
+        $expiresAt = date('Y-m-d H:i:s', time() + 315360000); // 10 years
+
+        $stmt = $conn->prepare("INSERT INTO user_auth_tokens (user_type, user_id, token_hash, expires_at) VALUES (?, ?, ?, ?)");
+        if ($stmt) {
+            $stmt->bind_param("siss", $userType, $userId, $tokenHash, $expiresAt);
+            $stmt->execute();
+            $stmt->close();
+        }
+
+        $cookieLifetime = 315360000;
+        @setcookie('ss_auth_token', $token, [
+            'expires' => time() + $cookieLifetime,
+            'path' => '/',
+            'domain' => '',
+            'secure' => isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on',
+            'httponly' => true,
+            'samesite' => 'Lax'
+        ]);
+
+        return $token;
+    } catch (Exception $e) {
+        error_log("issueAuthToken error: " . $e->getMessage());
+        return '';
+    }
+}
+
+function revokeCurrentAuthToken(): void
+{
+    $token = trim($_COOKIE['ss_auth_token'] ?? $_POST['auth_token'] ?? $_GET['auth_token'] ?? '');
+    if (!empty($token) && strlen($token) === 64 && ctype_xdigit($token)) {
+        try {
+            $conn = getDBConnection();
+            $tokenHash = hash('sha256', $token);
+            $stmt = $conn->prepare("DELETE FROM user_auth_tokens WHERE token_hash = ?");
+            if ($stmt) {
+                $stmt->bind_param("s", $tokenHash);
+                $stmt->execute();
+                $stmt->close();
+            }
+        } catch (Exception $e) {
+            // ignore
+        }
+    }
+    @setcookie('ss_auth_token', '', [
+        'expires' => time() - 3600,
+        'path' => '/',
+        'domain' => '',
+        'secure' => isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on',
+        'httponly' => true,
+        'samesite' => 'Lax'
+    ]);
+}
+
+function autoRestoreSessionFromRequest(): bool
 {
     if (
         !empty($_SESSION['church_id']) || 
@@ -3475,6 +3558,119 @@ function autoRestoreSessionFromRequest()
     ) {
         return true;
     }
+
+    $token = trim($_COOKIE['ss_auth_token'] ?? $_POST['auth_token'] ?? $_GET['auth_token'] ?? '');
+    if (empty($token) || strlen($token) !== 64 || !ctype_xdigit($token)) {
+        return false;
+    }
+
+    try {
+        $conn = getDBConnection();
+        ensureAuthTokensTable($conn);
+        $tokenHash = hash('sha256', $token);
+
+        $stmt = $conn->prepare("
+            SELECT user_type, user_id 
+            FROM user_auth_tokens 
+            WHERE token_hash = ? AND expires_at > NOW() 
+            LIMIT 1
+        ");
+        if (!$stmt) return false;
+        $stmt->bind_param("s", $tokenHash);
+        $stmt->execute();
+        $res = $stmt->get_result();
+        $tokenRow = $res ? $res->fetch_assoc() : null;
+        $stmt->close();
+
+        if (!$tokenRow) {
+            return false;
+        }
+
+        $userType = $tokenRow['user_type'];
+        $userId = intval($tokenRow['user_id']);
+
+        if ($userType === 'uncle') {
+            ensureChurchTypeColumn($conn);
+            $stmtU = $conn->prepare("
+                SELECT u.id, u.name, u.username, u.role, u.image_url, u.church_id,
+                       c.church_name, c.church_code, c.admin_email,
+                       COALESCE(c.church_type, 'kids') AS church_type,
+                       COALESCE(c.is_approved, 1) AS is_approved
+                FROM uncles u
+                LEFT JOIN churches c ON u.church_id = c.id
+                WHERE u.id = ? AND (u.deleted IS NULL OR u.deleted = 0)
+                LIMIT 1
+            ");
+            if ($stmtU) {
+                $stmtU->bind_param("i", $userId);
+                $stmtU->execute();
+                $uRow = $stmtU->get_result()->fetch_assoc();
+                $stmtU->close();
+
+                if ($uRow) {
+                    if (isset($uRow['is_approved']) && intval($uRow['is_approved']) === 0) {
+                        return false;
+                    }
+
+                    ensureActiveSession();
+                    $_SESSION['uncle_id'] = intval($uRow['id']);
+                    $_SESSION['uncle_name'] = $uRow['name'];
+                    $_SESSION['uncle_username'] = $uRow['username'];
+                    $_SESSION['uncle_image'] = $uRow['image_url'];
+                    $_SESSION['uncle_role'] = $uRow['role'] ?? 'uncle';
+                    $_SESSION['role'] = $uRow['role'] ?? 'uncle';
+                    if (in_array(strtolower(trim($uRow['role'] ?? '')), ['developer', 'dev'])) {
+                        $_SESSION['is_developer'] = true;
+                    }
+                    $_SESSION['church_id'] = intval($uRow['church_id']);
+                    $_SESSION['church_name'] = $uRow['church_name'];
+                    $_SESSION['church_code'] = $uRow['church_code'];
+                    $_SESSION['church_type'] = $uRow['church_type'];
+                    $_SESSION['admin_email'] = $uRow['admin_email'] ?? '';
+                    $_SESSION['login_type'] = 'uncle';
+                    $_SESSION['uncle_logged_in'] = true;
+                    return true;
+                }
+            }
+        } elseif ($userType === 'church') {
+            ensureChurchTypeColumn($conn);
+            $stmtC = $conn->prepare("
+                SELECT id, church_name, church_code, admin_email,
+                       COALESCE(church_type, 'kids') AS church_type,
+                       COALESCE(is_approved, 1) AS is_approved
+                FROM churches
+                WHERE id = ?
+                LIMIT 1
+            ");
+            if ($stmtC) {
+                $stmtC->bind_param("i", $userId);
+                $stmtC->execute();
+                $cRow = $stmtC->get_result()->fetch_assoc();
+                $stmtC->close();
+
+                if ($cRow) {
+                    if (isset($cRow['is_approved']) && intval($cRow['is_approved']) === 0) {
+                        return false;
+                    }
+
+                    ensureActiveSession();
+                    $_SESSION['church_id'] = intval($cRow['id']);
+                    $_SESSION['church_name'] = $cRow['church_name'];
+                    $_SESSION['church_code'] = $cRow['church_code'];
+                    $_SESSION['church_type'] = $cRow['church_type'];
+                    $_SESSION['admin_email'] = $cRow['admin_email'] ?? '';
+                    $_SESSION['login_type'] = 'church';
+                    $_SESSION['uncle_role'] = 'admin';
+                    $_SESSION['role'] = 'admin';
+                    $_SESSION['loggedIn'] = true;
+                    return true;
+                }
+            }
+        }
+    } catch (Exception $e) {
+        error_log("autoRestoreSessionFromRequest token restore error: " . $e->getMessage());
+    }
+
     return false;
 }
 
@@ -3570,6 +3766,7 @@ function isAdminOrDevRole(): bool
 // Check if user is logged in
 function checkAuth()
 {
+    autoRestoreSessionFromRequest();
     syncCurrentSessionRoleFromDB();
 
     if (
@@ -3587,6 +3784,7 @@ function checkAuth()
 
 function checkUncleAuth()
 {
+    autoRestoreSessionFromRequest();
     syncCurrentSessionRoleFromDB();
 
     if (
@@ -4072,6 +4270,7 @@ try {
 
 
         case 'logout':
+            revokeCurrentAuthToken();
             $_SESSION = [];
             if (ini_get("session.use_cookies")) {
                 $params = session_get_cookie_params();
@@ -6065,13 +6264,15 @@ function handleLogin()
 
                 runBackgroundGradeUpChecks();
 
-
+                $authToken = issueAuthToken('church', intval($row['id']));
 
                 sendJSON([
 
                     'success' => true,
 
                     'message' => 'تم تسجيل الدخول بنجاح',
+
+                    'auth_token' => $authToken,
 
                     'church_name' => $row['church_name'],
 
@@ -15635,11 +15836,15 @@ function handleUncleLogin()
 
 
 
+                $authToken = issueAuthToken('uncle', intval($row['id']));
+
                 sendJSON([
 
                     'success' => true,
 
                     'message' => 'تم تسجيل الدخول بنجاح',
+
+                    'auth_token' => $authToken,
 
                     'uncle' => [
 
@@ -34459,6 +34664,7 @@ try {
 
 
         case 'logout':
+            revokeCurrentAuthToken();
             $_SESSION = [];
             if (ini_get("session.use_cookies")) {
                 $params = session_get_cookie_params();
