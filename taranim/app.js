@@ -17066,6 +17066,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
           const computeFitForHtml = (htmlContent, targetEl) => {
             targetEl.innerHTML = htmlContent;
+            const sandboxBadge = targetEl.querySelector('.slide-badge-layer');
+            if (sandboxBadge) {
+              sandboxBadge.style.display = 'none';
+            }
             targetEl.style.maxWidth = `${safeW}px`;
             targetEl.style.width = `${safeW}px`;
             targetEl.style.boxSizing = 'border-box';
@@ -17228,7 +17232,8 @@ document.addEventListener('DOMContentLoaded', () => {
             for (let i = 0; i < liveSegments.length; i++) {
               const seg = liveSegments[i];
               const segW = Math.max(seg.scrollWidth || 0, seg.offsetWidth || 0, seg.getBoundingClientRect().width);
-              if (segW > safeW) {
+              const maxAllowed = seg.classList.contains('obs-first-line') ? (boxW - 4) : safeW;
+              if (segW > maxAllowed) {
                 segOverflow = true;
                 break;
               }

@@ -1869,7 +1869,7 @@ input[type="checkbox"]:checked::after {
 .slide-badge-layer {
   color: #94a3b8 !important;
   font-weight: 700 !important;
-  font-size: 0.72em !important;
+  font-size: 0.58em !important;
 }
 
 .stanza-badge-side {
@@ -1906,18 +1906,22 @@ input[type="checkbox"]:checked::after {
 }
 
 .slide-badge-layer {
-  position: absolute !important;
-  left: calc(100% + 0.28em) !important;
+  position: relative !important;
+  left: auto !important;
   right: auto !important;
-  top: 50% !important;
-  transform: translateY(-50%) !important;
+  top: auto !important;
+  bottom: auto !important;
+  transform: none !important;
   display: inline-block !important;
   visibility: visible !important;
-  opacity: 0.9 !important;
-  font-weight: 800 !important;
-  font-size: 0.52em !important;
-  line-height: 1 !important;
+  vertical-align: baseline !important;
   margin: 0 !important;
+  margin-inline-end: 0.3em !important;
+  margin-inline-start: 0 !important;
+  opacity: 0.9 !important;
+  font-weight: 700 !important;
+  font-size: 0.58em !important;
+  line-height: 1 !important;
   padding: 0 !important;
   z-index: 15 !important;
   white-space: nowrap !important;
@@ -1929,7 +1933,7 @@ input[type="checkbox"]:checked::after {
 .slide-badge-layer.chorus-num {
   color: #ef4444 !important;
   font-weight: 800 !important;
-  font-size: 0.52em !important;
+  font-size: 0.58em !important;
 }
 
 .slide-badge-layer.stanza-badge-side,
@@ -1937,15 +1941,17 @@ input[type="checkbox"]:checked::after {
 .slide-badge-layer.verse-num {
   color: #94a3b8 !important;
   font-weight: 700 !important;
-  font-size: 0.52em !important;
+  font-size: 0.58em !important;
 }
 
 /* FOR LTR / ENGLISH HYMNS: BADGE SITS TO THE LEFT OF THE FIRST LINE */
 [dir="ltr"] .slide-badge-layer,
 .is-ltr .slide-badge-layer,
 .is-ltr-badge {
-  right: calc(100% + 0.28em) !important;
+  right: auto !important;
   left: auto !important;
+  top: auto !important;
+  transform: none !important;
 }
 
 [dir="ltr"] .slide-lines-body,
