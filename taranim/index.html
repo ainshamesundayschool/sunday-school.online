@@ -40,10 +40,11 @@
   <meta name="twitter:description" content="منظومة العرض والترنيم الرقمية لمدارس الأحد — عرض الكلمات والإصحاحات الكتابية ببث مباشر للشاشات بأسرع محرك بحث فوري وتنسيق مخصص.">
   <meta name="twitter:image" content="https://ainshamesundayschool.rf.gd/taranim/logoicon.png">
 
-  <!-- Fonts -->
+  <!-- Fonts: Cairo Universal Standard -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Alexandria:wght@300;400;500;600;700;800;900&family=Almarai:wght@400;700;800&family=Amiri:ital,wght@0,400;0,700;1,400;1,700&family=Baloo+Bhaijaan+2:wght@400;500;600;700;800&family=Cairo:wght@400;600;700;800;900&family=Changa:wght@400;500;600;700;800&family=El+Messiri:wght@400;500;600;700&family=Jomhuria&family=Lemonada:wght@300;400;500;600;700&family=Marhey:wght@300;400;500;600;700&family=Playpen+Sans:wght@300;400;500;600;700;800&family=Rakkas&family=Readex+Pro:wght@300;400;500;600;700&family=Reem+Kufi:wght@400;500;600;700&family=Tajawal:wght@400;500;700;800;900&family=Zain:wght@300;400;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800;900&display=swap">
+  <link href="https://fonts.googleapis.com/css2?family=Alexandria:wght@300;400;500;600;700;800;900&family=Almarai:wght@400;700;800&family=Amiri:ital,wght@0,400;0,700;1,400;1,700&family=Changa:wght@400;500;600;700;800&family=El+Messiri:wght@400;500;600;700&family=Jomhuria&family=Lemonada:wght@300;400;500;600;700&family=Marhey:wght@300;400;500;600;700&family=Playpen+Sans:wght@300;400;500;600;700;800&family=Rakkas&family=Readex+Pro:wght@300;400;500;600;700&family=Reem+Kufi:wght@400;500;600;700&family=Tajawal:wght@400;500;700;800;900&family=Zain:wght@300;400;700;800;900&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/playpen-sans-arabic@5.3.0/index.css">
 
   <!-- Icons -->
@@ -159,10 +160,11 @@
       <!-- LEFT SIDE: CAST MENU & CONTROLLER BUTTONS -->
       <div class="top-left-options" style="display:flex; align-items:center; gap:8px;">
         <div class="dropdown-wrapper">
-          <div id="btn-menu-cast-wrapper">
+          <div id="btn-menu-cast-wrapper" style="position:relative;">
             <button class="icon-menu-btn" id="btn-menu-cast" title="البث والشاشات">
               <i class="fa-brands fa-chromecast"></i>
             </button>
+            <span id="cast-connected-badge" class="cast-connected-badge hidden" title="متصل بنقطة الاتصال"><span class="badge-dot"></span></span>
           </div>
 
           <div class="dropdown-popover hidden" id="popover-cast" style="min-width:280px; max-width:320px; padding:10px 12px; gap:8px;">
@@ -171,6 +173,17 @@
               <span><i class="fa-brands fa-chromecast" style="color:#2563eb;"></i> البث والشاشات</span>
               <button id="btn-detect-screens" type="button" title="تحديث الشاشات الخارجية" style="background:#f1f5f9; border:none; color:#475569; width:26px; height:26px; border-radius:6px; cursor:pointer; display:inline-flex; align-items:center; justify-content:center; font-size:0.78rem; transition:all 0.15s ease;">
                 <i class="fa-solid fa-rotate"></i>
+              </button>
+            </div>
+
+            <!-- HOTSPOT CONNECTION STATUS & DISCONNECT BOX (INSIDE CAST MENU) -->
+            <div id="cast-hotspot-status-box" class="cast-hotspot-status-box hidden" style="margin-top:4px; margin-bottom:6px; padding:7px 9px; background:var(--surface-2, #f8fafc); border:1px solid var(--border-solid, #e2e8f0); border-radius:10px; display:flex; align-items:center; justify-content:space-between; gap:6px;">
+              <div style="display:flex; align-items:center; gap:6px; font-size:0.75rem; font-weight:700; color:var(--text, #1e293b);">
+                <span class="online-pulse-dot"></span>
+                <span id="cast-hotspot-status-label">متصل بالتحكم</span>
+              </div>
+              <button type="button" id="btn-cast-disconnect" class="btn btn-sm" style="padding:3px 8px; font-size:0.7rem; border-radius:6px; white-space:nowrap; background:#ef4444; color:#ffffff; border:none; cursor:pointer; font-weight:700;" title="قطع الاتصال">
+                <i class="fa-solid fa-link-slash"></i> قطع الاتصال
               </button>
             </div>
 
@@ -209,88 +222,31 @@
               </label>
             </div>
 
-            <!-- 5. ILLUSTRATED CONNECTION GUIDE BANNER -->
-            <div id="hotspot-guide-banner" class="hotspot-guide-banner hidden" style="margin-top:6px; background:#ffffff; border:1px solid #cbd5e1; border-radius:10px; padding:10px; box-shadow:0 4px 12px rgba(0,0,0,0.05); font-size:0.75rem; color:#334155;">
-              <!-- Modern SVG Illustration -->
-              <div class="hotspot-illustration-wrap" style="text-align:center; margin-bottom:8px;">
-                <svg viewBox="0 0 280 90" width="100%" height="86" xmlns="http://www.w3.org/2000/svg" style="max-width:260px; margin:0 auto; display:block;">
-                  <defs>
-                    <linearGradient id="screenGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-                      <stop offset="0%" stop-color="#1e293b"/>
-                      <stop offset="100%" stop-color="#0f172a"/>
-                    </linearGradient>
-                    <linearGradient id="waveGrad" x1="0%" y1="0%" x2="100%" y2="0%">
-                      <stop offset="0%" stop-color="#3b82f6"/>
-                      <stop offset="50%" stop-color="#10b981"/>
-                      <stop offset="100%" stop-color="#3b82f6"/>
-                    </linearGradient>
-                    <filter id="hotspotGlow" x="-20%" y="-20%" width="140%" height="140%">
-                      <feGaussianBlur stdDeviation="2.5" result="blur"/>
-                      <feComposite in="SourceGraphic" in2="blur" operator="over"/>
-                    </filter>
-                  </defs>
-
-                  <!-- Left: Presentation Display (present.html) -->
-                  <g transform="translate(14, 10)">
-                    <rect x="0" y="0" width="76" height="48" rx="5" fill="url(#screenGrad)" stroke="#64748b" stroke-width="1.5"/>
-                    <path d="M 32 48 L 30 57 L 46 57 L 44 48 Z" fill="#64748b"/>
-                    <rect x="23" y="57" width="30" height="3" rx="1.5" fill="#475569"/>
-                    <rect x="5" y="5" width="66" height="38" rx="3" fill="#0284c7" opacity="0.2"/>
-                    <rect x="12" y="13" width="52" height="4" rx="2" fill="#38bdf8"/>
-                    <rect x="17" y="21" width="42" height="4" rx="2" fill="#bae6fd"/>
-                    <circle cx="38" cy="33" r="2.8" fill="#10b981"/>
-                    <text x="38" y="42" fill="#94a3b8" font-size="6" font-family="sans-serif" text-anchor="middle" font-weight="bold">present.html</text>
-                  </g>
-
-                  <!-- Center: Radiating Hotspot Wi-Fi Signal Waves -->
-                  <g transform="translate(108, 10)">
-                    <circle cx="28" cy="24" r="5" fill="#10b981" filter="url(#hotspotGlow)"/>
-                    <path d="M 18 14 A 16 16 0 0 1 38 14" fill="none" stroke="url(#waveGrad)" stroke-width="2" stroke-linecap="round"/>
-                    <path d="M 11 7 A 26 26 0 0 1 45 7" fill="none" stroke="url(#waveGrad)" stroke-width="2" stroke-linecap="round" opacity="0.75"/>
-                    <path d="M 4 0 A 36 36 0 0 1 52 0" fill="none" stroke="url(#waveGrad)" stroke-width="2" stroke-linecap="round" opacity="0.5"/>
-                    <text x="28" y="44" fill="#10b981" font-size="6.5" font-family="sans-serif" text-anchor="middle" font-weight="bold">Hotspot Wi-Fi</text>
-                    <path d="M 3 24 L 19 24" stroke="#10b981" stroke-width="1.2" stroke-dasharray="2 2"/>
-                    <path d="M 37 24 L 53 24" stroke="#10b981" stroke-width="1.2" stroke-dasharray="2 2"/>
-                  </g>
-
-                  <!-- Right: Remote Control Panel Device -->
-                  <g transform="translate(195, 6)">
-                    <rect x="0" y="0" width="38" height="64" rx="6" fill="#0f172a" stroke="#3b82f6" stroke-width="1.5"/>
-                    <rect x="4" y="6" width="30" height="52" rx="3" fill="#1e293b"/>
-                    <rect x="14" y="2" width="10" height="2" rx="1" fill="#475569"/>
-                    <circle cx="19" cy="61" r="1.5" fill="#475569"/>
-                    <rect x="7" y="10" width="24" height="6" rx="2" fill="#2563eb"/>
-                    <rect x="7" y="19" width="24" height="4" rx="1.5" fill="#475569"/>
-                    <rect x="7" y="26" width="11" height="8" rx="2" fill="#0284c7"/>
-                    <rect x="20" y="26" width="11" height="8" rx="2" fill="#10b981"/>
-                    <rect x="7" y="37" width="24" height="4" rx="1.5" fill="#475569"/>
-                    <rect x="7" y="44" width="24" height="4" rx="1.5" fill="#334155"/>
-                    <text x="19" y="55" fill="#60a5fa" font-size="5" font-family="sans-serif" text-anchor="middle" font-weight="bold">Control Panel</text>
-                  </g>
-                </svg>
+            <!-- 5. LIGHT-THEME MINIMALIST HOTSPOT GUIDE BANNER -->
+            <div id="hotspot-guide-banner" class="hotspot-guide-banner hidden" style="margin-top:8px; background:var(--surface, #ffffff); border:1px solid var(--border-solid, #e2e8f0); border-radius:12px; padding:10px 12px; box-shadow:0 2px 8px rgba(0,0,0,0.04); font-size:0.76rem; color:#475569;">
+              <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:6px;">
+                <div style="display:flex; align-items:center; gap:6px; font-weight:800; color:#0f172a; font-size:0.8rem;">
+                  <i class="fa-solid fa-tower-broadcast" style="color:#2563eb;"></i>
+                  <span>بث نقطة الاتصال (Hotspot)</span>
+                </div>
+                <span id="hotspot-host-ip-pill" class="badge" style="font-size:0.68rem; background:#eff6ff; color:#2563eb; padding:2px 7px; border-radius:12px; font-weight:700;">IP: جاري الكشف...</span>
               </div>
 
-              <div style="font-weight:800; color:#1e293b; margin-bottom:4px; display:flex; align-items:center; justify-content:space-between;">
-                <span><i class="fa-solid fa-circle-info" style="color:#2563eb;"></i> كيفية ربط وتحكم الجهاز:</span>
-                <span id="hotspot-host-ip-pill" class="badge" style="font-size:0.68rem; background:#eff6ff; color:#2563eb; padding:2px 6px; border-radius:6px; font-weight:700;">IP: جاري الكشف...</span>
+              <div style="font-size:0.73rem; color:#64748b; margin-bottom:6px; line-height:1.4;">
+                امسح الرمز بكاميرا الهاتف للتحكم الفوري المباشر من هاتفك بدون إنترنت:
               </div>
 
-              <ol style="padding-right:16px; margin:0; line-height:1.5; color:#475569;">
-                <li style="margin-bottom:3px;">صل كلا الجهازين بنفس شبكة الـ <b>Wi-Fi</b> أو نقطة اتصال الهاتف (Hotspot).</li>
-                <li style="margin-bottom:3px;">
-                  افتح رابط <b>لوحة التحكم</b> على الجهاز الآخر:
-                  <div style="margin-top:4px; display:flex; gap:4px; align-items:center;">
-                    <input type="text" id="input-hotspot-ctrl-url" readonly style="flex:1; font-size:0.68rem; padding:4px 6px; border:1px solid #cbd5e1; border-radius:6px; background:#f8fafc; color:#0f172a; direction:ltr; text-align:left;" value="">
-                    <button type="button" id="btn-copy-hotspot-url" class="btn btn-sm btn-secondary" style="padding:4px 8px; font-size:0.68rem; white-space:nowrap;" title="نسخ رابط التحكم">
-                      <i class="fa-solid fa-copy"></i>
-                    </button>
-                    <button type="button" id="btn-show-hotspot-qr" class="btn btn-sm btn-secondary" style="padding:4px 8px; font-size:0.68rem; white-space:nowrap;" title="عرض رمز QR">
-                      <i class="fa-solid fa-qrcode"></i>
-                    </button>
-                  </div>
-                </li>
-                <li>يظهر الجهاز المتصل أدناه باسم الـ <b>IP</b> الخاص به، وتتحكم أزرار لوحة التحكم بشاشة <b>present.html</b> مباشرة!</li>
-              </ol>
+              <!-- Dedicated Light Theme High-Contrast QR Box -->
+              <div style="display:flex; justify-content:center; margin-bottom:8px;">
+                <div id="hotspot-banner-qr" style="background:#ffffff; padding:6px; border-radius:10px; border:1px solid #e2e8f0; box-shadow:0 2px 6px rgba(0,0,0,0.04); min-width:130px; min-height:130px; display:flex; align-items:center; justify-content:center;"></div>
+              </div>
+
+              <div style="display:flex; gap:4px; align-items:center;">
+                <input type="text" id="input-hotspot-ctrl-url" readonly style="flex:1; font-size:0.68rem; padding:5px 7px; border:1px solid #cbd5e1; border-radius:6px; background:#f8fafc; color:#0f172a; direction:ltr; text-align:left;" value="">
+                <button type="button" id="btn-copy-hotspot-url" class="btn btn-sm btn-secondary" style="padding:5px 8px; font-size:0.68rem; white-space:nowrap;" title="نسخ رابط التحكم">
+                  <i class="fa-solid fa-copy"></i> نسخ
+                </button>
+              </div>
             </div>
 
             <!-- 6. CONNECTED HOTSPOT DEVICES LIST (NAMED BY IP) -->
@@ -311,16 +267,6 @@
         </div>
       </div>
     </header>
-
-    <!-- FLOATING HOTSPOT CONTROLLER MODE STATUS BAR -->
-    <div id="hotspot-controller-bar" class="hotspot-controller-bar hidden">
-      <div class="hotspot-controller-bar-content">
-        <span class="online-pulse-dot"></span>
-        <span class="controller-bar-title"><i class="fa-solid fa-tower-broadcast"></i> وضع التحكم المباشر (Hotspot Controller): تحكم في شاشة العرض</span>
-        <span id="controller-host-badge" class="controller-host-badge">متصل</span>
-        <button type="button" id="btn-exit-controller-mode" class="btn-exit-controller" title="الخروج من وضع التحكم"><i class="fa-solid fa-xmark"></i></button>
-      </div>
-    </div>
 
     <!-- CENTERED INTELLIGENT SEARCH HERO -->
     <section class="search-hero">
@@ -1833,6 +1779,74 @@
               <i class="fa-solid fa-up-right-from-square"></i> تجربة الريموت
             </button>
           </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- HOTSPOT DEVICE AUTHORIZATION REQUEST MODAL (ACCEPT / REJECT) -->
+    <div id="modal-hotspot-auth-request" class="modal-overlay hidden" style="z-index: 1000050;">
+      <div class="modal-card" style="max-width: 420px; border-radius: var(--r-xl, 24px); box-shadow: var(--shadow-xl, 0 32px 64px -12px rgba(0,0,0,.18)); overflow: hidden; background: var(--surface, #ffffff); border: 1px solid var(--border-solid, #e2e8f0);">
+        <div class="modal-header" style="padding: 16px 20px; border-bottom: 1px solid var(--border-solid, #e2e8f0); background: var(--surface, #ffffff); display:flex; align-items:center; justify-content:space-between;">
+          <div class="modal-header-title-wrap" style="display: flex; align-items: center; gap: 10px;">
+            <div style="width:36px; height:36px; border-radius:10px; background:var(--brand-bg, #eef0ff); color:var(--brand, #5b6cf5); display:flex; align-items:center; justify-content:center; font-size:1.1rem;">
+              <i class="fa-solid fa-shield-halved"></i>
+            </div>
+            <div>
+              <div class="modal-title" style="font-size:0.95rem; font-weight:800; color:var(--text, #1e293b);">طلب تحكم عن بعد</div>
+              <div class="modal-subtitle" style="font-size:0.75rem; color:var(--text-3, #8b90a8);">جهاز جديد يرغب بالاتصال عبر نقطة الاتصال</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="modal-body" style="padding: 18px 20px;">
+          <div class="auth-device-details" style="background:var(--surface-2, #f7f8fc); border:1px solid var(--border-solid, #e2e8f0); border-radius:var(--r-md, 14px); padding:12px 14px; margin-bottom:16px;">
+            <div style="display:flex; align-items:center; gap:12px;">
+              <div style="width:40px; height:40px; border-radius:50%; background:rgba(16,185,129,0.12); color:var(--success, #10b981); display:flex; align-items:center; justify-content:center; font-size:1.2rem;">
+                <i id="auth-req-device-icon" class="fa-solid fa-mobile-screen-button"></i>
+              </div>
+              <div style="flex:1;">
+                <div id="auth-req-device-name" style="font-weight:800; color:var(--text, #1e293b); font-size:0.9rem;">هاتف محمول</div>
+                <div style="display:flex; gap:8px; align-items:center; font-size:0.75rem; color:var(--text-3, #8b90a8); margin-top:2px;">
+                  <span id="auth-req-device-ip">IP: 192.168.1.50</span>
+                  <span>•</span>
+                  <span id="auth-req-device-net">نفس الشبكة (Hotspot)</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <p style="font-size:0.8rem; color:var(--text-2, #4b5068); margin:0 0 18px 0; line-height:1.5;">
+            هل تسمح لهذا الجهاز بالتحكم الكامل في عرض الترانيم والشاشات وتغيير الكلمات؟
+          </p>
+
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+            <button id="btn-reject-control-request" type="button" class="btn btn-secondary" style="padding:9px 16px; font-weight:700; color:#ef4444; border:1px solid #fca5a5; background:#fff; border-radius:var(--r-md, 14px); cursor:pointer;">
+              <i class="fa-solid fa-xmark"></i> رفض
+            </button>
+            <button id="btn-accept-control-request" type="button" class="btn btn-primary" style="padding:9px 16px; font-weight:700; border-radius:var(--r-md, 14px); cursor:pointer;">
+              <i class="fa-solid fa-check"></i> قبول وتحكم
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- MOBILE CONTROLLER WAITING / REJECTED OVERLAY -->
+    <div id="controller-waiting-overlay" class="controller-waiting-overlay hidden">
+      <div class="controller-waiting-card">
+        <div id="waiting-icon-box" class="waiting-icon-wrap pulse-anim">
+          <i class="fa-solid fa-tower-broadcast"></i>
+        </div>
+        <h3 id="waiting-title">جاري الاتصال بالعرض</h3>
+        <p id="waiting-desc">تم إرسال طلب التحكم إلى شاشة العرض الرئيسية.<br>في انتظار موافقة المسؤول على الجهاز الرئيسي...</p>
+        <div id="waiting-loader-bar" class="waiting-progress-bar"><div class="bar-fill"></div></div>
+        <div id="waiting-actions-row" style="margin-top:16px; display:flex; gap:8px; justify-content:center;">
+          <button id="btn-cancel-waiting-request" type="button" class="btn btn-sm btn-secondary" style="padding:7px 16px; border-radius:var(--r-md, 14px); font-size:0.8rem;">
+            إلغاء الطلب
+          </button>
+          <button id="btn-retry-waiting-request" type="button" class="btn btn-sm btn-primary hidden" style="padding:7px 16px; border-radius:var(--r-md, 14px); font-size:0.8rem;">
+            إعادة المحاولة
+          </button>
         </div>
       </div>
     </div>

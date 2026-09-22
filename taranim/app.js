@@ -1724,8 +1724,11 @@ document.addEventListener('DOMContentLoaded', () => {
     isHotspotControllerMode: false,
     hotspotHostIp: '',
     hotspotHostPin: '',
+    hotspotHostId: '',
     hotspotControllerPeer: null,
     hotspotControllerConn: null,
+    hostScreens: [],
+    pendingControlRequest: null,
 
     standbyConfig: (savedMediaConfig.standbyConfig && typeof savedMediaConfig.standbyConfig === 'object') ? {
       showLogo: true,
@@ -2209,8 +2212,13 @@ document.addEventListener('DOMContentLoaded', () => {
     btnAlignJustify: document.getElementById('btn-align-justify'),
     screensCastList: document.getElementById('screens-cast-list'),
     btnDetectScreens: document.getElementById('btn-detect-screens'),
+    castConnectedBadge: document.getElementById('cast-connected-badge'),
+    castHotspotStatusBox: document.getElementById('cast-hotspot-status-box'),
+    castHotspotStatusLabel: document.getElementById('cast-hotspot-status-label'),
+    btnCastDisconnect: document.getElementById('btn-cast-disconnect'),
     btnToggleHotspotMode: document.getElementById('btn-toggle-hotspot-mode'),
     hotspotGuideBanner: document.getElementById('hotspot-guide-banner'),
+    hotspotBannerQr: document.getElementById('hotspot-banner-qr'),
     hotspotHostIpPill: document.getElementById('hotspot-host-ip-pill'),
     inputHotspotCtrlUrl: document.getElementById('input-hotspot-ctrl-url'),
     btnCopyHotspotUrl: document.getElementById('btn-copy-hotspot-url'),
@@ -2222,6 +2230,22 @@ document.addEventListener('DOMContentLoaded', () => {
     hotspotControllerBar: document.getElementById('hotspot-controller-bar'),
     controllerHostBadge: document.getElementById('controller-host-badge'),
     btnExitControllerMode: document.getElementById('btn-exit-controller-mode'),
+
+    // HOTSPOT DEVICE AUTHORIZATION & WAITING OVERLAY ELEMENTS
+    modalHotspotAuthRequest: document.getElementById('modal-hotspot-auth-request'),
+    authReqDeviceName: document.getElementById('auth-req-device-name'),
+    authReqDeviceIp: document.getElementById('auth-req-device-ip'),
+    authReqDeviceIcon: document.getElementById('auth-req-device-icon'),
+    authReqDeviceNet: document.getElementById('auth-req-device-net'),
+    btnAcceptControlRequest: document.getElementById('btn-accept-control-request'),
+    btnRejectControlRequest: document.getElementById('btn-reject-control-request'),
+    controllerWaitingOverlay: document.getElementById('controller-waiting-overlay'),
+    waitingTitle: document.getElementById('waiting-title'),
+    waitingDesc: document.getElementById('waiting-desc'),
+    waitingIconBox: document.getElementById('waiting-icon-box'),
+    waitingLoaderBar: document.getElementById('waiting-loader-bar'),
+    btnCancelWaitingRequest: document.getElementById('btn-cancel-waiting-request'),
+    btnRetryWaitingRequest: document.getElementById('btn-retry-waiting-request'),
 
     btnCreditsInfo: document.getElementById('btn-credits-info'),
     modalCredits: document.getElementById('modal-credits'),
@@ -3512,17 +3536,16 @@ document.addEventListener('DOMContentLoaded', () => {
         activeRemotePeerConnections.set(conn.peer, conn);
         updateRemoteClientsUI(activeRemotePeerConnections.size);
 
-        if (conn.metadata && (conn.metadata.ip || conn.metadata.name)) {
-          registerHotspotDevice(conn.metadata, conn);
-        }
-
         conn.on('data', (cmd) => {
-          if (cmd) {
-            if (cmd.type === 'REGISTER_DEVICE') {
-              registerHotspotDevice(cmd, conn);
-            } else {
-              executeRemoteCommand(cmd);
-            }
+          if (!cmd) return;
+          if (cmd.type === 'REQUEST_CONTROL') {
+            handleHostControlRequest(cmd, conn);
+          } else if (cmd.type === 'REGISTER_DEVICE') {
+            registerHotspotDevice(cmd, conn);
+          } else if (cmd.type === 'DISCONNECT_CONTROLLER') {
+            handleControllerDisconnected(conn);
+          } else {
+            executeRemoteCommand(cmd);
           }
         });
 
@@ -3535,26 +3558,31 @@ document.addEventListener('DOMContentLoaded', () => {
             }
           });
           renderHotspotConnectedDevices();
+          if (state.hotspotConnectedDevices.size === 0) {
+            updateHotspotConnectionBadge(false);
+          }
         });
 
         conn.on('error', () => {
           activeRemotePeerConnections.delete(conn.peer);
         });
 
-        // Send current state immediately on connect
-        const currentLines = state.presentationLines || [];
-        conn.send({
-          type: 'STATE_UPDATE',
-          state: {
-            activeSong: state.activeSong,
-            currentLineIndex: state.currentLineIndex || 0,
-            totalLines: currentLines.length,
-            presentationLines: currentLines,
-            isBlank: Boolean(state.isBlank),
-            isStandbyMode: Boolean(state.isStandbyMode),
-            sessionRecents: (state.sessionRecents || []).slice(0, 20)
-          }
-        });
+        // If client is reconnecting and was already approved, send current state immediately
+        if (conn.peer && approvedControllerTokens.has(conn.peer)) {
+          const currentLines = state.presentationLines || [];
+          conn.send({
+            type: 'STATE_UPDATE',
+            state: {
+              activeSong: state.activeSong,
+              currentLineIndex: state.currentLineIndex || 0,
+              totalLines: currentLines.length,
+              presentationLines: currentLines,
+              isBlank: Boolean(state.isBlank),
+              isStandbyMode: Boolean(state.isStandbyMode),
+              sessionRecents: (state.sessionRecents || []).slice(0, 20)
+            }
+          });
+        }
       });
 
       hostPeer.on('error', () => {});
@@ -3722,22 +3750,58 @@ document.addEventListener('DOMContentLoaded', () => {
       nextLine();
     } else if (cmd.type === 'PREV_LINE') {
       prevLine();
-    } else if (cmd.type === 'JUMP_LINE') {
+    } else if (cmd.type === 'JUMP_LINE' || cmd.type === 'PRESENT_LINE') {
       if (cmd.lineIndex !== undefined && state.presentationLines && cmd.lineIndex >= 0 && cmd.lineIndex < state.presentationLines.length) {
         state.currentLineIndex = cmd.lineIndex;
         updateSlide();
       }
+    } else if (cmd.type === 'SYNC_STATE') {
+      if (cmd.currentLineIndex !== undefined && state.presentationLines && cmd.currentLineIndex >= 0 && cmd.currentLineIndex < state.presentationLines.length) {
+        state.currentLineIndex = cmd.currentLineIndex;
+        state.liveLineIndex = cmd.currentLineIndex;
+      }
+      if (cmd.isBlank !== undefined) {
+        state.isBlank = Boolean(cmd.isBlank);
+        if (els.btnToggleBlank) els.btnToggleBlank.classList.toggle('active', state.isBlank);
+      }
+      if (cmd.isStandbyMode !== undefined) {
+        state.isStandbyMode = Boolean(cmd.isStandbyMode);
+        if (els.btnToggleStandby) els.btnToggleStandby.classList.toggle('active', state.isStandbyMode);
+      }
+      updateSlide();
+      syncLiveState();
     } else if (cmd.type === 'TOGGLE_BLANK') {
       toggleBlank();
+    } else if (cmd.type === 'SET_BLANK') {
+      if (cmd.isBlank !== undefined) {
+        state.isBlank = Boolean(cmd.isBlank);
+        if (els.btnToggleBlank) els.btnToggleBlank.classList.toggle('active', state.isBlank);
+        syncLiveState();
+      }
     } else if (cmd.type === 'TOGGLE_STANDBY') {
       toggleStandbyMode(true);
-    } else if (cmd.type === 'PLAY_SONG' && cmd.song) {
+    } else if (cmd.type === 'SET_STANDBY') {
+      if (cmd.isStandby !== undefined) {
+        state.isStandbyMode = Boolean(cmd.isStandby);
+        if (els.btnToggleStandby) els.btnToggleStandby.classList.toggle('active', state.isStandbyMode);
+        syncLiveState();
+      }
+    } else if ((cmd.type === 'PLAY_SONG' || cmd.type === 'LOAD_SONG') && cmd.song) {
+      const songToLoad = Object.assign({}, cmd.song, { _fromHotspotSync: true });
       if (typeof openAndPresentItem === 'function') {
-        openAndPresentItem(cmd.song, Boolean(cmd.song.is_bible));
+        openAndPresentItem(songToLoad, Boolean(songToLoad.is_bible));
       } else if (typeof loadSongIntoPresentation === 'function') {
-        loadSongIntoPresentation(cmd.song, true);
+        loadSongIntoPresentation(songToLoad, true);
       }
       showToast(`📱 تم تشغيل "${cmd.song.title || 'العنصر'}" من الهاتف!`);
+    } else if (cmd.type === 'LAUNCH_SCREEN') {
+      const targetVal = cmd.screenVal || 'screen_0';
+      if (cmd.targetLineIdx !== undefined && cmd.targetLineIdx !== null && !isNaN(cmd.targetLineIdx)) {
+        state.liveLineIndex = cmd.targetLineIdx;
+        state.currentLineIndex = cmd.targetLineIdx;
+      }
+      launchPresenterOnSelectedScreen(targetVal);
+      showToast(`📺 تم إطلاق العرض من الريموت على (${targetVal})`);
     } else if (cmd.type === 'REQUEST_CATALOG') {
       if (state.allSongs && state.allSongs.length > 0) {
         const compactCatalog = state.allSongs.slice(0, 3500).map(s => ({
@@ -3851,8 +3915,151 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   // =========================================================================
-  // HOTSPOT MODE & DEVICE CONNECTION ENGINE
+  // HOTSPOT MODE & DEVICE CONNECTION ENGINE (HIGH-SPEED DIRECT P2P & LOCAL LAN)
   // =========================================================================
+  const approvedControllerTokens = new Set();
+  let pendingControlConn = null;
+  let pendingControlData = null;
+
+  function getHostScreensList() {
+    let screens = [];
+    if (screenDetails && screenDetails.screens && screenDetails.screens.length > 0) {
+      screens = screenDetails.screens.map((s, idx) => ({
+        val: 'screen_' + idx,
+        label: s.label || (s.isPrimary ? 'الشاشة الرئيسية (Main Display)' : `شاشة خارجية ${idx + 1}`),
+        width: s.width || 1920,
+        height: s.height || 1080,
+        isPrimary: Boolean(s.isPrimary)
+      }));
+    } else {
+      screens = [
+        {
+          val: 'screen_0',
+          label: 'الشاشة الرئيسية (Main Display)',
+          width: window.screen.width || 1920,
+          height: window.screen.height || 1080,
+          isPrimary: true
+        }
+      ];
+    }
+    return screens;
+  }
+
+  function getFullHostStateSnapshot() {
+    const currentLines = state.presentationLines || [];
+    return {
+      activeSong: state.activeSong,
+      currentLineIndex: state.currentLineIndex || 0,
+      totalLines: currentLines.length,
+      presentationLines: currentLines,
+      isBlank: Boolean(state.isBlank),
+      isStandbyMode: Boolean(state.isStandbyMode),
+      sessionRecents: (state.sessionRecents || []).slice(0, 20)
+    };
+  }
+
+  function updateHotspotConnectionBadge(connected, label = '') {
+    if (els.castConnectedBadge) {
+      els.castConnectedBadge.classList.toggle('hidden', !connected);
+    }
+    if (els.castHotspotStatusBox) {
+      els.castHotspotStatusBox.classList.toggle('hidden', !connected);
+    }
+    if (els.castHotspotStatusLabel && label) {
+      els.castHotspotStatusLabel.textContent = label;
+    }
+  }
+
+  function handleHostControlRequest(cmd, conn) {
+    pendingControlConn = conn;
+    pendingControlData = cmd;
+
+    if (els.modalHotspotAuthRequest) {
+      if (els.authReqDeviceName) {
+        els.authReqDeviceName.textContent = cmd.deviceName || 'جهاز هاتف محمول';
+      }
+      if (els.authReqDeviceIp) {
+        els.authReqDeviceIp.textContent = `IP: ${cmd.deviceIp || conn._remoteAddress || '127.0.0.1'}`;
+      }
+      if (els.authReqDeviceIcon) {
+        const isMobile = /mobile|phone|iphone|android/i.test(cmd.deviceName || cmd.userAgent || '');
+        els.authReqDeviceIcon.className = isMobile ? 'fa-solid fa-mobile-screen-button' : 'fa-solid fa-laptop';
+      }
+      if (els.authReqDeviceNet) {
+        els.authReqDeviceNet.textContent = cmd.isSameNetwork ? 'نفس شبكة الـ Hotspot' : 'اتصال شبكي مباشر (P2P)';
+      }
+      els.modalHotspotAuthRequest.classList.remove('hidden');
+    } else {
+      acceptPendingControlRequest();
+    }
+  }
+
+  function acceptPendingControlRequest() {
+    if (!pendingControlConn) return;
+    const token = pendingControlData?.clientToken || ('token_' + Date.now());
+    approvedControllerTokens.add(token);
+    if (pendingControlConn.peer) approvedControllerTokens.add(pendingControlConn.peer);
+
+    registerHotspotDevice({
+      ip: pendingControlData?.deviceIp || '127.0.0.1',
+      name: pendingControlData?.deviceName || 'لوحة تحكم',
+      userAgent: pendingControlData?.userAgent || '',
+      type: 'CONTROL_PANEL'
+    }, pendingControlConn);
+
+    try {
+      pendingControlConn.send({
+        type: 'CONTROL_ACCEPTED',
+        token: token,
+        screens: getHostScreensList(),
+        state: getFullHostStateSnapshot()
+      });
+    } catch(e) {}
+
+    updateHotspotConnectionBadge(true, `متصل: ${pendingControlData?.deviceName || 'الريموت'}`);
+
+    if (els.modalHotspotAuthRequest) {
+      els.modalHotspotAuthRequest.classList.add('hidden');
+    }
+    showToast(`🟢 تم قبول اتصال: ${pendingControlData?.deviceName || 'الجهاز'}`);
+    pendingControlConn = null;
+    pendingControlData = null;
+  }
+
+  function rejectPendingControlRequest() {
+    if (pendingControlConn) {
+      try {
+        pendingControlConn.send({
+          type: 'CONTROL_REJECTED',
+          reason: 'تم رفض طلب التحكم من قبل المسؤول'
+        });
+        setTimeout(() => { try { pendingControlConn.close(); } catch(e) {} }, 300);
+      } catch(e) {}
+    }
+    if (els.modalHotspotAuthRequest) {
+      els.modalHotspotAuthRequest.classList.add('hidden');
+    }
+    showToast('تم رفض طلب الاتصال');
+    pendingControlConn = null;
+    pendingControlData = null;
+  }
+
+  function handleControllerDisconnected(conn) {
+    if (conn && conn.peer) {
+      approvedControllerTokens.delete(conn.peer);
+    }
+    state.hotspotConnectedDevices.forEach((dev, key) => {
+      if (dev.conn === conn) {
+        state.hotspotConnectedDevices.delete(key);
+      }
+    });
+    renderHotspotConnectedDevices();
+    if (state.hotspotConnectedDevices.size === 0) {
+      updateHotspotConnectionBadge(false);
+    }
+    renderScreenOptions();
+  }
+
   async function detectLocalOrPublicIp() {
     const hostname = window.location.hostname;
     if (hostname && /^(\d{1,3}\.){3}\d{1,3}$/.test(hostname) && !hostname.startsWith('127.')) {
@@ -3924,7 +4131,29 @@ document.addEventListener('DOMContentLoaded', () => {
       path += '/';
     }
     const protocol = loc.protocol;
-    return `${protocol}//${targetHost}${portStr}${path}index.html?hotspot_ctrl=1`;
+    const pin = remoteHostSession?.roomPin || state.hotspotHostPin || '123456';
+    const hostId = remoteHostSession?.roomId || state.hotspotHostId || 'hotspot_host';
+    return `${protocol}//${targetHost}${portStr}${path}index.html?hotspot_ctrl=1&pin=${encodeURIComponent(pin)}&host_id=${encodeURIComponent(hostId)}&lan_ip=${encodeURIComponent(hostIp || '')}`;
+  }
+
+  function renderHotspotBannerQr(url) {
+    const qrContainer = els.hotspotBannerQr || document.getElementById('hotspot-banner-qr');
+    if (!qrContainer) return;
+    qrContainer.innerHTML = '';
+    if (typeof window.QRCode === 'function') {
+      try {
+        new window.QRCode(qrContainer, {
+          text: url,
+          width: 120,
+          height: 120,
+          colorDark: '#0f172a',
+          colorLight: '#ffffff',
+          correctLevel: window.QRCode.CorrectLevel.M
+        });
+        return;
+      } catch(e) {}
+    }
+    qrContainer.innerHTML = `<img src="https://api.qrserver.com/v1/create-qr-code/?size=120x120&data=${encodeURIComponent(url)}" alt="QR Code" style="width:120px; height:120px; display:block; border-radius:6px;">`;
   }
 
   function renderHotspotConnectedDevices() {
@@ -3939,7 +4168,7 @@ document.addEventListener('DOMContentLoaded', () => {
       if (els.hotspotNoDevicesPlaceholder) els.hotspotNoDevicesPlaceholder.classList.remove('hidden');
       els.hotspotDevicesList.innerHTML = `
         <div id="hotspot-no-devices-placeholder" style="font-size:0.72rem; color:#94a3b8; font-style:italic; padding:6px 8px; background:#f8fafc; border:1px dashed #cbd5e1; border-radius:8px; text-align:center;">
-          في انتظار فتح لوحة التحكم على جهاز آخر...
+          في انتظار مسح رمز QR على هاتف آخر...
         </div>
       `;
     } else {
@@ -3953,13 +4182,13 @@ document.addEventListener('DOMContentLoaded', () => {
             <div class="device-info">
               <span class="device-name">
                 <i class="${iconCls}" style="color:#10b981;"></i>
-                لوحة التحكم (${escapeHtml(ip)})
+                ${escapeHtml(dev.name || 'لوحة تحكم')} (${escapeHtml(ip)})
               </span>
               <span class="device-meta">
                 <span class="online-pulse-dot"></span>
                 <span>IP: ${escapeHtml(ip)}</span>
                 <span>•</span>
-                <span>تحكم مباشر (LAN)</span>
+                <span>تحكم مباشر (Hotspot)</span>
               </span>
             </div>
             <button type="button" class="btn-disconnect-device" data-ip="${escapeHtml(ip)}" title="فصل الاتصال" style="background:transparent; border:none; color:#ef4444; font-size:0.75rem; cursor:pointer; padding:4px;">
@@ -3977,11 +4206,19 @@ document.addEventListener('DOMContentLoaded', () => {
           if (targetIp) {
             state.hotspotConnectedDevices.forEach((dev, key) => {
               if (dev.ip === targetIp) {
-                if (dev.conn) { try { dev.conn.close(); } catch(err) {} }
+                if (dev.conn) {
+                  try {
+                    dev.conn.send({ type: 'HOST_DISCONNECTED' });
+                    dev.conn.close();
+                  } catch(err) {}
+                }
                 state.hotspotConnectedDevices.delete(key);
               }
             });
             renderHotspotConnectedDevices();
+            if (state.hotspotConnectedDevices.size === 0) {
+              updateHotspotConnectionBadge(false);
+            }
             renderScreenOptions();
             showToast(`تم فصل الجهاز ${targetIp}`);
           }
@@ -4009,10 +4246,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     renderHotspotConnectedDevices();
-    
-    if (isNew) {
-      showToast(`📱 تم اتصال لوحة تحكم جديدة: ${ip}`);
-    }
+    updateHotspotConnectionBadge(true, `متصل: ${devInfo.name || 'الريموت'}`);
   }
 
   let hotspotDevicesPollTimer = null;
@@ -4058,6 +4292,9 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   async function updateHotspotHostUI() {
+    if (!remoteHostSession) {
+      await initRemoteHost();
+    }
     const detectedIp = await detectLocalOrPublicIp();
     state.hotspotHostIp = detectedIp;
 
@@ -4073,6 +4310,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (state.isHotspotMode) {
       if (els.hotspotGuideBanner) els.hotspotGuideBanner.classList.remove('hidden');
       if (els.hotspotDevicesContainer) els.hotspotDevicesContainer.classList.remove('hidden');
+      renderHotspotBannerQr(ctrlUrl);
       startHotspotDevicesPolling();
     } else {
       if (els.hotspotGuideBanner) els.hotspotGuideBanner.classList.add('hidden');
@@ -4114,65 +4352,247 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  let controllerLivePollTimer = null;
+  let hotspotControllerPeer = null;
+  let hotspotControllerConn = null;
 
   async function initHotspotControllerMode() {
     state.isHotspotControllerMode = true;
 
+    // Never show ugly controller bar
     if (els.hotspotControllerBar) {
-      els.hotspotControllerBar.classList.remove('hidden');
-    }
-    if (els.controllerHostBadge) {
-      els.controllerHostBadge.textContent = '🟢 متصل بمضيف العرض (Hotspot)';
+      els.hotspotControllerBar.classList.add('hidden');
     }
 
-    // Send immediate ping to register this device's IP on host machine
-    sendHotspotPing();
-    setInterval(sendHotspotPing, 8000);
+    const params = new URLSearchParams(window.location.search);
+    const pin = params.get('pin') || params.get('roomPin') || state.hotspotHostPin || '123456';
+    const hostId = params.get('host_id') || params.get('roomId') || '';
+    const lanIp = params.get('lan_ip') || params.get('ip') || '';
 
-    // Fast poll to follow along if host changes slides (300ms)
-    let lastHostTimestamp = 0;
-    if (controllerLivePollTimer) clearInterval(controllerLivePollTimer);
-    controllerLivePollTimer = setInterval(async () => {
+    // Show waiting overlay
+    if (els.controllerWaitingOverlay) {
+      els.controllerWaitingOverlay.classList.remove('hidden');
+      if (els.waitingTitle) els.waitingTitle.textContent = 'جاري الاتصال بالعرض';
+      if (els.waitingDesc) els.waitingDesc.innerHTML = 'تم إرسال طلب التحكم إلى شاشة العرض الرئيسية.<br>في انتظار موافقة المسؤول على الجهاز الرئيسي...';
+      if (els.waitingIconBox) {
+        els.waitingIconBox.className = 'waiting-icon-wrap pulse-anim';
+        els.waitingIconBox.style.background = '#eff6ff';
+        els.waitingIconBox.style.color = '#2563eb';
+        els.waitingIconBox.innerHTML = '<i class="fa-solid fa-tower-broadcast"></i>';
+      }
+      if (els.waitingLoaderBar) els.waitingLoaderBar.classList.remove('hidden');
+      if (els.btnRetryWaitingRequest) els.btnRetryWaitingRequest.classList.add('hidden');
+    }
+
+    // Fast local network probe (triggers Chrome private/local network access prompt)
+    let isSameNet = false;
+    if (lanIp && !lanIp.startsWith('127.')) {
       try {
-        let res = await fetch('/api/live', { cache: 'no-cache' });
-        if (!res.ok) {
-          res = await fetch('/api.php?action=live', { cache: 'no-cache' });
-        }
-        if (res.ok) {
-          const liveData = await res.json();
-          if (liveData && (liveData.timestamp || liveData.updated_at)) {
-            const ts = liveData.timestamp || liveData.updated_at;
-            if (ts > lastHostTimestamp) {
-              lastHostTimestamp = ts;
-              if (liveData.isBlank !== undefined && els.btnToggleBlank) {
-                state.isBlank = Boolean(liveData.isBlank);
-                els.btnToggleBlank.classList.toggle('active', state.isBlank);
-              }
-            }
-          }
-        }
+        const ctrl = new AbortController();
+        const tid = setTimeout(() => ctrl.abort(), 1200);
+        await fetch(`http://${lanIp}:${window.location.port || 8080}/api/host_ip`, {
+          signal: ctrl.signal,
+          cache: 'no-cache',
+          mode: 'no-cors'
+        }).catch(() => {});
+        clearTimeout(tid);
+        isSameNet = true;
       } catch(e) {}
-    }, 300);
+    }
 
-    showToast('🟢 وضع التحكم المباشر نشط (تحكم فوري 0ms بدون إنترنت)');
+    const myToken = 'ct_' + Date.now();
+    const isMobile = /mobile|phone|android|iphone/i.test(navigator.userAgent);
+    const devName = isMobile ? (/iphone/i.test(navigator.userAgent) ? 'iPhone' : 'هاتف Android') : 'كمبيوتر محمول';
 
-    if (els.btnExitControllerMode) {
-      els.btnExitControllerMode.addEventListener('click', () => {
-        state.isHotspotControllerMode = false;
-        if (els.hotspotControllerBar) els.hotspotControllerBar.classList.add('hidden');
-        if (controllerLivePollTimer) {
-          clearInterval(controllerLivePollTimer);
-          controllerLivePollTimer = null;
-        }
-        window.history.replaceState({}, document.title, window.location.pathname);
-        showToast('تم الخروج من وضع التحكم');
-      });
+    // Direct WebRTC Peer Connection to Host (0ms rocket fast)
+    if (window.Peer && pin) {
+      const myPeerId = 'sst_ctrl_' + Math.floor(Math.random() * 1000000);
+      try {
+        if (hotspotControllerPeer) hotspotControllerPeer.destroy();
+        hotspotControllerPeer = new window.Peer(myPeerId, {
+          debug: 0,
+          config: {
+            iceServers: [
+              { urls: 'stun:stun.l.google.com:19302' },
+              { urls: 'stun:stun1.l.google.com:19302' },
+              { urls: 'stun:stun.cloudflare.com:3478' }
+            ],
+            iceCandidatePoolSize: 10
+          }
+        });
+
+        hotspotControllerPeer.on('open', () => {
+          const targetHostPeerId = 'sstaranim_' + pin;
+          hotspotControllerConn = hotspotControllerPeer.connect(targetHostPeerId, {
+            metadata: {
+              token: myToken,
+              name: devName,
+              userAgent: navigator.userAgent,
+              isSameNetwork: isSameNet
+            }
+          });
+
+          hotspotControllerConn.on('open', () => {
+            hotspotControllerConn.send({
+              type: 'REQUEST_CONTROL',
+              clientToken: myToken,
+              deviceName: devName,
+              deviceIp: lanIp || 'LAN',
+              userAgent: navigator.userAgent,
+              isSameNetwork: isSameNet
+            });
+          });
+
+          hotspotControllerConn.on('data', (msg) => {
+            if (!msg) return;
+            if (msg.type === 'CONTROL_ACCEPTED') {
+              onControlRequestAccepted(msg);
+            } else if (msg.type === 'CONTROL_REJECTED') {
+              onControlRequestRejected(msg.reason);
+            } else if (msg.type === 'STATE_UPDATE') {
+              onHostStateUpdate(msg.state);
+            } else if (msg.type === 'HOST_DISCONNECTED') {
+              disconnectHotspotController(true);
+            }
+          });
+
+          hotspotControllerConn.on('close', () => {
+            if (state.isHotspotControllerMode) {
+              updateHotspotConnectionBadge(false);
+            }
+          });
+        });
+      } catch(e) {}
+    }
+
+    sendHotspotPing();
+  }
+
+  function onControlRequestAccepted(msg) {
+    if (els.controllerWaitingOverlay) {
+      els.controllerWaitingOverlay.classList.add('hidden');
+    }
+
+    state.isHotspotControllerMode = true;
+    if (msg.screens && Array.isArray(msg.screens)) {
+      state.hostScreens = msg.screens;
+    }
+
+    if (msg.state) {
+      onHostStateUpdate(msg.state);
+    }
+
+    updateHotspotConnectionBadge(true, 'متصل بالمضيف الرئيسي (Hotspot)');
+    renderScreenOptions();
+    showToast('🟢 تم قبول الاتصال بنجاح! يمكنك الآن التحكم بالكامل في العرض');
+  }
+
+  function onControlRequestRejected(reason = '') {
+    if (els.controllerWaitingOverlay) {
+      if (els.waitingTitle) els.waitingTitle.textContent = 'تم رفض الطلب';
+      if (els.waitingDesc) els.waitingDesc.textContent = reason || 'تم رفض طلب التحكم من قبل المسؤول على جهاز العرض.';
+      if (els.waitingIconBox) {
+        els.waitingIconBox.className = 'waiting-icon-wrap';
+        els.waitingIconBox.style.background = '#fee2e2';
+        els.waitingIconBox.style.color = '#ef4444';
+        els.waitingIconBox.innerHTML = '<i class="fa-solid fa-circle-xmark"></i>';
+      }
+      if (els.waitingLoaderBar) els.waitingLoaderBar.classList.add('hidden');
+      if (els.btnRetryWaitingRequest) els.btnRetryWaitingRequest.classList.remove('hidden');
+    }
+  }
+
+  function onHostStateUpdate(hostState) {
+    if (!hostState) return;
+    if (hostState.activeSong) {
+      state.activeSong = hostState.activeSong;
+      renderActiveSongMeta();
+    }
+    if (hostState.presentationLines && Array.isArray(hostState.presentationLines)) {
+      state.presentationLines = hostState.presentationLines;
+    }
+    if (hostState.currentLineIndex !== undefined) {
+      state.currentLineIndex = hostState.currentLineIndex;
+    }
+    if (hostState.isBlank !== undefined) {
+      state.isBlank = Boolean(hostState.isBlank);
+      if (els.btnToggleBlank) els.btnToggleBlank.classList.toggle('active', state.isBlank);
+    }
+    if (hostState.isStandbyMode !== undefined) {
+      state.isStandbyMode = Boolean(hostState.isStandbyMode);
+      if (els.btnToggleStandby) els.btnToggleStandby.classList.toggle('active', state.isStandbyMode);
+    }
+    if (hostState.sessionRecents && Array.isArray(hostState.sessionRecents)) {
+      state.sessionRecents = hostState.sessionRecents;
+      renderRecentSession();
+    }
+    renderPresentationLinesList();
+  }
+
+  function sendHotspotCommand(cmd) {
+    if (!cmd) return;
+    cmd.id = 'cmd_' + Date.now() + '_' + Math.floor(Math.random()*1000);
+    cmd.timestamp = Date.now();
+
+    // Direct WebRTC DataChannel send (0ms rocket fast)
+    if (hotspotControllerConn && hotspotControllerConn.open) {
+      try {
+        hotspotControllerConn.send(cmd);
+      } catch(e) {}
+    }
+
+    // Local / server fallback
+    fetch('/api/hotspot_push', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(cmd)
+    }).catch(() => {
+      fetch('/api.php?action=send_command', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ command: cmd, roomId: state.hotspotHostId || '' })
+      }).catch(() => {});
+    });
+  }
+
+  window.sendHotspotCommand = sendHotspotCommand;
+
+  function disconnectHotspotController(wasRemoteInitiated = false) {
+    if (state.isHotspotControllerMode) {
+      if (!wasRemoteInitiated) {
+        sendHotspotCommand({ type: 'DISCONNECT_CONTROLLER' });
+      }
+      try {
+        if (hotspotControllerConn) hotspotControllerConn.close();
+        if (hotspotControllerPeer) hotspotControllerPeer.destroy();
+      } catch(e) {}
+      hotspotControllerConn = null;
+      hotspotControllerPeer = null;
+      state.isHotspotControllerMode = false;
+      state.hostScreens = [];
+      updateHotspotConnectionBadge(false);
+      renderScreenOptions();
+      window.history.replaceState({}, document.title, window.location.pathname);
+      showToast('تم قطع الاتصال بجهاز العرض');
+    } else {
+      // Host side disconnect
+      if (activeRemotePeerConnections) {
+        activeRemotePeerConnections.forEach(conn => {
+          try {
+            conn.send({ type: 'HOST_DISCONNECTED' });
+            conn.close();
+          } catch(e) {}
+        });
+        activeRemotePeerConnections.clear();
+      }
+      state.hotspotConnectedDevices.clear();
+      updateHotspotConnectionBadge(false);
+      renderHotspotConnectedDevices();
+      renderScreenOptions();
+      showToast('تم فصل جميع أجهزة التحكم');
     }
   }
 
   function initHotspotEngine() {
-    // Send ping on start to register this IP in case opened as secondary controller
     sendHotspotPing();
 
     if (els.btnToggleHotspotMode) {
@@ -4202,31 +4622,36 @@ document.addEventListener('DOMContentLoaded', () => {
       });
     }
 
-    if (els.btnShowHotspotQr) {
-      els.btnShowHotspotQr.addEventListener('click', () => {
-        const modal = document.getElementById('modal-remote-pairing');
-        if (modal) {
-          const ctrlUrl = els.inputHotspotCtrlUrl ? els.inputHotspotCtrlUrl.value : getHotspotControllerUrl(state.hotspotHostIp);
-          const qrBox = document.getElementById('remote-qr-canvas-container');
-          if (qrBox && typeof window.QRCode === 'function') {
-            qrBox.innerHTML = '';
-            new window.QRCode(qrBox, {
-              text: ctrlUrl,
-              width: 190,
-              height: 190,
-              colorDark: '#0f172a',
-              colorLight: '#ffffff',
-              correctLevel: window.QRCode.CorrectLevel.M
-            });
-          }
-          const pinTxt = document.getElementById('remote-host-pin-txt');
-          if (pinTxt) pinTxt.textContent = 'HOTSPOT';
-          const titleTxt = modal.querySelector('.modal-title');
-          if (titleTxt) titleTxt.textContent = 'لوحة التحكم عبر الشبكة المحلية (Hotspot)';
-          const subtitleTxt = modal.querySelector('.modal-subtitle');
-          if (subtitleTxt) subtitleTxt.textContent = 'امسح رمز QR لفتح لوحة التحكم الافتراضية كاملة على هاتفك بدون إنترنت';
-          modal.classList.remove('hidden');
+    if (els.btnCastDisconnect) {
+      els.btnCastDisconnect.addEventListener('click', () => {
+        disconnectHotspotController();
+      });
+    }
+
+    if (els.btnAcceptControlRequest) {
+      els.btnAcceptControlRequest.addEventListener('click', () => {
+        acceptPendingControlRequest();
+      });
+    }
+
+    if (els.btnRejectControlRequest) {
+      els.btnRejectControlRequest.addEventListener('click', () => {
+        rejectPendingControlRequest();
+      });
+    }
+
+    if (els.btnCancelWaitingRequest) {
+      els.btnCancelWaitingRequest.addEventListener('click', () => {
+        if (els.controllerWaitingOverlay) {
+          els.controllerWaitingOverlay.classList.add('hidden');
         }
+        disconnectHotspotController();
+      });
+    }
+
+    if (els.btnRetryWaitingRequest) {
+      els.btnRetryWaitingRequest.addEventListener('click', () => {
+        initHotspotControllerMode();
       });
     }
 
@@ -10675,7 +11100,11 @@ document.addEventListener('DOMContentLoaded', () => {
     const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || window.innerWidth <= 768;
 
     let screens = [];
-    if (screenDetails && screenDetails.screens && screenDetails.screens.length > 0) {
+    const isController = Boolean(state.isHotspotControllerMode && state.hostScreens && state.hostScreens.length > 0);
+
+    if (isController) {
+      screens = state.hostScreens;
+    } else if (screenDetails && screenDetails.screens && screenDetails.screens.length > 0) {
       screens = screenDetails.screens;
     } else {
       const currentW = window.screen.width || window.innerWidth || 1920;
@@ -10695,26 +11124,31 @@ document.addEventListener('DOMContentLoaded', () => {
       let optionsHtml = screens.map((s, idx) => {
         const sLeft = s.availLeft !== undefined ? s.availLeft : (s.left || 0);
         const sWidth = s.width || 1920;
-        const isCurrentScreen = winX >= sLeft && winX < (sLeft + sWidth);
+        const isCurrentScreen = !isController && (winX >= sLeft && winX < (sLeft + sWidth));
         const isMain = Boolean(s.isPrimary);
         
         let tags = [];
-        if (isMain) tags.push('الرئيسية');
-        if (isCurrentScreen) tags.push('لوحة التحكم');
+        if (isController) tags.push('جهاز العرض الرئيسي');
+        else {
+          if (isMain) tags.push('الرئيسية');
+          if (isCurrentScreen) tags.push('لوحة التحكم');
+        }
         const tagText = tags.length > 0 ? ' (' + tags.join(' - ') + ')' : '';
         const defaultName = isMain ? (isMobile ? 'شاشة الهاتف المحمول' : 'الشاشة الرئيسية') : ('شاشة خارجية ' + (idx + 1));
         const label = s.label || defaultName;
-        const val = 'screen_' + idx;
+        const val = s.val || ('screen_' + idx);
         return '<option value="' + val + '">' + escapeHtml(label) + ' (' + s.width + ' × ' + s.height + ' px)' + tagText + '</option>';
       }).join('');
 
-      optionsHtml += '<option value="in_app_overlay">عرض داخل التبويب الحالي (Overlay)</option>';
+      if (!isController) {
+        optionsHtml += '<option value="in_app_overlay">عرض داخل التبويب الحالي (Overlay)</option>';
 
-      if (state.hotspotConnectedDevices && state.hotspotConnectedDevices.size > 0) {
-        state.hotspotConnectedDevices.forEach((dev) => {
-          const ip = dev.ip || '127.0.0.1';
-          optionsHtml += '<option value="hotspot_' + escapeHtml(ip) + '">📱 جهاز تحكم متصل (' + escapeHtml(ip) + ')</option>';
-        });
+        if (state.hotspotConnectedDevices && state.hotspotConnectedDevices.size > 0) {
+          state.hotspotConnectedDevices.forEach((dev) => {
+            const ip = dev.ip || '127.0.0.1';
+            optionsHtml += '<option value="hotspot_' + escapeHtml(ip) + '">📱 جهاز تحكم متصل (' + escapeHtml(ip) + ')</option>';
+          });
+        }
       }
 
       els.connectedScreensSelect.innerHTML = optionsHtml;
@@ -10724,26 +11158,30 @@ document.addEventListener('DOMContentLoaded', () => {
       let cardsHtml = screens.map((s, idx) => {
         const sLeft = s.availLeft !== undefined ? s.availLeft : (s.left || 0);
         const sWidth = s.width || 1920;
-        const isCurrentScreen = winX >= sLeft && winX < (sLeft + sWidth);
+        const isCurrentScreen = !isController && (winX >= sLeft && winX < (sLeft + sWidth));
         const isMain = Boolean(s.isPrimary);
 
         let chips = [];
-        if (isMain) {
-          chips.push('<span class="screen-chip" style="font-size:0.7rem; font-weight:600; background:rgba(148,163,184,0.2); color:#94a3b8; padding:2px 8px; border-radius:10px;">الرئيسية</span>');
-        }
-        if (isCurrentScreen) {
-          chips.push('<span class="screen-chip" style="font-size:0.7rem; font-weight:600; background:rgba(59,130,246,0.2); color:#60a5fa; padding:2px 8px; border-radius:10px;">لوحة التحكم</span>');
+        if (isController) {
+          chips.push('<span class="screen-chip" style="font-size:0.7rem; font-weight:700; background:rgba(37,99,235,0.15); color:#2563eb; padding:2px 8px; border-radius:10px;"><i class="fa-solid fa-laptop"></i> شاشة الجهاز الرئيسي</span>');
+        } else {
+          if (isMain) {
+            chips.push('<span class="screen-chip" style="font-size:0.7rem; font-weight:600; background:rgba(148,163,184,0.2); color:#94a3b8; padding:2px 8px; border-radius:10px;">الرئيسية</span>');
+          }
+          if (isCurrentScreen) {
+            chips.push('<span class="screen-chip" style="font-size:0.7rem; font-weight:600; background:rgba(59,130,246,0.2); color:#60a5fa; padding:2px 8px; border-radius:10px;">لوحة التحكم</span>');
+          }
         }
 
         const chipsHtml = chips.length > 0 ? '<div class="screen-chips-row" style="margin-top:4px; display:flex; gap:4px; flex-wrap:wrap;">' + chips.join('') + '</div>' : '';
         const name = (s && s.label && s.label.trim()) ? s.label.trim() : (isMain ? 'الشاشة الرئيسية (Main Display)' : ('الشاشة الخارجية ' + (idx + 1)));
         const cardClass = 'screen-cast-card' + (isCurrentScreen ? ' current-screen-card' : '');
-        const val = 'screen_' + idx;
+        const val = s.val || ('screen_' + idx);
 
         return '<div class="' + cardClass + '" data-val="' + val + '"><div class="screen-info"><span class="screen-name"><i class="fa-solid fa-desktop"></i> ' + escapeHtml(name) + '</span>' + chipsHtml + '<span class="screen-res" style="font-size:0.75rem; color:#94a3b8; margin-top:3px; display:block;">' + s.width + ' × ' + s.height + ' px</span></div><i class="fa-solid fa-expand launch-btn-icon"></i></div>';
       }).join('');
 
-      if (state.hotspotConnectedDevices && state.hotspotConnectedDevices.size > 0) {
+      if (!isController && state.hotspotConnectedDevices && state.hotspotConnectedDevices.size > 0) {
         state.hotspotConnectedDevices.forEach((dev) => {
           const ip = dev.ip || '127.0.0.1';
           const isMobileDev = /mobile|phone|android|iphone/i.test(dev.userAgent || dev.name || '');
@@ -10757,6 +11195,15 @@ document.addEventListener('DOMContentLoaded', () => {
       els.screensCastList.querySelectorAll('.screen-cast-card').forEach(card => {
         card.addEventListener('click', async () => {
           const val = card.dataset.val;
+          if (state.isHotspotControllerMode) {
+            sendHotspotCommand({
+              type: 'LAUNCH_SCREEN',
+              screenVal: val,
+              targetLineIdx: state.currentLineIndex
+            });
+            showToast(`📺 جاري إطلاق العرض على شاشة الجهاز الرئيسي (${val})`);
+            return;
+          }
           if (val.startsWith('screen_') && 'getScreenDetails' in window && !screenDetails) {
             try {
               screenDetails = await window.getScreenDetails();
@@ -10773,6 +11220,23 @@ document.addEventListener('DOMContentLoaded', () => {
   let pendingChoiceExtVal = 'screen_1';
 
   async function handleFullscreenLaunch(targetLineIdx = null) {
+    if (state.isHotspotControllerMode) {
+      const targetLine = (targetLineIdx !== null && targetLineIdx !== undefined && !isNaN(targetLineIdx))
+        ? targetLineIdx
+        : state.currentLineIndex;
+      
+      const hostScreens = state.hostScreens || [];
+      const extVal = (hostScreens.length > 1) ? (hostScreens[1].val || 'screen_1') : (hostScreens[0]?.val || 'screen_0');
+
+      sendHotspotCommand({
+        type: 'LAUNCH_SCREEN',
+        screenVal: extVal,
+        targetLineIdx: targetLine
+      });
+      showToast('📺 تم إرسال أمر العرض بملء الشاشة إلى الجهاز الرئيسي');
+      return;
+    }
+
     if (targetLineIdx !== null && targetLineIdx !== undefined && !isNaN(targetLineIdx)) {
       state.liveSong = state.activeSong;
       state.livePresentationLines = state.presentationLines;
@@ -10831,6 +11295,15 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function launchPresenterOnSelectedScreen(selectedVal) {
+    if (state.isHotspotControllerMode) {
+      sendHotspotCommand({
+        type: 'LAUNCH_SCREEN',
+        screenVal: selectedVal || 'screen_0',
+        targetLineIdx: state.currentLineIndex
+      });
+      showToast('📺 تم إرسال أمر العرض إلى الجهاز الرئيسي');
+      return;
+    }
     closeAllPopovers();
     if (els.popoverCast) els.popoverCast.classList.add('hidden');
     const modalChoice = document.getElementById('modal-screen-choice');
@@ -14150,6 +14623,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function loadSongIntoPresentation(song, forceLive = true, skipDefaultTemplate = false, searchTarget = null) {
     if (!song) return;
+
+    if (state.isHotspotControllerMode && typeof sendHotspotCommand === 'function' && !song._fromHotspotSync) {
+      sendHotspotCommand({
+        type: 'LOAD_SONG',
+        song: song
+      });
+    }
 
     const isBibleSong = Boolean((song.is_bible === true || song.is_bible === '1' || song.is_bible === 1) || (song.chapter_number !== undefined && song.chapter_number !== null && song.chapter_number !== '') || song.type === 'bible');
     // Auto-apply assigned default template for Hymns or Bible
