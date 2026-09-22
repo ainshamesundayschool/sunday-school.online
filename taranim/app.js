@@ -17177,6 +17177,16 @@ document.addEventListener('DOMContentLoaded', () => {
               const segW = Math.max(seg.scrollWidth || 0, seg.offsetWidth || 0, seg.getBoundingClientRect().width);
               if (segW > safeW) return false;
             }
+
+            const badge = el.querySelector('.slide-badge-layer');
+            if (badge) {
+              const badgeRect = badge.getBoundingClientRect();
+              const elRect = el.getBoundingClientRect();
+              if (badgeRect.width > 0 && elRect.width > 0) {
+                const spanW = Math.max(badgeRect.right, elRect.right) - Math.min(badgeRect.left, elRect.left);
+                if (spanW > safeW) return false;
+              }
+            }
             return true;
           };
 
@@ -17364,7 +17374,19 @@ document.addEventListener('DOMContentLoaded', () => {
               }
             }
 
-            if (liveH <= safeH && liveW <= safeW + 2 && !segOverflow) {
+            const liveBadge = els.obsLineText.querySelector('.slide-badge-layer');
+            let badgeOverflow = false;
+            if (liveBadge && els.obsLowerThirdBox) {
+              const bRect = liveBadge.getBoundingClientRect();
+              const bxRect = els.obsLowerThirdBox.getBoundingClientRect();
+              if (bRect.width > 0 && bxRect.width > 0) {
+                if (bRect.right > bxRect.right - 8 || bRect.left < bxRect.left + 8) {
+                  badgeOverflow = true;
+                }
+              }
+            }
+
+            if (liveH <= safeH && liveW <= safeW + 2 && !segOverflow && !badgeOverflow) {
               break;
             }
             curS -= 1;
@@ -17380,11 +17402,11 @@ document.addEventListener('DOMContentLoaded', () => {
           if (els.obsLineText && els.obsLowerThirdBox) {
             const badge = els.obsLineText.querySelector('.slide-badge-layer');
             if (badge) {
-              badge.style.transform = 'translateY(-50%)';
+              badge.style.transform = 'none';
               const boxRect = els.obsLowerThirdBox.getBoundingClientRect();
               const badgeRect = badge.getBoundingClientRect();
               if (boxRect.width > 0 && badgeRect.width > 0) {
-                const pad = 6;
+                const pad = 8;
                 let shiftX = 0;
                 if (badgeRect.right > boxRect.right - pad) {
                   shiftX = (boxRect.right - pad) - badgeRect.right;
@@ -17392,7 +17414,7 @@ document.addEventListener('DOMContentLoaded', () => {
                   shiftX = (boxRect.left + pad) - badgeRect.left;
                 }
                 if (Math.abs(shiftX) > 0.5) {
-                  badge.style.transform = `translate(${Math.round(shiftX)}px, -50%)`;
+                  badge.style.transform = `translateX(${Math.round(shiftX)}px)`;
                 }
               }
             }
