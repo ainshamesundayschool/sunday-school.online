@@ -1869,7 +1869,7 @@ input[type="checkbox"]:checked::after {
 .slide-badge-layer {
   color: #94a3b8 !important;
   font-weight: 700 !important;
-  font-size: 0.58em !important;
+  font-size: 0.72em !important;
 }
 
 .stanza-badge-side {
@@ -1906,22 +1906,18 @@ input[type="checkbox"]:checked::after {
 }
 
 .slide-badge-layer {
-  position: relative !important;
-  left: auto !important;
+  position: absolute !important;
+  left: calc(100% + 0.28em) !important;
   right: auto !important;
-  top: auto !important;
-  bottom: auto !important;
-  transform: none !important;
+  top: 50% !important;
+  transform: translateY(-50%) !important;
   display: inline-block !important;
   visibility: visible !important;
-  vertical-align: baseline !important;
-  margin: 0 !important;
-  margin-inline-end: 0.3em !important;
-  margin-inline-start: 0 !important;
   opacity: 0.9 !important;
-  font-weight: 700 !important;
-  font-size: 0.58em !important;
+  font-weight: 800 !important;
+  font-size: 0.52em !important;
   line-height: 1 !important;
+  margin: 0 !important;
   padding: 0 !important;
   z-index: 15 !important;
   white-space: nowrap !important;
@@ -1933,7 +1929,7 @@ input[type="checkbox"]:checked::after {
 .slide-badge-layer.chorus-num {
   color: #ef4444 !important;
   font-weight: 800 !important;
-  font-size: 0.58em !important;
+  font-size: 0.52em !important;
 }
 
 .slide-badge-layer.stanza-badge-side,
@@ -1941,17 +1937,15 @@ input[type="checkbox"]:checked::after {
 .slide-badge-layer.verse-num {
   color: #94a3b8 !important;
   font-weight: 700 !important;
-  font-size: 0.58em !important;
+  font-size: 0.52em !important;
 }
 
 /* FOR LTR / ENGLISH HYMNS: BADGE SITS TO THE LEFT OF THE FIRST LINE */
 [dir="ltr"] .slide-badge-layer,
 .is-ltr .slide-badge-layer,
 .is-ltr-badge {
-  right: auto !important;
+  right: calc(100% + 0.28em) !important;
   left: auto !important;
-  top: auto !important;
-  transform: none !important;
 }
 
 [dir="ltr"] .slide-lines-body,
@@ -3726,17 +3720,13 @@ input[type="checkbox"]:checked::after {
   .obs-line-text,
   .line-text {
     height: auto !important;
-    line-height: 1.3 !important;
+    line-height: 1.35 !important;
     margin: 0 auto !important;
     width: 100% !important;
     max-width: 100% !important;
     text-align: center !important;
     text-align-last: center !important;
     transform: none !important;
-  }
-
-  .obs-line-row {
-    margin: 0.05em 0 !important;
   }
 
   .obs-line-segment {
@@ -3747,7 +3737,6 @@ input[type="checkbox"]:checked::after {
     text-align: center !important;
     width: auto !important;
     max-width: 100% !important;
-    box-sizing: border-box !important;
     margin-top: 0 !important;
     margin-bottom: 0 !important;
   }
