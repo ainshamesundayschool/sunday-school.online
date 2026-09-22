@@ -1463,6 +1463,7 @@
       // Dynamic resize: clear cached font size whenever presentation dimensions change
       if (_uniformWindowW !== boxW || _uniformWindowH !== boxH) {
         _uniformFontSize = null;
+        _uniformSongKey = '';
         _uniformWindowW = boxW;
         _uniformWindowH = boxH;
       }
@@ -1610,7 +1611,23 @@
       // UNIFORM TARNIMA & BIBLE FONT SIZE ENGINE
       const currentMode = (lastStyleData && (lastStyleData.presentationMode || lastStyleData.mode)) || 'fullslide';
       const itemKey = (lastStyleData && (lastStyleData.songKey || lastStyleData.songTitle || (isBible ? ('bible_' + (lastStyleData.bibleRef || '')) : ''))) || 'item';
-      const currentSongKey = `${itemKey}__mode_${currentMode}__font_${currentFont}__${boxW}x${boxH}`;
+
+      const allSlides = (lastStyleData && lastStyleData.allSlideTexts && Array.isArray(lastStyleData.allSlideTexts) && lastStyleData.allSlideTexts.length > 0)
+        ? lastStyleData.allSlideTexts
+        : (statePresentationLines && Array.isArray(statePresentationLines) && statePresentationLines.length > 0 ? statePresentationLines : null);
+
+      let textSig = '';
+      if (allSlides && allSlides.length > 0) {
+        textSig = allSlides.map(s => (typeof s === 'string' ? s : (s && s.text ? s.text : ''))).join('|');
+      } else {
+        textSig = textEl ? (textEl.innerText || textEl.textContent || '') : '';
+      }
+      let textHash = 0;
+      for (let i = 0; i < textSig.length; i++) {
+        textHash = ((textHash << 5) - textHash + textSig.charCodeAt(i)) | 0;
+      }
+
+      const currentSongKey = `${itemKey}__${textHash}__${textSig.length}__mode_${currentMode}__font_${currentFont}__fw_${fWeight}__lh_${finalLineHeight}__ls_${lSpacing}__al_${align}__${boxW}x${boxH}`;
 
       let appliedFontSize = minFont;
 
@@ -1618,10 +1635,6 @@
         if (_uniformSongKey === currentSongKey && _uniformFontSize !== null) {
           appliedFontSize = _uniformFontSize;
         } else {
-          const allSlides = (lastStyleData && lastStyleData.allSlideTexts && Array.isArray(lastStyleData.allSlideTexts) && lastStyleData.allSlideTexts.length > 0)
-            ? lastStyleData.allSlideTexts
-            : (statePresentationLines && Array.isArray(statePresentationLines) && statePresentationLines.length > 0 ? statePresentationLines : null);
-
           let uniformSize = maxFont;
 
           if (allSlides && allSlides.length > 0) {
@@ -2287,7 +2300,10 @@
       const textColor = data.textColor || '#ffffff';
       textEl.style.color = textColor;
 
+      _uniformFontSize = null;
+      _uniformSongKey = '';
       applyDynamicShadow(data);
+      fitTextToSafeArea(currentIsBible);
 
       // ALL-IN-ONE REAL-TIME SCROLL SYNCHRONIZATION & TRACKING
       if (data.mode === 'allinone' || (data.text && data.text.includes('allinone-slide-group'))) {

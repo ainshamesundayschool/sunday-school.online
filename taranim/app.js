@@ -14995,6 +14995,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     song = ensureSongVerses(song);
     state.activeSong = song;
+    state._uniformFontSize = null;
+    state._uniformSongKey = '';
     let linesList = [];
 
     const isBible = Boolean((song.is_bible === true || song.is_bible === '1' || song.is_bible === 1) || (song.chapter_number !== undefined && song.chapter_number !== null && song.chapter_number !== ''));
@@ -17044,6 +17046,7 @@ document.addEventListener('DOMContentLoaded', () => {
           // Dynamic resize: clear cached font size whenever presentation dimensions change
           if (state._uniformWindowW !== boxW || state._uniformWindowH !== boxH) {
             state._uniformFontSize = null;
+            state._uniformSongKey = '';
             state._uniformWindowW = boxW;
             state._uniformWindowH = boxH;
           }
@@ -17152,16 +17155,30 @@ document.addEventListener('DOMContentLoaded', () => {
           let appliedFontSize = minFont;
           const currentMode = state.presentationMode || 'fullslide';
           const itemKey = (targetSong && (targetSong.id || targetSong.key || targetSong.title || (isBible ? ('bible_' + (targetSong.book_name || '') + '_' + (targetSong.chapter_number || '')) : ''))) || 'item';
-          const currentSongKey = `${itemKey}__mode_${currentMode}__font_${state.selectedFont}__${boxW}x${boxH}`;
+
+          const allSlides = (state.presentationLines && Array.isArray(state.presentationLines) && state.presentationLines.length > 0)
+            ? state.presentationLines
+            : (targetSong && targetSong.slides ? targetSong.slides : null);
+
+          let textSig = '';
+          if (allSlides && allSlides.length > 0) {
+            textSig = allSlides.map(s => (typeof s === 'string' ? s : (s && s.text ? s.text : ''))).join('|');
+          } else {
+            textSig = String(snapText || text || '');
+          }
+          let textHash = 0;
+          for (let i = 0; i < textSig.length; i++) {
+            textHash = ((textHash << 5) - textHash + textSig.charCodeAt(i)) | 0;
+          }
+
+          const currentFont = isJomhuria ? 'Jomhuria' : (state.selectedFont || 'sans-serif');
+          const currentSongKey = `${itemKey}__${textHash}__${textSig.length}__mode_${currentMode}__font_${currentFont}__fw_${fWeight}__lh_${finalLineHeight}__ls_${lSpacing}__al_${align}__${boxW}x${boxH}`;
 
           if (currentSongKey) {
             if (state._uniformSongKey === currentSongKey && state._uniformFontSize !== null && state._uniformFontSize !== undefined) {
               appliedFontSize = state._uniformFontSize;
             } else {
               let uniformSize = maxFont;
-              const allSlides = (state.presentationLines && Array.isArray(state.presentationLines) && state.presentationLines.length > 0)
-                ? state.presentationLines
-                : (targetSong && targetSong.slides ? targetSong.slides : null);
 
               if (allSlides && allSlides.length > 0) {
                 let sandbox = document.getElementById('obs-fit-sandbox');
