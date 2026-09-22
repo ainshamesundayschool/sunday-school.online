@@ -1790,8 +1790,7 @@ if (!empty($_POST['dev_override_church_id'])) {
     }
 }
 
-// Release session lock immediately so concurrent API calls execute in parallel
-session_write_close();
+
 
 
 
@@ -2326,27 +2325,17 @@ function getTripParticipantIds($tripRow)
 
 function isTripDeveloperViewerRole()
 {
-    $role = strtolower($_SESSION['uncle_role'] ?? $_SESSION['role'] ?? $_SESSION['user_role'] ?? $_POST['uncle_role'] ?? $_POST['role'] ?? $_GET['uncle_role'] ?? $_GET['role'] ?? '');
-
+    if (!empty($_SESSION['is_developer'])) {
+        return true;
+    }
+    $role = strtolower($_SESSION['uncle_role'] ?? $_SESSION['role'] ?? $_SESSION['user_role'] ?? '');
     return in_array($role, ['developer', 'dev', 'admin', 'administrator', 'superadmin'], true);
 }
 
-
-
-/** Bypass trip ACL when developer/admin or when explicit override sent. */
-
+/** Bypass trip ACL when developer/admin */
 function isTripDeveloperViewer()
-
 {
-
-    if (isTripDeveloperViewerRole()) {
-
-        return true;
-
-    }
-
-    return !empty($_POST['dev_override_church_id']) || !empty($_GET['dev_override_church_id']);
-
+    return isTripDeveloperViewerRole();
 }
 
 
@@ -3477,123 +3466,15 @@ function saveEnhancedImage($image, $outputPath, $quality = 85)
 
 function autoRestoreSessionFromRequest()
 {
-    if (isset($_SESSION['church_id']) || isset($_SESSION['uncle_id']) || isset($_SESSION['loggedIn']) || isset($_SESSION['uncle_logged_in']) || !empty($_SESSION['is_developer'])) {
+    if (
+        !empty($_SESSION['church_id']) || 
+        !empty($_SESSION['uncle_id']) || 
+        !empty($_SESSION['loggedIn']) || 
+        !empty($_SESSION['uncle_logged_in']) || 
+        !empty($_SESSION['is_developer'])
+    ) {
         return true;
     }
-
-    $conn = null;
-    try {
-        $conn = getDBConnection();
-    } catch (Exception $e) {
-        return false;
-    }
-
-    // 1. Try restore by username
-    $username = trim($_POST['username'] ?? $_GET['username'] ?? '');
-    if (!empty($username)) {
-        try {
-            $stmt = $conn->prepare("
-                SELECT u.id, u.name, u.username, u.role, u.church_id,
-                       c.church_name, c.church_code, c.admin_email,
-                       COALESCE(c.church_type, 'kids') AS church_type
-                FROM uncles u
-                LEFT JOIN churches c ON u.church_id = c.id
-                WHERE u.username = ? AND (u.deleted IS NULL OR u.deleted = 0)
-                LIMIT 1
-            ");
-            if ($stmt) {
-                $stmt->bind_param("s", $username);
-                $stmt->execute();
-                $res = $stmt->get_result();
-                $row = $res ? $res->fetch_assoc() : null;
-                if ($row) {
-                    $_SESSION['uncle_id'] = intval($row['id']);
-                    $_SESSION['uncle_name'] = $row['name'];
-                    $_SESSION['uncle_username'] = $row['username'];
-                    $_SESSION['uncle_role'] = $row['role'];
-                    $_SESSION['role'] = $row['role'];
-                    if (in_array(strtolower(trim($row['role'] ?? '')), ['developer', 'dev'])) {
-                        $_SESSION['is_developer'] = true;
-                    }
-                    $_SESSION['church_id'] = intval($row['church_id']);
-                    $_SESSION['church_name'] = $row['church_name'];
-                    $_SESSION['church_code'] = $row['church_code'];
-                    $_SESSION['church_type'] = $row['church_type'];
-                    $_SESSION['admin_email'] = $row['admin_email'] ?? '';
-                    $_SESSION['login_type'] = 'uncle';
-                    $_SESSION['uncle_logged_in'] = true;
-                    return true;
-                }
-            }
-        } catch (Exception $e) {}
-    }
-
-    // 2. Try restore by uncle_id
-    $uncleId = intval($_POST['uncle_id'] ?? $_GET['uncle_id'] ?? 0);
-    if ($uncleId > 0) {
-        try {
-            $stmt = $conn->prepare("
-                SELECT u.id, u.name, u.username, u.role, u.church_id,
-                       c.church_name, c.church_code, c.admin_email,
-                       COALESCE(c.church_type, 'kids') AS church_type
-                FROM uncles u
-                LEFT JOIN churches c ON u.church_id = c.id
-                WHERE u.id = ? AND (u.deleted IS NULL OR u.deleted = 0)
-                LIMIT 1
-            ");
-            if ($stmt) {
-                $stmt->bind_param("i", $uncleId);
-                $stmt->execute();
-                $res = $stmt->get_result();
-                $row = $res ? $res->fetch_assoc() : null;
-                if ($row) {
-                    $_SESSION['uncle_id'] = intval($row['id']);
-                    $_SESSION['uncle_name'] = $row['name'];
-                    $_SESSION['uncle_username'] = $row['username'];
-                    $_SESSION['uncle_role'] = $row['role'];
-                    $_SESSION['role'] = $row['role'];
-                    if (in_array(strtolower(trim($row['role'] ?? '')), ['developer', 'dev'])) {
-                        $_SESSION['is_developer'] = true;
-                    }
-                    $_SESSION['church_id'] = intval($row['church_id']);
-                    $_SESSION['church_name'] = $row['church_name'];
-                    $_SESSION['church_code'] = $row['church_code'];
-                    $_SESSION['church_type'] = $row['church_type'];
-                    $_SESSION['admin_email'] = $row['admin_email'] ?? '';
-                    $_SESSION['login_type'] = 'uncle';
-                    $_SESSION['uncle_logged_in'] = true;
-                    return true;
-                }
-            }
-        } catch (Exception $e) {}
-    }
-
-    // Skip church-code and church-id auto restore if active session is developer or if performing an API action
-    $action = $_POST['action'] ?? $_GET['action'] ?? '';
-    if (!empty($_SESSION['is_developer']) || isDeveloperRole() || (!empty($action) && $action !== 'login' && $action !== 'church_login' && $action !== 'restore_session')) {
-        return false;
-    }
-
-    // 3. Try restore by church_code or church_id
-    $churchCode = trim($_POST['church_code'] ?? $_GET['church_code'] ?? '');
-    $churchId = intval($_POST['church_id'] ?? $_GET['church_id'] ?? 0);
-    if (!empty($churchCode) || $churchId > 0) {
-        try {
-            $row = findChurchRow($conn, $churchCode, $churchId);
-            if ($row) {
-                $_SESSION['church_id'] = intval($row['id']);
-                $_SESSION['church_name'] = $row['church_name'];
-                $_SESSION['church_code'] = $row['church_code'];
-                $_SESSION['church_type'] = $row['church_type'];
-                $_SESSION['login_type'] = 'church';
-                $_SESSION['uncle_role'] = 'admin';
-                $_SESSION['role'] = 'admin';
-                $_SESSION['loggedIn'] = true;
-                return true;
-            }
-        } catch (Exception $e) {}
-    }
-
     return false;
 }
 
@@ -3609,14 +3490,14 @@ function syncCurrentSessionRoleFromDB()
             $res = $stmt->get_result();
             if ($row = $res->fetch_assoc()) {
                 $dbRole = strtolower(trim($row['role'] ?? ''));
-                $sessRole = strtolower(trim($_SESSION['uncle_role'] ?? $_SESSION['role'] ?? ''));
-                if (!empty($_SESSION['is_developer']) || in_array($dbRole, ['developer', 'dev']) || in_array($sessRole, ['developer', 'dev'])) {
-                    $_SESSION['uncle_role'] = in_array($dbRole, ['developer', 'dev']) ? $dbRole : 'developer';
-                    $_SESSION['role'] = $_SESSION['uncle_role'];
+                if (in_array($dbRole, ['developer', 'dev'], true)) {
+                    $_SESSION['uncle_role'] = $dbRole;
+                    $_SESSION['role'] = $dbRole;
                     $_SESSION['is_developer'] = true;
                 } else {
                     $_SESSION['uncle_role'] = $row['role'];
                     $_SESSION['role'] = $row['role'];
+                    unset($_SESSION['is_developer']);
                 }
                 if (!empty($row['name'])) $_SESSION['uncle_name'] = $row['name'];
                 if (!empty($row['username'])) $_SESSION['uncle_username'] = $row['username'];
@@ -3633,18 +3514,6 @@ function syncCurrentSessionRoleFromDB()
 function getEffectiveUserRole(): string
 {
     if (!empty($_SESSION['is_developer'])) {
-        return 'developer';
-    }
-
-    $requestRole = strtolower(trim(
-        $_POST['uncle_role'] ?? 
-        $_POST['role'] ?? 
-        $_GET['uncle_role'] ?? 
-        $_GET['role'] ?? 
-        ''
-    ));
-
-    if (in_array($requestRole, ['developer', 'dev'], true)) {
         return 'developer';
     }
 
@@ -3674,10 +3543,6 @@ function getEffectiveUserRole(): string
         return 'admin';
     }
 
-    if (!empty($requestRole)) {
-        return $requestRole;
-    }
-
     return 'uncle';
 }
 
@@ -3686,11 +3551,8 @@ function isDeveloperRole(): bool
     if (!empty($_SESSION['is_developer'])) {
         return true;
     }
-    if (!empty($_POST['is_developer']) || !empty($_GET['is_developer']) || !empty($_POST['dev_override_church_id']) || !empty($_GET['dev_override_church_id'])) {
-        return true;
-    }
-    $reqRole = strtolower(trim($_POST['uncle_role'] ?? $_POST['role'] ?? $_GET['uncle_role'] ?? $_GET['role'] ?? ''));
-    if (in_array($reqRole, ['developer', 'dev'], true)) {
+    syncCurrentSessionRoleFromDB();
+    if (!empty($_SESSION['is_developer'])) {
         return true;
     }
     $role = getEffectiveUserRole();
@@ -3705,34 +3567,18 @@ function isAdminOrDevRole(): bool
            (isset($_SESSION['login_type']) && $_SESSION['login_type'] === 'church');
 }
 
-
 // Check if user is logged in
 function checkAuth()
 {
     syncCurrentSessionRoleFromDB();
 
-    if (autoRestoreSessionFromRequest()) {
-        return;
-    }
-
-    if (isAdminOrDevRole()) {
-        return;
-    }
-
-    $role = strtolower($_SESSION['uncle_role'] ?? $_SESSION['role'] ?? $_SESSION['user_role'] ?? '');
-    if (in_array($role, ['developer', 'dev', 'admin', 'administrator', 'superadmin'])) {
-        return;
-    }
-
-    if (isset($_SESSION['church_id']) || isset($_SESSION['uncle_id']) || isset($_SESSION['uncle_logged_in']) || isset($_SESSION['loggedIn'])) {
-        return;
-    }
-
-    if (!empty($_POST['church_id']) || !empty($_POST['church_code']) || !empty($_POST['username']) || !empty($_POST['uncle_id']) || !empty($_POST['all_churches']) || !empty($_POST['dev_override_church_id']) || !empty($_POST['student_id']) || !empty($_POST['studentId']) || !empty($_POST['kid_id'])) {
-        return;
-    }
-
-    if (!empty($_GET['church_id']) || !empty($_GET['church_code']) || !empty($_GET['username']) || !empty($_GET['uncle_id']) || !empty($_GET['all_churches']) || !empty($_GET['dev_override_church_id']) || !empty($_GET['student_id']) || !empty($_GET['studentId']) || !empty($_GET['kid_id'])) {
+    if (
+        !empty($_SESSION['church_id']) || 
+        !empty($_SESSION['uncle_id']) || 
+        !empty($_SESSION['uncle_logged_in']) || 
+        !empty($_SESSION['loggedIn']) || 
+        !empty($_SESSION['is_developer'])
+    ) {
         return;
     }
 
@@ -3743,28 +3589,13 @@ function checkUncleAuth()
 {
     syncCurrentSessionRoleFromDB();
 
-    if (autoRestoreSessionFromRequest()) {
-        return;
-    }
-
-    if (isAdminOrDevRole()) {
-        return;
-    }
-
-    $role = strtolower($_SESSION['uncle_role'] ?? $_SESSION['role'] ?? $_SESSION['user_role'] ?? '');
-    if (in_array($role, ['developer', 'dev', 'admin', 'administrator', 'superadmin'])) {
-        return;
-    }
-
-    if (isset($_SESSION['uncle_id']) || isset($_SESSION['church_id']) || isset($_SESSION['uncle_logged_in']) || isset($_SESSION['loggedIn'])) {
-        return;
-    }
-
-    if (!empty($_POST['church_id']) || !empty($_POST['church_code']) || !empty($_POST['username']) || !empty($_POST['uncle_id']) || !empty($_POST['all_churches']) || !empty($_POST['dev_override_church_id']) || !empty($_POST['student_id']) || !empty($_POST['kid_id'])) {
-        return;
-    }
-
-    if (!empty($_GET['church_id']) || !empty($_GET['church_code']) || !empty($_GET['username']) || !empty($_GET['uncle_id']) || !empty($_GET['all_churches']) || !empty($_GET['dev_override_church_id']) || !empty($_GET['student_id']) || !empty($_GET['kid_id'])) {
+    if (
+        !empty($_SESSION['uncle_id']) || 
+        !empty($_SESSION['uncle_logged_in']) || 
+        !empty($_SESSION['church_id']) || 
+        !empty($_SESSION['loggedIn']) || 
+        !empty($_SESSION['is_developer'])
+    ) {
         return;
     }
 
@@ -3772,102 +3603,52 @@ function checkUncleAuth()
 }
 
 // Get church ID from session
-
-
-
 function getChurchId()
-
 {
-
     // 1. Developer override — sent explicitly by the JS church-switcher
-
-    //    This takes priority over session so devs can view any church.
-
-    if (isset($_POST['dev_override_church_id']) && $_POST['dev_override_church_id'] !== '') {
-        $override = intval($_POST['dev_override_church_id']);
-        $callerRole = strtolower(trim($_SESSION['uncle_role'] ?? $_SESSION['role'] ?? $_POST['uncle_role'] ?? $_POST['role'] ?? $_GET['uncle_role'] ?? $_GET['role'] ?? ''));
-        if (in_array($callerRole, ['developer', 'dev', 'admin', 'administrator'])) {
-            error_log("getChurchId - dev override: $override (caller role: $callerRole)");
-            return $override;
+    //    This takes priority over session ONLY when verified as developer/admin
+    if (isDeveloperRole() || isAdminOrDevRole()) {
+        if (isset($_POST['dev_override_church_id']) && $_POST['dev_override_church_id'] !== '') {
+            return intval($_POST['dev_override_church_id']);
+        }
+        if (isset($_GET['dev_override_church_id']) && $_GET['dev_override_church_id'] !== '') {
+            return intval($_GET['dev_override_church_id']);
         }
     }
-    if (isset($_GET['dev_override_church_id']) && $_GET['dev_override_church_id'] !== '') {
-        $override = intval($_GET['dev_override_church_id']);
-        $callerRole = strtolower(trim($_SESSION['uncle_role'] ?? $_SESSION['role'] ?? $_POST['uncle_role'] ?? $_POST['role'] ?? $_GET['uncle_role'] ?? $_GET['role'] ?? ''));
-        if (in_array($callerRole, ['developer', 'dev', 'admin', 'administrator'])) {
-            error_log("getChurchId - dev override GET: $override (caller role: $callerRole)");
-            return $override;
-        }
-    }
-
-
 
     // 2. Session — normal path for both church and uncle logins
-
     if (isset($_SESSION['church_id']) && !empty($_SESSION['church_id'])) {
-
         return intval($_SESSION['church_id']);
-
     }
 
-
-
-    // 3. POST church_id — fallback for cases where session is missing
-
+    // 3. Fallback for public student forms where church_id is explicitly provided
     if (isset($_POST['church_id']) && !empty($_POST['church_id'])) {
-
         return intval($_POST['church_id']);
-
     }
-
-
-
-    // 4. GET church_id
-
     if (isset($_GET['church_id']) && !empty($_GET['church_id'])) {
-
         return intval($_GET['church_id']);
-
     }
 
-    // 5. Fallback lookup by uncle_id or username
-    $targetUncleId = $_SESSION['uncle_id'] ?? $_POST['uncle_id'] ?? $_GET['uncle_id'] ?? null;
-    $targetUsername = $_SESSION['uncle_username'] ?? $_POST['username'] ?? $_GET['username'] ?? null;
-
-    if (!empty($targetUncleId) || !empty($targetUsername)) {
+    // 4. Session uncle_id lookup
+    if (!empty($_SESSION['uncle_id'])) {
         try {
             $conn = getDBConnection();
-            if (!empty($targetUncleId)) {
-                $uid = intval($targetUncleId);
-                $stmt = $conn->prepare("SELECT church_id FROM uncles WHERE id = ? LIMIT 1");
-                if ($stmt) {
-                    $stmt->bind_param("i", $uid);
-                    $stmt->execute();
-                    $res = $stmt->get_result();
-                    $row = $res ? $res->fetch_assoc() : null;
-                    if ($row && !empty($row['church_id'])) {
-                        $_SESSION['church_id'] = intval($row['church_id']);
-                        return intval($row['church_id']);
-                    }
-                }
-            } else if (!empty($targetUsername)) {
-                $un = trim($targetUsername);
-                $stmt = $conn->prepare("SELECT church_id FROM uncles WHERE username = ? LIMIT 1");
-                if ($stmt) {
-                    $stmt->bind_param("s", $un);
-                    $stmt->execute();
-                    $res = $stmt->get_result();
-                    $row = $res ? $res->fetch_assoc() : null;
-                    if ($row && !empty($row['church_id'])) {
-                        $_SESSION['church_id'] = intval($row['church_id']);
-                        return intval($row['church_id']);
-                    }
+            $uid = intval($_SESSION['uncle_id']);
+            $stmt = $conn->prepare("SELECT church_id FROM uncles WHERE id = ? LIMIT 1");
+            if ($stmt) {
+                $stmt->bind_param("i", $uid);
+                $stmt->execute();
+                $res = $stmt->get_result();
+                $row = $res ? $res->fetch_assoc() : null;
+                if ($row && !empty($row['church_id'])) {
+                    $_SESSION['church_id'] = intval($row['church_id']);
+                    return intval($row['church_id']);
                 }
             }
         } catch (Exception $e) {}
     }
 
-    // 6. For Developers with no specific church bound, fallback to the first active church
+    // 5. For Developers with no specific church bound, fallback to the first active church
     if (isDeveloperRole()) {
         try {
             $conn = getDBConnection();
@@ -3881,7 +3662,6 @@ function getChurchId()
     error_log("getChurchId - no church_id found. Session: " . json_encode($_SESSION));
 
     return 0;
-
 }
 
 $action = '';
@@ -5677,163 +5457,37 @@ try {
             break;
 
         case 'restore_session':
-
-            // NOTE: session_start() already called at top of file — do NOT call again
-
-            // Do NOT wipe $_SESSION before restoring — just overwrite the keys we need
-
-
-
-            if (isset($_POST['church_code'])) {
-
-                $church_code = sanitize($_POST['church_code']);
-
-
-
-                $row = null;
-
-                try {
-
-                    $conn = getDBConnection();
-
-                    ensureChurchTypeColumn($conn);
-
-                    ensureChurchApprovedColumn($conn);
-
-                    $stmt = $conn->prepare("SELECT id, church_name, church_code, admin_email, COALESCE(church_type,'kids') AS church_type, COALESCE(is_approved, 1) AS is_approved FROM churches WHERE church_code = ?");
-                    $stmt->bind_param("s", $church_code);
-                    $stmt->execute();
-                    $row = $stmt->get_result()->fetch_assoc();
-                } catch (Exception $e) {
-                    error_log("restore_session church error: " . $e->getMessage());
-                }
-
-                if ($row) {
-                    if (isset($row['is_approved']) && intval($row['is_approved']) === 0) {
-                        sendJSON(['success' => false, 'message' => 'هذه الكنيسة معلقة وفي انتظار موافقة المطور للتفعيل']);
-                    }
-                    $_SESSION['church_id'] = $row['id'];
-                    $_SESSION['church_name'] = $row['church_name'];
-                    $_SESSION['church_code'] = $row['church_code'];
-                    $_SESSION['church_type'] = $row['church_type'];
-                    $_SESSION['admin_email'] = $row['admin_email'] ?? '';
-                    $_SESSION['login_type'] = 'church';
-                    $_SESSION['uncle_role'] = 'admin';
-                    $_SESSION['role'] = 'admin';
-
-                    $_SESSION['permanent'] = true;
-
-
-
-                    error_log("Session restored for church: " . $row['church_name']);
-
+            // Only restore if user already has an active authenticated session
+            if (!empty($_SESSION['uncle_id']) || !empty($_SESSION['church_id']) || !empty($_SESSION['uncle_logged_in']) || !empty($_SESSION['loggedIn'])) {
+                syncCurrentSessionRoleFromDB();
+                if (!empty($_SESSION['uncle_id'])) {
                     sendJSON([
-
                         'success' => true,
-
-                        'church_id' => $row['id'],
-
-                        'church_code' => $row['church_code'],
-
-                        'church_type' => $row['church_type'],
-
-                        'church_name' => $row['church_name'],
-
+                        'uncle_id' => $_SESSION['uncle_id'],
+                        'church_id' => $_SESSION['church_id'] ?? null,
+                        'church_type' => $_SESSION['church_type'] ?? 'kids',
+                        'church_name' => $_SESSION['church_name'] ?? '',
+                        'uncle_name' => $_SESSION['uncle_name'] ?? '',
+                        'uncle_role' => $_SESSION['uncle_role'] ?? 'uncle',
+                        'uncle' => ['role' => $_SESSION['uncle_role'] ?? 'uncle'],
+                        'role' => $_SESSION['uncle_role'] ?? 'uncle',
+                        'login_type' => 'uncle',
+                    ]);
+                } else {
+                    sendJSON([
+                        'success' => true,
+                        'church_id' => $_SESSION['church_id'],
+                        'church_code' => $_SESSION['church_code'] ?? '',
+                        'church_type' => $_SESSION['church_type'] ?? 'kids',
+                        'church_name' => $_SESSION['church_name'] ?? '',
                         'uncle_role' => 'admin',
-
                         'role' => 'admin',
-
                         'login_type' => 'church',
-
                     ]);
-
-                } else {
-
-                    error_log("Church not found with code: " . $church_code);
-
-                    sendJSON(['success' => false, 'message' => 'Church not found']);
-
                 }
-
-            } elseif (isset($_POST['username'])) {
-
-                $username = sanitize($_POST['username']);
-
-
-
-                $row = null;
-
-                try {
-
-                    $conn = getDBConnection();
-
-                    ensureChurchTypeColumn($conn);
-
-                    ensureChurchApprovedColumn($conn);
-
-                    $stmt = $conn->prepare("
-
-                SELECT u.id, u.name, u.username, u.role, u.church_id,
-                       c.church_name, c.church_code, c.admin_email,
-                       COALESCE(c.church_type, 'kids') AS church_type,
-                       COALESCE(c.is_approved, 1) AS is_approved
-                FROM uncles u
-                LEFT JOIN churches c ON u.church_id = c.id
-                WHERE u.username = ? AND (u.deleted IS NULL OR u.deleted = 0)
-            ");
-                    $stmt->bind_param("s", $username);
-                    $stmt->execute();
-                    $row = $stmt->get_result()->fetch_assoc();
-                } catch (Exception $e) {
-                    error_log("restore_session uncle error: " . $e->getMessage());
-                }
-
-                if ($row) {
-                    if (isset($row['is_approved']) && intval($row['is_approved']) === 0) {
-                        sendJSON(['success' => false, 'message' => 'هذه الكنيسة معلقة وفي انتظار موافقة المطور للتفعيل']);
-                    }
-                    $_SESSION['uncle_id'] = $row['id'];
-                    $_SESSION['uncle_name'] = $row['name'];
-                    $_SESSION['uncle_username'] = $row['username'];
-                    $_SESSION['uncle_role'] = $row['role'];
-                    $_SESSION['role'] = $row['role'];
-                    $_SESSION['church_id'] = $row['church_id'];
-                    $_SESSION['church_name'] = $row['church_name'];
-                    $_SESSION['church_code'] = $row['church_code'];
-                    $_SESSION['church_type'] = $row['church_type'];
-                    $_SESSION['admin_email'] = $row['admin_email'] ?? '';
-                    $_SESSION['login_type'] = 'uncle';
-                    $_SESSION['permanent'] = true;
-
-
-
-                    error_log("Session restored for uncle: " . $row['username']);
-
-                    sendJSON([
-                        'success' => true,
-                        'uncle_id' => $row['id'],
-                        'church_id' => $row['church_id'],
-                        'church_type' => $row['church_type'],
-                        'church_name' => $row['church_name'],
-                        'uncle_name' => $row['name'],
-                        'uncle_role' => $row['role'],
-                        'uncle' => ['role' => $row['role']],
-                    ]);
-
-                } else {
-
-                    error_log("Uncle not found with username: " . $username);
-
-                    sendJSON(['success' => false, 'message' => 'User not found']);
-
-                }
-
             } else {
-
-                sendJSON(['success' => false, 'message' => 'No credentials provided']);
-
+                sendJSON(['success' => false, 'message' => 'الجلسة منتهية، يرجى تسجيل الدخول']);
             }
-
             break;
 
 
@@ -6583,17 +6237,14 @@ function getData()
 
         $churchId = getChurchId();
 
-        $isAll = (!empty($_POST['all_churches']) && $_POST['all_churches'] === '1') || (isset($_POST['dev_override_church_id']) && $_POST['dev_override_church_id'] == -1);
+        $isAll = (isDeveloperRole() || isAdminOrDevRole()) && (
+            (!empty($_POST['all_churches']) && $_POST['all_churches'] === '1') || 
+            (isset($_POST['dev_override_church_id']) && $_POST['dev_override_church_id'] == -1)
+        );
 
         if ($isAll) {
 
             $stmt = $conn->prepare("
-
-        SELECT 
-
-            s.id, s.name, s.phone, s.birthday, s.coupons,
-
-            s.attendance_coupons, s.commitment_coupons, s.task_coupons,
                 SELECT 
                     s.id, s.name, s.phone, s.birthday, s.coupons,
                     s.attendance_coupons, s.commitment_coupons, s.task_coupons,
@@ -12376,39 +12027,13 @@ function handleAutoLogin()
 
 
         if ($row) {
-
-            @session_regenerate_id(true);
-
-
-
-            $_SESSION['church_id'] = $row['id'];
-
-            $_SESSION['church_name'] = $row['church_name'];
-
-            $_SESSION['church_code'] = $row['church_code'];
-
-            $_SESSION['church_type'] = $row['church_type'];
-
-            $_SESSION['auto_logged_in'] = true;
-
-            runBackgroundGradeUpChecks();
-
-
-
             sendJSON([
-
                 'success' => true,
-
-                'message' => 'تم تسجيل الدخول تلقائياً',
-
+                'message' => 'تم العثور على بيانات الكنيسة',
                 'church_name' => $row['church_name'],
-
                 'church_id' => $row['id'],
-
                 'church_code' => $row['church_code'],
-
                 'church_type' => $row['church_type'],
-
             ]);
 
         } else {
@@ -13636,41 +13261,20 @@ function getAllChurches()
 
 
         $stmt = $conn->prepare("
-
-            SELECT id, church_name, church_code, admin_email
-
+            SELECT id, church_name, church_code
             FROM churches 
-
-            WHERE admin_email IS NOT NULL 
-
-            AND admin_email != ''
-
             ORDER BY church_name
-
         ");
-
         $stmt->execute();
-
         $result = $stmt->get_result();
 
-
-
         $churches = [];
-
         while ($row = $result->fetch_assoc()) {
-
             $churches[] = [
-
                 'id' => $row['id'],
-
                 'name' => $row['church_name'],
-
-                'code' => $row['church_code'],
-
-                'email' => $row['admin_email']
-
+                'code' => $row['church_code']
             ];
-
         }
 
 
@@ -13861,7 +13465,7 @@ function getAllChurchesForAdmin()
 
         $role = strtolower($_SESSION['uncle_role'] ?? $_SESSION['role'] ?? $_SESSION['user_role'] ?? '');
 
-        $isAllowed = in_array($role, ['developer', 'dev', 'admin', 'administrator', 'superadmin']) || isset($_SESSION['church_id']) || isset($_SESSION['uncle_id']) || !empty($_POST['all_churches']);
+        $isAllowed = isAdminOrDevRole() || in_array($role, ['developer', 'dev', 'admin', 'administrator', 'superadmin']) || isset($_SESSION['church_id']) || isset($_SESSION['uncle_id']);
 
         if (!$isAllowed) {
 
@@ -15905,15 +15509,7 @@ function sendAsyncRequest($url, $data)
 // ===== UNCLE LOGIN =====
 
 function handleUncleLogin()
-
 {
-
-    $_SESSION['uncle_logged_in'] = true;
-
-    $_SESSION['user_type'] = 'uncle';
-
-
-
     try {
 
         $username = sanitize($_POST['username'] ?? '');
@@ -50887,47 +50483,7 @@ function trackSongDownload() {
 
 function getSongDownloadStats() {
     checkAuth();
-    $role = strtolower(trim($_SESSION['uncle_role'] ?? $_SESSION['role'] ?? $_SESSION['user_role'] ?? $_POST['uncle_role'] ?? $_POST['role'] ?? $_GET['uncle_role'] ?? $_GET['role'] ?? ''));
-    
-    $isDev = in_array($role, ['developer', 'dev']) || !empty($_SESSION['is_developer']);
-
-    if (!$isDev && !empty($_SESSION['uncle_id'])) {
-        $connTemp = getDBConnection();
-        $stmtTemp = $connTemp->prepare("SELECT role FROM uncles WHERE id = ?");
-        if ($stmtTemp) {
-            $uId = intval($_SESSION['uncle_id']);
-            $stmtTemp->bind_param("i", $uId);
-            $stmtTemp->execute();
-            $resTemp = $stmtTemp->get_result();
-            if ($rowTemp = $resTemp->fetch_assoc()) {
-                if (in_array(strtolower(trim($rowTemp['role'] ?? '')), ['developer', 'dev'])) {
-                    $isDev = true;
-                    $_SESSION['uncle_role'] = $rowTemp['role'];
-                }
-            }
-            $stmtTemp->close();
-        }
-    }
-
-    if (!$isDev && !empty($_SESSION['church_id'])) {
-        $connTemp = getDBConnection();
-        $stmtTemp = $connTemp->prepare("SELECT role FROM churches WHERE id = ?");
-        if ($stmtTemp) {
-            $cId = intval($_SESSION['church_id']);
-            $stmtTemp->bind_param("i", $cId);
-            $stmtTemp->execute();
-            $resTemp = $stmtTemp->get_result();
-            if ($rowTemp = $resTemp->fetch_assoc()) {
-                if (in_array(strtolower(trim($rowTemp['role'] ?? '')), ['developer', 'dev'])) {
-                    $isDev = true;
-                    $_SESSION['role'] = $rowTemp['role'];
-                }
-            }
-            $stmtTemp->close();
-        }
-    }
-
-    if (!$isDev) {
+    if (!isDeveloperRole()) {
         sendJSON(['success' => false, 'message' => 'غير مصرح - هذه البيانات مخصصة لمطور النظام فقط']);
         return;
     }
