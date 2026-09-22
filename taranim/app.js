@@ -14429,26 +14429,26 @@ document.addEventListener('DOMContentLoaded', () => {
     return [firstHalf, secondHalf];
   }
 
-  function splitBibleVerseIntoBalancedLines(text) {
+  function balanceTextIntoEvenLines(text, forcedLineCount = 0) {
     if (!text || !text.trim()) return [''];
     const clean = text.trim().replace(/\s+/g, ' ');
     const words = clean.split(' ').filter(Boolean);
-    if (words.length <= 4) return [clean];
+    if (words.length <= 3) return [clean];
 
     const totalWords = words.length;
     const totalChars = clean.length;
 
-    let lineCount = 1;
-    if (totalWords <= 7 && totalChars <= 42) {
-      lineCount = 1;
-    } else if (totalWords <= 16 && totalChars <= 90) {
-      lineCount = 2;
-    } else if (totalWords <= 27 && totalChars <= 150) {
-      lineCount = 3;
-    } else if (totalWords <= 38 && totalChars <= 220) {
-      lineCount = 4;
-    } else {
-      lineCount = Math.max(2, Math.round(totalWords / 7.5));
+    let lineCount = forcedLineCount;
+    if (!lineCount || lineCount < 1) {
+      if (totalWords <= 8) {
+        lineCount = 2;
+      } else if (totalWords <= 16) {
+        lineCount = 3;
+      } else if (totalWords <= 26) {
+        lineCount = 4;
+      } else {
+        lineCount = Math.max(4, Math.round(totalWords / 6.5));
+      }
     }
 
     if (lineCount <= 1) return [clean];
@@ -14471,7 +14471,7 @@ document.addEventListener('DOMContentLoaded', () => {
       if (lineWordCount < 3 && totalWords >= 8) cost += 150;
 
       const lastWord = words[j];
-      if (/[،؛:!\?\.]$/.test(lastWord)) {
+      if (/[،؛:!\?\.؟\-]$/.test(lastWord)) {
         cost -= 35;
       }
 
@@ -14520,8 +14520,38 @@ document.addEventListener('DOMContentLoaded', () => {
     return resultLines.length > 0 ? resultLines : [clean];
   }
 
+  function balanceSlideLines(linesArray, isBible = false) {
+    if (!linesArray || !Array.isArray(linesArray) || linesArray.length === 0) return linesArray || [];
+    const cleanLines = linesArray.map(l => String(l).trim()).filter(Boolean);
+    if (cleanLines.length === 0) return [''];
+
+    // Rule 2: If it's all in one line, break it evenly into good looking 4, 3, or 2 lines
+    if (cleanLines.length === 1) {
+      return balanceTextIntoEvenLines(cleanLines[0]);
+    }
+
+    // Rule 1: If it's a long line in a multi-line slide, break it evenly
+    const result = [];
+    cleanLines.forEach(line => {
+      const words = line.split(/\s+/).filter(Boolean);
+      if (words.length >= 8 || line.length >= 42) {
+        const targetSubLines = words.length >= 16 ? 3 : 2;
+        const sub = balanceTextIntoEvenLines(line, targetSubLines);
+        result.push(...sub);
+      } else {
+        result.push(line);
+      }
+    });
+
+    return result.length > 0 ? result : cleanLines;
+  }
+
+  function splitBibleVerseIntoBalancedLines(text) {
+    return balanceTextIntoEvenLines(text);
+  }
+
   function splitBibleTextIntoLines(text) {
-    return splitBibleVerseIntoBalancedLines(text);
+    return balanceTextIntoEvenLines(text);
   }
 
   function ensureSongVerses(song) {
@@ -15061,17 +15091,7 @@ document.addEventListener('DOMContentLoaded', () => {
               isFirstSlideOfVerse = false;
             };
 
-            let effectiveLines = [];
-            if (isBible) {
-              cleanLines.forEach(l => {
-                const sub = splitBibleVerseIntoBalancedLines(l);
-                if (sub && sub.length > 0) effectiveLines.push(...sub);
-                else effectiveLines.push(l);
-              });
-              if (effectiveLines.length === 0) effectiveLines = cleanLines;
-            } else {
-              effectiveLines = cleanLines;
-            }
+            let effectiveLines = balanceSlideLines(cleanLines, isBible);
 
             if (mode === 'oneline') {
               // ACTUAL 1 LINE: 2, 3, or 4 words max according to segment
@@ -15333,7 +15353,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
           });
         } else {
-          pushFallbackSlideItem(lines);
+          pushFallbackSlideItem(balanceSlideLines(lines, isBible));
         }
       });
     }
@@ -16108,8 +16128,8 @@ document.addEventListener('DOMContentLoaded', () => {
       text = text.replace(badgeRegex, '').trim();
     }
 
-    let html = escapeHtml(text);
-    let lines = html.split('\n');
+    let rawLines = text.split('\n').map(l => l.trim()).filter(Boolean);
+    let lines = balanceSlideLines(rawLines, isBible).map(l => escapeHtml(l));
 
     let badgeHtml = '';
     if (detectedBadge) {
@@ -16380,8 +16400,8 @@ document.addEventListener('DOMContentLoaded', () => {
       highlightedLines: state.isHighlightMode ? (state.highlightedLineIndices || []) : [],
       highlightColor: state.highlightColor || '#ef4444',
       songMaxLines: (targetSong && targetSong._maxSlideLines) || 2,
-      songMaxChars: (targetSong && targetSong._maxSlideChars) || 28,
-      songKey: targetSong ? (targetSong.id || targetSong.title || '') : '',
+      songKey: targetSong ? (targetSong.id || targetSong.key || targetSong.title || (isBible ? ('bible_' + (targetSong.book_name || '') + '_' + (targetSong.chapter_number || '')) : '')) : '',
+      uniformFontSize: state._uniformFontSize || null,
       allSlideTexts: (state.presentationLines && Array.isArray(state.presentationLines) && state.presentationLines.length > 0)
         ? state.presentationLines.map(s => ({
             text: (s && s.text) ? s.text : (Array.isArray(s.lines) ? s.lines.join('\n') : String(s || '')),
@@ -16978,34 +16998,19 @@ document.addEventListener('DOMContentLoaded', () => {
       const snapText = text;
       requestAnimationFrame(() => {
         if (els.obsLineText && snapText.trim() && els.obsLineText.style.display !== 'none') {
-          const curW = Math.max(320, (els.obsOverlay && els.obsOverlay.clientWidth) || window.innerWidth);
-          const curH = Math.max(240, (els.obsOverlay && els.obsOverlay.clientHeight) || window.innerHeight);
+          const curW = Math.max(300, (els.obsOverlay && els.obsOverlay.clientWidth) || window.innerWidth);
+          const curH = Math.max(200, (els.obsOverlay && els.obsOverlay.clientHeight) || window.innerHeight);
 
-          // 16:9 LOCKED BOUNDING BOX COMPUTATION (EXACT MATCH TO present.html)
-          const isPortrait = (window.innerHeight > window.innerWidth) || (curW <= 768 && window.innerHeight >= curW);
-          let boxW, boxH;
+          // Full viewport utilization with minimal safe margin around screen edges
+          const padX = curW <= 600 ? 14 : (curW <= 1024 ? 20 : 28);
+          const padY = curH <= 600 ? 14 : (curH <= 1024 ? 20 : 28);
+          const safeW = Math.max(260, curW - (padX * 2));
+          const safeH = Math.max(160, curH - (padY * 2));
 
-          if (isPortrait) {
-            boxW = Math.max(320, curW);
-            boxH = boxW * (9 / 16);
-          } else {
-            const screenAspect = curW / curH;
-            if (screenAspect >= (16 / 9)) {
-              boxH = curH;
-              boxW = curH * (16 / 9);
-            } else {
-              boxW = curW;
-              boxH = curW * (9 / 16);
-            }
-          }
-
-          const isFullSlide = (state.presentationMode === 'fullslide' || state.slideSplittingMode === 'fullslide');
-          const safeW = isPortrait ? (boxW * 0.94) : (boxW * 0.90);
-          const safeH = isPortrait ? (boxH * 0.88) : (boxH * 0.82);
-
-          if (els.obsLowerThirdBox && !isPortrait) {
-            els.obsLowerThirdBox.style.maxWidth = `${boxW}px`;
-            els.obsLowerThirdBox.style.maxHeight = `${boxH}px`;
+          if (els.obsLowerThirdBox) {
+            els.obsLowerThirdBox.style.maxWidth = `${curW}px`;
+            els.obsLowerThirdBox.style.maxHeight = `${curH}px`;
+            els.obsLowerThirdBox.style.padding = '0';
           }
 
           els.obsLineText.style.maxWidth = `${safeW}px`;
@@ -17026,11 +17031,8 @@ document.addEventListener('DOMContentLoaded', () => {
             r.style.boxSizing = 'border-box';
           });
 
-          const userScaleRatio = state.fontSize ? (state.fontSize / 105) : 1.0;
-          const minFont = isPortrait ? 12 : 20;
-          const maxFont = isPortrait 
-            ? Math.max(minFont + 1, Math.floor(safeH * 0.45)) 
-            : Math.max(minFont + 1, Math.min(isFullSlide ? 145 : 200, Math.floor(safeH * 0.50)));
+          const minFont = curW <= 600 ? 16 : 22;
+          const maxFont = Math.max(minFont + 1, Math.min(320, Math.floor(safeH * 0.96)));
 
           const checkFitsElement = (el, size) => {
             el.style.fontSize = `${size}px`;
@@ -17046,14 +17048,8 @@ document.addEventListener('DOMContentLoaded', () => {
             const elSegs = Array.from(el.querySelectorAll('.obs-line-segment'));
             for (let i = 0; i < elSegs.length; i++) {
               const seg = elSegs[i];
-              if ((seg.scrollWidth || 0) > safeW + 4 || (seg.offsetWidth || 0) > safeW + 4) return false;
-              const badge = seg.querySelector('.slide-badge-layer');
-              if (badge) {
-                const segRect = seg.getBoundingClientRect();
-                const badgeRect = badge.getBoundingClientRect();
-                const totalSpan = Math.max(segRect.right, badgeRect.right) - Math.min(segRect.left, badgeRect.left);
-                if (totalSpan > safeW + 6) return false;
-              }
+              const segWidth = Math.max(seg.scrollWidth || 0, seg.offsetWidth || 0);
+              if (segWidth > safeW + 2) return false;
             }
             return true;
           };
@@ -17115,12 +17111,13 @@ document.addEventListener('DOMContentLoaded', () => {
             return best;
           };
 
-          // UNIFORM TARNIMA FONT SIZE ENGINE (EXACT MATCH TO present.html)
+          // UNIFORM TARNIMA & BIBLE FONT SIZE ENGINE
           let appliedFontSize = minFont;
           const currentMode = state.presentationMode || 'fullslide';
-          const currentSongKey = `${(targetSong && (targetSong.key || targetSong.title)) || ''}__mode_${currentMode}__font_${state.selectedFont}__${curW}x${curH}`;
+          const itemKey = (targetSong && (targetSong.id || targetSong.key || targetSong.title || (isBible ? ('bible_' + (targetSong.book_name || '') + '_' + (targetSong.chapter_number || '')) : ''))) || 'item';
+          const currentSongKey = `${itemKey}__mode_${currentMode}__font_${state.selectedFont}__${curW}x${curH}`;
 
-          if (currentSongKey && !isBible) {
+          if (currentSongKey) {
             if (state._uniformSongKey === currentSongKey && state._uniformFontSize !== null && state._uniformFontSize !== undefined) {
               appliedFontSize = state._uniformFontSize;
             } else {
@@ -17154,19 +17151,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 uniformSize = computeFitForHtml(els.obsLineText.innerHTML, els.obsLineText);
               }
 
-              if (userScaleRatio !== 1.0) {
-                uniformSize = Math.max(minFont, Math.round(uniformSize * userScaleRatio));
-              }
               state._uniformFontSize = uniformSize;
               state._uniformSongKey = currentSongKey;
               appliedFontSize = uniformSize;
             }
           } else {
-            let bestSize = computeFitForHtml(els.obsLineText.innerHTML, els.obsLineText);
-            if (userScaleRatio !== 1.0) {
-              bestSize = Math.max(minFont, Math.round(bestSize * userScaleRatio));
-            }
-            appliedFontSize = bestSize;
+            appliedFontSize = computeFitForHtml(els.obsLineText.innerHTML, els.obsLineText);
           }
 
           // Apply font size and restore segment styling on live element
@@ -17186,14 +17176,14 @@ document.addEventListener('DOMContentLoaded', () => {
             s.style.textAlignLast = align === 'justify' ? 'center' : align;
           });
 
-          // Safety step-down loop
+          // Safety step-down loop: if any slide steps down, keep all slides in sync
           let safetyIter = 0;
           let curS = appliedFontSize;
           const elWrap = els.obsLineText.querySelector('.obs-slide-wrapper') || els.obsLineText;
-          while (curS > 22 && safetyIter < 20) {
+          while (curS > 18 && safetyIter < 20) {
             let segOverflow = false;
             for (let i = 0; i < segments.length; i++) {
-              if ((segments[i].scrollWidth || 0) > safeW + 4 || (segments[i].offsetWidth || 0) > safeW + 4) {
+              if ((segments[i].scrollWidth || 0) > safeW + 2 || (segments[i].offsetWidth || 0) > safeW + 2) {
                 segOverflow = true;
                 break;
               }
@@ -17213,7 +17203,10 @@ document.addEventListener('DOMContentLoaded', () => {
             els.obsLineText.style.fontSize = `${curS}px`;
             safetyIter++;
           }
-          appliedFontSize = curS;
+          if (curS < appliedFontSize) {
+            appliedFontSize = curS;
+            state._uniformFontSize = curS;
+          }
           
           // Re-apply highlights after formatting
           const hColor = state.highlightColor || '#ef4444';

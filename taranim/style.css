@@ -2851,10 +2851,10 @@ input[type="checkbox"]:checked::after {
   top: 50%;
   transform: translate(calc(-50% + var(--text-pos-x, 0%)), calc(-50% + var(--text-pos-y, 0%))) scale(var(--text-scale, 1)) rotate(var(--text-rot, 0deg));
   transform-origin: center center;
-  width: 96vw;
-  height: 90vh;
-  max-width: 96vw;
-  max-height: 90vh;
+  width: 98vw;
+  height: 96vh;
+  max-width: 98vw;
+  max-height: 96vh;
   text-align: center;
   padding: 0;
   z-index: 10;
@@ -2877,7 +2877,7 @@ input[type="checkbox"]:checked::after {
   text-align: center;
   margin: 0 auto;
   width: 100%;
-  max-width: 96vw;
+  max-width: 98vw;
   overflow: visible;
   word-break: keep-all;
   overflow-wrap: break-word;
@@ -3727,13 +3727,13 @@ input[type="checkbox"]:checked::after {
 
   .obs-line-segment {
     display: inline-block !important;
-    white-space: nowrap !important;
+    white-space: normal !important;
     word-break: normal !important;
-    overflow-wrap: normal !important;
+    overflow-wrap: break-word !important;
     text-align: center !important;
     width: auto !important;
-    margin-top: 0.25em !important;
-    margin-bottom: 0.25em !important;
+    margin-top: 0.15em !important;
+    margin-bottom: 0.15em !important;
   }
 
   .panel-header {
@@ -3803,25 +3803,23 @@ input[type="checkbox"]:checked::after {
   }
 }
 
-/* PC LANDSCAPE PREVIEW: EVENLY FILLS HEIGHT WITH MARGINS ABOVE & UNDER */
+/* PC LANDSCAPE PREVIEW: MAX FILLS HEIGHT AND WIDTH */
 @media (min-width: 769px) and (orientation: landscape) {
   .obs-lower-third-box,
   .lower-third-container {
-    padding-top: 2rem !important;
-    padding-bottom: 2rem !important;
-    max-height: 82vh !important;
+    padding: 0 !important;
+    max-height: 98vh !important;
   }
 
   .obs-line-text,
   .line-text {
-    line-height: 1.65 !important;
-    margin-top: 2vh !important;
-    margin-bottom: 2vh !important;
+    line-height: 1.35 !important;
+    margin: 0 auto !important;
   }
 
   .obs-line-segment {
-    margin-top: 0.35em !important;
-    margin-bottom: 0.35em !important;
+    margin-top: 0.15em !important;
+    margin-bottom: 0.15em !important;
   }
 }
 
