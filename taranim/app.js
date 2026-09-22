@@ -6804,7 +6804,7 @@ document.addEventListener('DOMContentLoaded', () => {
         state.splitLongLines = e.target.checked;
         saveUserSettings();
         if (state.activeSong) {
-          loadSongIntoPresentation(state.activeSong);
+          loadSongIntoPresentation(state.activeSong, true, true);
         }
         syncLiveState();
         showToast(state.splitLongLines ? 'تم تفعيل تقسيم السطر الطويل لسطرين!' : 'تم إيقاف تقسيم السطر الطويل');
@@ -6818,7 +6818,7 @@ document.addEventListener('DOMContentLoaded', () => {
         updateSplitLongLinesUI();
         updateScaleModeLockState();
         if (state.activeSong) {
-          loadSongIntoPresentation(state.activeSong);
+          loadSongIntoPresentation(state.activeSong, true, true);
         }
         syncLiveState(true);
       });
@@ -7643,7 +7643,11 @@ document.addEventListener('DOMContentLoaded', () => {
               if (els.obsOverlay) els.obsOverlay.setAttribute('data-chroma', tmpl.chromaKey);
             }
 
-            if (tmpl.presentationMode) {
+            const userSplitMode = localStorage.getItem('sunday_school_slide_splitting_mode');
+            if (userSplitMode) {
+              state.slideSplittingMode = userSplitMode;
+              state.presentationMode = userSplitMode;
+            } else if (tmpl.presentationMode) {
               state.presentationMode = tmpl.presentationMode;
               state.slideSplittingMode = tmpl.presentationMode;
             }
@@ -7677,7 +7681,13 @@ document.addEventListener('DOMContentLoaded', () => {
           const userTemplates = getUserTemplates();
           const tmpl = userTemplates.find(t => t.id === assignedId || t.name === assignedId);
           if (tmpl && tmpl.settings) {
+            const preservedSplit = localStorage.getItem('sunday_school_slide_splitting_mode') || state.slideSplittingMode;
             applyStyleSnapshot(tmpl.settings, tmpl.name);
+            if (preservedSplit) {
+              state.slideSplittingMode = preservedSplit;
+              state.presentationMode = preservedSplit;
+              try { localStorage.setItem('sunday_school_slide_splitting_mode', preservedSplit); } catch(e) {}
+            }
           }
         }
       } catch (err) {
@@ -8876,16 +8886,21 @@ document.addEventListener('DOMContentLoaded', () => {
       if (tabBtn2) tabBtn2.classList.toggle('active', canonicalMode === 'twelines');
       if (tabBtnAll) tabBtnAll.classList.toggle('active', canonicalMode === 'allinone');
 
+      const modeLabels = {
+        fullslide: 'تم ضبط الشرائح: شريحة أساسية (التقسيم الأصلي)',
+        oneline: 'تم ضبط الشرائح: سطر واحد لكل شريحة',
+        twelines: 'تم ضبط الشرائح: سطرين لكل شريحة',
+        allinone: 'تم ضبط الشرائح: الترنيمة بالكامل في شريحة واحدة'
+      };
+
       // Re-format active presentation lines
       const currentSong = state.activeSong || state.liveSong;
       if (currentSong) {
-        loadSongIntoPresentation(currentSong, true);
-        const modeLabels = {
-          fullslide: 'تم ضبط الشرائح: شريحة أساسية (التقسيم الأصلي)',
-          oneline: 'تم ضبط الشرائح: سطر واحد لكل شريحة',
-          twelines: 'تم ضبط الشرائح: سطرين لكل شريحة',
-          allinone: 'تم ضبط الشرائح: الترنيمة بالكامل في شريحة واحدة'
-        };
+        loadSongIntoPresentation(currentSong, true, true);
+        showToast(modeLabels[canonicalMode] || 'تم تحديث تقسيم الشرائح');
+      } else {
+        if (typeof updateObsModeUI === 'function') updateObsModeUI();
+        if (typeof syncLiveState === 'function') syncLiveState();
         showToast(modeLabels[canonicalMode] || 'تم تحديث تقسيم الشرائح');
       }
     };
@@ -10191,7 +10206,7 @@ document.addEventListener('DOMContentLoaded', () => {
               saveUserSettings();
               saveMediaConfig();
               if (state.activeSong && typeof loadSongIntoPresentation === 'function') {
-                loadSongIntoPresentation(state.activeSong, false);
+                loadSongIntoPresentation(state.activeSong, false, true);
               }
               syncLiveState(false, false, { triggerTransition: true });
               showToast(`تم تطبيق قالب "${tmpl.name}" ${selectedVarName ? `(${selectedVarName})` : ''} بالكامل! 🎬`);
@@ -15000,13 +15015,14 @@ document.addEventListener('DOMContentLoaded', () => {
     let linesList = [];
 
     const isBible = Boolean((song.is_bible === true || song.is_bible === '1' || song.is_bible === 1) || (song.chapter_number !== undefined && song.chapter_number !== null && song.chapter_number !== ''));
-    const splitMode = state.slideSplittingMode || state.presentationMode || localStorage.getItem('sunday_school_slide_splitting_mode') || 'fullslide';
+    const splitMode = state.slideSplittingMode || localStorage.getItem('sunday_school_slide_splitting_mode') || state.presentationMode || 'fullslide';
     let mode = 'fullslide';
     if (splitMode === '1' || splitMode === 'oneline') mode = 'oneline';
     else if (splitMode === '2' || splitMode === 'twelines') mode = 'twelines';
     else if (splitMode === 'all' || splitMode === 'allinone') mode = 'allinone';
     else mode = 'fullslide';
     state.presentationMode = mode;
+    state.slideSplittingMode = mode;
 
     if (song.verses && Array.isArray(song.verses) && song.verses.length > 0) {
       const buildVerseSlideItems = (verse, verseIndex, stanzaNumOverride) => {
