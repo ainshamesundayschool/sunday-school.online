@@ -1729,6 +1729,8 @@ document.addEventListener('DOMContentLoaded', () => {
     hotspotControllerConn: null,
     hostScreens: [],
     pendingControlRequest: null,
+    blockedHotspotDevices: new Set(JSON.parse(localStorage.getItem('sunday_school_taranim_blocked_devices') || '[]')),
+    canControlThisDevice: true,
 
     standbyConfig: (savedMediaConfig.standbyConfig && typeof savedMediaConfig.standbyConfig === 'object') ? {
       showLogo: true,
@@ -3545,7 +3547,25 @@ document.addEventListener('DOMContentLoaded', () => {
           } else if (cmd.type === 'DISCONNECT_CONTROLLER') {
             handleControllerDisconnected(conn);
           } else {
-            executeRemoteCommand(cmd);
+            // Check if device is blocked or control permission disabled
+            let devRecord = null;
+            state.hotspotConnectedDevices.forEach((d) => {
+              if (d.conn === conn || (conn.peer && d.peerId === conn.peer)) {
+                devRecord = d;
+              }
+            });
+
+            if (devRecord && devRecord.canControl === false) {
+              try {
+                conn.send({
+                  type: 'CONTROL_DENIED',
+                  message: 'صلاحية التحكم معطلة لهذا الجهاز من قبل المشرف على شاشة العرض.'
+                });
+              } catch(e) {}
+              return;
+            }
+
+            executeRemoteCommand(cmd, conn);
           }
         });
 
@@ -3567,20 +3587,11 @@ document.addEventListener('DOMContentLoaded', () => {
           activeRemotePeerConnections.delete(conn.peer);
         });
 
-        // If client is reconnecting and was already approved, send current state immediately
+        // If client is reconnecting and was already approved, send full current state immediately
         if (conn.peer && approvedControllerTokens.has(conn.peer)) {
-          const currentLines = state.presentationLines || [];
           conn.send({
             type: 'STATE_UPDATE',
-            state: {
-              activeSong: state.activeSong,
-              currentLineIndex: state.currentLineIndex || 0,
-              totalLines: currentLines.length,
-              presentationLines: currentLines,
-              isBlank: Boolean(state.isBlank),
-              isStandbyMode: Boolean(state.isStandbyMode),
-              sessionRecents: (state.sessionRecents || []).slice(0, 20)
-            }
+            state: getFullHostStateSnapshot()
           });
         }
       });
@@ -3641,34 +3652,57 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // 2. BROADCAST STATE IN 0MS TO ALL CONNECTED PEERS & PUSH TO SERVER
   async function pushRemoteHostState() {
-    if (!remoteHostSession) return;
-    const currentLines = state.presentationLines || [];
+    const currentLines = (state.livePresentationLines && state.livePresentationLines.length > 0) ? state.livePresentationLines : (state.presentationLines || []);
+    const targetSong = state.liveSong || state.activeSong;
+    const targetIdx = (state.liveLineIndex >= 0) ? state.liveLineIndex : (state.currentLineIndex >= 0 ? state.currentLineIndex : 0);
+
     const stateObj = {
-      activeSong: state.activeSong,
-      currentLineIndex: state.currentLineIndex || 0,
+      activeSong: targetSong,
+      liveSong: targetSong,
+      currentLineIndex: targetIdx,
+      liveLineIndex: targetIdx,
       totalLines: currentLines.length,
       presentationLines: currentLines,
       isBlank: Boolean(state.isBlank),
       isStandbyMode: Boolean(state.isStandbyMode),
-      sessionRecents: (state.sessionRecents || []).slice(0, 20),
+      sessionRecents: (state.sessionRecents || []).slice(0, 30),
       theme: state.userSettings?.selectedTemplateId || 'default'
     };
 
-    // Instant WebRTC Broadcast
-    activeRemotePeerConnections.forEach(conn => {
-      if (conn && conn.open) {
-        try {
-          conn.send({ type: 'STATE_UPDATE', state: stateObj });
-        } catch(e) {}
-      }
-    });
+    const payload = { type: 'STATE_UPDATE', state: stateObj };
+    const sentConns = new Set();
 
-    // Server State Push
-    requestRemoteHostApi('push_state', {
-      roomId: remoteHostSession.roomId,
-      hostKey: remoteHostSession.hostKey,
-      state: stateObj
-    }).catch(() => {});
+    // Instant WebRTC Broadcast to ALL connected peers
+    if (activeRemotePeerConnections) {
+      activeRemotePeerConnections.forEach(conn => {
+        if (conn && conn.open) {
+          try {
+            conn.send(payload);
+            sentConns.add(conn);
+          } catch(e) {}
+        }
+      });
+    }
+
+    if (state.hotspotConnectedDevices) {
+      state.hotspotConnectedDevices.forEach(dev => {
+        if (dev && dev.conn && dev.conn.open && !sentConns.has(dev.conn)) {
+          try {
+            dev.conn.send(payload);
+            sentConns.add(dev.conn);
+          } catch(e) {}
+        }
+      });
+    }
+
+    // Server State Push if session active
+    if (remoteHostSession && remoteHostSession.roomId) {
+      requestRemoteHostApi('push_state', {
+        roomId: remoteHostSession.roomId,
+        hostKey: remoteHostSession.hostKey,
+        state: stateObj
+      }).catch(() => {});
+    }
   }
 
   window.pushRemoteHostState = pushRemoteHostState;
@@ -3751,12 +3785,47 @@ document.addEventListener('DOMContentLoaded', () => {
     } else if (cmd.type === 'PREV_LINE') {
       prevLine();
     } else if (cmd.type === 'JUMP_LINE' || cmd.type === 'PRESENT_LINE') {
-      if (cmd.lineIndex !== undefined && state.presentationLines && cmd.lineIndex >= 0 && cmd.lineIndex < state.presentationLines.length) {
-        state.currentLineIndex = cmd.lineIndex;
-        updateSlide();
+      if (cmd.activeSong) {
+        const currKey = state.activeSong ? getItemKey(state.activeSong) : '';
+        const incomingKey = getItemKey(cmd.activeSong);
+        if (incomingKey && incomingKey !== currKey) {
+          const songToLoad = Object.assign({}, cmd.activeSong, { _fromHotspotSync: true });
+          if (typeof openAndPresentItem === 'function') {
+            openAndPresentItem(songToLoad, Boolean(songToLoad.is_bible));
+          } else if (typeof loadSongIntoPresentation === 'function') {
+            loadSongIntoPresentation(songToLoad, true, true);
+          }
+        }
+      }
+      const targetIdx = (cmd.lineIndex !== undefined) ? cmd.lineIndex : cmd.currentLineIndex;
+      if (targetIdx !== undefined && state.presentationLines && targetIdx >= 0 && targetIdx < state.presentationLines.length) {
+        state.liveSong = state.activeSong;
+        state.livePresentationLines = state.presentationLines;
+        state.currentLineIndex = targetIdx;
+        state.liveLineIndex = targetIdx;
+        state.isBlank = false;
+        renderPresentationLinesList();
+        syncLiveState();
+        if (typeof scrollActiveSlideToTop === 'function') {
+          scrollActiveSlideToTop(false);
+        }
       }
     } else if (cmd.type === 'SYNC_STATE') {
+      if (cmd.activeSong) {
+        const currKey = state.activeSong ? getItemKey(state.activeSong) : '';
+        const incomingKey = getItemKey(cmd.activeSong);
+        if (incomingKey && incomingKey !== currKey) {
+          const songToLoad = Object.assign({}, cmd.activeSong, { _fromHotspotSync: true });
+          if (typeof openAndPresentItem === 'function') {
+            openAndPresentItem(songToLoad, Boolean(songToLoad.is_bible));
+          } else if (typeof loadSongIntoPresentation === 'function') {
+            loadSongIntoPresentation(songToLoad, true, true);
+          }
+        }
+      }
       if (cmd.currentLineIndex !== undefined && state.presentationLines && cmd.currentLineIndex >= 0 && cmd.currentLineIndex < state.presentationLines.length) {
+        state.liveSong = state.activeSong;
+        state.livePresentationLines = state.presentationLines;
         state.currentLineIndex = cmd.currentLineIndex;
         state.liveLineIndex = cmd.currentLineIndex;
       }
@@ -3768,8 +3837,11 @@ document.addEventListener('DOMContentLoaded', () => {
         state.isStandbyMode = Boolean(cmd.isStandbyMode);
         if (els.btnToggleStandby) els.btnToggleStandby.classList.toggle('active', state.isStandbyMode);
       }
-      updateSlide();
+      renderPresentationLinesList();
       syncLiveState();
+      if (typeof scrollActiveSlideToTop === 'function') {
+        scrollActiveSlideToTop(false);
+      }
     } else if (cmd.type === 'TOGGLE_BLANK') {
       toggleBlank();
     } else if (cmd.type === 'SET_BLANK') {
@@ -3946,15 +4018,21 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function getFullHostStateSnapshot() {
-    const currentLines = state.presentationLines || [];
+    const currentLines = (state.livePresentationLines && state.livePresentationLines.length > 0) ? state.livePresentationLines : (state.presentationLines || []);
+    const targetSong = state.liveSong || state.activeSong;
+    const targetIdx = (state.liveLineIndex >= 0) ? state.liveLineIndex : (state.currentLineIndex >= 0 ? state.currentLineIndex : 0);
+
     return {
-      activeSong: state.activeSong,
-      currentLineIndex: state.currentLineIndex || 0,
+      activeSong: targetSong,
+      liveSong: targetSong,
+      currentLineIndex: targetIdx,
+      liveLineIndex: targetIdx,
       totalLines: currentLines.length,
       presentationLines: currentLines,
       isBlank: Boolean(state.isBlank),
       isStandbyMode: Boolean(state.isStandbyMode),
-      sessionRecents: (state.sessionRecents || []).slice(0, 20)
+      sessionRecents: (state.sessionRecents || []).slice(0, 30),
+      timestamp: Date.now()
     };
   }
 
@@ -3971,6 +4049,22 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function handleHostControlRequest(cmd, conn) {
+    const devIp = cmd.deviceIp || (conn && conn._remoteAddress) || '127.0.0.1';
+    const clientToken = cmd.clientToken || '';
+    const peerId = (conn && conn.peer) || '';
+
+    // Check if device is in blocked list
+    if (state.blockedHotspotDevices && (state.blockedHotspotDevices.has(devIp) || state.blockedHotspotDevices.has(clientToken) || state.blockedHotspotDevices.has(peerId))) {
+      try {
+        conn.send({
+          type: 'CONTROL_REJECTED',
+          reason: 'تم حظر هذا الجهاز من قبل المسؤول على جهاز العرض الرئيسي.'
+        });
+        setTimeout(() => { try { conn.close(); } catch(e) {} }, 300);
+      } catch(e) {}
+      return;
+    }
+
     pendingControlConn = conn;
     pendingControlData = cmd;
 
@@ -3979,7 +4073,7 @@ document.addEventListener('DOMContentLoaded', () => {
         els.authReqDeviceName.textContent = cmd.deviceName || 'جهاز هاتف محمول';
       }
       if (els.authReqDeviceIp) {
-        els.authReqDeviceIp.textContent = `IP: ${cmd.deviceIp || conn._remoteAddress || '127.0.0.1'}`;
+        els.authReqDeviceIp.textContent = `IP: ${devIp}`;
       }
       if (els.authReqDeviceIcon) {
         const isMobile = /mobile|phone|iphone|android/i.test(cmd.deviceName || cmd.userAgent || '');
@@ -4004,6 +4098,8 @@ document.addEventListener('DOMContentLoaded', () => {
       ip: pendingControlData?.deviceIp || '127.0.0.1',
       name: pendingControlData?.deviceName || 'لوحة تحكم',
       userAgent: pendingControlData?.userAgent || '',
+      token: token,
+      canControl: true,
       type: 'CONTROL_PANEL'
     }, pendingControlConn);
 
@@ -4016,7 +4112,7 @@ document.addEventListener('DOMContentLoaded', () => {
       });
     } catch(e) {}
 
-    updateHotspotConnectionBadge(true, `متصل: ${pendingControlData?.deviceName || 'الريموت'}`);
+    updateHotspotConnectionBadge(true, `متصل: ${state.hotspotConnectedDevices.size} أجهزة`);
 
     if (els.modalHotspotAuthRequest) {
       els.modalHotspotAuthRequest.classList.add('hidden');
@@ -4177,50 +4273,154 @@ document.addEventListener('DOMContentLoaded', () => {
         const ip = dev.ip || '127.0.0.1';
         const isMobile = /mobile|phone|android|iphone/i.test(dev.userAgent || dev.name || '');
         const iconCls = isMobile ? 'fa-solid fa-mobile-screen-button' : 'fa-solid fa-laptop';
+        const canControl = dev.canControl !== false;
+
         html += `
-          <div class="hotspot-device-card" data-ip="${escapeHtml(ip)}">
+          <div class="hotspot-device-card" data-key="${escapeHtml(dev.key)}">
             <div class="device-info">
               <span class="device-name">
-                <i class="${iconCls}" style="color:#10b981;"></i>
-                ${escapeHtml(dev.name || 'لوحة تحكم')} (${escapeHtml(ip)})
+                <i class="${iconCls}" style="color:${canControl ? '#10b981' : '#f59e0b'};"></i>
+                <span>${escapeHtml(dev.name || 'لوحة تحكم')}</span>
               </span>
               <span class="device-meta">
-                <span class="online-pulse-dot"></span>
+                <span class="online-pulse-dot" style="${canControl ? '' : 'background:#f59e0b; box-shadow:0 0 8px #f59e0b;'}"></span>
                 <span>IP: ${escapeHtml(ip)}</span>
                 <span>•</span>
-                <span>تحكم مباشر (Hotspot)</span>
+                <span class="device-status-badge ${canControl ? 'can-ctrl' : 'view-only'}">${canControl ? 'تحكم كامل' : 'مشاهد فقط'}</span>
               </span>
             </div>
-            <button type="button" class="btn-disconnect-device" data-ip="${escapeHtml(ip)}" title="فصل الاتصال" style="background:transparent; border:none; color:#ef4444; font-size:0.75rem; cursor:pointer; padding:4px;">
-              <i class="fa-solid fa-link-slash"></i>
-            </button>
+            <div class="device-actions-wrap">
+              <button type="button" class="btn-device-perm ${canControl ? 'active' : ''}" data-key="${escapeHtml(dev.key)}" title="${canControl ? 'تحويل لمشاهد فقط (منع التحكم)' : 'منح صلاحية التحكم'}">
+                <i class="fa-solid ${canControl ? 'fa-gamepad' : 'fa-eye'}"></i>
+                <span>${canControl ? 'تحكم' : 'مشاهد'}</span>
+              </button>
+              <button type="button" class="btn-disconnect-device" data-key="${escapeHtml(dev.key)}" title="إنهاء اتصال هذا الجهاز (طرد)">
+                <i class="fa-solid fa-power-off"></i>
+              </button>
+              <button type="button" class="btn-block-device" data-key="${escapeHtml(dev.key)}" title="حظر هذا الجهاز نهائياً">
+                <i class="fa-solid fa-ban"></i>
+              </button>
+            </div>
           </div>
         `;
       });
+
+      // If blocked devices exist, show blocked list
+      if (state.blockedHotspotDevices && state.blockedHotspotDevices.size > 0) {
+        html += `
+          <div class="blocked-devices-section" style="margin-top:8px; padding-top:6px; border-top:1px dashed #e2e8f0;">
+            <div style="font-size:0.7rem; font-weight:700; color:#ef4444; margin-bottom:4px; display:flex; align-items:center; justify-content:space-between;">
+              <span><i class="fa-solid fa-ban"></i> الأجهزة المحظورة (${state.blockedHotspotDevices.size}):</span>
+            </div>
+            <div style="display:flex; flex-direction:column; gap:3px;">
+              ${Array.from(state.blockedHotspotDevices).map(id => `
+                <div style="display:flex; align-items:center; justify-content:space-between; background:#fef2f2; border:1px solid #fee2e2; padding:3px 6px; border-radius:6px; font-size:0.66rem;">
+                  <span style="color:#991b1b; direction:ltr; font-family:monospace;">${escapeHtml(id)}</span>
+                  <button type="button" class="btn-unblock-device" data-id="${escapeHtml(id)}" style="background:transparent; border:none; color:#2563eb; cursor:pointer; font-weight:700; font-size:0.66rem;" title="إلغاء الحظر">
+                    إلغاء الحظر
+                  </button>
+                </div>
+              `).join('')}
+            </div>
+          </div>
+        `;
+      }
+
       els.hotspotDevicesList.innerHTML = html;
 
+      // Event: Permission Toggle (Can Control vs View-Only)
+      els.hotspotDevicesList.querySelectorAll('.btn-device-perm').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          const key = btn.dataset.key;
+          const dev = state.hotspotConnectedDevices.get(key);
+          if (dev) {
+            dev.canControl = !dev.canControl;
+            if (dev.conn && dev.conn.open) {
+              try {
+                dev.conn.send({
+                  type: 'PERMISSIONS_UPDATE',
+                  canControl: dev.canControl
+                });
+              } catch(err) {}
+            }
+            renderHotspotConnectedDevices();
+            showToast(dev.canControl ? `🟢 تم تفعيل صلاحية التحكم لـ (${dev.name})` : `👁️ تم تحويل (${dev.name}) إلى وضع المشاهدة فقط`);
+          }
+        });
+      });
+
+      // Event: Disconnect Device (Kick)
       els.hotspotDevicesList.querySelectorAll('.btn-disconnect-device').forEach(btn => {
         btn.addEventListener('click', (e) => {
           e.stopPropagation();
-          const targetIp = btn.dataset.ip;
-          if (targetIp) {
-            state.hotspotConnectedDevices.forEach((dev, key) => {
-              if (dev.ip === targetIp) {
-                if (dev.conn) {
-                  try {
-                    dev.conn.send({ type: 'HOST_DISCONNECTED' });
-                    dev.conn.close();
-                  } catch(err) {}
-                }
-                state.hotspotConnectedDevices.delete(key);
-              }
-            });
+          const key = btn.dataset.key;
+          const dev = state.hotspotConnectedDevices.get(key);
+          if (dev) {
+            if (dev.conn) {
+              try {
+                dev.conn.send({
+                  type: 'HOST_DISCONNECTED',
+                  reason: 'تم إنهاء اتصال هذا الجهاز من قبل المسؤول على جهاز العرض'
+                });
+                setTimeout(() => { try { dev.conn.close(); } catch(err) {} }, 300);
+              } catch(err) {}
+            }
+            state.hotspotConnectedDevices.delete(key);
+            if (dev.peerId) activeRemotePeerConnections.delete(dev.peerId);
             renderHotspotConnectedDevices();
             if (state.hotspotConnectedDevices.size === 0) {
               updateHotspotConnectionBadge(false);
             }
             renderScreenOptions();
-            showToast(`تم فصل الجهاز ${targetIp}`);
+            showToast(`🔴 تم إنهاء اتصال (${dev.name})`);
+          }
+        });
+      });
+
+      // Event: Block Device
+      els.hotspotDevicesList.querySelectorAll('.btn-block-device').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          const key = btn.dataset.key;
+          const dev = state.hotspotConnectedDevices.get(key);
+          if (dev) {
+            if (dev.ip && dev.ip !== '127.0.0.1' && dev.ip !== 'LAN') state.blockedHotspotDevices.add(dev.ip);
+            if (dev.token) state.blockedHotspotDevices.add(dev.token);
+            if (dev.peerId) state.blockedHotspotDevices.add(dev.peerId);
+            localStorage.setItem('sunday_school_taranim_blocked_devices', JSON.stringify(Array.from(state.blockedHotspotDevices)));
+
+            if (dev.conn) {
+              try {
+                dev.conn.send({
+                  type: 'CONTROL_REJECTED',
+                  reason: 'تم حظر هذا الجهاز من قبل المسؤول على جهاز العرض الرئيسي.'
+                });
+                setTimeout(() => { try { dev.conn.close(); } catch(err) {} }, 300);
+              } catch(err) {}
+            }
+            state.hotspotConnectedDevices.delete(key);
+            if (dev.peerId) activeRemotePeerConnections.delete(dev.peerId);
+            renderHotspotConnectedDevices();
+            if (state.hotspotConnectedDevices.size === 0) {
+              updateHotspotConnectionBadge(false);
+            }
+            renderScreenOptions();
+            showToast(`⛔ تم حظر (${dev.name}) بنجاح`);
+          }
+        });
+      });
+
+      // Event: Unblock Device
+      els.hotspotDevicesList.querySelectorAll('.btn-unblock-device').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          const id = btn.dataset.id;
+          if (id) {
+            state.blockedHotspotDevices.delete(id);
+            localStorage.setItem('sunday_school_taranim_blocked_devices', JSON.stringify(Array.from(state.blockedHotspotDevices)));
+            renderHotspotConnectedDevices();
+            showToast(`تم إلغاء حظر الجهاز`);
           }
         });
       });
@@ -4232,21 +4432,39 @@ document.addEventListener('DOMContentLoaded', () => {
   function registerHotspotDevice(devInfo, conn = null) {
     if (!devInfo) return;
     const ip = devInfo.ip || (conn && conn._remoteAddress) || '127.0.0.1';
-    const key = ip;
-    
-    const isNew = !state.hotspotConnectedDevices.has(key);
+    const peerId = (conn && conn.peer) ? conn.peer : '';
+    const token = devInfo.token || devInfo.clientToken || '';
+    const key = peerId || token || (ip + '_' + (devInfo.name || 'dev'));
+
+    // Check if blocked
+    if (state.blockedHotspotDevices && (state.blockedHotspotDevices.has(ip) || state.blockedHotspotDevices.has(token) || state.blockedHotspotDevices.has(peerId))) {
+      if (conn) {
+        try {
+          conn.send({ type: 'CONTROL_REJECTED', reason: 'تم حظر هذا الجهاز من قبل المشرف على جهاز العرض' });
+          setTimeout(() => { try { conn.close(); } catch(e) {} }, 300);
+        } catch(e) {}
+      }
+      return;
+    }
+
+    const existing = state.hotspotConnectedDevices.get(key);
+    const canControl = existing ? (existing.canControl !== undefined ? existing.canControl : true) : (devInfo.canControl !== undefined ? devInfo.canControl : true);
+
     state.hotspotConnectedDevices.set(key, {
       key: key,
+      peerId: peerId,
+      token: token,
       ip: ip,
-      name: devInfo.name || 'لوحة تحكم',
+      name: devInfo.name || devInfo.deviceName || 'لوحة تحكم',
       userAgent: devInfo.userAgent || '',
       type: devInfo.type || 'CONTROL_PANEL',
+      canControl: canControl,
       lastSeen: Date.now(),
-      conn: conn
+      conn: conn || (existing ? existing.conn : null)
     });
 
     renderHotspotConnectedDevices();
-    updateHotspotConnectionBadge(true, `متصل: ${devInfo.name || 'الريموت'}`);
+    updateHotspotConnectionBadge(true, `متصل: ${state.hotspotConnectedDevices.size} أجهزة`);
   }
 
   let hotspotDevicesPollTimer = null;
@@ -4448,10 +4666,14 @@ document.addEventListener('DOMContentLoaded', () => {
               onControlRequestAccepted(msg);
             } else if (msg.type === 'CONTROL_REJECTED') {
               onControlRequestRejected(msg.reason);
+            } else if (msg.type === 'PERMISSIONS_UPDATE') {
+              onPermissionsUpdate(msg.canControl);
             } else if (msg.type === 'STATE_UPDATE') {
               onHostStateUpdate(msg.state);
-            } else if (msg.type === 'HOST_DISCONNECTED') {
-              disconnectHotspotController(true);
+            } else if (msg.type === 'CONTROL_DENIED') {
+              showToast(msg.message || '⚠️ صلاحية التحكم معطلة لهذا الجهاز من قبل المشرف', 'warning');
+            } else if (msg.type === 'HOST_DISCONNECTED' || msg.type === 'FORCE_DISCONNECT') {
+              disconnectHotspotController(true, msg.reason);
             }
           });
 
@@ -4473,6 +4695,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     state.isHotspotControllerMode = true;
+    state.canControlThisDevice = true;
     if (msg.screens && Array.isArray(msg.screens)) {
       state.hostScreens = msg.screens;
     }
@@ -4501,18 +4724,60 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
+  function onPermissionsUpdate(canControl) {
+    state.canControlThisDevice = Boolean(canControl);
+    let banner = document.getElementById('controller-readonly-banner');
+    if (!state.canControlThisDevice) {
+      if (!banner) {
+        banner = document.createElement('div');
+        banner.id = 'controller-readonly-banner';
+        banner.className = 'controller-readonly-banner';
+        banner.innerHTML = '<i class="fa-solid fa-eye"></i><span>أنت الآن في وضع المشاهدة فقط (تم تعطيل التحكم من قبل المسؤول)</span>';
+        document.body.prepend(banner);
+      }
+      banner.style.display = 'flex';
+      updateHotspotConnectionBadge(true, 'متصل بالمضيف (مشاهدة فقط)');
+      showToast('👁️ تم تحويل جهازك إلى وضع المشاهدة فقط', 'warning');
+    } else {
+      if (banner) {
+        banner.style.display = 'none';
+      }
+      updateHotspotConnectionBadge(true, 'متصل بالمضيف الرئيسي (تحكم كامل)');
+      showToast('🟢 تم منحك صلاحية التحكم الكامل في العرض');
+    }
+  }
+
   function onHostStateUpdate(hostState) {
     if (!hostState) return;
-    if (hostState.activeSong) {
-      state.activeSong = hostState.activeSong;
-      renderActiveSongMeta();
+
+    const incomingSong = hostState.activeSong || hostState.liveSong;
+    const currentSongKey = state.activeSong ? getItemKey(state.activeSong) : '';
+    const incomingSongKey = incomingSong ? getItemKey(incomingSong) : '';
+    const isSongDifferent = Boolean(incomingSong && incomingSongKey && (!state.activeSong || currentSongKey !== incomingSongKey));
+
+    if (isSongDifferent) {
+      const songToLoad = Object.assign({}, incomingSong, { _fromHotspotSync: true });
+      if (typeof loadSongIntoPresentation === 'function') {
+        loadSongIntoPresentation(songToLoad, true, true);
+      }
+      state.activeSong = incomingSong;
+      state.liveSong = incomingSong;
+    } else if (incomingSong) {
+      state.activeSong = incomingSong;
+      state.liveSong = incomingSong;
     }
-    if (hostState.presentationLines && Array.isArray(hostState.presentationLines)) {
+
+    if (hostState.presentationLines && Array.isArray(hostState.presentationLines) && hostState.presentationLines.length > 0) {
       state.presentationLines = hostState.presentationLines;
+      state.livePresentationLines = hostState.presentationLines;
     }
-    if (hostState.currentLineIndex !== undefined) {
-      state.currentLineIndex = hostState.currentLineIndex;
+
+    const targetIdx = (hostState.currentLineIndex !== undefined) ? hostState.currentLineIndex : (hostState.liveLineIndex !== undefined ? hostState.liveLineIndex : state.currentLineIndex);
+    if (targetIdx !== undefined && targetIdx >= 0) {
+      state.currentLineIndex = targetIdx;
+      state.liveLineIndex = targetIdx;
     }
+
     if (hostState.isBlank !== undefined) {
       state.isBlank = Boolean(hostState.isBlank);
       if (els.btnToggleBlank) els.btnToggleBlank.classList.toggle('active', state.isBlank);
@@ -4525,11 +4790,22 @@ document.addEventListener('DOMContentLoaded', () => {
       state.sessionRecents = hostState.sessionRecents;
       renderRecentSession();
     }
+
+    renderActiveSongMeta();
     renderPresentationLinesList();
+    if (typeof scrollActiveSlideToTop === 'function') {
+      scrollActiveSlideToTop(false);
+    }
   }
 
   function sendHotspotCommand(cmd) {
     if (!cmd) return;
+    if (state.isHotspotControllerMode && state.canControlThisDevice === false) {
+      if (cmd.type !== 'REQUEST_CONTROL' && cmd.type !== 'REGISTER_DEVICE') {
+        showToast('⚠️ أنت في وضع المشاهدة فقط (صلاحية التحكم معطلة)', 'warning');
+        return;
+      }
+    }
     cmd.id = 'cmd_' + Date.now() + '_' + Math.floor(Math.random()*1000);
     cmd.timestamp = Date.now();
 
@@ -4556,7 +4832,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
   window.sendHotspotCommand = sendHotspotCommand;
 
-  function disconnectHotspotController(wasRemoteInitiated = false) {
+  function disconnectHotspotController(wasRemoteInitiated = false, reason = '') {
+    const banner = document.getElementById('controller-readonly-banner');
+    if (banner) banner.remove();
+
     if (state.isHotspotControllerMode) {
       if (!wasRemoteInitiated) {
         sendHotspotCommand({ type: 'DISCONNECT_CONTROLLER' });
@@ -4568,17 +4847,18 @@ document.addEventListener('DOMContentLoaded', () => {
       hotspotControllerConn = null;
       hotspotControllerPeer = null;
       state.isHotspotControllerMode = false;
+      state.canControlThisDevice = true;
       state.hostScreens = [];
       updateHotspotConnectionBadge(false);
       renderScreenOptions();
       window.history.replaceState({}, document.title, window.location.pathname);
-      showToast('تم قطع الاتصال بجهاز العرض');
+      showToast(reason || 'تم قطع الاتصال بجهاز العرض');
     } else {
       // Host side disconnect
       if (activeRemotePeerConnections) {
         activeRemotePeerConnections.forEach(conn => {
           try {
-            conn.send({ type: 'HOST_DISCONNECTED' });
+            conn.send({ type: 'HOST_DISCONNECTED', reason: 'تم فصل جميع أجهزة التحكم من الجهاز الرئيسي' });
             conn.close();
           } catch(e) {}
         });
@@ -15369,6 +15649,10 @@ document.addEventListener('DOMContentLoaded', () => {
     els.presentationLinesContainer.querySelectorAll('.line-item').forEach(item => {
       item.addEventListener('click', (e) => {
         if (e.target.closest('.copy-line-btn') || e.target.closest('.split-line-btn') || e.target.closest('.launch-fullscreen-btn')) return;
+        if (state.isHotspotControllerMode && state.canControlThisDevice === false) {
+          showToast('⚠️ أنت في وضع المشاهدة فقط. صلاحية التحكم معطلة من قبل المسؤول.', 'warning');
+          return;
+        }
         const clickedIdx = parseInt(item.dataset.idx);
 
         const lineRow = e.target.closest('.slide-line-row');
@@ -15396,6 +15680,17 @@ document.addEventListener('DOMContentLoaded', () => {
         state.highlightedLineIndices = [];
         renderPresentationLinesList();
         syncLiveState();
+
+        if (state.isHotspotControllerMode && typeof sendHotspotCommand === 'function') {
+          sendHotspotCommand({
+            type: 'PRESENT_LINE',
+            lineIndex: clickedIdx,
+            currentLineIndex: clickedIdx,
+            activeSong: state.activeSong,
+            isBlank: false,
+            isStandbyMode: false
+          });
+        }
       });
     });
 
@@ -16094,6 +16389,8 @@ document.addEventListener('DOMContentLoaded', () => {
         isBlank: state.isBlank,
         isStandbyMode: isEndingStandby
       });
+    } else if (!state.isHotspotControllerMode && typeof pushRemoteHostState === 'function') {
+      pushRemoteHostState();
     }
 
     // Helper to apply fit modes
