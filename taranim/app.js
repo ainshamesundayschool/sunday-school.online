@@ -14433,21 +14433,21 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!text || !text.trim()) return [''];
     const clean = text.trim().replace(/\s+/g, ' ');
     const words = clean.split(' ').filter(Boolean);
-    if (words.length <= 3) return [clean];
+    if (words.length <= 4) return [clean];
 
     const totalWords = words.length;
     const totalChars = clean.length;
 
     let lineCount = forcedLineCount;
     if (!lineCount || lineCount < 1) {
-      if (totalWords <= 8) {
+      if (totalWords <= 14) {
         lineCount = 2;
-      } else if (totalWords <= 16) {
+      } else if (totalWords <= 24) {
         lineCount = 3;
-      } else if (totalWords <= 26) {
+      } else if (totalWords <= 36) {
         lineCount = 4;
       } else {
-        lineCount = Math.max(4, Math.round(totalWords / 6.5));
+        lineCount = Math.max(4, Math.round(totalWords / 7.5));
       }
     }
 
@@ -14465,10 +14465,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
       const wordDiff = lineWordCount - targetWordsPerLine;
       const charDiff = lineCharCount - targetCharsPerLine;
-      let cost = (wordDiff * wordDiff * 6) + (charDiff * charDiff * 1.5);
+      let cost = (wordDiff * wordDiff * 5) + (charDiff * charDiff * 1.5);
 
-      if (lineWordCount < 2) cost += 500;
-      if (lineWordCount < 3 && totalWords >= 8) cost += 150;
+      if (lineWordCount < 2) cost += 600;
+      if (lineWordCount < 3 && totalWords >= 9) cost += 180;
 
       const lastWord = words[j];
       if (/[،؛:!\?\.؟\-]$/.test(lastWord)) {
@@ -14525,25 +14525,34 @@ document.addEventListener('DOMContentLoaded', () => {
     const cleanLines = linesArray.map(l => String(l).trim()).filter(Boolean);
     if (cleanLines.length === 0) return [''];
 
-    // Rule 2: If it's all in one line, break it evenly into good looking 4, 3, or 2 lines
+    // Combine all words of the slide
+    const allText = cleanLines.join(' ').replace(/\s+/g, ' ').trim();
+    const words = allText.split(' ').filter(Boolean);
+    if (words.length <= 4) return [allText];
+
+    // If slide arrived as 1 single line: break evenly into aesthetic lines
     if (cleanLines.length === 1) {
-      return balanceTextIntoEvenLines(cleanLines[0]);
+      return balanceTextIntoEvenLines(allText);
     }
 
-    // Rule 1: If it's a long line in a multi-line slide, break it evenly
-    const result = [];
-    cleanLines.forEach(line => {
-      const words = line.split(/\s+/).filter(Boolean);
-      if (words.length >= 8 || line.length >= 42) {
-        const targetSubLines = words.length >= 16 ? 3 : 2;
-        const sub = balanceTextIntoEvenLines(line, targetSubLines);
-        result.push(...sub);
-      } else {
-        result.push(line);
-      }
-    });
+    // If slide arrived as multiple lines: check if they are already evenly distributed
+    const lineLengths = cleanLines.map(l => l.length);
+    const lineWordCounts = cleanLines.map(l => l.split(/\s+/).filter(Boolean).length);
+    const maxWords = Math.max(...lineWordCounts);
+    const minWords = Math.min(...lineWordCounts);
+    const maxLen = Math.max(...lineLengths);
+    const minLen = Math.min(...lineLengths);
 
-    return result.length > 0 ? result : cleanLines;
+    // Check if lines are uneven, or any line is overlong, or too many lines for total words
+    const isUneven = (maxWords - minWords >= 3) || (maxLen - minLen >= 14) || (maxLen / Math.max(1, minLen) >= 1.6);
+    const hasOverlongLine = (maxWords >= 9) || (maxLen >= 44);
+    const isTooFragmented = (cleanLines.length >= 3 && words.length <= 14);
+
+    if (isUneven || hasOverlongLine || isTooFragmented || isBible) {
+      return balanceTextIntoEvenLines(allText);
+    }
+
+    return cleanLines;
   }
 
   function splitBibleVerseIntoBalancedLines(text) {
@@ -17027,8 +17036,8 @@ document.addEventListener('DOMContentLoaded', () => {
           }
 
           // Safe area inside 16:9 box with small margin so letters never touch edges or get cut off
-          const padX = isPortrait ? Math.max(10, Math.round(boxW * 0.035)) : Math.max(20, Math.round(boxW * 0.025));
-          const padY = isPortrait ? Math.max(8, Math.round(boxH * 0.05)) : Math.max(16, Math.round(boxH * 0.04));
+          const padX = isPortrait ? Math.max(8, Math.round(boxW * 0.022)) : Math.max(16, Math.round(boxW * 0.022));
+          const padY = isPortrait ? Math.max(6, Math.round(boxH * 0.03)) : Math.max(12, Math.round(boxH * 0.03));
           const safeW = Math.max(200, boxW - (padX * 2));
           const safeH = Math.max(120, boxH - (padY * 2));
 
@@ -17043,33 +17052,32 @@ document.addEventListener('DOMContentLoaded', () => {
             els.obsLowerThirdBox.style.overflow = 'hidden';
           }
 
-          const minFont = isPortrait ? 15 : 20;
-          const maxFont = Math.max(minFont + 1, Math.min(260, Math.floor(safeH * 0.75)));
+          const minFont = isPortrait ? 18 : 20;
+          const maxFont = Math.max(minFont + 1, Math.min(260, Math.floor(safeH * 0.85)));
 
           const checkFitsElement = (el, size) => {
             el.style.fontSize = `${size}px`;
             const rect = el.getBoundingClientRect();
             const scrollH = el.scrollHeight || 0;
-            const scrollW = el.scrollWidth || 0;
             const totalH = Math.max(rect.height, scrollH);
             if (totalH > safeH) return false;
-            if (scrollW > safeW + 1 || rect.width > safeW + 1) return false;
 
             const elSegs = el.querySelectorAll('.obs-line-segment');
-            for (let i = 0; i < elSegs.length; i++) {
-              const seg = elSegs[i];
-              const segW = Math.max(seg.scrollWidth || 0, seg.offsetWidth || 0, seg.getBoundingClientRect().width);
-              if (segW > safeW) return false;
+            if (elSegs.length > 0) {
+              for (let i = 0; i < elSegs.length; i++) {
+                const seg = elSegs[i];
+                const segW = Math.max(seg.scrollWidth || 0, seg.offsetWidth || 0, seg.getBoundingClientRect().width);
+                if (segW > safeW) return false;
+              }
+            } else {
+              const scrollW = el.scrollWidth || 0;
+              if (scrollW > safeW + 1 || rect.width > safeW + 1) return false;
             }
             return true;
           };
 
           const computeFitForHtml = (htmlContent, targetEl) => {
             targetEl.innerHTML = htmlContent;
-            const sandboxBadge = targetEl.querySelector('.slide-badge-layer');
-            if (sandboxBadge) {
-              sandboxBadge.style.display = 'none';
-            }
             targetEl.style.maxWidth = `${safeW}px`;
             targetEl.style.width = `${safeW}px`;
             targetEl.style.boxSizing = 'border-box';

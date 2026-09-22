@@ -3726,13 +3726,17 @@ input[type="checkbox"]:checked::after {
   .obs-line-text,
   .line-text {
     height: auto !important;
-    line-height: 1.35 !important;
+    line-height: 1.3 !important;
     margin: 0 auto !important;
     width: 100% !important;
     max-width: 100% !important;
     text-align: center !important;
     text-align-last: center !important;
     transform: none !important;
+  }
+
+  .obs-line-row {
+    margin: 0.05em 0 !important;
   }
 
   .obs-line-segment {
@@ -3743,6 +3747,7 @@ input[type="checkbox"]:checked::after {
     text-align: center !important;
     width: auto !important;
     max-width: 100% !important;
+    box-sizing: border-box !important;
     margin-top: 0 !important;
     margin-bottom: 0 !important;
   }
