@@ -590,12 +590,13 @@
               <div class="style-card-title" style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:6px;">
                 <span><i class="fa-solid fa-arrows-up-down-left-right"></i> أبعاد وموضع النص</span>
                 <div style="display:flex; align-items:center; gap:6px;">
-                  <button type="button" id="btn-toggle-lock-safe-area" class="btn btn-sm active" style="font-size:0.75rem; padding:3px 9px; border-radius:6px; font-weight:700; display:inline-flex; align-items:center; gap:5px; background:rgba(16, 185, 129, 0.15); color:#10b981; border:1px solid rgba(16, 185, 129, 0.3);" title="قفل الحجم لعدم تجاوز المنطقة الآمنة">
+                  <button type="button" id="btn-toggle-lock-safe-area" class="safe-area-lock-btn is-locked" title="قفل الحجم لعدم تجاوز المنطقة الآمنة">
                     <i class="fa-solid fa-lock" id="icon-lock-safe-area"></i>
                     <span id="text-lock-safe-area">المنطقة الآمنة: مقفل</span>
                   </button>
-                  <button type="button" id="btn-reset-text-transform" class="btn btn-sm btn-secondary" style="font-size:0.75rem; padding:3px 8px; border-radius:6px;" title="إعادة تعيين للأبعاد الافتراضية">
-                    <i class="fa-solid fa-rotate-left"></i> إعادة ضبط
+                  <button type="button" id="btn-reset-text-transform" class="text-transform-reset-btn" title="إعادة تعيين للأبعاد الافتراضية">
+                    <i class="fa-solid fa-rotate-left"></i>
+                    <span>إعادة ضبط</span>
                   </button>
                 </div>
               </div>

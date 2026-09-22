@@ -8937,18 +8937,17 @@ document.addEventListener('DOMContentLoaded', () => {
       const label = els.textLockSafeArea || document.getElementById('text-lock-safe-area');
       const isLocked = state.lockScaleToSafeArea !== false;
       if (btn) {
+        btn.classList.toggle('is-locked', isLocked);
+        btn.classList.toggle('is-unlocked', !isLocked);
         btn.classList.toggle('active', isLocked);
+        btn.style.background = '';
+        btn.style.color = '';
+        btn.style.borderColor = '';
         if (isLocked) {
-          btn.style.background = 'rgba(16, 185, 129, 0.15)';
-          btn.style.color = '#10b981';
-          btn.style.borderColor = 'rgba(16, 185, 129, 0.3)';
           if (icon) icon.className = 'fa-solid fa-lock';
           if (label) label.textContent = 'المنطقة الآمنة: مقفل';
           btn.title = 'قفل الحجم لعدم تجاوز المنطقة الآمنة (مفعل)';
         } else {
-          btn.style.background = 'rgba(239, 68, 68, 0.15)';
-          btn.style.color = '#ef4444';
-          btn.style.borderColor = 'rgba(239, 68, 68, 0.3)';
           if (icon) icon.className = 'fa-solid fa-lock-open';
           if (label) label.textContent = 'المنطقة الآمنة: حر';
           btn.title = 'قفل الحجم معطل: حر لتجاوز المنطقة الآمنة';
