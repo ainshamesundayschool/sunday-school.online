@@ -648,6 +648,9 @@ $showSettings = $hasChurchId || $isDevOrAdmin;
     <script
         src="<?php echo $pathPrefix; ?>/js/search_intelligent.js?v=<?php echo file_exists($rootPath . '/js/search_intelligent.js') ? filemtime($rootPath . '/js/search_intelligent.js') : time(); ?>"
         type="text/javascript"></script>
+    <script
+        src="<?php echo $pathPrefix; ?>/js/session_manager.js?v=<?php echo file_exists($rootPath . '/js/session_manager.js') ? filemtime($rootPath . '/js/session_manager.js') : time(); ?>"
+        type="text/javascript"></script>
     <script defer src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script defer
         src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
@@ -15873,9 +15876,13 @@ $showSettings = $hasChurchId || $isDevOrAdmin;
         }
         function confirmLogout() {
             closeLogoutModal();
-            fetch(API_URL + '?action=logout')
-                .then(() => { localStorage.clear(); window.location.href = '<?php echo $pathPrefix; ?>/'; })
-                .catch(() => { window.location.href = '<?php echo $pathPrefix; ?>/'; });
+            if (window.SessionManager) {
+                window.SessionManager.logout('<?php echo $pathPrefix; ?>/');
+            } else {
+                fetch(API_URL + '?action=logout', { method: 'POST', credentials: 'include' })
+                    .then(() => { localStorage.clear(); sessionStorage.clear(); window.location.href = '<?php echo $pathPrefix; ?>/'; })
+                    .catch(() => { window.location.href = '<?php echo $pathPrefix; ?>/'; });
+            }
         }
 
         // ── CLASS NAVIGATION PERMISSION ───────────────────────────────

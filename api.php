@@ -3487,64 +3487,546 @@ function ensureAuthTokensTable($conn): void
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
 }
 
-function issueAuthToken(string $userType, int $userId): string
+function ensureAuthRefreshTokensTable($conn): void
+{
+    static $ensuredRtr = false;
+    if ($ensuredRtr) return;
+    $ensuredRtr = true;
+    @$conn->query("CREATE TABLE IF NOT EXISTS `auth_refresh_tokens` (
+        `id` BIGINT AUTO_INCREMENT PRIMARY KEY,
+        `family_id` VARCHAR(64) NOT NULL COMMENT 'Session family identifier for rotation chain',
+        `user_type` VARCHAR(20) NOT NULL,
+        `user_id` INT NOT NULL,
+        `token_hash` VARCHAR(64) NOT NULL UNIQUE,
+        `parent_token_id` BIGINT NULL DEFAULT NULL,
+        `status` ENUM('active', 'revoked') NOT NULL DEFAULT 'active',
+        `revoked_at` DATETIME NULL DEFAULT NULL,
+        `revocation_reason` VARCHAR(50) NULL DEFAULT NULL,
+        `grace_until` DATETIME NULL DEFAULT NULL COMMENT '5-second grace window for concurrent requests',
+        `ip_address` VARCHAR(45) NULL DEFAULT NULL,
+        `user_agent` VARCHAR(500) NULL DEFAULT NULL,
+        `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        `expires_at` DATETIME NOT NULL,
+        `absolute_expires_at` DATETIME NOT NULL,
+        INDEX `idx_family_id` (`family_id`),
+        INDEX `idx_user_type_id` (`user_type`, `user_id`),
+        INDEX `idx_status_expires` (`status`, `expires_at`),
+        INDEX `idx_absolute_expires` (`absolute_expires_at`),
+        INDEX `idx_grace_until` (`grace_until`)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
+}
+
+function base64UrlEncode(string $data): string
+{
+    return rtrim(strtr(base64_encode($data), '+/', '-_'), '=');
+}
+
+function base64UrlDecode(string $data): string
+{
+    return base64_decode(strtr($data, '-_', '+/') . str_repeat('=', (4 - strlen($data) % 4) % 4));
+}
+
+function generateAccessToken(string $userType, int $userId, string $familyId, array $extra = []): string
+{
+    $lifetime = defined('ACCESS_TOKEN_LIFETIME') ? ACCESS_TOKEN_LIFETIME : 900; // 15 minutes
+    $secret = defined('AUTH_TOKEN_SECRET') ? AUTH_TOKEN_SECRET : 'ss_sec_k9f2_7d1b8c4e0a3f6e9124589dbe710a34c5';
+
+    $header = base64UrlEncode(json_encode(['typ' => 'JWT', 'alg' => 'HS256']));
+    $payloadData = [
+        'sub' => $userId,
+        'user_type' => $userType,
+        'family_id' => $familyId,
+        'church_id' => intval($extra['church_id'] ?? 0),
+        'role' => $extra['role'] ?? '',
+        'name' => $extra['name'] ?? '',
+        'username' => $extra['username'] ?? '',
+        'iat' => time(),
+        'exp' => time() + $lifetime
+    ];
+    $payload = base64UrlEncode(json_encode($payloadData, JSON_UNESCAPED_UNICODE));
+    $signature = base64UrlEncode(hash_hmac('sha256', "$header.$payload", $secret, true));
+
+    return "$header.$payload.$signature";
+}
+
+function verifyAccessToken(string $token): ?array
+{
+    $token = trim($token);
+    $parts = explode('.', $token);
+    if (count($parts) !== 3) {
+        return null;
+    }
+    [$headerB64, $payloadB64, $sigB64] = $parts;
+    $secret = defined('AUTH_TOKEN_SECRET') ? AUTH_TOKEN_SECRET : 'ss_sec_k9f2_7d1b8c4e0a3f6e9124589dbe710a34c5';
+    $expectedSig = base64UrlEncode(hash_hmac('sha256', "$headerB64.$payloadB64", $secret, true));
+
+    if (!hash_equals($expectedSig, $sigB64)) {
+        return null;
+    }
+
+    $payloadJson = base64UrlDecode($payloadB64);
+    $payload = json_decode($payloadJson, true);
+    if (!is_array($payload) || empty($payload['exp']) || empty($payload['sub'])) {
+        return null;
+    }
+
+    if (time() > intval($payload['exp'])) {
+        return null; // Expired access token
+    }
+
+    return $payload;
+}
+
+function getCookieSecuritySettings(): array
+{
+    $isSecure = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on') ||
+                (isset($_SERVER['SERVER_PORT']) && $_SERVER['SERVER_PORT'] == 443) ||
+                (isset($_SERVER['HTTP_X_FORWARDED_PROTO']) && $_SERVER['HTTP_X_FORWARDED_PROTO'] === 'https');
+    return [
+        'secure' => $isSecure,
+        'httponly' => true,
+        'samesite' => 'Strict',
+        'path' => '/'
+    ];
+}
+
+function setRefreshTokenCookie(string $plainToken, int $expiresTimestamp): void
+{
+    $settings = getCookieSecuritySettings();
+    $cookieName = defined('REFRESH_COOKIE_NAME') ? REFRESH_COOKIE_NAME : 'ss_refresh_token';
+    @setcookie($cookieName, $plainToken, [
+        'expires' => $expiresTimestamp,
+        'path' => $settings['path'],
+        'domain' => '',
+        'secure' => $settings['secure'],
+        'httponly' => $settings['httponly'],
+        'samesite' => $settings['samesite']
+    ]);
+}
+
+function clearRefreshTokenCookie(): void
+{
+    $settings = getCookieSecuritySettings();
+    $cookieName = defined('REFRESH_COOKIE_NAME') ? REFRESH_COOKIE_NAME : 'ss_refresh_token';
+    @setcookie($cookieName, '', [
+        'expires' => time() - 86400,
+        'path' => $settings['path'],
+        'domain' => '',
+        'secure' => $settings['secure'],
+        'httponly' => $settings['httponly'],
+        'samesite' => $settings['samesite']
+    ]);
+    @setcookie('ss_auth_token', '', [
+        'expires' => time() - 86400,
+        'path' => $settings['path'],
+        'domain' => '',
+        'secure' => $settings['secure'],
+        'httponly' => $settings['httponly'],
+        'samesite' => 'Lax'
+    ]);
+}
+
+function getUserClaimsForSession($conn, string $userType, int $userId): array
+{
+    $claims = [
+        'name' => '',
+        'username' => '',
+        'role' => '',
+        'church_id' => 0,
+        'church_name' => '',
+        'church_code' => '',
+        'church_type' => 'kids'
+    ];
+    if ($userType === 'uncle') {
+        $stmt = $conn->prepare("
+            SELECT u.id, u.name, u.username, u.role, u.church_id,
+                   c.church_name, c.church_code, COALESCE(c.church_type, 'kids') AS church_type
+            FROM uncles u
+            LEFT JOIN churches c ON u.church_id = c.id
+            WHERE u.id = ? LIMIT 1
+        ");
+        if ($stmt) {
+            $stmt->bind_param("i", $userId);
+            $stmt->execute();
+            $row = $stmt->get_result()->fetch_assoc();
+            $stmt->close();
+            if ($row) {
+                $claims['name'] = $row['name'] ?? '';
+                $claims['username'] = $row['username'] ?? '';
+                $claims['role'] = $row['role'] ?? 'uncle';
+                $claims['church_id'] = intval($row['church_id'] ?? 0);
+                $claims['church_name'] = $row['church_name'] ?? '';
+                $claims['church_code'] = $row['church_code'] ?? '';
+                $claims['church_type'] = $row['church_type'] ?? 'kids';
+            }
+        }
+    } elseif ($userType === 'church') {
+        $stmt = $conn->prepare("
+            SELECT id, church_name, church_code, COALESCE(church_type, 'kids') AS church_type
+            FROM churches WHERE id = ? LIMIT 1
+        ");
+        if ($stmt) {
+            $stmt->bind_param("i", $userId);
+            $stmt->execute();
+            $row = $stmt->get_result()->fetch_assoc();
+            $stmt->close();
+            if ($row) {
+                $claims['name'] = $row['church_name'] ?? '';
+                $claims['username'] = $row['church_code'] ?? '';
+                $claims['role'] = 'admin';
+                $claims['church_id'] = intval($row['id']);
+                $claims['church_name'] = $row['church_name'] ?? '';
+                $claims['church_code'] = $row['church_code'] ?? '';
+                $claims['church_type'] = $row['church_type'] ?? 'kids';
+            }
+        }
+    }
+    return $claims;
+}
+
+function issueSessionTokens(
+    string $userType,
+    int $userId,
+    ?string $familyId = null,
+    ?int $parentTokenId = null,
+    ?string $absoluteExpiresAt = null,
+    array $extraClaims = []
+): array {
+    try {
+        $conn = getDBConnection();
+        ensureAuthRefreshTokensTable($conn);
+
+        if (empty($familyId)) {
+            $familyId = bin2hex(random_bytes(16));
+        }
+
+        $now = time();
+        $absLifetime = defined('SESSION_ABSOLUTE_LIFETIME') ? SESSION_ABSOLUTE_LIFETIME : 2592000; // 30 days
+        if (empty($absoluteExpiresAt)) {
+            $absoluteExpiresAt = date('Y-m-d H:i:s', $now + $absLifetime);
+        }
+
+        if (empty($extraClaims)) {
+            $extraClaims = getUserClaimsForSession($conn, $userType, $userId);
+        }
+
+        $plainRefreshToken = bin2hex(random_bytes(32));
+        $tokenHash = hash('sha256', $plainRefreshToken);
+
+        $absTimestamp = strtotime($absoluteExpiresAt);
+        $refreshTokenExpiry = date('Y-m-d H:i:s', min($now + $absLifetime, $absTimestamp));
+
+        $ip = $_SERVER['REMOTE_ADDR'] ?? '';
+        $ua = substr($_SERVER['HTTP_USER_AGENT'] ?? '', 0, 500);
+
+        $stmt = $conn->prepare("
+            INSERT INTO auth_refresh_tokens 
+                (family_id, user_type, user_id, token_hash, parent_token_id, status, ip_address, user_agent, created_at, expires_at, absolute_expires_at) 
+            VALUES (?, ?, ?, ?, ?, 'active', ?, ?, NOW(), ?, ?)
+        ");
+        if ($stmt) {
+            $stmt->bind_param("ssisisssss", $familyId, $userType, $userId, $tokenHash, $parentTokenId, $ip, $ua, $refreshTokenExpiry, $absoluteExpiresAt);
+            $stmt->execute();
+            $stmt->close();
+        } else {
+            error_log("issueSessionTokens DB insert failed: " . $conn->error);
+            return [];
+        }
+
+        // Set HttpOnly, Secure, SameSite=Strict cookie
+        setRefreshTokenCookie($plainRefreshToken, $absTimestamp);
+
+        // Generate short-lived Access Token (15 minutes)
+        $accessToken = generateAccessToken($userType, $userId, $familyId, $extraClaims);
+
+        ensureActiveSession();
+        $_SESSION['family_id'] = $familyId;
+
+        // Populate session identity
+        if ($userType === 'uncle') {
+            $_SESSION['uncle_id'] = $userId;
+            $_SESSION['uncle_name'] = $extraClaims['name'] ?? '';
+            $_SESSION['uncle_username'] = $extraClaims['username'] ?? '';
+            $_SESSION['uncle_role'] = $extraClaims['role'] ?? 'uncle';
+            $_SESSION['role'] = $extraClaims['role'] ?? 'uncle';
+            if (in_array(strtolower(trim($extraClaims['role'] ?? '')), ['developer', 'dev'])) {
+                $_SESSION['is_developer'] = true;
+            }
+            $_SESSION['church_id'] = intval($extraClaims['church_id'] ?? 0);
+            $_SESSION['church_name'] = $extraClaims['church_name'] ?? '';
+            $_SESSION['church_code'] = $extraClaims['church_code'] ?? '';
+            $_SESSION['church_type'] = $extraClaims['church_type'] ?? 'kids';
+            $_SESSION['login_type'] = 'uncle';
+            $_SESSION['uncle_logged_in'] = true;
+        } elseif ($userType === 'church') {
+            $_SESSION['church_id'] = $userId;
+            $_SESSION['church_name'] = $extraClaims['church_name'] ?? '';
+            $_SESSION['church_code'] = $extraClaims['church_code'] ?? '';
+            $_SESSION['church_type'] = $extraClaims['church_type'] ?? 'kids';
+            $_SESSION['login_type'] = 'church';
+            $_SESSION['uncle_role'] = 'admin';
+            $_SESSION['role'] = 'admin';
+            $_SESSION['loggedIn'] = true;
+        }
+
+        return [
+            'access_token' => $accessToken,
+            'token_type' => 'Bearer',
+            'expires_in' => defined('ACCESS_TOKEN_LIFETIME') ? ACCESS_TOKEN_LIFETIME : 900,
+            'family_id' => $familyId,
+            'refresh_token' => $plainRefreshToken,
+            'auth_token' => $accessToken,
+            'absolute_expires_at' => $absoluteExpiresAt
+        ];
+    } catch (Exception $e) {
+        error_log("issueSessionTokens error: " . $e->getMessage());
+        return [];
+    }
+}
+
+function rotateRefreshToken(?string $plainToken = null): array
 {
     try {
         $conn = getDBConnection();
-        ensureAuthTokensTable($conn);
-        $token = bin2hex(random_bytes(32));
-        $tokenHash = hash('sha256', $token);
-        $expiresAt = date('Y-m-d H:i:s', time() + 315360000); // 10 years
+        ensureAuthRefreshTokensTable($conn);
 
-        $stmt = $conn->prepare("INSERT INTO user_auth_tokens (user_type, user_id, token_hash, expires_at) VALUES (?, ?, ?, ?)");
-        if ($stmt) {
-            $stmt->bind_param("siss", $userType, $userId, $tokenHash, $expiresAt);
-            $stmt->execute();
-            $stmt->close();
+        $cookieName = defined('REFRESH_COOKIE_NAME') ? REFRESH_COOKIE_NAME : 'ss_refresh_token';
+        $token = trim($plainToken ?? $_COOKIE[$cookieName] ?? $_POST['refresh_token'] ?? $_POST['refreshToken'] ?? '');
+
+        if (empty($token) || strlen($token) !== 64 || !ctype_xdigit($token)) {
+            return [
+                'success' => false,
+                'error' => 'NO_REFRESH_TOKEN',
+                'message' => 'لم يتم العثور على رمز تجديد صالح'
+            ];
         }
 
-        $cookieLifetime = 315360000;
-        @setcookie('ss_auth_token', $token, [
-            'expires' => time() + $cookieLifetime,
-            'path' => '/',
-            'domain' => '',
-            'secure' => isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on',
-            'httponly' => true,
-            'samesite' => 'Lax'
-        ]);
+        $tokenHash = hash('sha256', $token);
 
-        return $token;
+        $stmt = $conn->prepare("
+            SELECT id, family_id, user_type, user_id, parent_token_id, status,
+                   revoked_at, revocation_reason, grace_until, ip_address, user_agent,
+                   created_at, expires_at, absolute_expires_at
+            FROM auth_refresh_tokens
+            WHERE token_hash = ?
+            LIMIT 1
+        ");
+        if (!$stmt) {
+            return ['success' => false, 'error' => 'DB_ERROR', 'message' => 'خطأ في قاعدة البيانات'];
+        }
+        $stmt->bind_param("s", $tokenHash);
+        $stmt->execute();
+        $tokenRow = $stmt->get_result()->fetch_assoc();
+        $stmt->close();
+
+        if (!$tokenRow) {
+            clearRefreshTokenCookie();
+            return [
+                'success' => false,
+                'error' => 'INVALID_TOKEN',
+                'message' => 'جلسة غير صالحة، يرجى تسجيل الدخول مجدداً'
+            ];
+        }
+
+        $familyId = $tokenRow['family_id'];
+        $userType = $tokenRow['user_type'];
+        $userId = intval($tokenRow['user_id']);
+        $absExpiryTs = strtotime($tokenRow['absolute_expires_at']);
+        $now = time();
+
+        // 1. Check Absolute Expiry (30 days max lifetime from initial login)
+        if ($now >= $absExpiryTs) {
+            revokeSessionFamily($familyId, null, 'expired');
+            clearRefreshTokenCookie();
+            return [
+                'success' => false,
+                'error' => 'SESSION_EXPIRED',
+                'message' => 'انتهت الجلسة، الرجاء تسجيل الدخول مجددا'
+            ];
+        }
+
+        // Fetch user extra claims
+        $userClaims = getUserClaimsForSession($conn, $userType, $userId);
+
+        // 2. Token is REVOKED
+        if ($tokenRow['status'] === 'revoked') {
+            $graceUntil = !empty($tokenRow['grace_until']) ? strtotime($tokenRow['grace_until']) : 0;
+
+            // 2A. Within 5-second Grace Period -> Race Condition Handled Gracefully
+            if ($graceUntil >= $now) {
+                // Return fresh access token for the active family session
+                $newAccessToken = generateAccessToken($userType, $userId, $familyId, $userClaims);
+                return [
+                    'success' => true,
+                    'grace_period' => true,
+                    'access_token' => $newAccessToken,
+                    'auth_token' => $newAccessToken,
+                    'token_type' => 'Bearer',
+                    'expires_in' => defined('ACCESS_TOKEN_LIFETIME') ? ACCESS_TOKEN_LIFETIME : 900,
+                    'family_id' => $familyId
+                ];
+            }
+
+            // 2B. Past Grace Period -> ATTACK / REUSE DETECTED!
+            // Revoke entire family
+            $stmtRevokeAll = $conn->prepare("
+                UPDATE auth_refresh_tokens 
+                SET status = 'revoked', 
+                    revocation_reason = 'theft_detected', 
+                    revoked_at = NOW() 
+                WHERE family_id = ?
+            ");
+            if ($stmtRevokeAll) {
+                $stmtRevokeAll->bind_param("s", $familyId);
+                $stmtRevokeAll->execute();
+                $stmtRevokeAll->close();
+            }
+
+            clearRefreshTokenCookie();
+            $_SESSION = [];
+            @session_destroy();
+
+            // Log security incident in audit_logs
+            $clientIp = $_SERVER['REMOTE_ADDR'] ?? '';
+            $clientUa = $_SERVER['HTTP_USER_AGENT'] ?? '';
+            if (function_exists('writeAuditLog')) {
+                writeAuditLog(
+                    'security_token_theft_detected',
+                    'auth_session',
+                    $userId,
+                    $userClaims['name'] ?? "User #$userId",
+                    ['family_id' => $familyId, 'attempted_token_id' => $tokenRow['id']],
+                    ['action' => 'revoke_entire_family', 'ip' => $clientIp, 'user_agent' => $clientUa],
+                    "Security: Revoked entire session family due to revoked token reuse ($familyId)"
+                );
+            }
+
+            // Send Security Push Alert to User / Church / Developer (standard, no emojis)
+            $alertTitle = 'تنبيه أمني';
+            $alertBody = 'تم تسجيل الخروج لجميع الجلسات، يرجى تسجيل الدخول مجددا.';
+            if ($userType === 'church' && function_exists('_sendWebPushToChurch')) {
+                _sendWebPushToChurch($conn, $userId, $alertTitle, $alertBody);
+            } elseif ($userType === 'uncle' && function_exists('_sendWebPushToUncles')) {
+                _sendWebPushToUncles($conn, intval($userClaims['church_id'] ?? 0), $alertTitle, $alertBody);
+            }
+            if (function_exists('_sendWebPushToDeveloper')) {
+                _sendWebPushToDeveloper($conn, $alertTitle, "Theft detected for $userType #$userId (IP: $clientIp). Family: $familyId");
+            }
+
+            return [
+                'success' => false,
+                'error' => 'TOKEN_THEFT_DETECTED',
+                'message' => 'انتهت الجلسة، الرجاء تسجيل الدخول مجددا'
+            ];
+        }
+
+        // 3. Token is ACTIVE -> Normal Rotation
+        $graceSeconds = defined('REFRESH_TOKEN_GRACE_PERIOD') ? REFRESH_TOKEN_GRACE_PERIOD : 5;
+        $stmtRevoke = $conn->prepare("
+            UPDATE auth_refresh_tokens 
+            SET status = 'revoked', 
+                revocation_reason = 'rotated', 
+                revoked_at = NOW(), 
+                grace_until = DATE_ADD(NOW(), INTERVAL ? SECOND) 
+            WHERE id = ?
+        ");
+        if ($stmtRevoke) {
+            $stmtRevoke->bind_param("ii", $graceSeconds, $tokenRow['id']);
+            $stmtRevoke->execute();
+            $stmtRevoke->close();
+        }
+
+        // Issue new token pair
+        $newTokens = issueSessionTokens(
+            $userType,
+            $userId,
+            $familyId,
+            intval($tokenRow['id']),
+            $tokenRow['absolute_expires_at'],
+            $userClaims
+        );
+
+        if (empty($newTokens)) {
+            return ['success' => false, 'error' => 'ISSUE_FAILED', 'message' => 'تعذر تجديد الجلسة'];
+        }
+
+        return ['success' => true] + $newTokens;
     } catch (Exception $e) {
-        error_log("issueAuthToken error: " . $e->getMessage());
-        return '';
+        error_log("rotateRefreshToken error: " . $e->getMessage());
+        return ['success' => false, 'error' => 'SERVER_ERROR', 'message' => 'خطأ في الخادم: ' . $e->getMessage()];
     }
+}
+
+function revokeSessionFamily(?string $familyId = null, ?string $plainToken = null, string $reason = 'logout'): void
+{
+    try {
+        $conn = getDBConnection();
+        ensureAuthRefreshTokensTable($conn);
+
+        if (empty($familyId)) {
+            $cookieName = defined('REFRESH_COOKIE_NAME') ? REFRESH_COOKIE_NAME : 'ss_refresh_token';
+            $token = trim($plainToken ?? $_COOKIE[$cookieName] ?? $_POST['refresh_token'] ?? '');
+            if (!empty($token) && strlen($token) === 64 && ctype_xdigit($token)) {
+                $hash = hash('sha256', $token);
+                $stmt = $conn->prepare("SELECT family_id FROM auth_refresh_tokens WHERE token_hash = ? LIMIT 1");
+                if ($stmt) {
+                    $stmt->bind_param("s", $hash);
+                    $stmt->execute();
+                    $r = $stmt->get_result()->fetch_assoc();
+                    $stmt->close();
+                    if ($r && !empty($r['family_id'])) {
+                        $familyId = $r['family_id'];
+                    }
+                }
+            }
+        }
+
+        if (empty($familyId) && !empty($_SESSION['family_id'])) {
+            $familyId = $_SESSION['family_id'];
+        }
+
+        if (!empty($familyId)) {
+            $stmt = $conn->prepare("
+                UPDATE auth_refresh_tokens 
+                SET status = 'revoked', 
+                    revocation_reason = ?, 
+                    revoked_at = NOW() 
+                WHERE family_id = ?
+            ");
+            if ($stmt) {
+                $stmt->bind_param("ss", $reason, $familyId);
+                $stmt->execute();
+                $stmt->close();
+            }
+        }
+
+        // Clean legacy table token as well
+        $legacyToken = trim($_COOKIE['ss_auth_token'] ?? $_POST['auth_token'] ?? $_GET['auth_token'] ?? '');
+        if (!empty($legacyToken) && strlen($legacyToken) === 64 && ctype_xdigit($legacyToken)) {
+            $tokenHash = hash('sha256', $legacyToken);
+            $stmtL = $conn->prepare("DELETE FROM user_auth_tokens WHERE token_hash = ?");
+            if ($stmtL) {
+                $stmtL->bind_param("s", $tokenHash);
+                $stmtL->execute();
+                $stmtL->close();
+            }
+        }
+
+        clearRefreshTokenCookie();
+    } catch (Exception $e) {
+        error_log("revokeSessionFamily error: " . $e->getMessage());
+    }
+}
+
+function issueAuthToken(string $userType, int $userId): string
+{
+    $tokens = issueSessionTokens($userType, $userId);
+    return $tokens['access_token'] ?? '';
 }
 
 function revokeCurrentAuthToken(): void
 {
-    $token = trim($_COOKIE['ss_auth_token'] ?? $_POST['auth_token'] ?? $_GET['auth_token'] ?? '');
-    if (!empty($token) && strlen($token) === 64 && ctype_xdigit($token)) {
-        try {
-            $conn = getDBConnection();
-            $tokenHash = hash('sha256', $token);
-            $stmt = $conn->prepare("DELETE FROM user_auth_tokens WHERE token_hash = ?");
-            if ($stmt) {
-                $stmt->bind_param("s", $tokenHash);
-                $stmt->execute();
-                $stmt->close();
-            }
-        } catch (Exception $e) {
-            // ignore
-        }
-    }
-    @setcookie('ss_auth_token', '', [
-        'expires' => time() - 3600,
-        'path' => '/',
-        'domain' => '',
-        'secure' => isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on',
-        'httponly' => true,
-        'samesite' => 'Lax'
-    ]);
+    revokeSessionFamily(null, null, 'logout');
 }
 
 function autoRestoreSessionFromRequest(): bool
@@ -3559,16 +4041,113 @@ function autoRestoreSessionFromRequest(): bool
         return true;
     }
 
-    $token = trim($_COOKIE['ss_auth_token'] ?? $_POST['auth_token'] ?? $_POST['authToken'] ?? $_GET['auth_token'] ?? '');
-    if (empty($token) && !empty($_SERVER['HTTP_AUTHORIZATION']) && preg_match('/Bearer\s+([a-f0-9]{64})/i', $_SERVER['HTTP_AUTHORIZATION'], $m)) {
-        $token = $m[1];
+    $rawToken = trim($_POST['access_token'] ?? $_POST['auth_token'] ?? $_POST['authToken'] ?? $_GET['auth_token'] ?? '');
+    if (empty($rawToken) && !empty($_SERVER['HTTP_AUTHORIZATION']) && preg_match('/Bearer\s+(\S+)/i', $_SERVER['HTTP_AUTHORIZATION'], $m)) {
+        $rawToken = $m[1];
     }
 
-    if (!empty($token) && strlen($token) === 64 && ctype_xdigit($token)) {
+    // 1. Check if it's a signed JWT Access Token (header.payload.signature)
+    if (!empty($rawToken) && strpos($rawToken, '.') !== false) {
+        $payload = verifyAccessToken($rawToken);
+        if ($payload) {
+            $userType = $payload['user_type'] ?? '';
+            $userId = intval($payload['sub'] ?? 0);
+            $familyId = $payload['family_id'] ?? '';
+
+            ensureActiveSession();
+            $_SESSION['family_id'] = $familyId;
+
+            if ($userType === 'uncle') {
+                $_SESSION['uncle_id'] = $userId;
+                $_SESSION['uncle_name'] = $payload['name'] ?? '';
+                $_SESSION['uncle_username'] = $payload['username'] ?? '';
+                $_SESSION['uncle_role'] = $payload['role'] ?? 'uncle';
+                $_SESSION['role'] = $payload['role'] ?? 'uncle';
+                if (in_array(strtolower(trim($payload['role'] ?? '')), ['developer', 'dev'])) {
+                    $_SESSION['is_developer'] = true;
+                }
+                $_SESSION['church_id'] = intval($payload['church_id'] ?? 0);
+                $_SESSION['login_type'] = 'uncle';
+                $_SESSION['uncle_logged_in'] = true;
+                return true;
+            } elseif ($userType === 'church') {
+                $_SESSION['church_id'] = $userId;
+                $_SESSION['church_code'] = $payload['username'] ?? '';
+                $_SESSION['login_type'] = 'church';
+                $_SESSION['uncle_role'] = 'admin';
+                $_SESSION['role'] = 'admin';
+                $_SESSION['loggedIn'] = true;
+                return true;
+            }
+        }
+    }
+
+    // 2. Check if Refresh Token Cookie exists and is active (auto-restore)
+    $cookieName = defined('REFRESH_COOKIE_NAME') ? REFRESH_COOKIE_NAME : 'ss_refresh_token';
+    $refreshToken = trim($_COOKIE[$cookieName] ?? '');
+    if (!empty($refreshToken) && strlen($refreshToken) === 64 && ctype_xdigit($refreshToken)) {
+        try {
+            $conn = getDBConnection();
+            ensureAuthRefreshTokensTable($conn);
+            $hash = hash('sha256', $refreshToken);
+            $stmt = $conn->prepare("
+                SELECT family_id, user_type, user_id, absolute_expires_at 
+                FROM auth_refresh_tokens 
+                WHERE token_hash = ? AND status = 'active' AND absolute_expires_at > NOW() 
+                LIMIT 1
+            ");
+            if ($stmt) {
+                $stmt->bind_param("s", $hash);
+                $stmt->execute();
+                $rRow = $stmt->get_result()->fetch_assoc();
+                $stmt->close();
+                if ($rRow) {
+                    $uType = $rRow['user_type'];
+                    $uId = intval($rRow['user_id']);
+                    $_SESSION['family_id'] = $rRow['family_id'];
+                    $claims = getUserClaimsForSession($conn, $uType, $uId);
+                    ensureActiveSession();
+                    if ($uType === 'uncle') {
+                        $_SESSION['uncle_id'] = $uId;
+                        $_SESSION['uncle_name'] = $claims['name'];
+                        $_SESSION['uncle_username'] = $claims['username'];
+                        $_SESSION['uncle_role'] = $claims['role'];
+                        $_SESSION['role'] = $claims['role'];
+                        if (in_array(strtolower(trim($claims['role'])), ['developer', 'dev'])) {
+                            $_SESSION['is_developer'] = true;
+                        }
+                        $_SESSION['church_id'] = $claims['church_id'];
+                        $_SESSION['church_name'] = $claims['church_name'];
+                        $_SESSION['church_code'] = $claims['church_code'];
+                        $_SESSION['church_type'] = $claims['church_type'];
+                        $_SESSION['login_type'] = 'uncle';
+                        $_SESSION['uncle_logged_in'] = true;
+                        return true;
+                    } elseif ($uType === 'church') {
+                        $_SESSION['church_id'] = $uId;
+                        $_SESSION['church_name'] = $claims['name'];
+                        $_SESSION['church_code'] = $claims['username'];
+                        $_SESSION['church_type'] = $claims['church_type'];
+                        $_SESSION['login_type'] = 'church';
+                        $_SESSION['uncle_role'] = 'admin';
+                        $_SESSION['role'] = 'admin';
+                        $_SESSION['loggedIn'] = true;
+                        return true;
+                    }
+                }
+            }
+        } catch (Exception $e) {
+            error_log("autoRestoreSessionFromRequest RTR error: " . $e->getMessage());
+        }
+    }
+
+    // 3. Fallback to legacy user_auth_tokens check
+    $legacyToken = trim($_COOKIE['ss_auth_token'] ?? $rawToken);
+    if (!empty($legacyToken) && strlen($legacyToken) === 64 && ctype_xdigit($legacyToken)) {
         try {
             $conn = getDBConnection();
             ensureAuthTokensTable($conn);
-            $tokenHash = hash('sha256', $token);
+            $tokenHash = hash('sha256', $legacyToken);
 
             $stmt = $conn->prepare("
                 SELECT user_type, user_id 
@@ -4548,8 +5127,14 @@ try {
 
 
 
+        case 'refresh_token':
+        case 'refreshToken':
+            $rotateRes = rotateRefreshToken();
+            sendJSON($rotateRes);
+            break;
+
         case 'logout':
-            revokeCurrentAuthToken();
+            revokeSessionFamily(null, null, 'logout');
             $_SESSION = [];
             if (ini_get("session.use_cookies")) {
                 $params = session_get_cookie_params();
@@ -6545,22 +7130,27 @@ function handleLogin()
 
                 runBackgroundGradeUpChecks();
 
-                $authToken = issueAuthToken('church', intval($row['id']));
+                $sessionTokens = issueSessionTokens('church', intval($row['id']), null, null, null, [
+                    'name' => $row['church_name'],
+                    'username' => $churchCode,
+                    'role' => 'admin',
+                    'church_id' => intval($row['id']),
+                    'church_name' => $row['church_name'],
+                    'church_code' => $churchCode,
+                    'church_type' => $row['church_type'] ?? 'kids'
+                ]);
+                $authToken = $sessionTokens['access_token'] ?? '';
 
                 sendJSON([
-
                     'success' => true,
-
                     'message' => 'تم تسجيل الدخول بنجاح',
-
                     'auth_token' => $authToken,
-
+                    'access_token' => $authToken,
+                    'expires_in' => $sessionTokens['expires_in'] ?? 900,
+                    'family_id' => $sessionTokens['family_id'] ?? '',
                     'church_name' => $row['church_name'],
-
                     'church_id' => $row['id'],
-
                     'church_type' => $row['church_type'],
-
                 ]);
 
             }
@@ -16117,34 +16707,33 @@ function handleUncleLogin()
 
 
 
-                $authToken = issueAuthToken('uncle', intval($row['id']));
+                $sessionTokens = issueSessionTokens('uncle', intval($row['id']), null, null, null, [
+                    'name' => $row['name'],
+                    'username' => $row['username'],
+                    'role' => $row['role'] ?? 'uncle',
+                    'church_id' => intval($row['church_id'] ?? 0),
+                    'church_name' => $row['church_name'] ?? '',
+                    'church_code' => $row['church_code'] ?? '',
+                    'church_type' => $row['church_type'] ?? 'kids'
+                ]);
+                $authToken = $sessionTokens['access_token'] ?? '';
 
                 sendJSON([
-
                     'success' => true,
-
                     'message' => 'تم تسجيل الدخول بنجاح',
-
                     'auth_token' => $authToken,
-
+                    'access_token' => $authToken,
+                    'expires_in' => $sessionTokens['expires_in'] ?? 900,
+                    'family_id' => $sessionTokens['family_id'] ?? '',
                     'uncle' => [
-
                         'id' => $row['id'],
-
                         'name' => $row['name'],
-
                         'username' => $row['username'],
-
                         'image_url' => $row['image_url'],
-
                         'role' => $row['role']
-
                     ],
-
                     'church_name' => $row['church_name'],
-
                     'church_type' => $row['church_type'],
-
                 ]);
 
             }

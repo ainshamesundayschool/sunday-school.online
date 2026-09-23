@@ -809,8 +809,14 @@ position: absolute;
             localStorage.setItem('churchName',    data.church_name      || '');
             localStorage.setItem('churchCode',    data.church_code      || '');
         }
-        if (data.auth_token) {
-            localStorage.setItem('authToken', data.auth_token);
+        if (data.access_token || data.auth_token) {
+            const token = data.access_token || data.auth_token;
+            localStorage.setItem('authToken', token);
+            localStorage.setItem('ss_access_token', token);
+            sessionStorage.setItem('ss_access_token', token);
+            const exp = Date.now() + ((data.expires_in || 900) * 1000);
+            localStorage.setItem('ss_token_expires_at', String(exp));
+            sessionStorage.setItem('ss_token_expires_at', String(exp));
         }
     }
 
