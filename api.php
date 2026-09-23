@@ -3725,7 +3725,7 @@ function issueSessionTokens(
             VALUES (?, ?, ?, ?, ?, 'active', ?, ?, NOW(), ?, ?)
         ");
         if ($stmt) {
-            $stmt->bind_param("ssisisssss", $familyId, $userType, $userId, $tokenHash, $parentTokenId, $ip, $ua, $refreshTokenExpiry, $absoluteExpiresAt);
+            $stmt->bind_param("ssisissss", $familyId, $userType, $userId, $tokenHash, $parentTokenId, $ip, $ua, $refreshTokenExpiry, $absoluteExpiresAt);
             $stmt->execute();
             $stmt->close();
         } else {
@@ -14210,7 +14210,7 @@ function getAnnouncementsForStudent()
             ORDER BY created_at DESC
         ");
 
-        $stmt->bind_param("isssss", $churchId, $studentClass, $studentClass, $studentName, $studentName);
+        $stmt->bind_param("issss", $churchId, $studentClass, $studentClass, $studentName, $studentName);
         $stmt->execute();
         $result = $stmt->get_result();
 
@@ -49845,7 +49845,7 @@ function addGuest()
             VALUES (?, ?, ?, ?, '', ?, ?, ?, ?, ?, ?, 1)
         ");
         $addedByStr = $uncleId ? strval($uncleId) : 'church_admin';
-        $stmt->bind_param("isissssssss", $churchId, $name, $classId, $className, $phone, $guardianName, $notes, $photoUrl, $gender, $addedByStr);
+        $stmt->bind_param("isisssssss", $churchId, $name, $classId, $className, $phone, $guardianName, $notes, $photoUrl, $gender, $addedByStr);
 
         if ($stmt->execute()) {
             $guestId = $conn->insert_id;
