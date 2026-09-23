@@ -3559,37 +3559,125 @@ function autoRestoreSessionFromRequest(): bool
         return true;
     }
 
-    $token = trim($_COOKIE['ss_auth_token'] ?? $_POST['auth_token'] ?? $_GET['auth_token'] ?? '');
-    if (empty($token) || strlen($token) !== 64 || !ctype_xdigit($token)) {
-        return false;
+    $token = trim($_COOKIE['ss_auth_token'] ?? $_POST['auth_token'] ?? $_POST['authToken'] ?? $_GET['auth_token'] ?? '');
+    if (empty($token) && !empty($_SERVER['HTTP_AUTHORIZATION']) && preg_match('/Bearer\s+([a-f0-9]{64})/i', $_SERVER['HTTP_AUTHORIZATION'], $m)) {
+        $token = $m[1];
     }
 
-    try {
-        $conn = getDBConnection();
-        ensureAuthTokensTable($conn);
-        $tokenHash = hash('sha256', $token);
+    if (!empty($token) && strlen($token) === 64 && ctype_xdigit($token)) {
+        try {
+            $conn = getDBConnection();
+            ensureAuthTokensTable($conn);
+            $tokenHash = hash('sha256', $token);
 
-        $stmt = $conn->prepare("
-            SELECT user_type, user_id 
-            FROM user_auth_tokens 
-            WHERE token_hash = ? AND expires_at > NOW() 
-            LIMIT 1
-        ");
-        if (!$stmt) return false;
-        $stmt->bind_param("s", $tokenHash);
-        $stmt->execute();
-        $res = $stmt->get_result();
-        $tokenRow = $res ? $res->fetch_assoc() : null;
-        $stmt->close();
+            $stmt = $conn->prepare("
+                SELECT user_type, user_id 
+                FROM user_auth_tokens 
+                WHERE token_hash = ? AND expires_at > NOW() 
+                LIMIT 1
+            ");
+            if ($stmt) {
+                $stmt->bind_param("s", $tokenHash);
+                $stmt->execute();
+                $res = $stmt->get_result();
+                $tokenRow = $res ? $res->fetch_assoc() : null;
+                $stmt->close();
 
-        if (!$tokenRow) {
-            return false;
+                if ($tokenRow) {
+                    $userType = $tokenRow['user_type'];
+                    $userId = intval($tokenRow['user_id']);
+
+                    if ($userType === 'uncle') {
+                        ensureChurchTypeColumn($conn);
+                        $stmtU = $conn->prepare("
+                            SELECT u.id, u.name, u.username, u.role, u.image_url, u.church_id,
+                                   c.church_name, c.church_code, c.admin_email,
+                                   COALESCE(c.church_type, 'kids') AS church_type,
+                                   COALESCE(c.is_approved, 1) AS is_approved
+                            FROM uncles u
+                            LEFT JOIN churches c ON u.church_id = c.id
+                            WHERE u.id = ? AND (u.deleted IS NULL OR u.deleted = 0)
+                            LIMIT 1
+                        ");
+                        if ($stmtU) {
+                            $stmtU->bind_param("i", $userId);
+                            $stmtU->execute();
+                            $uRow = $stmtU->get_result()->fetch_assoc();
+                            $stmtU->close();
+
+                            if ($uRow) {
+                                if (isset($uRow['is_approved']) && intval($uRow['is_approved']) === 0) {
+                                    return false;
+                                }
+
+                                ensureActiveSession();
+                                $_SESSION['uncle_id'] = intval($uRow['id']);
+                                $_SESSION['uncle_name'] = $uRow['name'];
+                                $_SESSION['uncle_username'] = $uRow['username'];
+                                $_SESSION['uncle_image'] = $uRow['image_url'];
+                                $_SESSION['uncle_role'] = $uRow['role'] ?? 'uncle';
+                                $_SESSION['role'] = $uRow['role'] ?? 'uncle';
+                                if (in_array(strtolower(trim($uRow['role'] ?? '')), ['developer', 'dev'])) {
+                                    $_SESSION['is_developer'] = true;
+                                }
+                                $_SESSION['church_id'] = intval($uRow['church_id']);
+                                $_SESSION['church_name'] = $uRow['church_name'];
+                                $_SESSION['church_code'] = $uRow['church_code'];
+                                $_SESSION['church_type'] = $uRow['church_type'];
+                                $_SESSION['admin_email'] = $uRow['admin_email'] ?? '';
+                                $_SESSION['login_type'] = 'uncle';
+                                $_SESSION['uncle_logged_in'] = true;
+                                return true;
+                            }
+                        }
+                    } elseif ($userType === 'church') {
+                        ensureChurchTypeColumn($conn);
+                        $stmtC = $conn->prepare("
+                            SELECT id, church_name, church_code, admin_email,
+                                   COALESCE(church_type, 'kids') AS church_type,
+                                   COALESCE(is_approved, 1) AS is_approved
+                            FROM churches
+                            WHERE id = ?
+                            LIMIT 1
+                        ");
+                        if ($stmtC) {
+                            $stmtC->bind_param("i", $userId);
+                            $stmtC->execute();
+                            $cRow = $stmtC->get_result()->fetch_assoc();
+                            $stmtC->close();
+
+                            if ($cRow) {
+                                if (isset($cRow['is_approved']) && intval($cRow['is_approved']) === 0) {
+                                    return false;
+                                }
+
+                                ensureActiveSession();
+                                $_SESSION['church_id'] = intval($cRow['id']);
+                                $_SESSION['church_name'] = $cRow['church_name'];
+                                $_SESSION['church_code'] = $cRow['church_code'];
+                                $_SESSION['church_type'] = $cRow['church_type'];
+                                $_SESSION['admin_email'] = $cRow['admin_email'] ?? '';
+                                $_SESSION['login_type'] = 'church';
+                                $_SESSION['uncle_role'] = 'admin';
+                                $_SESSION['role'] = 'admin';
+                                $_SESSION['loggedIn'] = true;
+                                return true;
+                            }
+                        }
+                    }
+                }
+            }
+        } catch (Exception $e) {
+            error_log("autoRestoreSessionFromRequest token restore error: " . $e->getMessage());
         }
+    }
 
-        $userType = $tokenRow['user_type'];
-        $userId = intval($tokenRow['user_id']);
-
-        if ($userType === 'uncle') {
+    // Fallback: Verify identity from request credentials if token is missing
+    $reqUncleId = intval($_POST['uncle_id'] ?? $_GET['uncle_id'] ?? 0);
+    $reqUsername = sanitize($_POST['username'] ?? $_GET['username'] ?? '');
+    if ($reqUncleId > 0 && !empty($reqUsername)) {
+        try {
+            $conn = getDBConnection();
             ensureChurchTypeColumn($conn);
             $stmtU = $conn->prepare("
                 SELECT u.id, u.name, u.username, u.role, u.image_url, u.church_id,
@@ -3598,11 +3686,11 @@ function autoRestoreSessionFromRequest(): bool
                        COALESCE(c.is_approved, 1) AS is_approved
                 FROM uncles u
                 LEFT JOIN churches c ON u.church_id = c.id
-                WHERE u.id = ? AND (u.deleted IS NULL OR u.deleted = 0)
+                WHERE u.id = ? AND u.username = ? AND (u.deleted IS NULL OR u.deleted = 0)
                 LIMIT 1
             ");
             if ($stmtU) {
-                $stmtU->bind_param("i", $userId);
+                $stmtU->bind_param("is", $reqUncleId, $reqUsername);
                 $stmtU->execute();
                 $uRow = $stmtU->get_result()->fetch_assoc();
                 $stmtU->close();
@@ -3629,21 +3717,36 @@ function autoRestoreSessionFromRequest(): bool
                     $_SESSION['admin_email'] = $uRow['admin_email'] ?? '';
                     $_SESSION['login_type'] = 'uncle';
                     $_SESSION['uncle_logged_in'] = true;
+                    issueAuthToken('uncle', intval($uRow['id']));
                     return true;
                 }
             }
-        } elseif ($userType === 'church') {
+        } catch (Exception $e) {
+            error_log("autoRestoreSessionFromRequest fallback uncle error: " . $e->getMessage());
+        }
+    }
+
+    $reqChurchCode = sanitize($_POST['church_code'] ?? $_GET['church_code'] ?? '');
+    $reqChurchId = intval($_POST['church_id'] ?? $_GET['church_id'] ?? 0);
+    if (!empty($reqChurchCode)) {
+        try {
+            $conn = getDBConnection();
             ensureChurchTypeColumn($conn);
-            $stmtC = $conn->prepare("
+            $sqlC = "
                 SELECT id, church_name, church_code, admin_email,
                        COALESCE(church_type, 'kids') AS church_type,
                        COALESCE(is_approved, 1) AS is_approved
                 FROM churches
-                WHERE id = ?
+                WHERE church_code = ? " . ($reqChurchId > 0 ? "AND id = ? " : "") . "
                 LIMIT 1
-            ");
+            ";
+            $stmtC = $conn->prepare($sqlC);
             if ($stmtC) {
-                $stmtC->bind_param("i", $userId);
+                if ($reqChurchId > 0) {
+                    $stmtC->bind_param("si", $reqChurchCode, $reqChurchId);
+                } else {
+                    $stmtC->bind_param("s", $reqChurchCode);
+                }
                 $stmtC->execute();
                 $cRow = $stmtC->get_result()->fetch_assoc();
                 $stmtC->close();
@@ -3663,15 +3766,191 @@ function autoRestoreSessionFromRequest(): bool
                     $_SESSION['uncle_role'] = 'admin';
                     $_SESSION['role'] = 'admin';
                     $_SESSION['loggedIn'] = true;
+                    issueAuthToken('church', intval($cRow['id']));
                     return true;
                 }
             }
+        } catch (Exception $e) {
+            error_log("autoRestoreSessionFromRequest fallback church error: " . $e->getMessage());
         }
-    } catch (Exception $e) {
-        error_log("autoRestoreSessionFromRequest token restore error: " . $e->getMessage());
     }
 
     return false;
+}
+
+function handleRestoreSession(): void
+{
+    autoRestoreSessionFromRequest();
+    syncCurrentSessionRoleFromDB();
+
+    if (!empty($_SESSION['uncle_id'])) {
+        $authToken = issueAuthToken('uncle', intval($_SESSION['uncle_id']));
+        sendJSON([
+            'success' => true,
+            'uncle_id' => $_SESSION['uncle_id'],
+            'church_id' => $_SESSION['church_id'] ?? null,
+            'church_type' => $_SESSION['church_type'] ?? 'kids',
+            'church_name' => $_SESSION['church_name'] ?? '',
+            'church_code' => $_SESSION['church_code'] ?? '',
+            'uncle_name' => $_SESSION['uncle_name'] ?? '',
+            'uncle_username' => $_SESSION['uncle_username'] ?? '',
+            'uncle_role' => $_SESSION['uncle_role'] ?? 'uncle',
+            'uncle' => [
+                'id' => $_SESSION['uncle_id'],
+                'name' => $_SESSION['uncle_name'] ?? '',
+                'role' => $_SESSION['uncle_role'] ?? 'uncle'
+            ],
+            'role' => $_SESSION['uncle_role'] ?? 'uncle',
+            'login_type' => 'uncle',
+            'auth_token' => $authToken
+        ]);
+        return;
+    }
+
+    if (!empty($_SESSION['church_id'])) {
+        $authToken = issueAuthToken('church', intval($_SESSION['church_id']));
+        sendJSON([
+            'success' => true,
+            'church_id' => $_SESSION['church_id'],
+            'church_code' => $_SESSION['church_code'] ?? '',
+            'church_type' => $_SESSION['church_type'] ?? 'kids',
+            'church_name' => $_SESSION['church_name'] ?? '',
+            'admin_email' => $_SESSION['admin_email'] ?? '',
+            'uncle_role' => 'admin',
+            'role' => 'admin',
+            'login_type' => 'church',
+            'auth_token' => $authToken
+        ]);
+        return;
+    }
+
+    // Explicit fallback by username
+    $username = sanitize($_POST['username'] ?? $_GET['username'] ?? '');
+    if (!empty($username)) {
+        try {
+            $conn = getDBConnection();
+            ensureChurchTypeColumn($conn);
+            $stmt = $conn->prepare("
+                SELECT u.id, u.name, u.username, u.role, u.image_url, u.church_id,
+                       c.church_name, c.church_code, c.admin_email,
+                       COALESCE(c.church_type, 'kids') AS church_type,
+                       COALESCE(c.is_approved, 1) AS is_approved
+                FROM uncles u
+                LEFT JOIN churches c ON u.church_id = c.id
+                WHERE u.username = ? AND (u.deleted IS NULL OR u.deleted = 0)
+                LIMIT 1
+            ");
+            if ($stmt) {
+                $stmt->bind_param("s", $username);
+                $stmt->execute();
+                $uRow = $stmt->get_result()->fetch_assoc();
+                $stmt->close();
+                if ($uRow) {
+                    if (isset($uRow['is_approved']) && intval($uRow['is_approved']) === 0) {
+                        sendJSON(['success' => false, 'message' => 'هذه الكنيسة معلقة وفي انتظار موافقة المطور']);
+                        return;
+                    }
+                    ensureActiveSession();
+                    $_SESSION['uncle_id'] = intval($uRow['id']);
+                    $_SESSION['uncle_name'] = $uRow['name'];
+                    $_SESSION['uncle_username'] = $uRow['username'];
+                    $_SESSION['uncle_image'] = $uRow['image_url'];
+                    $_SESSION['uncle_role'] = $uRow['role'] ?? 'uncle';
+                    $_SESSION['role'] = $uRow['role'] ?? 'uncle';
+                    if (in_array(strtolower(trim($uRow['role'] ?? '')), ['developer', 'dev'])) {
+                        $_SESSION['is_developer'] = true;
+                    }
+                    $_SESSION['church_id'] = intval($uRow['church_id']);
+                    $_SESSION['church_name'] = $uRow['church_name'];
+                    $_SESSION['church_code'] = $uRow['church_code'];
+                    $_SESSION['church_type'] = $uRow['church_type'];
+                    $_SESSION['admin_email'] = $uRow['admin_email'] ?? '';
+                    $_SESSION['login_type'] = 'uncle';
+                    $_SESSION['uncle_logged_in'] = true;
+                    $authToken = issueAuthToken('uncle', intval($uRow['id']));
+                    sendJSON([
+                        'success' => true,
+                        'uncle_id' => $_SESSION['uncle_id'],
+                        'church_id' => $_SESSION['church_id'],
+                        'church_type' => $_SESSION['church_type'],
+                        'church_name' => $_SESSION['church_name'],
+                        'church_code' => $_SESSION['church_code'],
+                        'uncle_name' => $_SESSION['uncle_name'],
+                        'uncle_username' => $_SESSION['uncle_username'],
+                        'uncle_role' => $_SESSION['uncle_role'],
+                        'uncle' => [
+                            'id' => $_SESSION['uncle_id'],
+                            'name' => $_SESSION['uncle_name'],
+                            'role' => $_SESSION['uncle_role']
+                        ],
+                        'role' => $_SESSION['uncle_role'],
+                        'login_type' => 'uncle',
+                        'auth_token' => $authToken
+                    ]);
+                    return;
+                }
+            }
+        } catch (Exception $e) {
+            error_log("handleRestoreSession username error: " . $e->getMessage());
+        }
+    }
+
+    // Explicit fallback by church_code
+    $churchCode = sanitize($_POST['church_code'] ?? $_GET['church_code'] ?? '');
+    if (!empty($churchCode)) {
+        try {
+            $conn = getDBConnection();
+            ensureChurchTypeColumn($conn);
+            $stmt = $conn->prepare("
+                SELECT id, church_name, church_code, admin_email,
+                       COALESCE(church_type, 'kids') AS church_type,
+                       COALESCE(is_approved, 1) AS is_approved
+                FROM churches
+                WHERE church_code = ?
+                LIMIT 1
+            ");
+            if ($stmt) {
+                $stmt->bind_param("s", $churchCode);
+                $stmt->execute();
+                $cRow = $stmt->get_result()->fetch_assoc();
+                $stmt->close();
+                if ($cRow) {
+                    if (isset($cRow['is_approved']) && intval($cRow['is_approved']) === 0) {
+                        sendJSON(['success' => false, 'message' => 'هذه الكنيسة معلقة وفي انتظار موافقة المطور']);
+                        return;
+                    }
+                    ensureActiveSession();
+                    $_SESSION['church_id'] = intval($cRow['id']);
+                    $_SESSION['church_name'] = $cRow['church_name'];
+                    $_SESSION['church_code'] = $cRow['church_code'];
+                    $_SESSION['church_type'] = $cRow['church_type'];
+                    $_SESSION['admin_email'] = $cRow['admin_email'] ?? '';
+                    $_SESSION['login_type'] = 'church';
+                    $_SESSION['uncle_role'] = 'admin';
+                    $_SESSION['role'] = 'admin';
+                    $_SESSION['loggedIn'] = true;
+                    $authToken = issueAuthToken('church', intval($cRow['id']));
+                    sendJSON([
+                        'success' => true,
+                        'church_id' => $_SESSION['church_id'],
+                        'church_code' => $_SESSION['church_code'],
+                        'church_type' => $_SESSION['church_type'],
+                        'church_name' => $_SESSION['church_name'],
+                        'admin_email' => $_SESSION['admin_email'],
+                        'uncle_role' => 'admin',
+                        'role' => 'admin',
+                        'login_type' => 'church',
+                        'auth_token' => $authToken
+                    ]);
+                    return;
+                }
+            }
+        } catch (Exception $e) {
+            error_log("handleRestoreSession church_code error: " . $e->getMessage());
+        }
+    }
+
+    sendJSON(['success' => false, 'message' => 'not found - No credentials found to restore session']);
 }
 
 function syncCurrentSessionRoleFromDB()
@@ -5672,37 +5951,7 @@ try {
             break;
 
         case 'restore_session':
-            // Only restore if user already has an active authenticated session
-            if (!empty($_SESSION['uncle_id']) || !empty($_SESSION['church_id']) || !empty($_SESSION['uncle_logged_in']) || !empty($_SESSION['loggedIn'])) {
-                syncCurrentSessionRoleFromDB();
-                if (!empty($_SESSION['uncle_id'])) {
-                    sendJSON([
-                        'success' => true,
-                        'uncle_id' => $_SESSION['uncle_id'],
-                        'church_id' => $_SESSION['church_id'] ?? null,
-                        'church_type' => $_SESSION['church_type'] ?? 'kids',
-                        'church_name' => $_SESSION['church_name'] ?? '',
-                        'uncle_name' => $_SESSION['uncle_name'] ?? '',
-                        'uncle_role' => $_SESSION['uncle_role'] ?? 'uncle',
-                        'uncle' => ['role' => $_SESSION['uncle_role'] ?? 'uncle'],
-                        'role' => $_SESSION['uncle_role'] ?? 'uncle',
-                        'login_type' => 'uncle',
-                    ]);
-                } else {
-                    sendJSON([
-                        'success' => true,
-                        'church_id' => $_SESSION['church_id'],
-                        'church_code' => $_SESSION['church_code'] ?? '',
-                        'church_type' => $_SESSION['church_type'] ?? 'kids',
-                        'church_name' => $_SESSION['church_name'] ?? '',
-                        'uncle_role' => 'admin',
-                        'role' => 'admin',
-                        'login_type' => 'church',
-                    ]);
-                }
-            } else {
-                sendJSON(['success' => false, 'message' => 'الجلسة منتهية، يرجى تسجيل الدخول']);
-            }
+            handleRestoreSession();
             break;
 
 
@@ -6183,17 +6432,49 @@ try {
 
 
 
+        case 'login':
+            handleLogin();
+            break;
+
+        case 'reviewStudentGender':
+            checkAuth();
+            reviewStudentGender();
+            break;
+
+        case 'generateUnclesTemplate':
+            checkAuth();
+            generateUnclesTemplate();
+            break;
+
+        case 'bulkSaveImportedUncles':
+            checkAuth();
+            bulkSaveImportedUncles();
+            break;
+
+        case 'generateChurchesTemplate':
+            checkAuth();
+            generateChurchesTemplate();
+            break;
+
+        case 'bulkSaveImportedChurches':
+            checkAuth();
+            bulkSaveImportedChurches();
+            break;
+
+        case 'updateTripPointsConfig':
+            checkAuth();
+            updateTripPointsConfig();
+            break;
+
         default:
-
-            // Fall through — second switch below handles remaining actions
-
+            sendJSON(['success' => false, 'message' => 'Invalid action: ' . $action]);
             break;
 
     }
 
 } catch (Exception $e) {
 
-    error_log("API Error (switch 1): " . $e->getMessage());
+    error_log("API Error: " . $e->getMessage());
 
     sendJSON(['success' => false, 'message' => 'خطأ في السيرفر: ' . $e->getMessage()]);
 
@@ -34474,6 +34755,7 @@ function getSessionInfo()
 
 {
 
+    autoRestoreSessionFromRequest();
     runBackgroundGradeUpChecks();
     syncCurrentSessionRoleFromDB();
 
@@ -34641,1230 +34923,6 @@ function getSessionInfo()
 
 }
 
-// Handle different actions
-
-try {
-
-    switch ($action) {
-
-
-
-        case 'login':
-
-            handleLogin();
-
-            break;
-
-        case 'auto_login':  // أضف هذا
-
-            handleAutoLogin();
-
-            break;
-
-
-
-        case 'logout':
-            revokeCurrentAuthToken();
-            $_SESSION = [];
-            if (ini_get("session.use_cookies")) {
-                $params = session_get_cookie_params();
-                setcookie(session_name(), '', time() - 42000,
-                    $params["path"], $params["domain"],
-                    $params["secure"], $params["httponly"]
-                );
-            }
-            @session_destroy();
-            sendJSON(['success' => true, 'message' => 'تم تسجيل الخروج بنجاح']);
-            break;
-
-
-
-        case 'getData':
-
-            checkAuth();
-
-            getData();
-
-            break;
-
-
-
-        case 'submitAttendance':
-
-            checkAuth();
-
-            submitAttendance();
-
-            break;
-
-
-
-        case 'updateCoupons':
-
-            checkAuth();
-
-            updateCoupons();
-
-            break;
-
-
-
-        case 'addStudent':
-
-            checkAuth();
-
-            addStudent();
-
-            break;
-
-
-
-        case 'updateStudent':
-
-            checkAuth();
-
-            updateStudent();
-
-            break; // Added missing break
-
-
-
-        case 'reviewStudentGender':
-
-            checkAuth();
-
-            reviewStudentGender();
-
-            break;
-
-
-
-        case 'uncleLogin':
-
-            handleUncleLogin();
-
-            break;
-
-
-
-        case 'getCurrentUncle':
-
-            getCurrentUncle();
-
-            break;
-
-
-
-        case 'updateUncleProfile':
-
-            updateUncleProfile();
-
-            break;
-
-
-
-        case 'updateUncleImage':
-
-            updateUncleImage();
-
-            break;
-
-
-
-        case 'getAllUncles':
-
-            getAllUncles();
-
-            break;
-
-
-
-        case 'generateUnclesTemplate':
-
-            generateUnclesTemplate();
-
-            break;
-
-
-
-        case 'bulkSaveImportedUncles':
-
-            bulkSaveImportedUncles();
-
-            break;
-
-
-
-        case 'generateChurchesTemplate':
-
-            generateChurchesTemplate();
-
-            break;
-
-
-
-        case 'bulkSaveImportedChurches':
-
-            bulkSaveImportedChurches();
-
-            break;
-
-
-
-        case 'addUncle':
-
-            addUncle();
-
-            break;
-
-
-
-        case 'updateUncle':
-
-            updateUncle();
-
-            break;
-
-
-
-        case 'deleteUncle':
-
-            deleteUncle();
-
-            break;
-
-
-
-        case 'updateChurchAdminEmail':
-
-            updateChurchAdminEmail();
-
-            break;
-
-
-
-        case 'deleteStudent':
-
-            checkAuth();
-
-            deleteStudent();
-
-            break;
-
-        case 'resetStudentPassword':
-        case 'resetKidPassword':
-
-            checkAuth();
-
-            resetStudentPassword();
-
-            break;
-
-
-
-        case 'updateStudentImage':
-
-            checkAuth();
-
-            updateStudentImage();
-
-            break;
-
-
-
-        case 'getAllAnnouncements':
-
-            checkAuth();
-
-            getAllAnnouncements();
-
-            break;
-
-
-
-        case 'addAnnouncement':
-
-            checkAuth();
-
-            addAnnouncement();
-
-            break;
-
-
-
-        case 'toggleAnnouncement':
-
-            checkAuth();
-
-            toggleAnnouncement();
-
-            break;
-
-
-
-        case 'deleteAnnouncement':
-
-            checkAuth();
-
-            deleteAnnouncement();
-
-            break;
-
-
-
-        case 'test':
-
-            sendJSON([
-
-                'success' => true,
-
-                'message' => 'API is working!',
-
-                'timestamp' => date('Y-m-d H:i:s')
-
-            ]);
-
-            break;
-
-
-
-        case 'getStudentByPhone':
-
-            getStudentByPhone();
-
-            break;
-
-
-
-        case 'getStudentAttendance':
-
-            getStudentAttendance();
-
-            break;
-
-
-
-        case 'getAnnouncementsForStudent':
-
-            getAnnouncementsForStudent();
-
-            break;
-
-
-
-        case 'getAllChurches':
-
-            getAllChurches();
-
-            break;
-
-
-
-        case 'getPublicStats':
-
-            getPublicStats();
-
-            break;
-
-
-
-        case 'submitRegistrationRequest':
-
-            submitRegistrationRequest();
-
-            break;
-
-
-
-        case 'approveRegistration':
-
-            checkAuth();
-
-            approveRegistration();
-
-            break;
-
-
-
-        case 'getPendingRegistrations':
-
-            checkAuth();
-
-            getPendingRegistrations();
-
-            break;
-
-
-
-        case 'updateRegistration':
-
-            checkAuth();
-
-            updateRegistration();
-
-            break;
-
-
-
-        case 'bulkUpdateRegistrations':
-
-            checkAuth();
-
-            bulkUpdateRegistrations();
-
-            break;
-
-
-
-        case 'rejectRegistration':
-
-            checkAuth();
-
-            rejectRegistration();
-
-            break;
-
-
-
-        case 'addChurch':
-
-            checkAuth();
-
-            addChurch();
-
-            break;
-
-
-
-        case 'getAllChurchesForAdmin':
-
-            checkAuth();
-
-            getAllChurchesForAdmin();
-
-            break;
-
-
-
-        case 'updateChurch':
-
-            checkAuth();
-
-            updateChurch();
-
-            break;
-
-
-
-        case 'updateChurchPassword':
-
-            checkAuth();
-
-            updateChurchPassword();
-
-            break;
-
-
-
-        case 'deleteChurch':
-
-            checkAuth();
-
-            deleteChurch();
-
-            break;
-
-
-
-        case 'cleanupOrphanedFiles':
-
-            cleanupOrphanedFiles();
-
-            break;
-
-
-
-        case 'generateKidsTemplate':
-
-            generateKidsTemplate();
-
-            break;
-
-
-
-        case 'bulkAddKids':
-
-            checkAuth();
-
-            bulkAddKids();
-
-            break;
-
-        case 'bulkSaveImportedKids':
-
-            checkAuth();
-
-            bulkSaveImportedKids();
-
-            break;
-
-
-
-        case 'getKidsData':
-
-            checkAuth();
-
-            getKidsData();
-
-            break;
-
-
-
-        case 'saveSiblingGroup':
-
-            saveSiblingGroup();
-
-            break;
-
-
-
-        case 'kidLogin':
-
-            handleKidLogin();
-
-            break;
-
-
-
-        case 'checkKidPasswordByPhone':
-
-            checkKidPasswordByPhone();
-
-            break;
-
-
-
-        case 'kidLoginByPhoneWithPassword':
-
-            kidLoginByPhoneWithPassword();
-
-            break;
-
-
-
-        case 'setupStudentPassword':
-
-            setupStudentPassword();
-
-            break;
-
-        case 'changeStudentPassword':
-
-            changeStudentPassword();
-
-            break;
-
-
-
-        case 'getStudentProfile':
-
-            getStudentProfile();
-
-            break;
-
-
-
-        case 'updateStudentInfo':
-
-            updateStudentInfo();
-
-            break;
-
-
-
-        case 'searchKidsByName':
-
-            searchKidsByName();
-
-            break;
-
-
-
-        case 'updateStudentAttendance':
-
-            updateStudentAttendance();
-
-            break;
-
-
-
-        case 'updateCouponsKids':
-
-            updateCouponsKids();
-
-            break;
-
-
-
-        case 'updateStudentImageAfterCreation':
-
-            checkAuth();
-
-            updateStudentImageAfterCreation();
-
-            break;
-
-
-
-        case 'hasTempAttendance':
-
-            hasTempAttendance();
-
-            break;
-
-
-
-        case 'getChurchStatistics':
-
-            checkAuth();
-
-            getChurchStatistics();
-
-            break;
-
-
-
-        case 'getClassDetails':
-
-            checkAuth();
-
-            getClassDetails();
-
-            break;
-
-
-
-        case 'getStudentAttendanceDetails':
-
-            checkAuth();
-
-            getStudentAttendanceDetails();
-
-            break;
-
-
-
-        case 'updateCouponsWithReason':
-
-            checkAuth();
-
-            updateCouponsWithReason();
-
-            break;
-
-
-
-        case 'getCouponLogs':
-
-            checkAuth();
-
-            getCouponLogs();
-
-            break;
-
-
-
-        case 'getChurchClasses':
-
-            getChurchClasses();
-
-            break;
-
-
-
-        case 'saveChurchClasses':
-
-            checkAuth();
-
-            saveChurchClasses();
-
-            break;
-
-
-
-        case 'addChurchClass':
-
-            checkAuth();
-
-            addChurchClass();
-
-            break;
-
-
-
-        case 'updateChurchClass':
-
-            checkAuth();
-
-            updateChurchClass();
-
-            break;
-
-
-
-        case 'deleteChurchClass':
-
-            checkAuth();
-
-            deleteChurchClass();
-
-            break;
-
-
-
-        case 'resetChurchClasses':
-
-            checkAuth();
-
-            resetChurchClasses();
-
-            break;
-
-
-
-        case 'reorderChurchClasses':
-
-            checkAuth();
-
-            reorderChurchClasses();
-
-            break;
-
-
-
-        case 'getChurchClassesForAdmin':
-
-            getChurchClassesForAdmin();
-
-            break;
-
-
-
-        case 'getPublicChurchClasses':
-
-            getPublicChurchClasses();
-
-            break;
-
-
-
-        case 'getChurchClassesWithStats':
-
-            checkAuth(); // يتطلب تسجيل دخول
-
-            getChurchClassesWithStats();
-
-            break;
-
-
-
-        // دوال الرحلات / المؤتمرات
-
-        case 'getTrips':
-
-            getTrips();
-
-            break;
-
-        case 'getGuests':
-
-            getGuests();
-
-            break;
-
-        case 'addGuest':
-
-            addGuest();
-
-            break;
-
-        case 'updateGuest':
-
-            updateGuest();
-
-            break;
-
-        case 'deleteGuest':
-
-            deleteGuest();
-
-            break;
-
-        case 'transferGuestToStudent':
-            transferGuestToStudent();
-            break;
-
-        case 'updateGuestImage':
-            updateGuestImage();
-            break;
-
-
-
-        case 'addTrip':
-
-            addTrip();
-
-            break;
-
-
-
-        case 'updateTrip':
-
-            updateTrip();
-
-            break;
-
-
-
-        case 'deleteTrip':
-
-            deleteTrip();
-
-            break;
-
-
-
-        case 'sendCollaborationRequest':
-
-            checkAuth();
-
-            sendCollaborationRequest();
-
-            break;
-
-
-
-        case 'getCollaborationRequests':
-
-            checkAuth();
-
-            getCollaborationRequests();
-
-            break;
-
-
-
-        case 'respondToCollaborationRequest':
-
-            checkAuth();
-
-            respondToCollaborationRequest();
-
-            break;
-
-        case 'removeTripCollaborator':
-
-            checkAuth();
-
-            removeTripCollaborator();
-
-            break;
-
-        case 'updateCollaborationLimit':
-
-            checkAuth();
-
-            updateCollaborationLimit();
-
-            break;
-
-
-
-
-
-        case 'getCustomFieldTemplates':
-
-            checkAuth();
-
-            getCustomFieldTemplates();
-
-            break;
-
-        case 'addCustomFieldTemplate':
-
-            checkAuth();
-
-            addCustomFieldTemplate();
-
-            break;
-
-        case 'deleteCustomFieldTemplate':
-
-            checkAuth();
-
-            deleteCustomFieldTemplate();
-
-            break;
-
-
-
-        case 'getTripDetails':
-
-            getTripDetails();
-
-            break;
-
-        case 'getRoomsTemplates':
-
-            getRoomsTemplates();
-
-            break;
-
-        case 'saveRoomsTemplate':
-
-            saveRoomsTemplate();
-
-            break;
-
-        case 'deleteRoomsTemplate':
-
-            deleteRoomsTemplate();
-
-            break;
-
-
-
-        case 'processGameQRCode':
-
-            // Processes a camera-scanned game URL: updates student's per-trip points JSON
-
-            processGameQRCode();
-
-            break;
-
-
-
-        case 'updateTripPointsConfig':
-
-            // Save a custom template / points config for a trip (JSON)
-
-            checkAuth();
-
-            updateTripPointsConfig();
-
-            break;
-
-
-
-        case 'registerStudentForTrip':
-
-            registerStudentForTrip();
-
-            break;
-
-
-
-        case 'searchAllStudents':
-
-            searchAllStudents();
-
-            break;
-
-
-
-        case 'addTripPayment':
-
-            addTripPayment();
-
-            break;
-
-
-
-        case 'cancelTripRegistration':
-
-            cancelTripRegistration();
-
-            break;
-
-        case 'removeAllTripRegistrations':
-
-            removeAllTripRegistrations();
-
-            break;
-
-
-
-        case 'exportTripData':
-
-            exportTripData();
-
-            break;
-
-
-
-        case 'bulkUpdateCustomData':
-
-            bulkUpdateCustomData();
-
-            break;
-
-
-
-        case 'getWaitlist':
-
-            getWaitlistAction();
-
-            break;
-
-
-
-                case 'promoteFromWaitlist':
-
-            checkAuth();
-
-            promoteSpecificFromWaitlistAction();
-
-            break;
-
-
-
-        case 'removeFromWaitlist':
-
-            removeFromWaitlist();
-
-            break;
-
-
-
-        case 'rebalanceTripWaitlist':
-
-            rebalanceTripWaitlist();
-
-            break;
-
-
-
-        case 'addTripWaitlistPayment':
-
-            addTripWaitlistPayment();
-
-            break;
-
-
-
-        case 'deleteTripWaitlistPayment':
-
-            deleteTripWaitlistPayment();
-
-            break;
-
-
-
-        case 'restoreTripWaitlistPayment':
-
-            restoreTripWaitlistPayment();
-
-            break;
-
-
-
-
-
-        // دوال تحسين الحضور
-
-        case 'getFridaysInMonth':
-
-            getFridaysInMonth();
-
-            break;
-
-
-
-        case 'getAttendanceByDateAndClass':
-
-            getAttendanceByDateAndClass();
-
-            break;
-
-
-
-        case 'updateSingleAttendance':
-
-            updateSingleAttendance();
-
-            break;
-
-
-
-        case 'deleteAttendance':
-
-            deleteAttendance();
-
-            break;
-
-        case 'deleteStudentAttendanceByDate':
-
-            deleteStudentAttendanceByDate();
-
-            break;
-
-
-
-        // دوال إعدادات الفصول
-
-        case 'getClassSettings':
-
-            getClassSettings();
-
-            break;
-
-
-
-        case 'saveClassSettings':
-
-            saveClassSettings();
-
-            break;
-
-
-
-        // دوال تحديث الأطفال
-
-        case 'updateStudentFull':
-
-            updateStudentFull();
-
-            break;
-
-
-
-        case 'getTripExpenses':
-
-            getTripExpenses();
-
-            break;
-
-
-
-        case 'saveTripExpense':
-
-            saveTripExpense();
-
-            break;
-
-
-
-        case 'deleteTripExpense':
-
-            deleteTripExpense();
-
-            break;
-
-
-
-        case 'getAttendanceByDate':
-
-            getAttendanceByDate();
-
-            break;
-
-
-
-        case 'submitUncleAttendance':
-
-            checkUncleAuth();
-
-            submitUncleAttendance();
-
-            break;
-
-
-
-        case 'getUncleAttendanceByDate':
-
-            checkUncleAuth();
-
-            getUncleAttendanceByDate();
-
-            break;
-
-
-
-        case 'getUncleAttendanceReport':
-
-            checkUncleAuth();
-
-            getUncleAttendanceReport();
-
-            break;
-
-
-
-        case 'toggleUncleAttendance':
-
-            checkUncleAuth();
-
-            toggleUncleAttendance();
-
-            break;
-
-
-
-        case 'deleteUncleAttendance':
-
-            checkUncleAuth();
-
-            deleteUncleAttendance();
-
-            break;
-
-
-
-        case 'getSessionInfo':
-
-            getSessionInfo();
-
-            break;
-
-
-
-        // ===== NEW AUDIT LOG FUNCTIONS =====
-
-        case 'getAuditLogs':
-
-            checkAuth();
-
-            getAuditLogs();
-
-            break;
-
-
-
-        case 'getEntityAuditHistory':
-
-            checkAuth();
-
-            getEntityAuditHistory();
-
-            break;
-
-
-
-
-
-        default:
-
-            sendJSON(['success' => false, 'message' => 'Invalid action: ' . $action]);
-
-    }
-
-} catch (Exception $e) {
-
-    error_log("API Error: " . $e->getMessage());
-
-    sendJSON(['success' => false, 'message' => 'خطأ في السيرفر: ' . $e->getMessage()]);
-
-}
 
 function getClassUncles()
 

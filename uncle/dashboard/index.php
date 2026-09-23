@@ -15642,6 +15642,10 @@ $showSettings = $hasChurchId || $isDevOrAdmin;
                 const r = localStorage.getItem('uncleRole') || localStorage.getItem('role');
                 if (r) fd.append('role', r);
             }
+            if (!fd.has('auth_token')) {
+                const at = localStorage.getItem('authToken') || localStorage.getItem('auth_token');
+                if (at) fd.append('auth_token', at);
+            }
             fetch(API_URL, { method: 'POST', body: fd, credentials: 'include' })
                 .then(r => r.json())
                 .then(d => {
@@ -15657,6 +15661,37 @@ $showSettings = $hasChurchId || $isDevOrAdmin;
                         if (criticalActions.includes(params.action)) {
                             triggerUndoToastChecking();
                         }
+                    } else if (d.message && d.message.includes('غير مصرح') && !params._retried) {
+                        // Attempt silent session restore and transparent retry
+                        const restoreFd = new FormData();
+                        restoreFd.append('action', 'restore_session');
+                        const at = localStorage.getItem('authToken') || localStorage.getItem('auth_token');
+                        if (at) restoreFd.append('auth_token', at);
+                        const un = localStorage.getItem('uncleUsername');
+                        if (un) restoreFd.append('username', un);
+                        const cc = localStorage.getItem('churchCode');
+                        if (cc) restoreFd.append('church_code', cc);
+                        const uid = localStorage.getItem('uncleId');
+                        if (uid) restoreFd.append('uncle_id', uid);
+
+                        fetch(API_URL, { method: 'POST', body: restoreFd, credentials: 'include' })
+                            .then(r => r.json())
+                            .then(rd => {
+                                if (rd && rd.success) {
+                                    if (rd.auth_token) localStorage.setItem('authToken', rd.auth_token);
+                                    params._retried = true;
+                                    makeApiCall(params, ok, err);
+                                } else {
+                                    const m = d.message || 'فشل';
+                                    if (err) err(m);
+                                    else showToast(m, 'error');
+                                }
+                            })
+                            .catch(() => {
+                                const m = d.message || 'فشل';
+                                if (err) err(m);
+                                else showToast(m, 'error');
+                            });
                     } else {
                         const m = d.message || 'فشل';
                         if (err) err(m);
@@ -16165,13 +16200,20 @@ $showSettings = $hasChurchId || $isDevOrAdmin;
             }
         }
 
-        async function fetchClassTasks(className) {
+        const _tasksLastFetched = new Map();
+        async function fetchClassTasks(className, force = false) {
             const container = document.getElementById('classTasksCollapsible');
             if (!container) return;
             if (!className || className === 'الخدام' || className === 'الزوار') {
                 container.style.display = 'none';
                 return;
             }
+
+            const nowTs = Date.now();
+            if (!force && _tasksLastFetched.has(className) && (nowTs - _tasksLastFetched.get(className) < 4000)) {
+                return;
+            }
+            _tasksLastFetched.set(className, nowTs);
 
             try {
                 // If combined view, check group
@@ -26775,10 +26817,17 @@ $showSettings = $hasChurchId || $isDevOrAdmin;
         }
 
         // ── CLASS UNCLES ──────────────────────────────────────────────
-        function loadClassUncles(className) {
+        const _classUnclesLastFetched = new Map();
+        function loadClassUncles(className, force = false) {
             const bar = document.getElementById('unclesBar');
             const list = document.getElementById('unclesList');
             if (!bar || !list) return;
+
+            const nowTs = Date.now();
+            if (!force && _classUnclesLastFetched.has(className) && (nowTs - _classUnclesLastFetched.get(className) < 4000)) {
+                return;
+            }
+            _classUnclesLastFetched.set(className, nowTs);
 
             if (className === 'الخدام') {
                 let unclesList = window.allUnclesData || [];

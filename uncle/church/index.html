@@ -14592,18 +14592,25 @@
             const loginType = localStorage.getItem('loginType') || '';
             const cc = localStorage.getItem('churchCode');
             const un = localStorage.getItem('uncleUsername');
+            const at = localStorage.getItem('authToken') || localStorage.getItem('auth_token');
+            const uid = localStorage.getItem('uncleId');
+            const cid = localStorage.getItem('churchId');
 
-            if (!cc && !un) return false; // nothing to restore with
+            if (!cc && !un && !at) return false; // nothing to restore with
 
             try {
                 const fd = new FormData();
                 fd.append('action', 'restore_session');
-                if (loginType === 'church' && cc) fd.append('church_code', cc);
-                else if (un) fd.append('username', un);
-                else return false;
+                if (at) fd.append('auth_token', at);
+                if (cc) fd.append('church_code', cc);
+                if (un) fd.append('username', un);
+                if (uid) fd.append('uncle_id', uid);
+                if (cid) fd.append('church_id', cid);
 
                 const d = await fetch(API_URL, { method: 'POST', body: fd, credentials: 'include' }).then(r => r.json());
                 if (d.success) {
+                    if (d.auth_token) localStorage.setItem('authToken', d.auth_token);
+                    if (d.church_id) { sessionChurchId = d.church_id; localStorage.setItem('churchId', d.church_id); }
                     return true;
                 }
                 // Only clear credentials if server explicitly says the user doesn't exist or is unapproved
@@ -15154,26 +15161,6 @@
             const ovD = document.getElementById('overviewDate');
             if (ovD) ovD.textContent = new Date().toLocaleDateString('ar-EG', { weekday: 'long', day: 'numeric', month: 'long' });
 
-            // If still falling back to 'مدارس الأحد' because session didn't have churchName,
-            // query getSessionInfo with the resolved church ID in background to auto-upgrade UI immediately
-            const activeCid = sessionChurchId || parseInt(localStorage.getItem('churchId') || 0);
-            if (currentChurchDisplayName === 'مدارس الأحد' && activeCid > 0) {
-                const bgFd = new FormData();
-                bgFd.append('action', 'getSessionInfo');
-                bgFd.append('church_id', activeCid);
-                fetch(API_URL, { method: 'POST', body: bgFd, credentials: 'include' })
-                    .then(r => r.json())
-                    .then(bgData => {
-                        if (bgData && bgData.church_name && bgData.church_name !== 'مدارس الأحد' && bgData.church_name !== 'الكنيسة') {
-                            localStorage.setItem('churchName', bgData.church_name);
-                            document.getElementById('sidebarChurchName').textContent = bgData.church_name;
-                            if (topbarChurchEl) topbarChurchEl.textContent = bgData.church_name;
-                            if (ovCN) ovCN.textContent = bgData.church_name;
-                        }
-                    })
-                    .catch(() => {});
-            }
-
             setTimeout(renderKidRegLinks, 100);
 
             // 5. Developer visibility check
@@ -15206,20 +15193,6 @@
             const savedTab = hashData.tab || 'overview';
             const btn = document.getElementById('nav-' + savedTab) || document.querySelector(`.nav-item[onclick*="'${savedTab}'"]`);
             await switchTab(savedTab, btn);
-
-            // Warm secondary data concurrently in parallel after the initial tab renders
-            runWhenIdle(() => {
-                const tasks = [];
-                if (savedTab !== 'students') tasks.push(runDataLoad('students', loadStudents).then(() => loadedTabs.add('students')));
-                if (savedTab !== 'uncles') tasks.push(runDataLoad('uncles', loadUncles).then(() => loadedTabs.add('uncles')));
-                if (savedTab !== 'trips') tasks.push(runDataLoad('trips', loadTrips).then(() => loadedTabs.add('trips')));
-                if (savedTab !== 'pending') tasks.push(runDataLoad('pending', loadPendingRegistrations).then(() => loadedTabs.add('pending')));
-                if (savedTab !== 'graduates') tasks.push(runDataLoad('graduates', loadGraduates).then(() => loadedTabs.add('graduates')));
-                if (savedTab !== 'guests') tasks.push(runDataLoad('guests', loadGuests).then(() => loadedTabs.add('guests')));
-                if (savedTab !== 'classes') tasks.push(loadClassSettings().then(() => loadedTabs.add('classes')));
-                if (isDeveloper) loadAllChurches();
-                Promise.allSettled(tasks).catch(e => console.error("Error warming up idle caches:", e));
-            }, 800);
 
             // Handle deep links (modals)
             if (savedTab === 'trips' && hashData.params.get('trip_id')) {
@@ -15507,20 +15480,6 @@
                 overview: async () => {
                     await loadStatistics();
                     renderKidRegLinks();
-
-                    // Concurrent secondary preloads to prevent database/network throttling
-                    (async () => {
-                        try {
-                            const tasks = [];
-                            if (!allStudents.length) tasks.push(runDataLoad('students', loadStudents).then(calculateTotalCoupons));
-                            if (!allTripsCache.length) tasks.push(runDataLoad('trips', loadTrips));
-                            if (!allUncles.length) tasks.push(runDataLoad('uncles', loadUncles));
-                            tasks.push(loadAuditLogs());
-                            await Promise.allSettled(tasks);
-                        } catch (e) {
-                            console.error("Error in overview preloads:", e);
-                        }
-                    })();
                 },
                 uncles: async () => { await runDataLoad('uncles', loadUncles); renderKidRegLinks(); },
                 students: async () => { await runDataLoad('students', loadStudents); renderKidRegLinks(); },
@@ -15755,6 +15714,8 @@
             }
 
             // Always attach session credentials as a fallback for autoRestoreSessionFromRequest
+            const at = localStorage.getItem('authToken') || localStorage.getItem('auth_token');
+            if (at) fd.append('auth_token', at);
             const cc = localStorage.getItem('churchCode');
             if (cc) fd.append('church_code', cc);
             const un = localStorage.getItem('uncleUsername') || localStorage.getItem('username');
@@ -15842,6 +15803,16 @@
                     console.log('Statistics response:', d);
 
                     if (!d.success) {
+                        if (d.message && d.message.includes('غير مصرح') && !loadStatistics._retried) {
+                            loadStatistics._retried = true;
+                            return restoreSessionAndReload().then(restored => {
+                                if (restored) return loadStatistics();
+                                throw new Error(d.message);
+                            }).catch(() => {
+                                if (_restoreStatisticsFromCache()) return;
+                                showToast('خطأ في تحميل الإحصائيات', 'error');
+                            });
+                        }
                         console.error('Statistics error:', d.message);
                         if (_restoreStatisticsFromCache()) {
                             if (_offlineSessionMode || d.offline) _showOfflineCacheToast();
