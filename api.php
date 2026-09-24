@@ -7447,6 +7447,28 @@ function getData()
             $students = [];
 
             while ($row = $result->fetch_assoc()) {
+                $ci = !empty($row['custom_info']) ? json_decode($row['custom_info'], true) : [];
+                if (!is_array($ci)) { $ci = []; }
+                $parentPhonesNorm = normalizeParentPhones($row['parent_phones'] ?? '', $row['emergency_phone'] ?? '');
+
+                $guardianName = $ci['guardian_name'] ?? $ci['اسم ولي الأمر'] ?? $ci['ولي الأمر'] ?? $ci['اسم الأب'] ?? $ci['father_name'] ?? $ci['parent_name'] ?? $ci['mother_name'] ?? ($ci['field_0'] ?? '');
+                if (empty($guardianName) && !empty($parentPhonesNorm) && is_array($parentPhonesNorm)) {
+                    foreach ($parentPhonesNorm as $pp) {
+                        if (!empty($pp['name'])) {
+                            $guardianName = $pp['name'];
+                            break;
+                        }
+                    }
+                }
+
+                $addr = !empty($row['address']) ? $row['address'] : ($ci['address'] ?? $ci['العنوان'] ?? $ci['home_address'] ?? '');
+                $phoneVal = !empty($row['phone']) ? $row['phone'] : ($ci['phone'] ?? $ci['رقم التليفون'] ?? $ci['الهاتف'] ?? '');
+                $rawBday = !empty($row['birthday']) ? $row['birthday'] : ($ci['birthday'] ?? $ci['تاريخ الميلاد'] ?? $ci['عيد الميلاد'] ?? '');
+                $bdayFormatted = formatDateFromDB($rawBday);
+
+                $phoneLabel = $ci['phone_label'] ?? $ci['phone_type'] ?? 'personal';
+                $phoneCustomLabel = $ci['phone_custom_label'] ?? $ci['phone_custom_type'] ?? '';
+
                 $studentData = [
                     'الاسم' => $row['name'],
                     '_churchName' => $row['church_name'] ?? '',
@@ -7455,16 +7477,18 @@ function getData()
                     'الفصل' => $row['class'] ?? 'بدون فصل',
                     '_classCode' => $row['class_code'] ?? '',
                     '_classId' => intval($row['class_id']),
-                    'العنوان' => $row['address'] ?? '',
-                    'رقم التليفون' => $row['phone'] ?? '',
-                    'عيد الميلاد' => formatDateFromDB($row['birthday']),
+                    'العنوان' => $addr,
+                    'رقم التليفون' => $phoneVal,
+                    'عيد الميلاد' => $bdayFormatted,
+                    'تاريخ الميلاد' => $bdayFormatted,
+                    'ولي الأمر' => $guardianName,
                     'كوبونات' => intval($row['coupons']),
                     'كوبونات الحضور' => intval($row['attendance_coupons']),
                     'كوبونات الالتزام' => intval($row['commitment_coupons']),
                     'كوبونات التاسكات' => intval($row['task_coupons']),
                     'تليفون الطوارئ' => $row['emergency_phone'] ?? '',
                     'parent_phones' => $row['parent_phones'] ?? '',
-                    '_parentPhones' => normalizeParentPhones($row['parent_phones'] ?? '', $row['emergency_phone'] ?? ''),
+                    '_parentPhones' => $parentPhonesNorm,
                     'ملاحظات طبية' => $row['medical_notes'] ?? '',
                     'معلومات إضافية' => $row['custom_info'] ?? '',
                     'صورة' => $row['image_url'] ?? '',
@@ -7473,23 +7497,15 @@ function getData()
                     '_isGuest' => intval($row['is_guest'] ?? 0),
                     'name' => $row['name'],
                     'class' => $row['class'] ?? 'بدون فصل',
-                    'address' => $row['address'] ?? '',
-                    'phone' => $row['phone'] ?? '',
-                    'birthday' => formatDateFromDB($row['birthday']),
+                    'address' => $addr,
+                    'phone' => $phoneVal,
+                    'birthday' => $bdayFormatted,
                     'coupons' => intval($row['coupons']),
                     'custom_info' => $row['custom_info'] ?? '',
-                    '_customInfo' => !empty($row['custom_info'])
-                        ? json_decode($row['custom_info'], true)
-                        : null,
-                    'phone_label' => (!empty($row['custom_info']) && is_array(json_decode($row['custom_info'], true))) 
-                        ? (json_decode($row['custom_info'], true)['phone_label'] ?? json_decode($row['custom_info'], true)['phone_type'] ?? 'personal')
-                        : 'personal',
-                    'phone_custom_label' => (!empty($row['custom_info']) && is_array(json_decode($row['custom_info'], true))) 
-                        ? (json_decode($row['custom_info'], true)['phone_custom_label'] ?? json_decode($row['custom_info'], true)['phone_custom_type'] ?? '')
-                        : '',
-                    'guardian_name' => (!empty($row['custom_info']) && is_array(json_decode($row['custom_info'], true)))
-                        ? (json_decode($row['custom_info'], true)['guardian_name'] ?? json_decode($row['custom_info'], true)['father_name'] ?? json_decode($row['custom_info'], true)['parent_name'] ?? json_decode($row['custom_info'], true)['mother_name'] ?? '')
-                        : '',
+                    '_customInfo' => $ci,
+                    'phone_label' => $phoneLabel,
+                    'phone_custom_label' => $phoneCustomLabel,
+                    'guardian_name' => $guardianName,
                 ];
 
                 $students[] = $studentData;
@@ -7703,61 +7719,65 @@ function getData()
 
 
 
+            $ci = !empty($row['custom_info']) ? json_decode($row['custom_info'], true) : [];
+            if (!is_array($ci)) { $ci = []; }
+            $parentPhonesNorm = normalizeParentPhones($row['parent_phones'] ?? '', $row['emergency_phone'] ?? '');
+
+            $guardianName = $ci['guardian_name'] ?? $ci['اسم ولي الأمر'] ?? $ci['ولي الأمر'] ?? $ci['اسم الأب'] ?? $ci['father_name'] ?? $ci['parent_name'] ?? $ci['mother_name'] ?? ($ci['field_0'] ?? '');
+            if (empty($guardianName) && !empty($parentPhonesNorm) && is_array($parentPhonesNorm)) {
+                foreach ($parentPhonesNorm as $pp) {
+                    if (!empty($pp['name'])) {
+                        $guardianName = $pp['name'];
+                        break;
+                    }
+                }
+            }
+
+            $addr = !empty($row['address']) ? $row['address'] : ($ci['address'] ?? $ci['العنوان'] ?? $ci['home_address'] ?? '');
+            $phoneVal = !empty($row['phone']) ? $row['phone'] : ($ci['phone'] ?? $ci['رقم التليفون'] ?? $ci['الهاتف'] ?? '');
+            $rawBday = !empty($row['birthday']) ? $row['birthday'] : ($ci['birthday'] ?? $ci['تاريخ الميلاد'] ?? $ci['عيد الميلاد'] ?? '');
+            $bdayFormatted = formatDateFromDB($rawBday);
+
+            $phoneLabel = $ci['phone_label'] ?? $ci['phone_type'] ?? 'personal';
+            $phoneCustomLabel = $ci['phone_custom_label'] ?? $ci['phone_custom_type'] ?? '';
+
             $studentData = [
-
                 'الاسم' => $row['name'],
-
                 'الفصل' => $row['class'],
-
                 '_classId' => intval($row['class_id']),
-
                 '_classCode' => $row['class_code'] ?? '',
-
                 '_churchId' => intval($row['church_id']),
-
                 '_churchName' => $row['church_name'] ?? '',
-
                 'الكنيسة' => $row['church_name'] ?? '',
-
-                'العنوان' => $row['address'] ?? '',
-
-                'رقم التليفون' => $row['phone'] ?? '',
-
-                'عيد الميلاد' => formatDateFromDB($row['birthday']),
-
+                'العنوان' => $addr,
+                'رقم التليفون' => $phoneVal,
+                'عيد الميلاد' => $bdayFormatted,
+                'تاريخ الميلاد' => $bdayFormatted,
+                'ولي الأمر' => $guardianName,
                 'كوبونات' => intval($row['coupons']),
-
                 'كوبونات الحضور' => intval($row['attendance_coupons']),
-
                 'كوبونات الالتزام' => intval($row['commitment_coupons']),
-
                 'كوبونات التاسكات' => intval($row['task_coupons']),
-
                 'تليفون الطوارئ' => $row['emergency_phone'] ?? '',
                 'parent_phones' => $row['parent_phones'] ?? '',
-                '_parentPhones' => normalizeParentPhones($row['parent_phones'] ?? '', $row['emergency_phone'] ?? ''),
+                '_parentPhones' => $parentPhonesNorm,
                 'ملاحظات طبية' => $row['medical_notes'] ?? '',
                 'معلومات إضافية' => $row['custom_info'] ?? '',
                 'صورة' => $row['image_url'] ?? '',
                 '_studentId' => intval($row['id']),
                 'النوع' => $row['gender'] ?? 'male',
                 '_isGuest' => intval($row['is_guest'] ?? 0),
-                '_customInfo' => !empty($row['custom_info'])
-                    ? json_decode($row['custom_info'], true)
-                    : null,
-                'phone_label' => (!empty($row['custom_info']) && is_array(json_decode($row['custom_info'], true))) 
-                    ? (json_decode($row['custom_info'], true)['phone_label'] ?? json_decode($row['custom_info'], true)['phone_type'] ?? 'personal')
-                    : 'personal',
-                'phone_custom_label' => (!empty($row['custom_info']) && is_array(json_decode($row['custom_info'], true))) 
-                    ? (json_decode($row['custom_info'], true)['phone_custom_label'] ?? json_decode($row['custom_info'], true)['phone_custom_type'] ?? '')
-                    : '',
-                'guardian_name' => (!empty($row['custom_info']) && is_array(json_decode($row['custom_info'], true)))
-                    ? (json_decode($row['custom_info'], true)['guardian_name'] ?? json_decode($row['custom_info'], true)['father_name'] ?? json_decode($row['custom_info'], true)['parent_name'] ?? json_decode($row['custom_info'], true)['mother_name'] ?? '')
-                    : '',
-                'address' => $row['address'] ?? '',
-                'phone' => $row['phone'] ?? '',
-                'birthday' => formatDateFromDB($row['birthday']),
+                'name' => $row['name'],
+                'class' => $row['class'],
+                'address' => $addr,
+                'phone' => $phoneVal,
+                'birthday' => $bdayFormatted,
+                'coupons' => intval($row['coupons']),
                 'custom_info' => $row['custom_info'] ?? '',
+                '_customInfo' => $ci,
+                'phone_label' => $phoneLabel,
+                'phone_custom_label' => $phoneCustomLabel,
+                'guardian_name' => $guardianName,
             ];
 
             appendSiblingGroupToStudentPayload($studentData, $row);
@@ -23273,7 +23293,7 @@ function getStudentProfile()
 
     try {
 
-        $studentId = intval($_POST['studentId'] ?? $_GET['studentId'] ?? 0);
+        $studentId = intval($_POST['studentId'] ?? $_POST['student_id'] ?? $_POST['id'] ?? $_GET['studentId'] ?? $_GET['student_id'] ?? $_GET['id'] ?? 0);
 
 
 
@@ -23321,13 +23341,25 @@ function getStudentProfile()
             if (!is_array($ci)) { $ci = []; }
             $row['phone_label'] = $ci['phone_label'] ?? $ci['phone_type'] ?? 'personal';
             $row['phone_custom_label'] = $ci['phone_custom_label'] ?? $ci['phone_custom_type'] ?? '';
-            $row['guardian_name'] = $ci['guardian_name'] ?? $ci['father_name'] ?? $ci['parent_name'] ?? $ci['mother_name'] ?? ($ci['field_0'] ?? '');
+            $row['guardian_name'] = $ci['guardian_name'] ?? $ci['اسم ولي الأمر'] ?? $ci['ولي الأمر'] ?? $ci['اسم الأب'] ?? $ci['father_name'] ?? $ci['parent_name'] ?? $ci['mother_name'] ?? ($ci['field_0'] ?? '');
             if (empty($row['guardian_name']) && !empty($row['parent_phones']) && is_array($row['parent_phones'])) {
                 foreach ($row['parent_phones'] as $pp) {
                     if (!empty($pp['name'])) {
                         $row['guardian_name'] = $pp['name'];
                         break;
                     }
+                }
+            }
+            if (empty($row['address'])) {
+                $row['address'] = $ci['address'] ?? $ci['العنوان'] ?? $ci['home_address'] ?? '';
+            }
+            if (empty($row['phone'])) {
+                $row['phone'] = $ci['phone'] ?? $ci['رقم التليفون'] ?? $ci['الهاتف'] ?? '';
+            }
+            if (empty($row['birthday'])) {
+                $rawCiBday = $ci['birthday'] ?? $ci['تاريخ الميلاد'] ?? $ci['عيد الميلاد'] ?? '';
+                if (!empty($rawCiBday)) {
+                    $row['birthday'] = formatDateFromDB($rawCiBday);
                 }
             }
             // Add Arabic field aliases so consumer code receives both English & Arabic keys
@@ -25569,7 +25601,7 @@ function getStudentAttendanceDetails()
 
     try {
 
-        $studentId = intval($_POST['studentId'] ?? 0);
+        $studentId = intval($_POST['studentId'] ?? $_POST['student_id'] ?? $_POST['id'] ?? $_GET['studentId'] ?? $_GET['student_id'] ?? 0);
 
 
 
@@ -25941,9 +25973,9 @@ function getChurchClasses()
 
 function getCouponLogs()
 {
-    checkAuth();
+    autoRestoreSessionFromRequest();
     try {
-        $studentId = intval($_POST['studentId'] ?? $_POST['student_id'] ?? $_GET['studentId'] ?? $_GET['student_id'] ?? 0);
+        $studentId = intval($_POST['studentId'] ?? $_POST['student_id'] ?? $_POST['id'] ?? $_GET['studentId'] ?? $_GET['student_id'] ?? $_GET['id'] ?? 0);
         $studentName = trim($_POST['studentName'] ?? $_POST['name'] ?? $_GET['studentName'] ?? '');
 
         if ($studentId === 0 && empty($studentName)) {
