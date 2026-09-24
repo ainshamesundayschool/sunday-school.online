@@ -36123,7 +36123,7 @@ function getOrderedClassListForChurch(int $churchId): array
 
  */
 
-function gradeUpStudentsForChurch(int $churchId): array
+function gradeUpStudentsForChurch(int $churchId, ?array $customMapping = null): array
 
 {
 
@@ -36149,23 +36149,105 @@ function gradeUpStudentsForChurch(int $churchId): array
 
     }
 
+    $classById = [];
 
+    foreach ($ordered as $c) {
 
-    $topClassId = (int) $ordered[count($ordered) - 1]['id'];
-
-    $nextById = [];
-
-    for ($i = 0; $i < count($ordered) - 1; $i++) {
-
-        $nextById[(int) $ordered[$i]['id']] = $ordered[$i + 1];
+        $classById[(int)$c['id']] = $c;
 
     }
 
+    $topClassId = (int) $ordered[count($ordered) - 1]['id'];
 
+    $topClassName = $ordered[count($ordered) - 1]['arabic_name'] ?? '';
+
+    $mapping = [];
+
+    if ($customMapping !== null && is_array($customMapping)) {
+
+        foreach ($ordered as $c) {
+
+            $srcId = (int)$c['id'];
+
+            $srcName = $c['arabic_name'] ?? '';
+
+            $targetVal = $customMapping[$srcId] ?? $customMapping[(string)$srcId] ?? null;
+
+            if ($targetVal === null || $targetVal === 'same' || $targetVal === 'none' || (string)$targetVal === (string)$srcId) {
+
+                $mapping[$srcId] = ['type' => 'same'];
+
+            } elseif ($targetVal === 'graduate' || $targetVal === '0' || $targetVal === 0) {
+
+                $mapping[$srcId] = [
+
+                    'type' => 'graduate',
+
+                    'source_name' => $srcName,
+
+                ];
+
+            } else {
+
+                $targetId = (int)$targetVal;
+
+                if (isset($classById[$targetId])) {
+
+                    $mapping[$srcId] = [
+
+                        'type' => 'promote',
+
+                        'target_id' => $targetId,
+
+                        'target_name' => $classById[$targetId]['arabic_name'] ?? '',
+
+                    ];
+
+                } else {
+
+                    $mapping[$srcId] = ['type' => 'same'];
+
+                }
+
+            }
+
+        }
+
+    } else {
+
+        for ($i = 0; $i < count($ordered) - 1; $i++) {
+
+            $srcId = (int)$ordered[$i]['id'];
+
+            $next = $ordered[$i + 1];
+
+            $mapping[$srcId] = [
+
+                'type' => 'promote',
+
+                'target_id' => (int)$next['id'],
+
+                'target_name' => $next['arabic_name'] ?? '',
+
+            ];
+
+        }
+
+        $mapping[$topClassId] = [
+
+            'type' => 'graduate',
+
+            'source_name' => $topClassName,
+
+        ];
+
+    }
 
     $stmt = $conn->prepare("
 
-        SELECT id, class_id FROM students
+        SELECT id, name, class_id, class, COALESCE(enrollment_status, 'active') as enrollment_status, graduate_from_class_id, graduate_from_class
+
+        FROM students
 
         WHERE church_id = ? AND COALESCE(enrollment_status, 'active') = 'active'
 
@@ -36177,7 +36259,33 @@ function gradeUpStudentsForChurch(int $churchId): array
 
     $students = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
 
+    $snapshot = [];
 
+    foreach ($students as $s) {
+
+        $snapshot[] = [
+
+            'id' => (int)$s['id'],
+
+            'name' => $s['name'] ?? '',
+
+            'old_data' => [
+
+                'class_id' => (int)$s['class_id'],
+
+                'class' => $s['class'] ?? '',
+
+                'enrollment_status' => $s['enrollment_status'] ?? 'active',
+
+                'graduate_from_class_id' => $s['graduate_from_class_id'] ?? null,
+
+                'graduate_from_class' => $s['graduate_from_class'] ?? null,
+
+            ]
+
+        ];
+
+    }
 
     $upd = $conn->prepare("
 
@@ -36188,8 +36296,6 @@ function gradeUpStudentsForChurch(int $churchId): array
         WHERE id = ? AND church_id = ?
 
     ");
-
-    $topClassName = $ordered[count($ordered) - 1]['arabic_name'] ?? '';
 
     $gradStmt = $conn->prepare("
 
@@ -36211,8 +36317,6 @@ function gradeUpStudentsForChurch(int $churchId): array
 
     ");
 
-
-
     $promoted = 0;
 
     $graduated = 0;
@@ -36225,11 +36329,21 @@ function gradeUpStudentsForChurch(int $churchId): array
 
         $cid = (int) $s['class_id'];
 
+        if (!isset($mapping[$cid])) {
 
+            $unchanged++;
 
-        if ($cid === $topClassId) {
+            continue;
 
-            $gradStmt->bind_param("siii", $topClassName, $sid, $churchId, $topClassId);
+        }
+
+        $rule = $mapping[$cid];
+
+        if ($rule['type'] === 'graduate') {
+
+            $gradClass = $rule['source_name'] ?? ($classById[$cid]['arabic_name'] ?? '');
+
+            $gradStmt->bind_param("siii", $gradClass, $sid, $churchId, $cid);
 
             if ($gradStmt->execute() && $gradStmt->affected_rows > 0) {
 
@@ -36241,31 +36355,19 @@ function gradeUpStudentsForChurch(int $churchId): array
 
             }
 
-            continue;
+        } elseif ($rule['type'] === 'promote') {
 
-        }
+            $upd->bind_param("isii", $rule['target_id'], $rule['target_name'], $sid, $churchId);
 
+            if ($upd->execute() && $upd->affected_rows > 0) {
 
+                $promoted++;
 
-        if (!isset($nextById[$cid])) {
+            } else {
 
-            $unchanged++;
+                $unchanged++;
 
-            continue;
-
-        }
-
-        $next = $nextById[$cid];
-
-        $nextId = (int) $next['id'];
-
-        $nextName = $next['arabic_name'];
-
-        $upd->bind_param("isii", $nextId, $nextName, $sid, $churchId);
-
-        if ($upd->execute() && $upd->affected_rows > 0) {
-
-            $promoted++;
+            }
 
         } else {
 
@@ -36275,8 +36377,6 @@ function gradeUpStudentsForChurch(int $churchId): array
 
     }
 
-
-
     return [
 
         'promoted' => $promoted,
@@ -36285,7 +36385,9 @@ function gradeUpStudentsForChurch(int $churchId): array
 
         'unchanged' => $unchanged,
 
-        'top_class' => $ordered[count($ordered) - 1]['arabic_name'] ?? '',
+        'top_class' => $topClassName,
+
+        'snapshot' => $snapshot,
 
     ];
 
@@ -36469,35 +36571,35 @@ function gradeUpAllKids()
 
 
 
-        $result = gradeUpStudentsForChurch($churchId);
+        $rawMapping = $_POST['mapping'] ?? null;
 
-        if (isset($result['message'])) {
+        $customMapping = null;
+
+        if (!empty($rawMapping)) {
+
+            if (is_string($rawMapping)) {
+
+                $customMapping = json_decode($rawMapping, true);
+
+            } elseif (is_array($rawMapping)) {
+
+                $customMapping = $rawMapping;
+
+            }
+
+        }
+
+
+
+        $result = gradeUpStudentsForChurch($churchId, $customMapping);
+
+        if (isset($result['message']) && empty($result['promoted']) && empty($result['graduated']) && empty($result['unchanged'])) {
 
             sendJSON(['success' => false, 'message' => $result['message']]);
 
             return;
 
         }
-
-
-
-        writeAuditLog(
-
-            'manual_grade_up',
-
-            'students',
-
-            $churchId,
-
-            'نقل يدوي للفصول — سنة دراسية جديدة',
-
-            null,
-
-            null,
-
-            json_encode($result, JSON_UNESCAPED_UNICODE)
-
-        );
 
 
 
@@ -36517,6 +36619,26 @@ function gradeUpAllKids()
 
 
 
+        $auditLogId = writeAuditLog(
+
+            'manual_grade_up',
+
+            'bulk_action',
+
+            $churchId,
+
+            'نقل السنة الجديدة لجميع الأطفال',
+
+            $result['snapshot'] ?? [],
+
+            ['result' => $result, 'custom_mapping' => $customMapping],
+
+            $msg
+
+        );
+
+
+
         sendJSON([
 
             'success' => true,
@@ -36530,6 +36652,18 @@ function gradeUpAllKids()
             'unchanged' => $result['unchanged'],
 
             'top_class' => $result['top_class'] ?? '',
+
+            'log' => [
+
+                'id' => is_numeric($auditLogId) ? (int)$auditLogId : 0,
+
+                'action' => 'manual_grade_up',
+
+                'entity' => 'bulk_action',
+
+                'notes' => $msg,
+
+            ],
 
         ]);
 
@@ -39159,9 +39293,12 @@ function restoreSingleAuditLogInternal($logId, $churchId, $conn, $targetStudentI
                             }
                         }
                     }
-                } elseif ($action === 'bulk_student_class_update') {
+                } elseif ($action === 'bulk_student_class_update' || $action === 'manual_grade_up' || $action === 'grade_up_all_kids') {
                     $oldClassId = intval($item['old_data']['class_id'] ?? 0);
                     $oldClass = $item['old_data']['class'] ?? '';
+                    $oldStatus = $item['old_data']['enrollment_status'] ?? 'active';
+                    $oldGradId = isset($item['old_data']['graduate_from_class_id']) ? $item['old_data']['graduate_from_class_id'] : null;
+                    $oldGradClass = isset($item['old_data']['graduate_from_class']) ? $item['old_data']['graduate_from_class'] : null;
                     
                     $chk = $conn->prepare("SELECT id FROM students WHERE id = ? AND church_id = ?");
                     $chk->bind_param("ii", $sid, $churchId);
@@ -39170,8 +39307,8 @@ function restoreSingleAuditLogInternal($logId, $churchId, $conn, $targetStudentI
                         continue;
                     }
 
-                    $upd = $conn->prepare("UPDATE students SET class_id = ?, class = ?, updated_at = NOW() WHERE id = ? AND church_id = ?");
-                    $upd->bind_param("isii", $oldClassId, $oldClass, $sid, $churchId);
+                    $upd = $conn->prepare("UPDATE students SET class_id = ?, class = ?, enrollment_status = ?, graduate_from_class_id = ?, graduate_from_class = ?, updated_at = NOW() WHERE id = ? AND church_id = ?");
+                    $upd->bind_param("issssii", $oldClassId, $oldClass, $oldStatus, $oldGradId, $oldGradClass, $sid, $churchId);
                     if ($upd->execute()) {
                         $revertedCount++;
                     }

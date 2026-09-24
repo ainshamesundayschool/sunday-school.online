@@ -8408,6 +8408,180 @@
                 min-height: 60vh !important;
             }
         }
+
+        /* ── Grade Up Modal Styles ── */
+        .grade-up-classes-wrap {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            max-height: 48vh;
+            overflow-y: auto;
+            padding-inline-end: 4px;
+        }
+
+        .grade-up-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            padding: 12px 14px;
+            background: var(--surface-2);
+            border: 1px solid var(--border-solid);
+            border-radius: var(--r-lg, 16px);
+            transition: border-color 0.2s, background 0.2s, box-shadow 0.2s;
+        }
+
+        .grade-up-row:hover {
+            background: var(--surface);
+            border-color: var(--brand-light, #a5b0ff);
+            box-shadow: var(--shadow-sm);
+        }
+
+        .grade-up-source {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex: 1;
+            min-width: 130px;
+        }
+
+        .grade-up-order-badge {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 28px;
+            height: 28px;
+            border-radius: var(--r-sm, 10px);
+            background: var(--brand-bg, #eef0ff);
+            color: var(--brand, #5b6cf5);
+            font-weight: 800;
+            font-size: 0.85rem;
+            flex-shrink: 0;
+        }
+
+        .grade-up-source-name {
+            font-weight: 700;
+            font-size: 0.92rem;
+            color: var(--text, #1a1d2e);
+        }
+
+        .grade-up-source-count {
+            font-size: 0.75rem;
+            color: var(--text-3, #8b90a8);
+        }
+
+        .grade-up-arrow {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: var(--surface, #ffffff);
+            color: var(--brand, #5b6cf5);
+            font-size: 0.95rem;
+            box-shadow: 0 1px 4px rgba(0, 0, 0, 0.07);
+            flex-shrink: 0;
+        }
+
+        .grade-up-target-container {
+            flex: 1.3;
+            min-width: 170px;
+            position: relative;
+        }
+
+        .grade-up-select {
+            width: 100%;
+            height: 40px;
+            font-weight: 700;
+            font-size: 0.88rem;
+            padding: 0 34px 0 12px;
+            border-radius: var(--r-md, 14px);
+            background: var(--surface, #ffffff);
+            border: 1.5px solid var(--border-solid, #e4e6f0);
+            color: var(--text, #1a1d2e);
+            cursor: pointer;
+            font-family: 'Cairo', sans-serif;
+            appearance: none;
+            -webkit-appearance: none;
+            transition: all 0.2s ease;
+        }
+
+        .grade-up-select:focus {
+            border-color: var(--brand, #5b6cf5);
+            outline: none;
+            box-shadow: 0 0 0 3px var(--brand-glow, rgba(91, 108, 245, 0.18));
+        }
+
+        .grade-up-select.is-grad {
+            border-color: var(--coupon, #8b5cf6);
+            background: var(--coupon-bg, #ede9fe);
+            color: var(--coupon-dark, #7c3aed);
+        }
+
+        .grade-up-select.is-same {
+            border-color: var(--border-solid, #e4e6f0);
+            color: var(--text-3, #8b90a8);
+            background: var(--surface-3, #eceef7);
+        }
+
+        .grade-up-select.is-custom {
+            border-color: var(--warning, #f59e0b);
+            color: var(--warning-dark, #d97706);
+            background: var(--warning-bg, #fef3c7);
+        }
+
+        .grade-up-select-chevron {
+            position: absolute;
+            inset-inline-end: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            pointer-events: none;
+            color: var(--text-3, #8b90a8);
+            font-size: 0.8rem;
+            transition: transform 0.2s ease, color 0.2s ease;
+        }
+
+        .grade-up-select:focus + .grade-up-select-chevron {
+            color: var(--brand, #5b6cf5);
+            transform: translateY(-50%) rotate(180deg);
+        }
+
+        .grade-up-target-container:has(.custom-select-wrap) > .grade-up-select-chevron {
+            display: none;
+        }
+
+        .grade-up-target-container .custom-select-wrap {
+            width: 100%;
+        }
+
+        .cs-opt-subtext,
+        .grade-up-default-tag {
+            font-size: 0.74rem;
+            color: var(--text-3, #8b90a8);
+            font-weight: 500;
+            margin-inline-start: 6px;
+            display: inline-block;
+        }
+
+        @media (max-width: 600px) {
+            .grade-up-row {
+                flex-direction: column;
+                align-items: stretch;
+                gap: 8px;
+            }
+            .grade-up-arrow {
+                align-self: center;
+                transform: rotate(-90deg);
+            }
+            .grade-up-source {
+                min-width: auto;
+            }
+            .grade-up-target-container {
+                min-width: auto;
+                width: 100%;
+            }
+        }
     </style>
     <script src="/js/og-meta.js"></script>
     <script src="/js/rooms_helpers.js"></script>
@@ -9102,32 +9276,6 @@
                                 </form>
                             </div>
                         </div>
-
-                        <!-- GRADE UP CARD -->
-                        <div class="card" style="margin-bottom:0;">
-                            <div class="card-header">
-                                <div class="card-title"><i class="fas fa-graduation-cap"
-                                        style="color:var(--primary);"></i> نقل السنة الجديدة</div>
-                            </div>
-                            <div class="card-body"
-                                style="background:var(--surface-2); padding:16px; display:flex; flex-direction:column; gap:12px;">
-                                <div style="display:flex; flex-direction:column; gap:8px;">
-                                    <button class="btn btn-warning btn-sm" onclick="confirmGradeUpAllKids()"
-                                        style="width:100%;">
-                                        <i class="fas fa-level-up-alt"></i> نقل الجميع للسنة الجديدة
-                                    </button>
-                                    <button class="btn btn-outline btn-sm"
-                                        onclick="switchTabByName('churchSettings'); openSettingsPage('kidsGradeUp');"
-                                        style="width:100%;">
-                                        <i class="fas fa-calendar-alt"></i> موعد النقل السنوي
-                                    </button>
-                                </div>
-                                <p style="font-size:0.76rem; color:var(--muted); margin:0; line-height:1.5;">
-                                    ينقل كل طفل إلى الفصل التالي حسب ترتيب الفصول. من كان في أعلى فصل يُنقل إلى قسم
-                                    <strong>خريجين</strong>.
-                                </p>
-                            </div>
-                        </div>
                     </div>
 
                     <!-- Main Content -->
@@ -9139,6 +9287,10 @@
                                     <button class="btn btn-primary btn-sm split-header-add-btn"
                                         onclick="toggleSplitSidebar('studentsSidebar')" title="إضافة طفل"><i
                                             class="fas fa-plus"></i> <span class="btn-text">إضافة طفل</span></button>
+                                    <button type="button" class="btn btn-outline btn-sm" onclick="openGradeUpModal()"
+                                        title="نقل السنة الجديدة">
+                                        <i class="fas fa-graduation-cap" style="color:var(--brand);"></i> <span class="btn-text">نقل السنة الجديدة</span>
+                                    </button>
                                     <button type="button" class="btn btn-danger btn-sm" id="bulkSelectCloseHeaderBtn"
                                         onclick="disableBulkSelectMode()" title="إلغاء وضع التحديد" style="display:none;">
                                         <i class="fas fa-times"></i> <span class="btn-text">إلغاء التحديد</span>
@@ -10406,7 +10558,7 @@
                             <div class="settings-field-box">
                                 <div class="settings-panel-title" style="margin-bottom:10px;"><i
                                         class="fas fa-level-up-alt"></i> نقل يدوي</div>
-                                <button type="button" class="btn btn-warning" onclick="confirmGradeUpAllKids()"
+                                <button type="button" class="btn btn-warning" onclick="openGradeUpModal()"
                                     style="width:100%; margin-bottom:12px;">
                                     <i class="fas fa-graduation-cap"></i> نقل جميع الأطفال للسنة الجديدة
                                 </button>
@@ -11818,6 +11970,65 @@
                             onclick="closeModal('bulkEditClassModal')">إلغاء</button>
                     </div>
                 </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Grade Up Classes Modal -->
+    <div id="gradeUpModal" class="modal">
+        <div class="modal-box wide" style="max-width:680px;">
+            <div class="modal-head">
+                <h2><i class="fas fa-graduation-cap" style="color:var(--brand, #5b6cf5);"></i> نقل السنة الجديدة</h2>
+                <button class="modal-close" onclick="closeModal('gradeUpModal')"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="modal-body" style="display:flex; flex-direction:column; gap:14px; padding:20px;">
+                <!-- Description Box -->
+                <div class="grade-up-desc-box" style="background:var(--surface-2); border:1px solid var(--border-solid); border-radius:var(--r-lg, 16px); padding:14px 16px; display:flex; gap:12px; align-items:flex-start;">
+                    <div style="width:36px; height:36px; border-radius:var(--r-md, 12px); background:var(--brand-bg, #eef0ff); color:var(--brand, #5b6cf5); display:flex; align-items:center; justify-content:center; flex-shrink:0; font-size:1.05rem;">
+                        <i class="fas fa-graduation-cap"></i>
+                    </div>
+                    <div style="flex:1;">
+                        <div style="font-weight:700; font-size:0.92rem; color:var(--text); margin-bottom:4px;">
+                            نقل الأطفال للسنة الدراسية الجديدة
+                        </div>
+                        <p style="font-size:0.82rem; color:var(--text-2); margin:0 0 8px; line-height:1.6;">
+                            ينقل كل طفل إلى الفصل التالي حسب ترتيب الفصول. من كان في أعلى فصل يُنقل إلى قسم <strong>الخريجين</strong>.
+                            يمكنك تعديل الفصل المستهدف لأي فصل بالضغط على السهم إذا كان هناك مسار نقل غير صحيح أو حاجة لنقل استثنائي.
+                        </p>
+                        <div style="display:inline-flex; align-items:center; gap:6px; font-size:0.78rem; font-weight:700; color:var(--brand); background:var(--brand-bg); padding:4px 10px; border-radius:var(--r-full);">
+                            <i class="fas fa-undo"></i> يمكنك التراجع عن هذا الإجراء في أي وقت من سجل العمليات
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Summary Bar -->
+                <div id="gradeUpSummaryBar" style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:8px 16px; background:var(--surface-3); border-radius:var(--r-md, 12px); padding:10px 14px; font-size:0.82rem; color:var(--text-2);">
+                    <span><i class="fas fa-chalkboard" style="color:var(--brand); margin-inline-end:4px;"></i> عدد الفصول: <strong id="gradeUpClassCount" style="color:var(--text);">0</strong></span>
+                    <span><i class="fas fa-level-up-alt" style="color:var(--success); margin-inline-end:4px;"></i> ترقية للفصل التالي: <strong id="gradeUpPromoteCount" style="color:var(--text);">0</strong> طفل</span>
+                    <span><i class="fas fa-user-graduate" style="color:var(--coupon); margin-inline-end:4px;"></i> إلى الخريجين: <strong id="gradeUpGradCount" style="color:var(--text);">0</strong> طفل</span>
+                    <span id="gradeUpSameWrap" style="display:none;"><i class="fas fa-pause-circle" style="color:var(--text-3); margin-inline-end:4px;"></i> بدون تغيير: <strong id="gradeUpSameCount" style="color:var(--text);">0</strong> طفل</span>
+                </div>
+
+                <!-- Classes Mapping List -->
+                <div class="grade-up-classes-wrap" id="gradeUpClassesList">
+                    <div style="text-align:center; padding:30px 0; color:var(--text-3); font-size:0.9rem;">
+                        <i class="fas fa-spinner fa-spin" style="font-size:1.5rem; color:var(--brand); margin-bottom:8px; display:block;"></i>
+                        جاري تحميل الفصول...
+                    </div>
+                </div>
+
+                <!-- Footer Actions -->
+                <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:10px; margin-top:8px; padding-top:14px; border-top:1px solid var(--border-solid);">
+                    <button type="button" class="btn btn-outline btn-sm" onclick="closeModal('gradeUpModal'); switchTabByName('churchSettings'); openSettingsPage('kidsGradeUp');" title="إعدادات موعد النقل السنوي">
+                        <i class="fas fa-calendar-alt"></i> موعد النقل السنوي
+                    </button>
+                    <div style="display:flex; align-items:center; gap:8px;">
+                        <button type="button" class="btn btn-outline" onclick="closeModal('gradeUpModal')">إلغاء</button>
+                        <button type="button" class="btn btn-primary" id="btnSubmitGradeUp" onclick="submitGradeUpWithMapping()">
+                            <i class="fas fa-check"></i> تأكيد نقل السنة الجديدة
+                        </button>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -14806,7 +15017,12 @@
             function updateTriggerText() {
                 const selectedOpt = selectEl.options && selectEl.selectedIndex >= 0 ? selectEl.options[selectEl.selectedIndex] : null;
                 if (selectedOpt && selectedOpt.textContent.trim()) {
-                    textSpan.textContent = selectedOpt.textContent.trim();
+                    if (selectedOpt.dataset.subtext) {
+                        const main = selectedOpt.dataset.maintext || selectedOpt.textContent.replace(selectedOpt.dataset.subtext, '').trim();
+                        textSpan.innerHTML = `${escHtml(main)} <span class="cs-opt-subtext" style="font-size:0.75rem; color:var(--text-3, #8b90a8); font-weight:500; margin-inline-start:6px;">${escHtml(selectedOpt.dataset.subtext)}</span>`;
+                    } else {
+                        textSpan.textContent = selectedOpt.textContent.trim();
+                    }
                     textSpan.classList.remove('cs-placeholder');
                 } else {
                     textSpan.textContent = selectEl.getAttribute('placeholder') || 'اختر...';
@@ -14872,8 +15088,20 @@
                     }
 
                     const span = document.createElement('span');
-                    span.textContent = opt.textContent;
-                    item.appendChild(span);
+                    if (opt.dataset.subtext) {
+                        const main = opt.dataset.maintext || opt.textContent.replace(opt.dataset.subtext, '').trim();
+                        span.textContent = main;
+                        item.appendChild(span);
+
+                        const sub = document.createElement('span');
+                        sub.className = 'cs-opt-subtext';
+                        sub.textContent = ' ' + opt.dataset.subtext;
+                        sub.style.cssText = 'font-size:0.75rem; color:var(--text-3, #8b90a8); font-weight:500; margin-inline-start:6px;';
+                        item.appendChild(sub);
+                    } else {
+                        span.textContent = opt.textContent;
+                        item.appendChild(span);
+                    }
 
                     const check = document.createElement('i');
                     check.className = 'fas fa-check cs-opt-check';
@@ -17965,18 +18193,261 @@
             }
         }
 
-        async function confirmGradeUpAllKids() {
-            if (!(await showConfirm({ message: 'هل تريد نقل جميع الأطفال للسنة الدراسية الجديدة؟\n\nكل طفل ينتقل للفصل التالي، ومن كان في أعلى فصل يذهب إلى قسم الخريجين.' }))) return;
-            const fd = mkFd('gradeUpAllKids');
-            const res = await fetch(API_URL, { method: 'POST', body: fd }).then(r => r.json()).catch(() => ({ success: false }));
-            if (res.success) {
-                showToast(res.message || 'تم النقل', 'success');
-                if (typeof loadStudents === 'function') loadStudents();
-                if (typeof loadGraduates === 'function') loadGraduates();
-                if (typeof loadData === 'function') loadData();
-            } else {
-                showToast(res.message || 'فشل النقل', 'error');
+        let _gradeUpClassesData = [];
+        let _gradeUpInitialMapping = {};
+
+        async function openGradeUpModal() {
+            openModal('gradeUpModal');
+            const container = document.getElementById('gradeUpClassesList');
+            if (!container) return;
+
+            container.innerHTML = `
+                <div style="text-align:center; padding:30px 0; color:var(--text-3); font-size:0.9rem;">
+                    <i class="fas fa-spinner fa-spin" style="font-size:1.5rem; color:var(--brand); margin-bottom:8px; display:block;"></i>
+                    جاري تحميل الفصول...
+                </div>
+            `;
+
+            try {
+                // Fetch fresh church classes
+                const fd = mkFd('getChurchClasses');
+                const res = await fetch(API_URL, { method: 'POST', body: fd }).then(r => r.json()).catch(() => null);
+
+                let clsList = [];
+                if (res && res.success && Array.isArray(res.classes) && res.classes.length > 0) {
+                    clsList = res.classes;
+                } else if (Array.isArray(classes) && classes.length > 0) {
+                    clsList = classes;
+                }
+
+                if (!clsList.length) {
+                    container.innerHTML = `
+                        <div style="text-align:center; padding:30px 10px; color:var(--text-3);">
+                            <i class="fas fa-exclamation-triangle" style="font-size:2rem; color:var(--warning); margin-bottom:10px; display:block;"></i>
+                            <p style="margin:0; font-weight:700;">لا توجد فصول مضافة في هذه الكنيسة</p>
+                            <p style="margin:4px 0 0; font-size:0.8rem;">يرجى إضافة الفصول أولاً لتتمكن من نقل الأطفال للسنة الجديدة.</p>
+                        </div>
+                    `;
+                    const submitBtn = document.getElementById('btnSubmitGradeUp');
+                    if (submitBtn) submitBtn.disabled = true;
+                    return;
+                }
+
+                const submitBtn = document.getElementById('btnSubmitGradeUp');
+                if (submitBtn) submitBtn.disabled = false;
+
+                _gradeUpClassesData = clsList;
+                _gradeUpInitialMapping = {};
+
+                // Count active students per class
+                const studentCountByClass = {};
+                if (Array.isArray(allStudents)) {
+                    allStudents.forEach(s => {
+                        const cid = s._classId || 0;
+                        studentCountByClass[cid] = (studentCountByClass[cid] || 0) + 1;
+                    });
+                }
+
+                const n = clsList.length;
+                container.innerHTML = clsList.map((c, i) => {
+                    const count = (studentCountByClass[c.id] !== undefined)
+                        ? studentCountByClass[c.id]
+                        : (c.student_count || 0);
+
+                    // Default target: next class or 'graduate' for highest class
+                    const defaultTarget = (i < n - 1) ? String(clsList[i + 1].id) : 'graduate';
+                    _gradeUpInitialMapping[c.id] = defaultTarget;
+
+                    let optionsHtml = '';
+
+                    // Target options: each church class (Class name only, with (default) in smaller font & different color)
+                    clsList.forEach((targetClass, tIdx) => {
+                        const isSelected = (defaultTarget === String(targetClass.id));
+                        const isDefault = (tIdx === i + 1);
+                        const subtext = isDefault ? '(default)' : '';
+                        optionsHtml += `<option value="${targetClass.id}" ${isSelected ? 'selected' : ''} data-maintext="${escHtml(targetClass.arabic_name)}" ${subtext ? `data-subtext="${subtext}"` : ''}>${escHtml(targetClass.arabic_name)}${subtext ? ' (default)' : ''}</option>`;
+                    });
+
+                    // Graduate option
+                    const isGradDefault = (i === n - 1);
+                    const isGradSelected = (defaultTarget === 'graduate');
+                    const gradSubtext = isGradDefault ? '(default)' : '';
+                    optionsHtml += `<option value="graduate" ${isGradSelected ? 'selected' : ''} data-maintext="قسم الخريجين" ${gradSubtext ? `data-subtext="${gradSubtext}"` : ''}>قسم الخريجين${gradSubtext ? ' (default)' : ''}</option>`;
+
+                    // Same class option
+                    optionsHtml += `<option value="same" data-maintext="بدون نقل (يبقى مكانه)">بدون نقل (يبقى مكانه)</option>`;
+
+                    const selectClass = isGradSelected ? 'grade-up-select is-grad' : 'grade-up-select';
+
+                    return `
+                        <div class="grade-up-row" id="gradeUpRow_${c.id}">
+                            <div class="grade-up-source">
+                                <span class="grade-up-order-badge">${i + 1}</span>
+                                <div style="display:flex; flex-direction:column; gap:2px;">
+                                    <span class="grade-up-source-name">${escHtml(c.arabic_name)}</span>
+                                    <span class="grade-up-source-count">
+                                        <i class="fas fa-child" style="margin-inline-end:3px;"></i>${count} طفل
+                                    </span>
+                                </div>
+                            </div>
+                            
+                            <div class="grade-up-arrow" title="ينتقل إلى">
+                                <i class="fas fa-arrow-left"></i>
+                            </div>
+
+                            <div class="grade-up-target-container">
+                                <select class="${selectClass}" data-from-id="${c.id}" data-student-count="${count}" data-default-target="${defaultTarget}" onchange="onGradeUpTargetChange(this)" title="اختر الفصل المستهدف">
+                                    ${optionsHtml}
+                                </select>
+                                <i class="fas fa-chevron-down grade-up-select-chevron"></i>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+
+                initCustomSelects(container);
+                updateGradeUpSummary();
+
+            } catch (e) {
+                console.error('Error opening grade up modal:', e);
+                container.innerHTML = `
+                    <div style="text-align:center; padding:20px; color:var(--danger);">
+                        <i class="fas fa-exclamation-circle" style="font-size:1.8rem; margin-bottom:8px; display:block;"></i>
+                        فشل في تحميل الفصول
+                    </div>
+                `;
             }
+        }
+
+        function onGradeUpTargetChange(sel) {
+            const fromId = sel.getAttribute('data-from-id');
+            const defaultTarget = sel.getAttribute('data-default-target');
+            const val = sel.value;
+
+            sel.classList.remove('is-grad', 'is-same', 'is-custom');
+            if (val === 'graduate') {
+                sel.classList.add('is-grad');
+            } else if (val === 'same' || val === String(fromId)) {
+                sel.classList.add('is-same');
+            } else if (val !== defaultTarget) {
+                sel.classList.add('is-custom');
+            }
+
+            updateGradeUpSummary();
+        }
+
+        function updateGradeUpSummary() {
+            let totalClasses = 0;
+            let promoteStudents = 0;
+            let gradStudents = 0;
+            let sameStudents = 0;
+
+            document.querySelectorAll('.grade-up-select').forEach(sel => {
+                totalClasses++;
+                const count = parseInt(sel.getAttribute('data-student-count') || '0', 10);
+                const val = sel.value;
+                const fromId = sel.getAttribute('data-from-id');
+
+                if (val === 'graduate') {
+                    gradStudents += count;
+                } else if (val === 'same' || val === String(fromId)) {
+                    sameStudents += count;
+                } else {
+                    promoteStudents += count;
+                }
+            });
+
+            const cClass = document.getElementById('gradeUpClassCount');
+            const cPromote = document.getElementById('gradeUpPromoteCount');
+            const cGrad = document.getElementById('gradeUpGradCount');
+            const cSame = document.getElementById('gradeUpSameCount');
+            const wrapSame = document.getElementById('gradeUpSameWrap');
+
+            if (cClass) cClass.textContent = totalClasses;
+            if (cPromote) cPromote.textContent = promoteStudents;
+            if (cGrad) cGrad.textContent = gradStudents;
+            if (cSame) cSame.textContent = sameStudents;
+            if (wrapSame) wrapSame.style.display = sameStudents > 0 ? 'inline-block' : 'none';
+        }
+
+        async function submitGradeUpWithMapping() {
+            const btn = document.getElementById('btnSubmitGradeUp');
+            const mapping = {};
+            let hasMovements = false;
+
+            document.querySelectorAll('.grade-up-select').forEach(sel => {
+                const fromId = sel.getAttribute('data-from-id');
+                const val = sel.value;
+                mapping[fromId] = val;
+                if (val !== 'same' && val !== String(fromId)) {
+                    hasMovements = true;
+                }
+            });
+
+            if (!hasMovements) {
+                showToast('جميع الفصول مضبوطة على «بدون نقل»! لن يتم إجراء أي تغيير.', 'warning');
+                return;
+            }
+
+            const confirmed = await showConfirm({
+                title: 'تأكيد نقل السنة الجديدة',
+                message: 'هل أنت متأكد من تنفيذ نقل جميع الأطفال للسنة الدراسية الجديدة وفقاً للفصول المحددة؟\n\n(ملاحظة: يمكنك التراجع عن هذا الإجراء في أي وقت من سجل العمليات)',
+                confirmText: 'نعم، نفّذ النقل',
+                danger: false
+            });
+            if (!confirmed) return;
+
+            if (btn) {
+                btn.disabled = true;
+                btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري النقل...';
+            }
+
+            try {
+                const fd = mkFd('gradeUpAllKids');
+                fd.append('mapping', JSON.stringify(mapping));
+                const res = await fetch(API_URL, { method: 'POST', body: fd }).then(r => r.json()).catch(() => ({ success: false }));
+
+                if (res.success) {
+                    showToast(res.message || 'تم نقل الأطفال للسنة الجديدة بنجاح', 'success');
+                    closeModal('gradeUpModal');
+                    if (typeof loadStudents === 'function') loadStudents();
+                    if (typeof loadGraduates === 'function') loadGraduates();
+                    if (typeof loadData === 'function') loadData();
+                    if (typeof loadClassSettings === 'function') loadClassSettings();
+
+                    // Show undo toast with NO cooldown and with X button to close
+                    if (res.log && res.log.id) {
+                        showUndoToast(res.log, {
+                            noCooldown: true,
+                            customMessage: res.message || 'تم نقل الأطفال للسنة الجديدة'
+                        });
+                    } else {
+                        setTimeout(async () => {
+                            const lfd = mkFd('getLastAuditLog');
+                            const ld = await fetch(API_URL, { method: 'POST', body: lfd }).then(r => r.json()).catch(() => null);
+                            if (ld && ld.success && ld.log) {
+                                showUndoToast(ld.log, {
+                                    noCooldown: true,
+                                    customMessage: res.message || 'تم نقل الأطفال للسنة الجديدة'
+                                });
+                            }
+                        }, 300);
+                    }
+                } else {
+                    showToast(res.message || 'فشل في تنفيذ النقل', 'error');
+                }
+            } catch (err) {
+                showToast('حدث خطأ في الاتصال بالخادم', 'error');
+            } finally {
+                if (btn) {
+                    btn.disabled = false;
+                    btn.innerHTML = '<i class="fas fa-check"></i> تأكيد نقل السنة الجديدة';
+                }
+            }
+        }
+
+        async function confirmGradeUpAllKids() {
+            openGradeUpModal();
         }
 
         let _graduateClasses = [];
@@ -24441,7 +24912,7 @@
             }, 500);
         }
 
-        function showUndoToast(log) {
+        function showUndoToast(log, options = {}) {
             const toastEl = document.getElementById('undoToast');
             const timerEl = document.getElementById('undoTimerCircle');
             const textEl = document.getElementById('undoToastText');
@@ -24453,7 +24924,7 @@
 
             const actionLabel = getActionMeta(log.action || '').label || log.action;
             const entityName = log.entity_name || log.description || '';
-            const logNotes = log.notes || `${actionLabel}: ${entityName}`;
+            const logNotes = options.customMessage || log.notes || `${actionLabel}: ${entityName}`;
 
             textEl.innerHTML = `
                 <div style="display:flex; flex-direction:column; gap:2px;">
@@ -24473,6 +24944,8 @@
                         if (typeof loadStudents === 'function') loadStudents();
                         if (typeof loadStatistics === 'function') loadStatistics();
                         if (typeof loadAuditLogs === 'function') loadAuditLogs();
+                        if (typeof loadGraduates === 'function') loadGraduates();
+                        if (typeof loadData === 'function') loadData();
                         if (typeof loadPendingRegistrations === 'function') loadPendingRegistrations();
                         if (typeof currentAttendanceDate !== 'undefined' && currentAttendanceDate && typeof loadAttendanceForDate === 'function') {
                             loadAttendanceForDate(currentAttendanceDate);
@@ -24485,6 +24958,14 @@
                 }
             };
 
+            const hasCooldown = options.noCooldown !== true;
+            if (!hasCooldown) {
+                timerEl.style.display = 'none';
+                toastEl.classList.add('show');
+                return;
+            }
+
+            timerEl.style.display = '';
             let secondsLeft = 10;
             timerEl.textContent = secondsLeft;
             toastEl.classList.add('show');
@@ -24504,8 +24985,12 @@
 
         function hideUndoToast() {
             const toastEl = document.getElementById('undoToast');
+            const timerEl = document.getElementById('undoTimerCircle');
             if (toastEl) {
                 toastEl.classList.remove('show');
+            }
+            if (timerEl) {
+                timerEl.style.display = '';
             }
             if (undoToastTimer) {
                 clearTimeout(undoToastTimer);
