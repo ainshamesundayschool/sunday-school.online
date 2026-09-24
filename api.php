@@ -25954,26 +25954,34 @@ function getCouponLogs()
         $conn = getDBConnection();
         ensureCouponLogsTable($conn);
 
-        // Resolve studentId or studentName if missing
-        if ($studentId > 0 && empty($studentName)) {
-            $nameStmt = $conn->prepare("SELECT name FROM students WHERE id = ?");
-            if ($nameStmt) {
-                $nameStmt->bind_param("i", $studentId);
-                $nameStmt->execute();
-                $sRow = $nameStmt->get_result()->fetch_assoc();
-                if ($sRow) {
-                    $studentName = trim($sRow['name'] ?? '');
+        // Fetch student details from students table
+        $studentMeta = null;
+        if ($studentId > 0) {
+            $sMetaStmt = $conn->prepare("SELECT id, name, church_id, coupons, attendance_coupons, commitment_coupons, task_coupons, created_at FROM students WHERE id = ?");
+            if ($sMetaStmt) {
+                $sMetaStmt->bind_param("i", $studentId);
+                $sMetaStmt->execute();
+                $studentMeta = $sMetaStmt->get_result()->fetch_assoc();
+                if ($studentMeta) {
+                    if (empty($studentName)) {
+                        $studentName = trim($studentMeta['name'] ?? '');
+                    }
                 }
             }
         } elseif ($studentId === 0 && !empty($studentName)) {
             $churchId = getChurchId();
-            $idStmt = $conn->prepare("SELECT id FROM students WHERE church_id = ? AND name = ? LIMIT 1");
-            if ($idStmt) {
+            if ($churchId > 0) {
+                $idStmt = $conn->prepare("SELECT id, name, church_id, coupons, attendance_coupons, commitment_coupons, task_coupons, created_at FROM students WHERE church_id = ? AND name = ? LIMIT 1");
                 $idStmt->bind_param("is", $churchId, $studentName);
+            } else {
+                $idStmt = $conn->prepare("SELECT id, name, church_id, coupons, attendance_coupons, commitment_coupons, task_coupons, created_at FROM students WHERE name = ? LIMIT 1");
+                $idStmt->bind_param("s", $studentName);
+            }
+            if ($idStmt) {
                 $idStmt->execute();
-                $sRow = $idStmt->get_result()->fetch_assoc();
-                if ($sRow) {
-                    $studentId = intval($sRow['id']);
+                $studentMeta = $idStmt->get_result()->fetch_assoc();
+                if ($studentMeta) {
+                    $studentId = intval($studentMeta['id']);
                 }
             }
         }
@@ -26013,27 +26021,43 @@ function getCouponLogs()
             }
         }
 
-        // 2. Fetch from audit_logs (historical edits from Uncle Dashboard)
+        // 2. Fetch from audit_logs
         $auditTableCheck = $conn->query("SHOW TABLES LIKE 'audit_logs'");
         if ($auditTableCheck && $auditTableCheck->num_rows > 0) {
             $aStmt = null;
             if ($studentId > 0 && !empty($studentName)) {
                 $aStmt = $conn->prepare("
                     SELECT 
-                        al.id, al.uncle_name, al.old_data, al.new_data, al.notes, al.created_at as raw_date,
+                        al.id, al.action, al.entity, al.uncle_name, al.old_data, al.new_data, al.notes, al.created_at as raw_date,
                         DATE_FORMAT(al.created_at, '%d/%m/%Y %H:%i') as formatted_date
                     FROM audit_logs al
-                    WHERE ((al.entity = 'coupon' OR al.action = 'coupon_edit') AND (al.entity_id = ? OR al.entity_name = ?))
+                    WHERE ((al.entity_id = ? OR al.entity_name = ?)
+                      AND (
+                          al.entity = 'coupon' 
+                          OR al.action LIKE '%coupon%' 
+                          OR al.action = 'coupon_edit'
+                          OR al.notes LIKE '%كوبون%'
+                          OR al.notes LIKE '%coupon%'
+                          OR (al.old_data LIKE '%coupons%' OR al.new_data LIKE '%coupons%')
+                      ))
                     ORDER BY al.created_at DESC
                 ");
                 if ($aStmt) $aStmt->bind_param("is", $studentId, $studentName);
             } elseif ($studentId > 0) {
                 $aStmt = $conn->prepare("
                     SELECT 
-                        al.id, al.uncle_name, al.old_data, al.new_data, al.notes, al.created_at as raw_date,
+                        al.id, al.action, al.entity, al.uncle_name, al.old_data, al.new_data, al.notes, al.created_at as raw_date,
                         DATE_FORMAT(al.created_at, '%d/%m/%Y %H:%i') as formatted_date
                     FROM audit_logs al
-                    WHERE ((al.entity = 'coupon' OR al.action = 'coupon_edit') AND al.entity_id = ?)
+                    WHERE (al.entity_id = ?
+                      AND (
+                          al.entity = 'coupon' 
+                          OR al.action LIKE '%coupon%' 
+                          OR al.action = 'coupon_edit'
+                          OR al.notes LIKE '%كوبون%'
+                          OR al.notes LIKE '%coupon%'
+                          OR (al.old_data LIKE '%coupons%' OR al.new_data LIKE '%coupons%')
+                      ))
                     ORDER BY al.created_at DESC
                 ");
                 if ($aStmt) $aStmt->bind_param("i", $studentId);
@@ -26061,10 +26085,16 @@ function getCouponLogs()
                         if (preg_match('/(\d+)\s*→\s*(\d+)/u', $notes, $m)) {
                             $oldCount = intval($m[1]);
                             $newCount = intval($m[2]);
+                        } elseif (preg_match('/([+-]?\d+)\s*كوبون/u', $notes, $m2)) {
+                            $delta = intval($m2[1]);
+                            $oldCount = '---';
+                            $newCount = '---';
                         }
                     }
 
-                    $changeAmount = ($newCount !== null && $oldCount !== null) ? ($newCount - $oldCount) : 0;
+                    $changeAmount = ($newCount !== null && $oldCount !== null && $oldCount !== '---') 
+                        ? ($newCount - $oldCount) 
+                        : (isset($delta) ? $delta : 0);
                     $changeType = $changeAmount >= 0 ? 'add' : 'deduct';
 
                     // Avoid duplicate if an entry from coupon_logs exists within 3 seconds
@@ -26081,8 +26111,8 @@ function getCouponLogs()
                     if (!$isDuplicate) {
                         $logs[] = [
                             'id' => 'al_' . $arow['id'],
-                            'old_count' => $oldCount ?? 0,
-                            'new_count' => $newCount ?? 0,
+                            'old_count' => $oldCount ?? '---',
+                            'new_count' => $newCount ?? '---',
                             'change_amount' => $changeAmount,
                             'change_type' => $changeType,
                             'reason' => $reason,
@@ -26147,14 +26177,149 @@ function getCouponLogs()
             }
         }
 
-        // Sort all logs by raw_date descending
+        // 4. Fetch from task_submissions (Task awards)
+        $tasksTblCheck = $conn->query("SHOW TABLES LIKE 'task_submissions'");
+        if ($tasksTblCheck && $tasksTblCheck->num_rows > 0 && $studentId > 0) {
+            $tsStmt = $conn->prepare("
+                SELECT 
+                    ts.id, ts.score, ts.coupons_awarded, ts.submitted_at as raw_date,
+                    DATE_FORMAT(COALESCE(ts.graded_at, ts.submitted_at), '%d/%m/%Y %H:%i') as formatted_date,
+                    COALESCE(t.title, 'تاسك') as task_title,
+                    COALESCE(u.name, 'الخادم المسؤول') as uncle_name
+                FROM task_submissions ts
+                LEFT JOIN tasks t ON ts.task_id = t.id
+                LEFT JOIN uncles u ON ts.graded_by_uncle_id = u.id
+                WHERE ts.student_id = ? 
+                  AND ts.coupons_awarded > 0 
+                  AND (ts.is_deleted IS NULL OR ts.is_deleted = 0)
+                ORDER BY ts.submitted_at DESC
+            ");
+            if ($tsStmt) {
+                $tsStmt->bind_param("i", $studentId);
+                $tsStmt->execute();
+                $tsRes = $tsStmt->get_result();
+                while ($tsRow = $tsRes->fetch_assoc()) {
+                    $logs[] = [
+                        'id' => 'ts_' . $tsRow['id'],
+                        'old_count' => '---',
+                        'new_count' => '---',
+                        'change_amount' => intval($tsRow['coupons_awarded']),
+                        'change_type' => 'task',
+                        'reason' => 'حل تاسك: ' . $tsRow['task_title'],
+                        'uncle_name' => $tsRow['uncle_name'] ?? 'الخادم المسؤول',
+                        'created_at' => $tsRow['formatted_date'],
+                        'raw_date' => $tsRow['raw_date']
+                    ];
+                }
+            }
+        }
+
+        // 5. Fetch from attendance (Presence coupons)
+        $attTblCheck = $conn->query("SHOW TABLES LIKE 'attendance'");
+        if ($attTblCheck && $attTblCheck->num_rows > 0 && $studentId > 0) {
+            $attStmt = $conn->prepare("
+                SELECT 
+                    a.id, a.attendance_date, a.status,
+                    COALESCE(a.created_at, a.attendance_date) as raw_date,
+                    DATE_FORMAT(a.attendance_date, '%d/%m/%Y') as formatted_date,
+                    COALESCE(u.name, 'مسؤول الحضور') as uncle_name
+                FROM attendance a
+                LEFT JOIN uncles u ON a.uncle_id = u.id
+                WHERE a.student_id = ? AND a.status = 'present'
+                ORDER BY a.attendance_date DESC
+            ");
+            if ($attStmt) {
+                $attStmt->bind_param("i", $studentId);
+                $attStmt->execute();
+                $attRes = $attStmt->get_result();
+                while ($aRow = $attRes->fetch_assoc()) {
+                    $logs[] = [
+                        'id' => 'att_' . $aRow['id'],
+                        'old_count' => '---',
+                        'new_count' => '---',
+                        'change_amount' => 1,
+                        'change_type' => 'attendance',
+                        'reason' => 'حضور خدمة (' . $aRow['formatted_date'] . ')',
+                        'uncle_name' => $aRow['uncle_name'] ?? 'مسؤول الحضور',
+                        'created_at' => $aRow['formatted_date'],
+                        'raw_date' => $aRow['raw_date'] ?? ($aRow['attendance_date'] . ' 00:00:00')
+                    ];
+                }
+            }
+        }
+
+        // 6. Commitment / Initial Balance from student profile
+        if ($studentMeta) {
+            $comAmt = intval($studentMeta['commitment_coupons'] ?? 0);
+            if ($comAmt > 0) {
+                $logs[] = [
+                    'id' => 'com_' . $studentId,
+                    'old_count' => '---',
+                    'new_count' => '---',
+                    'change_amount' => $comAmt,
+                    'change_type' => 'commitment',
+                    'reason' => 'رصيد التزام / رصيد افتتاحي',
+                    'uncle_name' => 'النظام',
+                    'created_at' => !empty($studentMeta['created_at']) ? date('d/m/Y H:i', strtotime($studentMeta['created_at'])) : '---',
+                    'raw_date' => $studentMeta['created_at'] ?? '1970-01-01 00:00:00'
+                ];
+            }
+
+            // Fallback: If still no logs found, but student has positive coupons
+            $totCoupons = intval($studentMeta['coupons'] ?? 0);
+            if (empty($logs) && $totCoupons > 0) {
+                $logs[] = [
+                    'id' => 'init_' . $studentId,
+                    'old_count' => 0,
+                    'new_count' => $totCoupons,
+                    'change_amount' => $totCoupons,
+                    'change_type' => 'initial',
+                    'reason' => 'رصيد الكوبونات المقيد للطفل',
+                    'uncle_name' => 'النظام',
+                    'created_at' => !empty($studentMeta['created_at']) ? date('d/m/Y H:i', strtotime($studentMeta['created_at'])) : date('d/m/Y'),
+                    'raw_date' => $studentMeta['created_at'] ?? date('Y-m-d H:i:s')
+                ];
+            }
+        }
+
+        // 7. Calculate chronological running balance for entries with missing old/new count
+        usort($logs, function ($a, $b) {
+            $ta = strtotime($a['raw_date'] ?? '1970-01-01');
+            $tb = strtotime($b['raw_date'] ?? '1970-01-01');
+            return $ta <=> $tb;
+        });
+
+        $running = 0;
+        foreach ($logs as &$item) {
+            if ($item['old_count'] === '---' || $item['new_count'] === '---' || $item['old_count'] === null) {
+                $item['old_count'] = $running;
+                $running = max(0, $running + intval($item['change_amount']));
+                $item['new_count'] = $running;
+            } else {
+                $running = intval($item['new_count']);
+            }
+        }
+        unset($item);
+
+        // Sort descending (most recent on top)
         usort($logs, function ($a, $b) {
             $ta = strtotime($a['raw_date'] ?? '1970-01-01');
             $tb = strtotime($b['raw_date'] ?? '1970-01-01');
             return $tb <=> $ta;
         });
 
-        sendJSON(['success' => true, 'logs' => $logs]);
+        sendJSON([
+            'success' => true,
+            'student' => [
+                'id' => $studentId,
+                'name' => $studentName,
+                'coupons' => intval($studentMeta['coupons'] ?? 0),
+                'attendance_coupons' => intval($studentMeta['attendance_coupons'] ?? 0),
+                'commitment_coupons' => intval($studentMeta['commitment_coupons'] ?? 0),
+                'task_coupons' => intval($studentMeta['task_coupons'] ?? 0),
+            ],
+            'logs' => $logs
+        ]);
 
     } catch (Exception $e) {
         error_log("getCouponLogs error: " . $e->getMessage());
