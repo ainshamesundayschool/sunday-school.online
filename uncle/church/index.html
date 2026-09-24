@@ -16541,7 +16541,7 @@
                         { label: 'عرض التفاصيل', icon: 'fa-eye', handler: () => showStudentDetails(sid) },
                         { label: 'تعديل', icon: 'fa-edit', handler: () => editStudentFull(sid) },
                         { label: 'الكوبونات', icon: 'fa-star', handler: () => editCoupons(sid, s['الاسم'], s['كوبونات'] || 0) },
-                        { label: 'سجل الكوبونات', icon: 'fa-history', handler: () => showCouponLogs(sid) },
+                        { label: 'سجل الكوبونات', icon: 'fa-history', handler: () => showCouponLogs(sid, s['الاسم']) },
                         { label: 'حذف', icon: 'fa-trash', danger: true, handler: () => deleteStudentConfirm(sid, s['الاسم']) },
                     ]);
                     const isSelected = selectedStudentIds.has(sid);
@@ -17127,14 +17127,18 @@
             <div class="sbox"><div class="sv" style="color:${((d.stats && d.stats.attendance_rate) || 0) >= 70 ? 'var(--success)' : 'var(--danger)'};">${(d.stats && d.stats.attendance_rate) || 0}%</div><div class="sl">نسبة الحضور</div></div>
         </div>
         <div style="display:flex;gap:10px;">
-            <button class="btn btn-primary btn-sm" style="flex:1;" onclick="showCouponLogs(${studentId})"><i class="fas fa-history"></i> سجل الكوبونات</button>
+            <button class="btn btn-primary btn-sm" style="flex:1;" onclick="showCouponLogs(${studentId}, decodeURIComponent('${encodeURIComponent(name || '')}'))"><i class="fas fa-history"></i> سجل الكوبونات</button>
             <button class="btn btn-success btn-sm" style="flex:1;" onclick="editCoupons(${studentId}, decodeURIComponent('${encodeURIComponent(name || '')}'), ${Number(couponsCount) || 0})"><i class="fas fa-star"></i> تعديل الكوبونات</button>
         </div>`;
             openModal('studentDetailsModal');
         }
 
-        function showCouponLogs(id) {
+        function showCouponLogs(id, name = '') {
             const sid = parseInt(id, 10);
+            if (!name && typeof allStudents !== 'undefined' && Array.isArray(allStudents)) {
+                const found = allStudents.find(st => (st.id == sid || st['م'] == sid));
+                if (found && found['الاسم']) name = found['الاسم'];
+            }
             const c = document.getElementById('couponLogs');
             if (c) {
                 c.innerHTML = '<div style="text-align:center;padding:30px;color:var(--text-3);"><i class="fas fa-spinner fa-spin fa-2x"></i><div style="margin-top:10px;font-size:0.9rem;">جاري تحميل سجل الكوبونات...</div></div>';
@@ -17144,6 +17148,10 @@
             const fd = mkFd('getCouponLogs');
             fd.append('studentId', sid);
             fd.append('student_id', sid);
+            if (name) {
+                fd.append('studentName', name);
+                fd.append('name', name);
+            }
 
             fetch(API_URL, { method: 'POST', body: fd, credentials: 'include' })
                 .then(r => r.json())

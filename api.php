@@ -10596,6 +10596,18 @@ function updateCoupons()
 
                     auditCouponChange($studentId, $studentName, $oldTotal, $totalCoupons, 'تعديل دفعة (التزام)');
 
+                    if ($oldTotal !== $totalCoupons) {
+                        ensureCouponLogsTable($conn);
+                        $cDiff = $totalCoupons - $oldTotal;
+                        $cType = $cDiff >= 0 ? 'add' : 'deduct';
+                        $uId = $_SESSION['uncle_id'] ?? ($_SESSION['user_id'] ?? null);
+                        $cLogStmt = $conn->prepare("INSERT INTO coupon_logs (student_id, uncle_id, old_count, new_count, change_amount, change_type, reason) VALUES (?, ?, ?, ?, ?, ?, 'تعديل دفعة (التزام)')");
+                        if ($cLogStmt) {
+                            $cLogStmt->bind_param("iiiiis", $studentId, $uId, $oldTotal, $totalCoupons, $cDiff, $cType);
+                            $cLogStmt->execute();
+                        }
+                    }
+
                     _sendWebPushToKids($conn, $churchId, 'رصيد كوبونات جديد ⭐', "تم تحديث رصيد الكوبونات الخاص بك. الرصيد الحالي: {$totalCoupons}", [
                         'notifType' => 'coupons',
                         'url' => '/user/',
@@ -25928,94 +25940,226 @@ function getChurchClasses()
 // ===== GET COUPON LOGS =====
 
 function getCouponLogs()
-
 {
-
     checkAuth();
-
     try {
-
         $studentId = intval($_POST['studentId'] ?? $_POST['student_id'] ?? $_GET['studentId'] ?? $_GET['student_id'] ?? 0);
+        $studentName = trim($_POST['studentName'] ?? $_POST['name'] ?? $_GET['studentName'] ?? '');
 
-        if ($studentId === 0) {
-
+        if ($studentId === 0 && empty($studentName)) {
             sendJSON(['success' => false, 'message' => 'معرف الطفل مطلوب']);
-
             return;
-
         }
 
         $conn = getDBConnection();
         ensureCouponLogsTable($conn);
 
-        $stmt = $conn->prepare("
-
-            SELECT 
-
-                cl.*,
-
-                COALESCE(u.name, 'النظام') as uncle_name,
-
-                DATE_FORMAT(cl.created_at, '%d/%m/%Y %H:%i') as formatted_date
-
-            FROM coupon_logs cl
-
-            LEFT JOIN uncles u ON cl.uncle_id = u.id
-
-            WHERE cl.student_id = ?
-
-            ORDER BY cl.created_at DESC
-
-        ");
-
-        $stmt->bind_param("i", $studentId);
-
-        $stmt->execute();
-
-        $result = $stmt->get_result();
-
-
+        // Resolve studentId or studentName if missing
+        if ($studentId > 0 && empty($studentName)) {
+            $nameStmt = $conn->prepare("SELECT name FROM students WHERE id = ?");
+            if ($nameStmt) {
+                $nameStmt->bind_param("i", $studentId);
+                $nameStmt->execute();
+                $sRow = $nameStmt->get_result()->fetch_assoc();
+                if ($sRow) {
+                    $studentName = trim($sRow['name'] ?? '');
+                }
+            }
+        } elseif ($studentId === 0 && !empty($studentName)) {
+            $churchId = getChurchId();
+            $idStmt = $conn->prepare("SELECT id FROM students WHERE church_id = ? AND name = ? LIMIT 1");
+            if ($idStmt) {
+                $idStmt->bind_param("is", $churchId, $studentName);
+                $idStmt->execute();
+                $sRow = $idStmt->get_result()->fetch_assoc();
+                if ($sRow) {
+                    $studentId = intval($sRow['id']);
+                }
+            }
+        }
 
         $logs = [];
 
-        while ($row = $result->fetch_assoc()) {
-
-            $logs[] = [
-
-                'id' => $row['id'],
-
-                'old_count' => $row['old_count'],
-
-                'new_count' => $row['new_count'],
-
-                'change_amount' => $row['change_amount'],
-
-                'change_type' => $row['change_type'],
-
-                'reason' => $row['reason'],
-
-                'uncle_name' => $row['uncle_name'] ?? 'النظام',
-
-                'created_at' => $row['formatted_date']
-
-            ];
-
+        // 1. Fetch from coupon_logs
+        if ($studentId > 0) {
+            $stmt = $conn->prepare("
+                SELECT 
+                    cl.*,
+                    COALESCE(u.name, 'النظام') as uncle_name,
+                    DATE_FORMAT(cl.created_at, '%d/%m/%Y %H:%i') as formatted_date,
+                    cl.created_at as raw_date
+                FROM coupon_logs cl
+                LEFT JOIN uncles u ON cl.uncle_id = u.id
+                WHERE cl.student_id = ?
+                ORDER BY cl.created_at DESC
+            ");
+            if ($stmt) {
+                $stmt->bind_param("i", $studentId);
+                $stmt->execute();
+                $result = $stmt->get_result();
+                while ($row = $result->fetch_assoc()) {
+                    $logs[] = [
+                        'id' => 'cl_' . $row['id'],
+                        'old_count' => intval($row['old_count']),
+                        'new_count' => intval($row['new_count']),
+                        'change_amount' => intval($row['change_amount']),
+                        'change_type' => $row['change_type'],
+                        'reason' => $row['reason'],
+                        'uncle_name' => $row['uncle_name'] ?? 'النظام',
+                        'created_at' => $row['formatted_date'],
+                        'raw_date' => $row['raw_date']
+                    ];
+                }
+            }
         }
 
+        // 2. Fetch from audit_logs (historical edits from Uncle Dashboard)
+        $auditTableCheck = $conn->query("SHOW TABLES LIKE 'audit_logs'");
+        if ($auditTableCheck && $auditTableCheck->num_rows > 0) {
+            $aStmt = null;
+            if ($studentId > 0 && !empty($studentName)) {
+                $aStmt = $conn->prepare("
+                    SELECT 
+                        al.id, al.uncle_name, al.old_data, al.new_data, al.notes, al.created_at as raw_date,
+                        DATE_FORMAT(al.created_at, '%d/%m/%Y %H:%i') as formatted_date
+                    FROM audit_logs al
+                    WHERE ((al.entity = 'coupon' OR al.action = 'coupon_edit') AND (al.entity_id = ? OR al.entity_name = ?))
+                    ORDER BY al.created_at DESC
+                ");
+                if ($aStmt) $aStmt->bind_param("is", $studentId, $studentName);
+            } elseif ($studentId > 0) {
+                $aStmt = $conn->prepare("
+                    SELECT 
+                        al.id, al.uncle_name, al.old_data, al.new_data, al.notes, al.created_at as raw_date,
+                        DATE_FORMAT(al.created_at, '%d/%m/%Y %H:%i') as formatted_date
+                    FROM audit_logs al
+                    WHERE ((al.entity = 'coupon' OR al.action = 'coupon_edit') AND al.entity_id = ?)
+                    ORDER BY al.created_at DESC
+                ");
+                if ($aStmt) $aStmt->bind_param("i", $studentId);
+            }
 
+            if ($aStmt) {
+                $aStmt->execute();
+                $aRes = $aStmt->get_result();
+                while ($arow = $aRes->fetch_assoc()) {
+                    $oldData = json_decode($arow['old_data'] ?? '', true);
+                    $newData = json_decode($arow['new_data'] ?? '', true);
+                    $oldCount = isset($oldData['coupons']) ? intval($oldData['coupons']) : null;
+                    $newCount = isset($newData['coupons']) ? intval($newData['coupons']) : null;
+
+                    $notes = $arow['notes'] ?? '';
+                    $reason = 'تعديل كوبونات';
+                    if (strpos($notes, 'السبب:') !== false) {
+                        $parts = explode('السبب:', $notes);
+                        $reason = trim($parts[1] ?? 'تعديل كوبونات');
+                    } elseif ($notes) {
+                        $reason = $notes;
+                    }
+
+                    if ($oldCount === null || $newCount === null) {
+                        if (preg_match('/(\d+)\s*→\s*(\d+)/u', $notes, $m)) {
+                            $oldCount = intval($m[1]);
+                            $newCount = intval($m[2]);
+                        }
+                    }
+
+                    $changeAmount = ($newCount !== null && $oldCount !== null) ? ($newCount - $oldCount) : 0;
+                    $changeType = $changeAmount >= 0 ? 'add' : 'deduct';
+
+                    // Avoid duplicate if an entry from coupon_logs exists within 3 seconds
+                    $rawTime = strtotime($arow['raw_date']);
+                    $isDuplicate = false;
+                    foreach ($logs as $existing) {
+                        $existTime = strtotime($existing['raw_date']);
+                        if (abs($existTime - $rawTime) <= 3 && intval($existing['change_amount']) === $changeAmount) {
+                            $isDuplicate = true;
+                            break;
+                        }
+                    }
+
+                    if (!$isDuplicate) {
+                        $logs[] = [
+                            'id' => 'al_' . $arow['id'],
+                            'old_count' => $oldCount ?? 0,
+                            'new_count' => $newCount ?? 0,
+                            'change_amount' => $changeAmount,
+                            'change_type' => $changeType,
+                            'reason' => $reason,
+                            'uncle_name' => $arow['uncle_name'] ?? 'النظام',
+                            'created_at' => $arow['formatted_date'],
+                            'raw_date' => $arow['raw_date']
+                        ];
+                    }
+                }
+            }
+        }
+
+        // 3. Fetch from coupon_withdrawals
+        $withCheck = $conn->query("SHOW TABLES LIKE 'coupon_withdrawals'");
+        if ($withCheck && $withCheck->num_rows > 0 && $studentId > 0) {
+            $wStmt = $conn->prepare("
+                SELECT 
+                    w.*,
+                    COALESCE(u.name, 'النظام') as uncle_name,
+                    DATE_FORMAT(w.created_at, '%d/%m/%Y %H:%i') as formatted_date,
+                    w.created_at as raw_date
+                FROM coupon_withdrawals w
+                LEFT JOIN uncles u ON w.uncle_id = u.id
+                WHERE w.student_id = ?
+                ORDER BY w.created_at DESC
+            ");
+            if ($wStmt) {
+                $wStmt->bind_param("i", $studentId);
+                $wStmt->execute();
+                $wRes = $wStmt->get_result();
+                while ($wRow = $wRes->fetch_assoc()) {
+                    $amt = intval($wRow['amount']);
+                    $isRef = intval($wRow['is_refunded'] ?? 0);
+                    $note = !empty($wRow['note']) ? " ({$wRow['note']})" : '';
+
+                    $logs[] = [
+                        'id' => 'cw_' . $wRow['id'],
+                        'old_count' => '---',
+                        'new_count' => '---',
+                        'change_amount' => -$amt,
+                        'change_type' => 'withdraw',
+                        'reason' => 'صرف كوبونات / هدايا' . $note,
+                        'uncle_name' => $wRow['uncle_name'] ?? 'النظام',
+                        'created_at' => $wRow['formatted_date'],
+                        'raw_date' => $wRow['raw_date']
+                    ];
+
+                    if ($isRef) {
+                        $logs[] = [
+                            'id' => 'cw_ref_' . $wRow['id'],
+                            'old_count' => '---',
+                            'new_count' => '---',
+                            'change_amount' => +$amt,
+                            'change_type' => 'refund',
+                            'reason' => 'استرجاع كوبونات مستردة' . $note,
+                            'uncle_name' => $wRow['uncle_name'] ?? 'النظام',
+                            'created_at' => !empty($wRow['refunded_at']) ? date('d/m/Y H:i', strtotime($wRow['refunded_at'])) : $wRow['formatted_date'],
+                            'raw_date' => $wRow['refunded_at'] ?? $wRow['raw_date']
+                        ];
+                    }
+                }
+            }
+        }
+
+        // Sort all logs by raw_date descending
+        usort($logs, function ($a, $b) {
+            $ta = strtotime($a['raw_date'] ?? '1970-01-01');
+            $tb = strtotime($b['raw_date'] ?? '1970-01-01');
+            return $tb <=> $ta;
+        });
 
         sendJSON(['success' => true, 'logs' => $logs]);
 
-
-
     } catch (Exception $e) {
-
         error_log("getCouponLogs error: " . $e->getMessage());
-
         sendJSON(['success' => false, 'message' => 'خطأ في جلب سجل الكوبونات']);
-
     }
-
 }
 
 function saveChurchClasses()
