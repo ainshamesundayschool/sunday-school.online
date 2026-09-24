@@ -1,6 +1,12 @@
 RewriteEngine On
 
-# ── InfinityFree / iFastNet cookie-check compatibility ──────────
+# ── Block Malicious Bots, Probes & Scanners ───────────────────────
+<IfModule mod_rewrite.c>
+    RewriteCond %{HTTP_USER_AGENT} (sqlmap|nikto|wpscan|masscan|zgrab|acunetix|havij|dirbuster|gobuster|shodan|censys) [NC]
+    RewriteRule ^ - [F,L]
+</IfModule>
+
+# ── InfinityFree / Hostinger / iFastNet compatibility ─────────────
 # The host appends ?i=<number> after its cookie verification redirect.
 # We must NOT strip or redirect that parameter server-side — doing so
 # breaks the cookie-check flow and shows "Cookies are not enabled".

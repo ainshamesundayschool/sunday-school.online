@@ -1848,6 +1848,99 @@ if (file_exists($configRoot . '/vendor/autoload.php')) {
     require_once 'vendor/autoload.php';
 }
 
+// ── Bot Protection & Rate Limiting ───────────────────────────────
+function enforceBotAndRateLimitProtection(): void
+{
+    $ip = function_exists('getClientIp') ? getClientIp() : ($_SERVER['REMOTE_ADDR'] ?? '');
+    $ua = $_SERVER['HTTP_USER_AGENT'] ?? '';
+
+    // 1. Block empty user-agent or known automated scanning/probing bots
+    if (empty($ua)) {
+        http_response_code(403);
+        sendJSON(['success' => false, 'error' => 'FORBIDDEN', 'message' => 'تم رفض الطلب']);
+    }
+
+    $blockedScanners = [
+        'sqlmap', 'nikto', 'wpscan', 'masscan', 'zgrab',
+        'dirbuster', 'gobuster', 'acunetix', 'havij', 'shodan', 'censys'
+    ];
+    $lowerUa = strtolower($ua);
+    foreach ($blockedScanners as $scanner) {
+        if (strpos($lowerUa, $scanner) !== false) {
+            http_response_code(403);
+            sendJSON(['success' => false, 'error' => 'FORBIDDEN', 'message' => 'تم رفض الطلب']);
+        }
+    }
+
+    // 2. High-Frequency Rate Limiting on authentication endpoints
+    $action = $_POST['action'] ?? $_GET['action'] ?? '';
+    if (in_array($action, ['login', 'login_uncle', 'refresh_token', 'refreshToken', 'auto_login'], true)) {
+        try {
+            $conn = getDBConnection();
+            @$conn->query("CREATE TABLE IF NOT EXISTS `api_rate_limits` (
+                `ip_hash` VARCHAR(64) NOT NULL PRIMARY KEY,
+                `hits` INT NOT NULL DEFAULT 1,
+                `window_start` INT NOT NULL,
+                INDEX `idx_window` (`window_start`)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+
+            $ipHash = hash('sha256', $ip . '_' . $action);
+            $now = time();
+            $windowSize = 60; // 1 minute window
+            $maxHits = ($action === 'refresh_token' || $action === 'refreshToken') ? 60 : 15;
+
+            $stmt = $conn->prepare("SELECT hits, window_start FROM api_rate_limits WHERE ip_hash = ? LIMIT 1");
+            if ($stmt) {
+                $stmt->bind_param("s", $ipHash);
+                $stmt->execute();
+                $row = $stmt->get_result()->fetch_assoc();
+                $stmt->close();
+
+                if ($row) {
+                    $windowStart = intval($row['window_start']);
+                    $hits = intval($row['hits']);
+
+                    if ($now - $windowStart < $windowSize) {
+                        if ($hits >= $maxHits) {
+                            http_response_code(429);
+                            sendJSON([
+                                'success' => false,
+                                'error' => 'RATE_LIMIT_EXCEEDED',
+                                'message' => 'تم تجاوز الحد المسموح من الطلبات، يرجى الانتظار دقيقة والمحاولة مجددا'
+                            ]);
+                        }
+                        $stmtUp = $conn->prepare("UPDATE api_rate_limits SET hits = hits + 1 WHERE ip_hash = ?");
+                        if ($stmtUp) {
+                            $stmtUp->bind_param("s", $ipHash);
+                            $stmtUp->execute();
+                            $stmtUp->close();
+                        }
+                    } else {
+                        // Reset window
+                        $stmtReset = $conn->prepare("UPDATE api_rate_limits SET hits = 1, window_start = ? WHERE ip_hash = ?");
+                        if ($stmtReset) {
+                            $stmtReset->bind_param("is", $now, $ipHash);
+                            $stmtReset->execute();
+                            $stmtReset->close();
+                        }
+                    }
+                } else {
+                    $stmtIns = $conn->prepare("INSERT INTO api_rate_limits (ip_hash, hits, window_start) VALUES (?, 1, ?)");
+                    if ($stmtIns) {
+                        $stmtIns->bind_param("si", $ipHash, $now);
+                        $stmtIns->execute();
+                        $stmtIns->close();
+                    }
+                }
+            }
+        } catch (Exception $e) {
+            error_log("Rate limit check error: " . $e->getMessage());
+        }
+    }
+}
+
+enforceBotAndRateLimitProtection();
+
 
 
 
@@ -3581,7 +3674,8 @@ function getCookieSecuritySettings(): array
 {
     $isSecure = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on') ||
                 (isset($_SERVER['SERVER_PORT']) && $_SERVER['SERVER_PORT'] == 443) ||
-                (isset($_SERVER['HTTP_X_FORWARDED_PROTO']) && $_SERVER['HTTP_X_FORWARDED_PROTO'] === 'https');
+                (isset($_SERVER['HTTP_X_FORWARDED_PROTO']) && $_SERVER['HTTP_X_FORWARDED_PROTO'] === 'https') ||
+                (isset($_SERVER['HTTP_CF_VISITOR']) && strpos($_SERVER['HTTP_CF_VISITOR'], '"scheme":"https"') !== false);
     return [
         'secure' => $isSecure,
         'httponly' => true,
@@ -3716,7 +3810,7 @@ function issueSessionTokens(
         $absTimestamp = strtotime($absoluteExpiresAt);
         $refreshTokenExpiry = date('Y-m-d H:i:s', min($now + $absLifetime, $absTimestamp));
 
-        $ip = $_SERVER['REMOTE_ADDR'] ?? '';
+        $ip = function_exists('getClientIp') ? getClientIp() : ($_SERVER['REMOTE_ADDR'] ?? '');
         $ua = substr($_SERVER['HTTP_USER_AGENT'] ?? '', 0, 500);
 
         $stmt = $conn->prepare("
@@ -3887,7 +3981,7 @@ function rotateRefreshToken(?string $plainToken = null): array
             @session_destroy();
 
             // Log security incident in audit_logs
-            $clientIp = $_SERVER['REMOTE_ADDR'] ?? '';
+            $clientIp = function_exists('getClientIp') ? getClientIp() : ($_SERVER['REMOTE_ADDR'] ?? '');
             $clientUa = $_SERVER['HTTP_USER_AGENT'] ?? '';
             if (function_exists('writeAuditLog')) {
                 writeAuditLog(
