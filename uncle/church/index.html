@@ -4473,54 +4473,202 @@
         }
 
         /* ═══════════════════════════════════════════════════════════════════
-   FRIDAY GRID
-═══════════════════════════════════════════════════════════════════ */
+           MODERN ATTENDANCE DAY GRID & CARDS (Uncle Dashboard Style)
+        ═══════════════════════════════════════════════════════════════════ */
         .friday-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
-            gap: 12px;
+            grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+            gap: 16px;
         }
 
         .friday-card {
-            background: white;
-            border: 1px solid var(--border-solid);
-            border-radius: var(--radius-lg);
-            padding: 16px 14px;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--r-xl);
+            padding: 16px 18px;
             cursor: pointer;
-            transition: all var(--t-base) var(--ease);
+            transition: all var(--t) var(--spring);
             display: flex;
             flex-direction: column;
-            gap: 8px;
+            gap: 12px;
+            position: relative;
+            overflow: hidden;
+            box-shadow: var(--shadow-sm);
         }
 
         .friday-card:hover {
-            border-color: var(--primary);
-            transform: translateY(-2px);
+            border-color: var(--brand);
+            transform: translateY(-3px);
             box-shadow: var(--shadow-md);
         }
 
         .friday-card.selected {
-            border-color: var(--primary);
-            background: var(--primary-light);
+            border-color: var(--brand);
+            background: var(--brand-bg);
         }
 
-        .friday-card .date {
-            font-size: 0.9rem;
+        .friday-card .att-card-top {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .friday-card .att-date-badge {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background: var(--brand-bg);
+            color: var(--brand);
+            border-radius: var(--r-md);
+            min-width: 52px;
+            height: 52px;
+            padding: 4px;
+            flex-shrink: 0;
+            border: 1px solid var(--border);
+        }
+
+        .friday-card .att-date-badge .day-num {
+            font-size: 1.35rem;
+            font-weight: 900;
+            line-height: 1;
+            font-family: 'Cairo', sans-serif;
+        }
+
+        .friday-card .att-date-badge .day-month {
+            font-size: 0.68rem;
             font-weight: 700;
-            color: var(--text);
+            opacity: 0.85;
+            font-family: 'Cairo', sans-serif;
         }
 
-        .friday-card .stats {
+        .friday-card .att-card-title-wrap {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .friday-card .att-weekday-name {
+            font-size: 0.98rem;
+            font-weight: 800;
+            color: var(--text);
+            font-family: 'Cairo', sans-serif;
+            line-height: 1.3;
+        }
+
+        .friday-card .att-full-date {
+            font-size: 0.78rem;
+            color: var(--text-3);
+            font-weight: 600;
+            font-family: 'Cairo', sans-serif;
+            margin-top: 2px;
+        }
+
+        .friday-card .att-status-badge {
+            font-size: 0.7rem;
+            font-weight: 700;
+            padding: 3px 8px;
+            border-radius: var(--r-full);
+            white-space: nowrap;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            font-family: 'Cairo', sans-serif;
+        }
+
+        .friday-card .att-status-badge.recorded {
+            background: var(--success-bg);
+            color: var(--success-dark);
+        }
+
+        .friday-card .att-status-badge.pending {
+            background: var(--surface-3);
+            color: var(--text-3);
+        }
+
+        .friday-card .att-progress-track {
+            height: 6px;
+            background: var(--surface-3);
+            border-radius: var(--r-full);
+            overflow: hidden;
+            display: flex;
+            width: 100%;
+        }
+
+        .friday-card .att-progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--success), #34d399);
+            border-radius: var(--r-full);
+            transition: width 0.35s var(--ease);
+        }
+
+        .friday-card .att-progress-meta {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            font-size: 0.76rem;
+            color: var(--text-3);
+            font-family: 'Cairo', sans-serif;
+            font-weight: 600;
+            margin-top: 4px;
+        }
+
+        .friday-card .att-progress-meta strong {
+            font-weight: 800;
+        }
+
+        .friday-card .att-card-bottom {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding-top: 10px;
+            border-top: 1px solid var(--border-solid);
+            margin-top: auto;
+        }
+
+        .friday-card .att-pills-row {
             display: flex;
             gap: 6px;
             flex-wrap: wrap;
         }
 
-        .friday-card .stats span {
-            font-size: 0.7rem;
-            padding: 2px 8px;
-            border-radius: var(--radius-pill);
+        .friday-card .att-pill {
+            font-size: 0.74rem;
+            padding: 3px 8px;
+            border-radius: var(--r-full);
             font-weight: 700;
+            font-family: 'Cairo', sans-serif;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .friday-card .att-pill.present {
+            background: var(--success-bg);
+            color: var(--success-dark);
+        }
+
+        .friday-card .att-pill.absent {
+            background: var(--danger-bg);
+            color: var(--danger-dark);
+        }
+
+        .friday-card .att-open-arrow {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            background: var(--surface-2);
+            color: var(--text-3);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.75rem;
+            transition: all var(--t) var(--ease);
+        }
+
+        .friday-card:hover .att-open-arrow {
+            background: var(--brand-bg);
+            color: var(--brand);
+            transform: translateX(-3px);
         }
 
         /* ═══════════════════════════════════════════════════════════════════
@@ -5754,16 +5902,155 @@
             }
         }
 
+        /* ═══════════════════════════════════════════════════════════════════
+           MODERN ATTENDANCE ASSIGNING CARDS (Uncle Dashboard Style)
+        ═══════════════════════════════════════════════════════════════════ */
         .att-detail-list {
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            gap: 12px;
+            margin-top: 14px;
         }
 
-        .att-person-meta {
+        .uncle-att-item.att-detail-item {
+            background: var(--surface);
+            border: 1.5px solid var(--border);
+            border-radius: var(--r-xl);
+            padding: 12px 14px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            transition: all .2s var(--ease);
+            position: relative;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .uncle-att-item.att-detail-item:hover {
+            box-shadow: var(--shadow-md);
+            transform: translateY(-2px);
+        }
+
+        .uncle-att-item.att-detail-item.present {
+            border-color: rgba(16, 185, 129, .38);
+            background: linear-gradient(135deg, rgba(236, 253, 245, .92), rgba(209, 250, 229, .68));
+        }
+
+        [data-theme="dark"] .uncle-att-item.att-detail-item.present {
+            background: linear-gradient(135deg, rgba(6, 78, 59, .3), rgba(5, 95, 75, .22));
+            border-color: rgba(16, 185, 129, .45);
+        }
+
+        .uncle-att-item.att-detail-item.absent {
+            border-color: rgba(239, 68, 68, .32);
+            background: linear-gradient(135deg, rgba(254, 242, 242, .92), rgba(254, 226, 226, .68));
+        }
+
+        [data-theme="dark"] .uncle-att-item.att-detail-item.absent {
+            background: linear-gradient(135deg, rgba(127, 29, 29, .3), rgba(153, 27, 27, .22));
+            border-color: rgba(239, 68, 68, .38);
+        }
+
+        .att-person-info {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .att-person-name {
+            font-weight: 800;
+            font-size: 0.94rem;
+            color: var(--text);
+            font-family: 'Cairo', sans-serif;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .att-person-badges {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            margin-top: 3px;
+            flex-wrap: wrap;
+        }
+
+        .att-person-meta-tag {
             font-size: 0.72rem;
+            font-weight: 600;
+            padding: 2px 7px;
+            border-radius: var(--r-sm);
+            background: var(--surface-3);
+            color: var(--text-2);
+            font-family: 'Cairo', sans-serif;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .att-segmented-control {
+            display: inline-flex;
+            align-items: center;
+            background: var(--surface-3);
+            border-radius: var(--r-full);
+            padding: 3px;
+            gap: 3px;
+            border: 1px solid var(--border-solid);
+            flex-shrink: 0;
+        }
+
+        .att-segment-btn {
+            border: none;
+            background: transparent;
+            padding: 6px 13px;
+            border-radius: var(--r-full);
+            font-family: 'Cairo', sans-serif;
+            font-size: 0.78rem;
+            font-weight: 800;
+            cursor: pointer;
+            color: var(--text-2);
+            transition: all .2s var(--spring);
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            line-height: 1.2;
+        }
+
+        .att-segment-btn:hover:not(.active):not(.present-active):not(.absent-active) {
+            background: rgba(0, 0, 0, .05);
+            color: var(--text);
+        }
+
+        .att-segment-btn.present-active {
+            background: linear-gradient(135deg, var(--success), var(--success-dark));
+            color: #fff;
+            box-shadow: 0 2px 8px rgba(16, 185, 129, .32);
+        }
+
+        .att-segment-btn.absent-active {
+            background: linear-gradient(135deg, var(--danger), var(--danger-dark));
+            color: #fff;
+            box-shadow: 0 2px 8px rgba(239, 68, 68, .32);
+        }
+
+        .att-del-btn {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            border: none;
+            background: transparent;
             color: var(--text-3);
-            margin-top: 2px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all .18s var(--ease);
+            flex-shrink: 0;
+            font-size: 0.8rem;
+        }
+
+        .att-del-btn:hover {
+            background: var(--danger-bg);
+            color: var(--danger);
+            transform: scale(1.1);
         }
 
         .link-chip-center {
@@ -8118,13 +8405,104 @@
 
         /* ── UNIVERSAL TAB CUSTOM EXPORT BUILDER STYLES ── */
         #tabCustomExportModal {
-            --surface: var(--card, #ffffff);
-            --surface-2: var(--bg, #f5f5f8);
-            --border-solid: var(--border-2, rgba(15, 14, 26, 0.14));
-            --brand: var(--primary, #4f46e5);
-            --brand-bg: var(--primary-light, #eef0ff);
-            --r-lg: var(--radius-lg, 16px);
-            --r-md: var(--radius, 12px);
+            --surface: var(--surface, #ffffff);
+            --surface-2: var(--surface-2, #f5f5f8);
+            --surface-3: var(--surface-3, #eceef7);
+            --border-solid: var(--border-solid, #e4e6f0);
+            --brand: var(--brand, #5b6cf5);
+            --brand-bg: var(--brand-bg, #eef0ff);
+            --r-lg: var(--r-lg, 18px);
+            --r-md: var(--r-md, 14px);
+            --text: var(--text, #1a1d2e);
+            --text-2: var(--text-2, #4b5068);
+        }
+
+        [data-theme="dark"] #tabCustomExportModal {
+            --surface: var(--surface-2, #1e2132);
+            --surface-2: var(--surface-3, #252840);
+            --border-solid: var(--border-solid, #2a2d42);
+            --text: #e8eaf6;
+            --text-2: #9299be;
+        }
+
+        /* High-contrast dropdown styling for export filters and sort layers */
+        #tabCustomExportModal select,
+        #tabCustomExportModal .form-select,
+        #tabCustomExportModal .sort-layer-select,
+        #tabExportFiltersContainer .form-select,
+        #tabExportFilterClass,
+        #tabExportFilterRole {
+            background-color: var(--surface) !important;
+            color: var(--text) !important;
+            border: 1.5px solid var(--border-solid) !important;
+            border-radius: var(--r-md) !important;
+            font-family: 'Cairo', sans-serif !important;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05) !important;
+        }
+
+        [data-theme="dark"] #tabCustomExportModal select,
+        [data-theme="dark"] #tabCustomExportModal .form-select,
+        [data-theme="dark"] #tabCustomExportModal .sort-layer-select,
+        [data-theme="dark"] #tabExportFiltersContainer .form-select,
+        [data-theme="dark"] #tabExportFilterClass,
+        [data-theme="dark"] #tabExportFilterRole {
+            background-color: var(--surface-2, #1e2132) !important;
+            color: #f1f5f9 !important;
+            border-color: var(--border-solid, #2a2d42) !important;
+        }
+
+        /* Native options contrast fix for all OS engines (including macOS Safari & Chrome) */
+        #tabCustomExportModal select option,
+        #tabCustomExportModal .form-select option,
+        #tabCustomExportModal .sort-layer-select option,
+        #tabExportFiltersContainer select option,
+        #tabExportFilterClass option,
+        #tabExportFilterRole option {
+            background-color: #ffffff !important;
+            color: #0f172a !important;
+            padding: 8px 12px !important;
+            font-weight: 600 !important;
+        }
+
+        [data-theme="dark"] #tabCustomExportModal select option,
+        [data-theme="dark"] #tabCustomExportModal .form-select option,
+        [data-theme="dark"] #tabCustomExportModal .sort-layer-select option,
+        [data-theme="dark"] #tabExportFiltersContainer select option,
+        [data-theme="dark"] #tabExportFilterClass option,
+        [data-theme="dark"] #tabExportFilterRole option {
+            background-color: #1e2132 !important;
+            color: #f8fafc !important;
+            padding: 8px 12px !important;
+            font-weight: 600 !important;
+        }
+
+        /* Custom Select Trigger in Custom Export Filter panels */
+        .tab-export-panel .custom-select-wrap,
+        #tabExportFiltersContainer .custom-select-wrap {
+            width: 100% !important;
+            display: flex !important;
+        }
+
+        .tab-export-panel .custom-select-trigger,
+        #tabExportFiltersContainer .custom-select-trigger {
+            width: 100% !important;
+            height: 34px !important;
+            min-height: 34px !important;
+            padding: 0 12px !important;
+            font-size: 0.78rem !important;
+            font-weight: 600 !important;
+            background: var(--surface) !important;
+            color: var(--text) !important;
+            border: 1.5px solid var(--border-solid) !important;
+            border-radius: var(--r-md) !important;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04) !important;
+        }
+
+        [data-theme="dark"] .tab-export-panel .custom-select-trigger,
+        [data-theme="dark"] #tabExportFiltersContainer .custom-select-trigger {
+            background: var(--surface-2, #1e2132) !important;
+            color: #f1f5f9 !important;
+            border-color: var(--border-solid, #2a2d42) !important;
         }
 
         .tab-export-builder {
@@ -9627,7 +10005,7 @@
             <div id="attendance" class="tab-panel">
                 <div class="card">
                     <div class="card-header">
-                        <div class="card-title"><i class="fas fa-calendar-check"></i> سجل الحضور - أيام الجُمعة</div>
+                        <div class="card-title" id="kidsAttTabTitle"><i class="fas fa-calendar-check"></i> سجل الحضور - أيام الجُمعة</div>
                         <div class="export-row">
                             <select id="attClassFilter" class="form-select" onchange="filterAttendanceDisplay()">
                                 <option value="">جميع الفصول</option>
@@ -9654,12 +10032,33 @@
                         <div class="month-tabs" id="monthTabs"></div>
                         <div id="fridaysList"></div>
                         <div id="attendanceDetail" style="display:none;margin-top:20px;">
-                            <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;">
-                                <button class="btn btn-outline btn-sm" onclick="closeAttendanceDetail()"><i
-                                        class="fas fa-arrow-right"></i> رجوع</button>
-                                <h3 id="attDetailTitle" style="font-size:1rem;font-weight:700;"></h3>
+                            <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:16px;flex-wrap:wrap;">
+                                <div style="display:flex;align-items:center;gap:12px;">
+                                    <button class="btn btn-outline btn-sm" onclick="closeAttendanceDetail()" style="border-radius:var(--r-md);"><i
+                                            class="fas fa-arrow-right"></i> رجوع للأيام</button>
+                                    <h3 id="attDetailTitle" style="font-size:1.1rem;font-weight:800;color:var(--text);margin:0;display:flex;align-items:center;gap:8px;"></h3>
+                                </div>
+                                <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+                                    <button type="button" class="btn btn-success btn-sm" onclick="bulkSetKidAttendance('present')" style="border-radius:var(--r-md);font-weight:700;"><i class="fas fa-check-double"></i> تحضير الكل</button>
+                                    <button type="button" class="btn btn-danger btn-sm" onclick="bulkSetKidAttendance('absent')" style="border-radius:var(--r-md);font-weight:700;"><i class="fas fa-user-times"></i> غياب الكل</button>
+                                    <button type="button" class="btn btn-outline btn-sm" onclick="deleteCurrentDayAttendance()" style="border-radius:var(--r-md);color:var(--danger);border-color:rgba(239,68,68,.3);font-weight:700;"><i class="fas fa-trash"></i> حذف الكشف</button>
+                                </div>
                             </div>
                             <div class="summary-box" id="attSummaryBoxes"></div>
+                            
+                            <!-- Search & Status Filter Toolbar -->
+                            <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;margin:16px 0;flex-wrap:wrap;background:var(--surface-2);padding:10px 14px;border-radius:var(--r-lg);border:1px solid var(--border-solid);">
+                                <div style="position:relative;flex:1;min-width:200px;max-width:360px;">
+                                    <i class="fas fa-search" style="position:absolute;right:12px;top:50%;transform:translateY(-50%);color:var(--text-3);font-size:0.85rem;"></i>
+                                    <input type="text" id="attDetailSearch" placeholder="بحث بالاسم أو الفصل..." class="form-control" style="padding-right:34px;height:36px;border-radius:var(--r-md);font-size:0.85rem;" oninput="filterKidAttendanceDetailView(this.value)">
+                                </div>
+                                <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;">
+                                    <button type="button" class="btn btn-sm btn-outline active" id="attFilterBtn_all" onclick="filterKidAttStatus('all')" style="border-radius:var(--r-full);font-size:0.78rem;padding:4px 12px;">الكل <span id="attCount_all" style="font-weight:800;">(0)</span></button>
+                                    <button type="button" class="btn btn-sm btn-outline" id="attFilterBtn_present" onclick="filterKidAttStatus('present')" style="border-radius:var(--r-full);font-size:0.78rem;padding:4px 12px;color:var(--success);">حاضر <span id="attCount_present" style="font-weight:800;">(0)</span></button>
+                                    <button type="button" class="btn btn-sm btn-outline" id="attFilterBtn_absent" onclick="filterKidAttStatus('absent')" style="border-radius:var(--r-full);font-size:0.78rem;padding:4px 12px;color:var(--danger);">غائب <span id="attCount_absent" style="font-weight:800;">(0)</span></button>
+                                </div>
+                            </div>
+
                             <div class="att-detail-list" id="attendanceTable"></div>
                         </div>
                     </div>
@@ -9671,7 +10070,7 @@
             <div id="uncleAttendance" class="tab-panel">
                 <div class="card">
                     <div class="card-header">
-                        <div class="card-title"><i class="fas fa-user-tie"></i> سجل حضور الخُدام - أيام الجُمعة</div>
+                        <div class="card-title" id="unclesAttTabTitle"><i class="fas fa-user-tie"></i> سجل حضور الخُدام - أيام الجُمعة</div>
                         <div class="export-row">
                             <button type="button" class="btn btn-outline btn-sm"
                                 onclick="openTabCustomExport('uncleAttendance')" title="تصدير مخصص">
@@ -9708,13 +10107,32 @@
                             </div>
                             <div id="uncleFridaysList2"></div>
                             <div id="uncleAttendanceDetail2" style="display:none;margin-top:20px;">
-                                <div
-                                    style="display:flex;align-items:center;gap:12px;margin-bottom:16px;flex-wrap:wrap;">
-                                    <button class="btn btn-outline btn-sm" onclick="closeUncleAttendanceDetail2()"><i
-                                            class="fas fa-arrow-right"></i> رجوع</button>
-                                    <h3 id="uncleAttDetailTitle2" style="font-size:1rem;font-weight:700;"></h3>
+                                <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:16px;flex-wrap:wrap;">
+                                    <div style="display:flex;align-items:center;gap:12px;">
+                                        <button class="btn btn-outline btn-sm" onclick="closeUncleAttendanceDetail2()" style="border-radius:var(--r-md);"><i
+                                                class="fas fa-arrow-right"></i> رجوع للأيام</button>
+                                        <h3 id="uncleAttDetailTitle2" style="font-size:1.1rem;font-weight:800;color:var(--text);margin:0;display:flex;align-items:center;gap:8px;"></h3>
+                                    </div>
+                                    <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+                                        <button type="button" class="btn btn-success btn-sm" onclick="bulkSetUncleAttendance('present')" style="border-radius:var(--r-md);font-weight:700;"><i class="fas fa-check-double"></i> تحضير الكل</button>
+                                        <button type="button" class="btn btn-danger btn-sm" onclick="bulkSetUncleAttendance('absent')" style="border-radius:var(--r-md);font-weight:700;"><i class="fas fa-user-times"></i> غياب الكل</button>
+                                    </div>
                                 </div>
                                 <div class="summary-box" id="uncleAttSummaryBoxes2"></div>
+
+                                <!-- Search & Status Filter Toolbar for Uncles -->
+                                <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;margin:16px 0;flex-wrap:wrap;background:var(--surface-2);padding:10px 14px;border-radius:var(--r-lg);border:1px solid var(--border-solid);">
+                                    <div style="position:relative;flex:1;min-width:200px;max-width:360px;">
+                                        <i class="fas fa-search" style="position:absolute;right:12px;top:50%;transform:translateY(-50%);color:var(--text-3);font-size:0.85rem;"></i>
+                                        <input type="text" id="uncleAttDetailSearch" placeholder="بحث باسم الخادم..." class="form-control" style="padding-right:34px;height:36px;border-radius:var(--r-md);font-size:0.85rem;" oninput="filterUncleAttendanceDetailView(this.value)">
+                                    </div>
+                                    <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;">
+                                        <button type="button" class="btn btn-sm btn-outline active" id="uaFilterBtn_all" onclick="filterUncleAttStatus('all')" style="border-radius:var(--r-full);font-size:0.78rem;padding:4px 12px;">الكل <span id="uaCount_all" style="font-weight:800;">(0)</span></button>
+                                        <button type="button" class="btn btn-sm btn-outline" id="uaFilterBtn_present" onclick="filterUncleAttStatus('present')" style="border-radius:var(--r-full);font-size:0.78rem;padding:4px 12px;color:var(--success);">حاضر <span id="uaCount_present" style="font-weight:800;">(0)</span></button>
+                                        <button type="button" class="btn btn-sm btn-outline" id="uaFilterBtn_absent" onclick="filterUncleAttStatus('absent')" style="border-radius:var(--r-full);font-size:0.78rem;padding:4px 12px;color:var(--danger);">غائب <span id="uaCount_absent" style="font-weight:800;">(0)</span></button>
+                                    </div>
+                                </div>
+
                                 <div class="att-detail-list" id="uncleAttendanceTable2"></div>
                             </div>
                         </div>
@@ -20971,14 +21389,18 @@
                 // Reload the current date with new filter
                 loadAttendanceForDate(currentAttendanceDate);
             }
-        } async function loadAttendanceForDate(date) {
+        }
+        let currentKidAttendanceList = [];
+        let kidAttFilterQuery = '';
+        let kidAttStatusFilter = 'all';
+
+        async function loadAttendanceForDate(date) {
             currentAttendanceDate = date;
             const cls = document.getElementById('attClassFilter')?.value || '';
 
             // Ensure date is in YYYY-MM-DD format
             let formattedDate = date;
             if (date && date.includes('/')) {
-                // Convert from DD/MM/YYYY to YYYY-MM-DD
                 const parts = date.split('/');
                 if (parts.length === 3) {
                     formattedDate = `${parts[2]}-${parts[1]}-${parts[0]}`;
@@ -20992,7 +21414,7 @@
             }
 
             try {
-                const response = await fetch(API_URL, { method: 'POST', body: fd });
+                const response = await fetch(API_URL, { method: 'POST', body: fd, credentials: 'include' });
                 const d = await response.json();
 
                 if (!d.success) {
@@ -21000,7 +21422,14 @@
                     return;
                 }
 
-                const att = d.attendance || [];
+                currentKidAttendanceList = d.attendance || [];
+
+                // Reset search and filter toolbar
+                kidAttFilterQuery = '';
+                kidAttStatusFilter = 'all';
+                const searchInp = document.getElementById('attDetailSearch');
+                if (searchInp) searchInp.value = '';
+                updateKidAttFilterButtonsUI();
 
                 // Create date object from YYYY-MM-DD
                 const dateParts = d.date.split('-');
@@ -21013,19 +21442,19 @@
                     day: 'numeric'
                 });
 
-                document.getElementById('attDetailTitle').textContent = dateStr;
+                document.getElementById('attDetailTitle').innerHTML = `<i class="fas fa-calendar-day" style="color:var(--brand);"></i> ${escHtml(dateStr)}`;
 
-                const present = att.filter(a => a.status === 'present').length;
-                const absent = att.filter(a => a.status === 'absent').length;
-                const rate = att.length > 0 ? Math.round(present / att.length * 100) : 0;
+                const present = currentKidAttendanceList.filter(a => a.status === 'present').length;
+                const absent = currentKidAttendanceList.filter(a => a.status === 'absent').length;
+                const rate = currentKidAttendanceList.length > 0 ? Math.round(present / currentKidAttendanceList.length * 100) : 0;
 
                 document.getElementById('attSummaryBoxes').innerHTML = `
-            <div class="sbox"><div class="sv">${att.length}</div><div class="sl">إجمالي</div></div>
+            <div class="sbox"><div class="sv">${currentKidAttendanceList.length}</div><div class="sl">إجمالي</div></div>
             <div class="sbox"><div class="sv" style="color:var(--success);">${present}</div><div class="sl">حاضر</div></div>
             <div class="sbox"><div class="sv" style="color:var(--danger);">${absent}</div><div class="sl">غائب</div></div>
             <div class="sbox"><div class="sv" style="color:${rate >= 70 ? 'var(--success)' : 'var(--danger)'};">${rate}%</div><div class="sl">نسبة الحضور</div></div>`;
 
-                renderAttendanceTable(att, formattedDate);
+                renderKidAttendanceCards(formattedDate);
 
                 document.getElementById('attendanceDetail').style.display = 'block';
                 document.getElementById('fridaysList').style.display = 'none';
@@ -21037,8 +21466,11 @@
                 showToast('خطأ في تحميل الحضور', 'error');
             }
         }
+        window.loadAttendanceForDate = loadAttendanceForDate;
+
         function closeAttendanceDetail() {
             currentAttendanceDate = null;
+            currentKidAttendanceList = [];
             document.getElementById('attendanceDetail').style.display = 'none';
             document.getElementById('fridaysList').style.display = 'block';
             document.getElementById('monthTabs').style.display = 'flex';
@@ -21047,6 +21479,8 @@
             // Refresh the Friday cards
             renderFridayCards();
         }
+        window.closeAttendanceDetail = closeAttendanceDetail;
+
         function buildAttPersonAvatar(name, imageUrl) {
             const initials = (name || '؟').split(' ').map(w => w[0]).filter(Boolean).slice(0, 2).join('');
             const imgHtml = imageUrl
@@ -21055,77 +21489,212 @@
             return `<div class="uncle-att-ava">${imgHtml}<span${imageUrl ? ' style="display:none"' : ''}>${escHtml(initials)}</span></div>`;
         }
 
-        function renderAttendanceTable(att, date) {
+        function updateKidAttFilterButtonsUI() {
+            ['all', 'present', 'absent'].forEach(st => {
+                const btn = document.getElementById(`attFilterBtn_${st}`);
+                if (btn) {
+                    if (st === kidAttStatusFilter) btn.classList.add('active');
+                    else btn.classList.remove('active');
+                }
+            });
+        }
+
+        function filterKidAttendanceDetailView(query) {
+            kidAttFilterQuery = (query || '').trim().toLowerCase();
+            renderKidAttendanceCards(currentAttendanceDate);
+        }
+        window.filterKidAttendanceDetailView = filterKidAttendanceDetailView;
+
+        function filterKidAttStatus(status) {
+            kidAttStatusFilter = status;
+            updateKidAttFilterButtonsUI();
+            renderKidAttendanceCards(currentAttendanceDate);
+        }
+        window.filterKidAttStatus = filterKidAttStatus;
+
+        function renderKidAttendanceCards(date) {
             const grid = document.getElementById('attendanceTable');
-            if (!att.length) {
-                grid.innerHTML = `<div class="empty-state" style="padding:28px;"><i class="fas fa-calendar-times"></i><h3>لا توجد سجلات حضور لهذا اليوم</h3></div>`;
+            if (!grid) return;
+
+            const allCount = currentKidAttendanceList.length;
+            const presCount = currentKidAttendanceList.filter(a => a.status === 'present').length;
+            const absCount = currentKidAttendanceList.filter(a => a.status === 'absent').length;
+
+            const cAll = document.getElementById('attCount_all');
+            const cPres = document.getElementById('attCount_present');
+            const cAbs = document.getElementById('attCount_absent');
+            if (cAll) cAll.textContent = `(${allCount})`;
+            if (cPres) cPres.textContent = `(${presCount})`;
+            if (cAbs) cAbs.textContent = `(${absCount})`;
+
+            let filtered = currentKidAttendanceList;
+
+            // Status filter
+            if (kidAttStatusFilter === 'present') {
+                filtered = filtered.filter(a => a.status === 'present');
+            } else if (kidAttStatusFilter === 'absent') {
+                filtered = filtered.filter(a => a.status === 'absent');
+            }
+
+            // Text search
+            if (kidAttFilterQuery) {
+                filtered = filtered.filter(a => {
+                    const name = (a.student_name || '').toLowerCase();
+                    const cls = (a.class || '').toLowerCase();
+                    const by = (a.recorded_by || '').toLowerCase();
+                    return name.includes(kidAttFilterQuery) || cls.includes(kidAttFilterQuery) || by.includes(kidAttFilterQuery);
+                });
+            }
+
+            if (!filtered.length) {
+                grid.innerHTML = `<div class="empty-state" style="padding:32px;grid-column:1/-1;text-align:center;">
+                    <i class="fas fa-calendar-times" style="font-size:2.2rem;color:var(--text-3);margin-bottom:10px;"></i>
+                    <h3 style="color:var(--text-2);font-weight:700;">لا توجد سجلات مطابقة للبحث أو التصفية</h3>
+                </div>`;
                 return;
             }
 
-            grid.innerHTML = att.map(a => {
+            grid.innerHTML = filtered.map(a => {
                 const student = allStudents.find(s => String(s['_studentId']) === String(a.student_id));
                 const imgUrl = a.student_image || student?.['صورة'] || student?.image_url || '';
-                const pCls = a.status === 'present' ? ' present' : '';
-                const aCls = a.status === 'absent' ? ' absent' : '';
-                return `<div class="uncle-att-item att-detail-item">
+                const isPres = a.status === 'present';
+                const isAbs = a.status === 'absent';
+                const itemCls = isPres ? 'present' : (isAbs ? 'absent' : '');
+
+                return `<div class="uncle-att-item att-detail-item ${itemCls}">
                     ${buildAttPersonAvatar(a.student_name, imgUrl)}
-                    <div style="flex:1;min-width:0;">
-                        <div style="font-weight:700;font-size:.88rem;">${escHtml(a.student_name)}</div>
-                        <div class="att-person-meta">${escHtml(a.class || '—')} · ${escHtml(a.recorded_by || '—')}</div>
+                    <div class="att-person-info">
+                        <div class="att-person-name" title="${escHtml(a.student_name)}" style="cursor:pointer;" onclick="showStudentDetails(${a.student_id})">
+                            ${escHtml(a.student_name)}
+                        </div>
+                        <div class="att-person-badges">
+                            <span class="att-person-meta-tag"><i class="fas fa-layer-group"></i> ${escHtml(a.class || '—')}</span>
+                            ${a.recorded_by ? `<span class="att-person-meta-tag"><i class="fas fa-user-check"></i> ${escHtml(a.recorded_by)}</span>` : ''}
+                        </div>
                     </div>
-                    <div class="toggle-btns">
-                        <button type="button" class="att-toggle-btn${pCls}" onclick="setKidAttendanceStatus(${a.id},'present','${date}','${a.status}')"><i class="fas fa-check"></i> حاضر</button>
-                        <button type="button" class="att-toggle-btn${aCls}" onclick="setKidAttendanceStatus(${a.id},'absent','${date}','${a.status}')"><i class="fas fa-times"></i> غائب</button>
-                        <button type="button" class="btn btn-outline btn-sm toolbar-clear-btn" title="حذف" onclick="deleteAttendanceRecord(${a.id},'${date}',true)" style="color:var(--danger);border-color:rgba(220,38,38,.25);"><i class="fas fa-trash"></i></button>
+                    
+                    <div class="att-segmented-control">
+                        <button type="button" class="att-segment-btn ${isPres ? 'present-active' : ''}" 
+                            onclick="setKidAttendanceStatus(${a.id}, 'present', '${date}', '${a.status}')" title="تسجيل حاضر">
+                            <i class="fas fa-check"></i> حاضر
+                        </button>
+                        <button type="button" class="att-segment-btn ${isAbs ? 'absent-active' : ''}" 
+                            onclick="setKidAttendanceStatus(${a.id}, 'absent', '${date}', '${a.status}')" title="تسجيل غائب">
+                            <i class="fas fa-times"></i> غائب
+                        </button>
                     </div>
+
+                    <button type="button" class="att-del-btn" title="حذف السجل" onclick="deleteAttendanceRecord(${a.id}, '${date}', false)">
+                        <i class="fas fa-trash-alt"></i>
+                    </button>
                 </div>`;
             }).join('');
         }
 
+        // Backward compatibility
+        function renderAttendanceTable(att, date) {
+            currentKidAttendanceList = att;
+            renderKidAttendanceCards(date);
+        }
+
         async function setKidAttendanceStatus(id, status, date, current) {
             if (current === status) return;
+            
+            // Optimistic update
+            const rec = currentKidAttendanceList.find(x => x.id == id);
+            if (rec) rec.status = status;
+            renderKidAttendanceCards(date);
+
             const fd = mkFd('updateSingleAttendance');
             fd.append('attendance_id', id);
             fd.append('status', status);
-            const d = await fetch(API_URL, { method: 'POST', body: fd }).then(r => r.json()).catch(() => ({ success: false }));
+            const d = await fetch(API_URL, { method: 'POST', body: fd, credentials: 'include' }).then(r => r.json()).catch(() => ({ success: false }));
             if (d.success) {
-                showToast('تم التحديث', 'success');
-                loadAttendanceForDate(date);
-                renderFridayCards();
+                showToast('تم تحديث حالة الحضور', 'success');
+                // Update stats cache
+                const pCount = currentKidAttendanceList.filter(a => a.status === 'present').length;
+                const aCount = currentKidAttendanceList.filter(a => a.status === 'absent').length;
+                _saveLocalCache(`att_stats_${date}`, { p: pCount, a: aCount });
+                const ep = document.getElementById(`p_${date}`);
+                const ea = document.getElementById(`a_${date}`);
+                if (ep) ep.textContent = `حاضر: ${pCount}`;
+                if (ea) ea.textContent = `غائب: ${aCount}`;
             } else {
-                showToast(d.message || 'فشل', 'error');
+                showToast(d.message || 'فشل التحديث', 'error');
+                loadAttendanceForDate(date);
             }
         }
         window.setKidAttendanceStatus = setKidAttendanceStatus;
+
+        async function bulkSetKidAttendance(status) {
+            if (!currentKidAttendanceList || !currentKidAttendanceList.length) return;
+            const targetList = currentKidAttendanceList.filter(a => a.status !== status);
+            if (!targetList.length) {
+                showToast(`الجميع بالفعل بحالة ${status === 'present' ? 'حاضر' : 'غائب'}`, 'info');
+                return;
+            }
+
+            const label = status === 'present' ? 'تحضير الكل' : 'تغييب الكل';
+            if (!(await showConfirm({ message: `هل أنت متأكد من ${label} (${targetList.length} طفل)؟` }))) return;
+
+            showToast('جاري التحديث...', 'info');
+            try {
+                for (const item of targetList) {
+                    const fd = mkFd('updateSingleAttendance');
+                    fd.append('attendance_id', item.id);
+                    fd.append('status', status);
+                    await fetch(API_URL, { method: 'POST', body: fd, credentials: 'include' });
+                }
+                showToast(`تم ${label} بنجاح`, 'success');
+                loadAttendanceForDate(currentAttendanceDate);
+                renderFridayCards();
+            } catch (err) {
+                console.error(err);
+                showToast('حدث خطأ أثناء التحديث الجماعي', 'error');
+                loadAttendanceForDate(currentAttendanceDate);
+            }
+        }
+        window.bulkSetKidAttendance = bulkSetKidAttendance;
+
+        async function deleteCurrentDayAttendance() {
+            if (!currentAttendanceDate || !currentKidAttendanceList.length) return;
+            if (!(await showConfirm({ 
+                title: 'تأكيد حذف كشف اليوم بالكامل',
+                message: `هل أنت متأكد من حذف جميع سجلات حضور يوم (${currentAttendanceDate}) البالغ عددها ${currentKidAttendanceList.length} سجل؟ لا يمكن التراجع عن هذا الإجراء!`, 
+                danger: true 
+            }))) return;
+
+            showToast('جاري حذف كشف اليوم...', 'info');
+            try {
+                for (const item of currentKidAttendanceList) {
+                    const fd = mkFd('deleteAttendance');
+                    fd.append('attendance_id', item.id);
+                    await fetch(API_URL, { method: 'POST', body: fd, credentials: 'include' });
+                }
+                showToast('تم حذف كشف اليوم بالكامل', 'success');
+                closeAttendanceDetail();
+            } catch (err) {
+                console.error(err);
+                showToast('حدث خطأ أثناء حذف الكشف', 'error');
+                loadAttendanceForDate(currentAttendanceDate);
+            }
+        }
+        window.deleteCurrentDayAttendance = deleteCurrentDayAttendance;
+
         async function toggleAttendanceStatus(id, curr, date, skipConfirm) {
             const nxt = curr === 'present' ? 'absent' : 'present';
             if (!skipConfirm && !(await showConfirm({ message: `تغيير الحالة إلى ${nxt === 'present' ? 'حاضر' : 'غائب'}؟` }))) return;
-
-            const fd = new FormData();
-            fd.append('action', 'updateSingleAttendance');
-            fd.append('attendance_id', id);
-            fd.append('status', nxt);
-
-            const d = await fetch(API_URL, { method: 'POST', body: fd })
-                .then(r => r.json())
-                .catch(() => ({ success: false }));
-
-            if (d.success) {
-                showToast('تم التحديث', 'success');
-                loadAttendanceForDate(date);
-                renderFridayCards();
-            } else {
-                showToast(d.message || 'فشل', 'error');
-            }
+            setKidAttendanceStatus(id, nxt, date, curr);
         }
+        window.toggleAttendanceStatus = toggleAttendanceStatus;
+
         async function deleteAttendanceRecord(id, date, skipConfirm) {
             if (!skipConfirm && !(await showConfirm({ message: 'حذف سجل الحضور؟', danger: true }))) return;
 
-            const fd = new FormData();
-            fd.append('action', 'deleteAttendance');
+            const fd = mkFd('deleteAttendance');
             fd.append('attendance_id', id);
 
-            const d = await fetch(API_URL, { method: 'POST', body: fd })
+            const d = await fetch(API_URL, { method: 'POST', body: fd, credentials: 'include' })
                 .then(r => r.json())
                 .catch(() => ({ success: false }));
 
@@ -21137,6 +21706,7 @@
                 showToast(d.message || 'فشل', 'error');
             }
         }
+        window.deleteAttendanceRecord = deleteAttendanceRecord;
         // Manual attendance
         function showAddAttendanceModal() {
             document.getElementById('manualAttDate').value = new Date().toISOString().split('T')[0];
@@ -27558,26 +28128,39 @@
         }
 
         // Load detail for a date
+        let currentUncleAttendanceList = [];
+        let uncleAttFilterQuery = '';
+        let uncleAttStatusFilter = 'all';
+
         async function ua2LoadDate(date) {
             ua2Date = date;
             const fd = mkFd('getUncleAttendanceByDate');
             fd.append('date', date);
-            const data = await fetch(API_URL, { method: 'POST', body: fd }).then(r => r.json()).catch(() => ({ success: false }));
+            const data = await fetch(API_URL, { method: 'POST', body: fd, credentials: 'include' }).then(r => r.json()).catch(() => ({ success: false }));
             if (!data.success) { showToast('خطأ في تحميل حضور الخُدام', 'error'); return; }
-            const att = data.attendance || [];
-            const present = att.filter(a => a.status === 'present').length;
-            const absent = att.filter(a => a.status === 'absent').length;
-            const total = att.length;
+            
+            currentUncleAttendanceList = data.attendance || [];
+            uncleAttFilterQuery = '';
+            uncleAttStatusFilter = 'all';
+            const searchInp = document.getElementById('uncleAttDetailSearch');
+            if (searchInp) searchInp.value = '';
+            updateUncleAttFilterButtonsUI();
+
+            const present = currentUncleAttendanceList.filter(a => a.status === 'present').length;
+            const absent = currentUncleAttendanceList.filter(a => a.status === 'absent').length;
+            const total = currentUncleAttendanceList.length;
             const rate = total > 0 ? Math.round(present / total * 100) : 0;
             const dateObj = new Date(date + 'T00:00:00');
-            document.getElementById('uncleAttDetailTitle2').textContent =
-                dateObj.toLocaleDateString('ar-EG', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+            const dateStr = dateObj.toLocaleDateString('ar-EG', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+            
+            document.getElementById('uncleAttDetailTitle2').innerHTML = `<i class="fas fa-calendar-day" style="color:var(--brand);"></i> ${escHtml(dateStr)}`;
             document.getElementById('uncleAttSummaryBoxes2').innerHTML = `
             <div class="sbox"><div class="sv">${total}</div><div class="sl">إجمالي</div></div>
             <div class="sbox"><div class="sv" style="color:var(--success);">${present}</div><div class="sl">حاضر</div></div>
             <div class="sbox"><div class="sv" style="color:var(--danger);">${absent}</div><div class="sl">غائب</div></div>
             <div class="sbox"><div class="sv" style="color:${rate >= 70 ? 'var(--success)' : 'var(--danger)'};">${rate}%</div><div class="sl">نسبة الحضور</div></div>`;
-            ua2RenderTable(att, date);
+            
+            renderUncleAttendanceCards(date);
             document.getElementById('uncleAttendanceDetail2').style.display = 'block';
             document.getElementById('uncleFridaysList2').style.display = 'none';
         }
@@ -27585,64 +28168,189 @@
 
         function closeUncleAttendanceDetail2() {
             ua2Date = null;
+            currentUncleAttendanceList = [];
             document.getElementById('uncleAttendanceDetail2').style.display = 'none';
             document.getElementById('uncleFridaysList2').style.display = 'block';
             renderUa2FridayCards();
         }
         window.closeUncleAttendanceDetail2 = closeUncleAttendanceDetail2;
 
-        function ua2RenderTable(att, date) {
+        function updateUncleAttFilterButtonsUI() {
+            ['all', 'present', 'absent'].forEach(st => {
+                const btn = document.getElementById(`uncleAttFilterBtn_${st}`);
+                if (btn) {
+                    if (st === uncleAttStatusFilter) btn.classList.add('active');
+                    else btn.classList.remove('active');
+                }
+            });
+        }
+
+        function filterUncleAttendanceDetailView(query) {
+            uncleAttFilterQuery = (query || '').trim().toLowerCase();
+            renderUncleAttendanceCards(ua2Date);
+        }
+        window.filterUncleAttendanceDetailView = filterUncleAttendanceDetailView;
+
+        function filterUncleAttStatus(status) {
+            uncleAttStatusFilter = status;
+            updateUncleAttFilterButtonsUI();
+            renderUncleAttendanceCards(ua2Date);
+        }
+        window.filterUncleAttStatus = filterUncleAttStatus;
+
+        function renderUncleAttendanceCards(date) {
             const tb = document.getElementById('uncleAttendanceTable2');
             if (!tb) return;
-            if (!att.length) {
-                tb.innerHTML = `<div class="empty-state" style="padding:28px;"><i class="fas fa-user-slash"></i><h3>لا توجد سجلات حضور خُدام لهذا اليوم</h3></div>`;
+
+            const allCount = currentUncleAttendanceList.length;
+            const presCount = currentUncleAttendanceList.filter(a => a.status === 'present').length;
+            const absCount = currentUncleAttendanceList.filter(a => a.status === 'absent').length;
+
+            const cAll = document.getElementById('uncleAttCount_all');
+            const cPres = document.getElementById('uncleAttCount_present');
+            const cAbs = document.getElementById('uncleAttCount_absent');
+            if (cAll) cAll.textContent = `(${allCount})`;
+            if (cPres) cPres.textContent = `(${presCount})`;
+            if (cAbs) cAbs.textContent = `(${absCount})`;
+
+            let filtered = currentUncleAttendanceList;
+
+            // Status filter
+            if (uncleAttStatusFilter === 'present') {
+                filtered = filtered.filter(a => a.status === 'present');
+            } else if (uncleAttStatusFilter === 'absent') {
+                filtered = filtered.filter(a => a.status === 'absent');
+            }
+
+            // Text search
+            if (uncleAttFilterQuery) {
+                filtered = filtered.filter(a => {
+                    const name = (a.uncle_name || '').toLowerCase();
+                    const by = (a.recorded_by_name || '').toLowerCase();
+                    return name.includes(uncleAttFilterQuery) || by.includes(uncleAttFilterQuery);
+                });
+            }
+
+            if (!filtered.length) {
+                tb.innerHTML = `<div class="empty-state" style="padding:32px;grid-column:1/-1;text-align:center;">
+                    <i class="fas fa-user-slash" style="font-size:2.2rem;color:var(--text-3);margin-bottom:10px;"></i>
+                    <h3 style="color:var(--text-2);font-weight:700;">لا توجد سجلات مطابقة للبحث أو التصفية</h3>
+                </div>`;
                 return;
             }
-            tb.innerHTML = att.map(a => {
+
+            tb.innerHTML = filtered.map(a => {
                 const roleText = a.role === 'admin' ? 'مسؤول' : 'خادم';
-                const pCls = a.status === 'present' ? ' present' : '';
-                const aCls = a.status === 'absent' ? ' absent' : '';
-                return `<div class="uncle-att-item att-detail-item">
+                const isPres = a.status === 'present';
+                const isAbs = a.status === 'absent';
+                const itemCls = isPres ? 'present' : (isAbs ? 'absent' : '');
+
+                return `<div class="uncle-att-item att-detail-item ${itemCls}">
                     ${buildAttPersonAvatar(a.uncle_name, a.image_url || '')}
-                    <div style="flex:1;min-width:0;">
-                        <div style="font-weight:700;font-size:.88rem;">${escHtml(a.uncle_name)}</div>
-                        <div class="att-person-meta">${roleText}${a.recorded_by_name ? ' · ' + escHtml(a.recorded_by_name) : ''}</div>
+                    <div class="att-person-info">
+                        <div class="att-person-name" title="${escHtml(a.uncle_name)}">
+                            ${escHtml(a.uncle_name)}
+                        </div>
+                        <div class="att-person-badges">
+                            <span class="att-person-meta-tag"><i class="fas fa-shield-alt"></i> ${roleText}</span>
+                            ${a.recorded_by_name ? `<span class="att-person-meta-tag"><i class="fas fa-user-check"></i> ${escHtml(a.recorded_by_name)}</span>` : ''}
+                        </div>
                     </div>
-                    <div class="toggle-btns">
-                        <button type="button" class="att-toggle-btn${pCls}" onclick="setUa2AttendanceStatus(${a.id},'present','${date}','${a.status}')"><i class="fas fa-check"></i> حاضر</button>
-                        <button type="button" class="att-toggle-btn${aCls}" onclick="setUa2AttendanceStatus(${a.id},'absent','${date}','${a.status}')"><i class="fas fa-times"></i> غائب</button>
-                        <button type="button" class="btn btn-outline btn-sm toolbar-clear-btn" title="حذف" onclick="ua2Delete(${a.id},'${date}')" style="color:var(--danger);border-color:rgba(220,38,38,.25);"><i class="fas fa-trash"></i></button>
+                    
+                    <div class="att-segmented-control">
+                        <button type="button" class="att-segment-btn ${isPres ? 'present-active' : ''}" 
+                            onclick="setUa2AttendanceStatus(${a.id}, 'present', '${date}', '${a.status}')" title="تسجيل حاضر">
+                            <i class="fas fa-check"></i> حاضر
+                        </button>
+                        <button type="button" class="att-segment-btn ${isAbs ? 'absent-active' : ''}" 
+                            onclick="setUa2AttendanceStatus(${a.id}, 'absent', '${date}', '${a.status}')" title="تسجيل غائب">
+                            <i class="fas fa-times"></i> غائب
+                        </button>
                     </div>
+
+                    <button type="button" class="att-del-btn" title="حذف السجل" onclick="ua2Delete(${a.id}, '${date}')">
+                        <i class="fas fa-trash-alt"></i>
+                    </button>
                 </div>`;
             }).join('');
         }
 
+        // Backward compatibility
+        function ua2RenderTable(att, date) {
+            currentUncleAttendanceList = att;
+            renderUncleAttendanceCards(date);
+        }
+
         async function setUa2AttendanceStatus(id, status, date, current) {
             if (current === status) return;
+            
+            // Optimistic update
+            const rec = currentUncleAttendanceList.find(x => x.id == id);
+            if (rec) rec.status = status;
+            renderUncleAttendanceCards(date);
+
             const fd = mkFd('toggleUncleAttendance');
             fd.append('id', id);
             fd.append('status', status);
-            const d = await fetch(API_URL, { method: 'POST', body: fd }).then(r => r.json()).catch(() => ({ success: false }));
-            if (d.success) { showToast('تم التحديث', 'success'); ua2LoadDate(date); renderUa2FridayCards(); }
-            else showToast('فشل', 'error');
+            const d = await fetch(API_URL, { method: 'POST', body: fd, credentials: 'include' }).then(r => r.json()).catch(() => ({ success: false }));
+            if (d.success) { 
+                showToast('تم تحديث حالة حضور الخادم', 'success'); 
+                // Update stats cache
+                const pCount = currentUncleAttendanceList.filter(a => a.status === 'present').length;
+                const aCount = currentUncleAttendanceList.filter(a => a.status === 'absent').length;
+                _saveLocalCache(`ua2_att_stats_${date}`, { p: pCount, a: aCount });
+                const ep = document.getElementById(`ua2p_${date}`);
+                const ea = document.getElementById(`ua2a_${date}`);
+                if (ep) ep.textContent = `حاضر: ${pCount}`;
+                if (ea) ea.textContent = `غائب: ${aCount}`;
+            } else {
+                showToast('فشل التحديث', 'error');
+                ua2LoadDate(date);
+            }
         }
         window.setUa2AttendanceStatus = setUa2AttendanceStatus;
 
+        async function bulkSetUncleAttendance(status) {
+            if (!currentUncleAttendanceList || !currentUncleAttendanceList.length) return;
+            const targetList = currentUncleAttendanceList.filter(a => a.status !== status);
+            if (!targetList.length) {
+                showToast(`الجميع بالفعل بحالة ${status === 'present' ? 'حاضر' : 'غائب'}`, 'info');
+                return;
+            }
+
+            const label = status === 'present' ? 'تحضير كل الخُدام' : 'تغييب كل الخُدام';
+            if (!(await showConfirm({ message: `هل أنت متأكد من ${label} (${targetList.length} خادم)؟` }))) return;
+
+            showToast('جاري التحديث...', 'info');
+            try {
+                for (const item of targetList) {
+                    const fd = mkFd('toggleUncleAttendance');
+                    fd.append('id', item.id);
+                    fd.append('status', status);
+                    await fetch(API_URL, { method: 'POST', body: fd, credentials: 'include' });
+                }
+                showToast(`تم ${label} بنجاح`, 'success');
+                ua2LoadDate(ua2Date);
+                renderUa2FridayCards();
+            } catch (err) {
+                console.error(err);
+                showToast('حدث خطأ أثناء التحديث الجماعي', 'error');
+                ua2LoadDate(ua2Date);
+            }
+        }
+        window.bulkSetUncleAttendance = bulkSetUncleAttendance;
+
         async function ua2Toggle(id, curr, date) {
             const nxt = curr === 'present' ? 'absent' : 'present';
-            const fd = mkFd('toggleUncleAttendance');
-            fd.append('id', id); fd.append('status', nxt);
-            const d = await fetch(API_URL, { method: 'POST', body: fd }).then(r => r.json()).catch(() => ({ success: false }));
-            if (d.success) { showToast('تم التحديث', 'success'); ua2LoadDate(date); renderUa2FridayCards(); }
-            else showToast('فشل', 'error');
+            setUa2AttendanceStatus(id, nxt, date, curr);
         }
         window.ua2Toggle = ua2Toggle;
 
         async function ua2Delete(id, date) {
-            if (!(await showConfirm({ message: 'حذف سجل حضور الخادم؟' }))) return;
+            if (!(await showConfirm({ message: 'حذف سجل حضور الخادم؟', danger: true }))) return;
             const fd = mkFd('deleteUncleAttendance');
             fd.append('id', id);
-            const d = await fetch(API_URL, { method: 'POST', body: fd }).then(r => r.json()).catch(() => ({ success: false }));
+            const d = await fetch(API_URL, { method: 'POST', body: fd, credentials: 'include' }).then(r => r.json()).catch(() => ({ success: false }));
             if (d.success) { showToast('تم الحذف', 'success'); ua2LoadDate(date); renderUa2FridayCards(); }
             else showToast('فشل', 'error');
         }
@@ -32766,7 +33474,7 @@
 
                 if (['students', 'attendance', 'guests', 'pending', 'uncles'].includes(currentExportTab)) {
                     const wrap = document.createElement('div');
-                    wrap.style.cssText = 'display:flex; flex-direction:column; gap:2px;';
+                    wrap.style.cssText = 'display:flex; flex-direction:column; gap:4px;';
                     const label = document.createElement('label');
                     label.style.cssText = 'font-size:0.73rem; font-weight:700; color:var(--text-2); margin:0;';
                     label.textContent = 'تصفية حسب الفصل:';
@@ -32774,7 +33482,7 @@
                     const sel = document.createElement('select');
                     sel.className = 'form-select';
                     sel.id = 'tabExportFilterClass';
-                    sel.style.cssText = 'font-size:0.75rem; padding:4px 8px; height:32px; width:100%; background:var(--surface); color:var(--text); border:1.5px solid var(--border-solid); border-radius:var(--r-md);';
+                    sel.style.cssText = 'font-size:0.78rem; padding:0 10px 0 28px; height:34px; width:100%;';
                     sel.onchange = () => { onTabExportFilterChange(); };
 
                     let uniqueClasses = [];
@@ -32786,8 +33494,8 @@
                     }
                     uniqueClasses.sort();
 
-                    sel.innerHTML = '<option value="all" style="background:var(--surface); color:var(--text);">جميع الفصول</option>' +
-                        uniqueClasses.map(c => `<option value="${escHtml(c)}" style="background:var(--surface); color:var(--text);">${escHtml(c)}</option>`).join('');
+                    sel.innerHTML = '<option value="all">جميع الفصول</option>' +
+                        uniqueClasses.map(c => `<option value="${escHtml(c)}">${escHtml(c)}</option>`).join('');
 
                     wrap.appendChild(label);
                     wrap.appendChild(sel);
@@ -32796,7 +33504,7 @@
 
                 if (['uncles', 'uncleAttendance'].includes(currentExportTab)) {
                     const wrap = document.createElement('div');
-                    wrap.style.cssText = 'display:flex; flex-direction:column; gap:2px;';
+                    wrap.style.cssText = 'display:flex; flex-direction:column; gap:4px;';
                     const label = document.createElement('label');
                     label.style.cssText = 'font-size:0.73rem; font-weight:700; color:var(--text-2); margin:0;';
                     label.textContent = 'تصفية حسب الدور:';
@@ -32804,13 +33512,21 @@
                     const sel = document.createElement('select');
                     sel.className = 'form-select';
                     sel.id = 'tabExportFilterRole';
-                    sel.style.cssText = 'font-size:0.75rem; padding:4px 8px; height:32px; width:100%; background:var(--surface); color:var(--text); border:1.5px solid var(--border-solid); border-radius:var(--r-md);';
+                    sel.style.cssText = 'font-size:0.78rem; padding:0 10px 0 28px; height:34px; width:100%;';
                     sel.onchange = () => { onTabExportFilterChange(); };
-                    sel.innerHTML = '<option value="all" style="background:var(--surface); color:var(--text);">جميع الأدوار</option><option value="admin" style="background:var(--surface); color:var(--text);">مسؤول فقط</option><option value="uncle" style="background:var(--surface); color:var(--text);">خادم فقط</option>';
+                    sel.innerHTML = '<option value="all">جميع الأدوار</option><option value="admin">مسؤول فقط</option><option value="uncle">خادم فقط</option>';
 
                     wrap.appendChild(label);
                     wrap.appendChild(sel);
                     container.appendChild(wrap);
+                }
+
+                if (typeof initCustomSelects === 'function') {
+                    try {
+                        initCustomSelects(container);
+                    } catch (e) {
+                        console.warn('initCustomSelects container error:', e);
+                    }
                 }
             }
 
