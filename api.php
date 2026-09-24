@@ -26214,7 +26214,44 @@ function getCouponLogs()
             }
         }
 
-        // 5. Fetch from attendance (Presence coupons)
+        // 5. Fetch church settings for default attendance day and coupon rate
+        $churchId = intval($studentMeta['church_id'] ?? getChurchId());
+        $dayNames = [
+            1 => 'الاثنين',
+            2 => 'الثلاثاء',
+            3 => 'الأربعاء',
+            4 => 'الخميس',
+            5 => 'الجمعة',
+            6 => 'السبت',
+            7 => 'الأحد',
+        ];
+        $churchAttendanceDayNum = 5;
+        $churchCouponsPerAtt = 100;
+        $churchCouponsEnabled = 1;
+
+        if ($churchId > 0) {
+            ensureChurchSettingsTable($conn);
+            $csStmt = $conn->prepare("SELECT attendance_day, coupons_enabled, coupons_count FROM church_settings WHERE church_id = ? LIMIT 1");
+            if ($csStmt) {
+                $csStmt->bind_param("i", $churchId);
+                $csStmt->execute();
+                $csRow = $csStmt->get_result()->fetch_assoc();
+                if ($csRow) {
+                    if (isset($csRow['attendance_day']) && intval($csRow['attendance_day']) > 0) {
+                        $churchAttendanceDayNum = intval($csRow['attendance_day']);
+                    }
+                    if (isset($csRow['coupons_enabled'])) {
+                        $churchCouponsEnabled = intval($csRow['coupons_enabled']);
+                    }
+                    if (isset($csRow['coupons_count']) && intval($csRow['coupons_count']) > 0) {
+                        $churchCouponsPerAtt = intval($csRow['coupons_count']);
+                    }
+                }
+            }
+        }
+        $defaultChurchDayName = $dayNames[$churchAttendanceDayNum] ?? 'الجمعة';
+
+        // 6. Fetch from attendance (Presence coupons)
         $attTblCheck = $conn->query("SHOW TABLES LIKE 'attendance'");
         if ($attTblCheck && $attTblCheck->num_rows > 0 && $studentId > 0) {
             $attStmt = $conn->prepare("
@@ -26226,47 +26263,95 @@ function getCouponLogs()
                 FROM attendance a
                 LEFT JOIN uncles u ON a.uncle_id = u.id
                 WHERE a.student_id = ? AND a.status = 'present'
-                ORDER BY a.attendance_date DESC
+                ORDER BY a.attendance_date ASC
             ");
             if ($attStmt) {
                 $attStmt->bind_param("i", $studentId);
                 $attStmt->execute();
                 $attRes = $attStmt->get_result();
+                $attRows = [];
                 while ($aRow = $attRes->fetch_assoc()) {
+                    $attRows[] = $aRow;
+                }
+                $attCount = count($attRows);
+
+                // Determine settled coupons per attendance
+                $perAttAward = ($churchCouponsEnabled === 0) ? 0 : $churchCouponsPerAtt;
+                $stuAttCoupons = intval($studentMeta['attendance_coupons'] ?? 0);
+                if ($stuAttCoupons > 0 && $attCount > 0 && ($stuAttCoupons % $attCount === 0)) {
+                    $perAttAward = intval($stuAttCoupons / $attCount);
+                }
+
+                foreach ($attRows as $aRow) {
+                    $dayNumOfDate = (int)date('N', strtotime($aRow['attendance_date']));
+                    $dayLabel = ($dayNumOfDate === $churchAttendanceDayNum) 
+                        ? $defaultChurchDayName 
+                        : ($dayNames[$dayNumOfDate] ?? $defaultChurchDayName);
+
+                    $rawTime = (!empty($aRow['raw_date']) && strpos($aRow['raw_date'], ' ') !== false)
+                        ? $aRow['raw_date'] 
+                        : ($aRow['attendance_date'] . ' 10:00:00');
+
                     $logs[] = [
                         'id' => 'att_' . $aRow['id'],
                         'old_count' => '---',
                         'new_count' => '---',
-                        'change_amount' => 1,
+                        'change_amount' => $perAttAward,
                         'change_type' => 'attendance',
-                        'reason' => 'حضور خدمة (' . $aRow['formatted_date'] . ')',
+                        'reason' => 'حضور ' . $dayLabel . ' (' . $aRow['formatted_date'] . ')',
                         'uncle_name' => $aRow['uncle_name'] ?? 'مسؤول الحضور',
                         'created_at' => $aRow['formatted_date'],
-                        'raw_date' => $aRow['raw_date'] ?? ($aRow['attendance_date'] . ' 00:00:00')
+                        'raw_date' => $rawTime
                     ];
                 }
             }
         }
 
-        // 6. Commitment / Initial Balance from student profile
+        // 7. Commitment / Initial Balance from student profile
         if ($studentMeta) {
+            $totCoupons = intval($studentMeta['coupons'] ?? 0);
             $comAmt = intval($studentMeta['commitment_coupons'] ?? 0);
-            if ($comAmt > 0) {
+            $taskCoupons = intval($studentMeta['task_coupons'] ?? 0);
+            $attCouponsInMeta = intval($studentMeta['attendance_coupons'] ?? 0);
+
+            // Determine opening balance: commitment_coupons or base non-attendance non-task coupons
+            $openingBalance = $comAmt;
+            if ($openingBalance === 0 && $totCoupons > ($attCouponsInMeta + $taskCoupons)) {
+                $openingBalance = max(0, $totCoupons - $attCouponsInMeta - $taskCoupons);
+            }
+
+            if ($openingBalance > 0) {
+                // Determine raw_date for opening balance so it occurs chronologically BEFORE attendance
+                $firstEventDate = null;
+                foreach ($logs as $l) {
+                    if (!empty($l['raw_date'])) {
+                        $ts = strtotime($l['raw_date']);
+                        if ($ts && ($firstEventDate === null || $ts < $firstEventDate)) {
+                            $firstEventDate = $ts;
+                        }
+                    }
+                }
+                $openDateStr = '1970-01-01 00:00:00';
+                if ($firstEventDate !== null) {
+                    $openDateStr = date('Y-m-d H:i:s', $firstEventDate - 86400); // 1 day before earliest event
+                } elseif (!empty($studentMeta['created_at']) && $studentMeta['created_at'] !== '0000-00-00 00:00:00') {
+                    $openDateStr = $studentMeta['created_at'];
+                }
+
                 $logs[] = [
                     'id' => 'com_' . $studentId,
-                    'old_count' => '---',
-                    'new_count' => '---',
-                    'change_amount' => $comAmt,
+                    'old_count' => 0,
+                    'new_count' => $openingBalance,
+                    'change_amount' => $openingBalance,
                     'change_type' => 'commitment',
-                    'reason' => 'رصيد التزام / رصيد افتتاحي',
+                    'reason' => ($comAmt > 0) ? 'رصيد التزام / رصيد افتتاحي' : 'رصيد افتتاحي مقيد للطفل',
                     'uncle_name' => 'النظام',
-                    'created_at' => !empty($studentMeta['created_at']) ? date('d/m/Y H:i', strtotime($studentMeta['created_at'])) : '---',
-                    'raw_date' => $studentMeta['created_at'] ?? '1970-01-01 00:00:00'
+                    'created_at' => (!empty($studentMeta['created_at']) && $studentMeta['created_at'] !== '0000-00-00 00:00:00') ? date('d/m/Y', strtotime($studentMeta['created_at'])) : '---',
+                    'raw_date' => $openDateStr
                 ];
             }
 
             // Fallback: If still no logs found, but student has positive coupons
-            $totCoupons = intval($studentMeta['coupons'] ?? 0);
             if (empty($logs) && $totCoupons > 0) {
                 $logs[] = [
                     'id' => 'init_' . $studentId,
@@ -26276,16 +26361,22 @@ function getCouponLogs()
                     'change_type' => 'initial',
                     'reason' => 'رصيد الكوبونات المقيد للطفل',
                     'uncle_name' => 'النظام',
-                    'created_at' => !empty($studentMeta['created_at']) ? date('d/m/Y H:i', strtotime($studentMeta['created_at'])) : date('d/m/Y'),
+                    'created_at' => !empty($studentMeta['created_at']) ? date('d/m/Y', strtotime($studentMeta['created_at'])) : date('d/m/Y'),
                     'raw_date' => $studentMeta['created_at'] ?? date('Y-m-d H:i:s')
                 ];
             }
         }
 
-        // 7. Calculate chronological running balance for entries with missing old/new count
+        // 8. Calculate chronological running balance for entries with missing old/new count
         usort($logs, function ($a, $b) {
             $ta = strtotime($a['raw_date'] ?? '1970-01-01');
             $tb = strtotime($b['raw_date'] ?? '1970-01-01');
+            if ($ta === $tb) {
+                $priority = ['commitment' => 1, 'initial' => 1, 'attendance' => 2, 'task' => 3, 'refund' => 4, 'manual' => 5, 'withdraw' => 6];
+                $pa = $priority[$a['change_type'] ?? ''] ?? 5;
+                $pb = $priority[$b['change_type'] ?? ''] ?? 5;
+                return $pa <=> $pb;
+            }
             return $ta <=> $tb;
         });
 
