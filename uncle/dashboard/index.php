@@ -13353,6 +13353,11 @@ $showSettings = $hasChurchId || $isDevOrAdmin;
                                     style="flex: 1; padding:8px 10px;font-size:.78rem; display:flex; align-items:center; justify-content:center; gap:4px; border-radius: var(--r-md);">
                                     <i class="fas fa-history"></i> النشاطات
                                 </button>
+                                <button type="button" class="btn btn-secondary btn-sm" id="uncleProfileDownloadBtn"
+                                    onclick="triggerPwaInstall()"
+                                    style="width: 100%; padding:8px 10px;font-size:.78rem; display:flex; align-items:center; justify-content:center; gap:6px; border-radius: var(--r-md); margin-top: 2px;">
+                                    <i class="fas fa-download"></i> تنزيل كـ تطبيق
+                                </button>
                             </div>
                         </div>
 
@@ -13488,6 +13493,19 @@ $showSettings = $hasChurchId || $isDevOrAdmin;
                                             والترتيب</div>
                                     </div>
                                 </a>
+                                <button type="button" class="settings-hub-card" id="uncleHubDownloadBtn"
+                                    onclick="triggerPwaInstall()"
+                                    style="max-width: 100%; aspect-ratio: auto; min-height: 80px; display: flex; flex-direction: row; align-items: center; justify-content: flex-start; padding: 12px; gap: 12px; border-radius: 12px;">
+                                    <div class="settings-hub-icon"
+                                        style="background:rgba(91, 108, 245, 0.1);color:var(--brand); width: 40px; height: 40px; font-size: 1.1rem; border-radius: 10px; display: flex; align-items: center; justify-content: center;">
+                                        <i class="fas fa-download"></i>
+                                    </div>
+                                    <div style="text-align: right;">
+                                        <div class="settings-hub-title"
+                                            style="font-size: 0.8rem; font-weight: 800; color: var(--text);">تنزيل كـ تطبيق</div>
+                                        <div style="font-size: 0.68rem; color: var(--text-3); margin-top: 2px;" id="uncleHubDownloadSubtitle">تثبيت على الهاتف</div>
+                                    </div>
+                                </button>
                             </div>
                         </div>
                     </div>
@@ -16745,6 +16763,7 @@ $showSettings = $hasChurchId || $isDevOrAdmin;
 
             // Show Profile directly
             openUncleAccountPage('profile');
+            if (typeof updatePwaInstallUI === 'function') updatePwaInstallUI();
             stopAutoRefresh();
         }
 
@@ -28365,10 +28384,29 @@ $showSettings = $hasChurchId || $isDevOrAdmin;
         // ══════════════════════════════════════════════════════════════
         let _pwaPrompt = null;
 
+        function updatePwaInstallUI() {
+            const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+            const btn = document.getElementById('uncleProfileDownloadBtn');
+            const hubBtn = document.getElementById('uncleHubDownloadBtn');
+            const hubSub = document.getElementById('uncleHubDownloadSubtitle');
+
+            if (isStandalone) {
+                if (btn) {
+                    btn.innerHTML = '<i class="fas fa-check-circle" style="color:var(--success);"></i> التطبيق مثبت';
+                    btn.onclick = () => showToast('✅ التطبيق مثبت بالفعل وتعمل من داخله الآن!', 'success');
+                }
+                if (hubBtn) {
+                    if (hubSub) hubSub.textContent = 'التطبيق مثبت بالفعل';
+                    hubBtn.onclick = () => showToast('✅ التطبيق مثبت بالفعل وتعمل من داخله الآن!', 'success');
+                }
+            }
+        }
+
         // Capture the install prompt
         window.addEventListener('beforeinstallprompt', e => {
             e.preventDefault();
             _pwaPrompt = e;
+            updatePwaInstallUI();
         });
 
         // App installed
@@ -28376,7 +28414,11 @@ $showSettings = $hasChurchId || $isDevOrAdmin;
             _pwaPrompt = null;
             closePwaModal();
             showToast('✅ تم تثبيت التطبيق بنجاح!', 'success');
+            updatePwaInstallUI();
         });
+
+        window.addEventListener('DOMContentLoaded', updatePwaInstallUI);
+        window.addEventListener('load', updatePwaInstallUI);
 
         function triggerPwaInstall(customDesc) {
             const descEl = document.getElementById('pwaModalDescription');
