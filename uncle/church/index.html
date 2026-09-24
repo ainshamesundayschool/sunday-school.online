@@ -9174,6 +9174,12 @@
                                 </div>
                             </div>
                             <div class="card-body" style="background:var(--surface-2); padding:16px;">
+                                <button type="button" class="btn btn-outline" onclick="showBulkAddModal()"
+                                    style="width:100%;height:36px;font-size:0.8rem;font-weight:700;display:flex;align-items:center;justify-content:center;gap:6px;border-style:dashed;color:var(--text-2);background:var(--surface);margin-bottom:12px;"
+                                    title="إضافة مجموعة أطفال دفعة واحدة">
+                                    <i class="fas fa-upload" style="color:var(--primary);"></i> إضافة مجموعة أطفال
+                                    (Excel / نص)
+                                </button>
                                 <form id="addKidForm" onsubmit="addStudent(event)" novalidate autocomplete="off"
                                     style="display:flex;flex-direction:column;gap:12px;">
                                     <div class="form-group">
@@ -9293,12 +9299,6 @@
                                     <button type="submit" class="btn btn-primary" id="addKidSubmitBtn"
                                         style="font-size:0.85rem;height:36px;margin-top:4px;">
                                         <i class="fas fa-plus"></i> إضافة الطفل
-                                    </button>
-                                    <button type="button" class="btn btn-outline" onclick="showBulkAddModal()"
-                                        style="width:100%;height:36px;font-size:0.8rem;font-weight:700;display:flex;align-items:center;justify-content:center;gap:6px;border-style:dashed;color:var(--text-2);background:var(--surface);margin-top:2px;"
-                                        title="إضافة مجموعة أطفال دفعة واحدة">
-                                        <i class="fas fa-upload" style="color:var(--primary);"></i> إضافة مجموعة أطفال
-                                        (Excel / نص)
                                     </button>
                                 </form>
                             </div>
@@ -16602,6 +16602,41 @@
             return rel;
         }
 
+        function getMainPhoneLabelText(type, customType = '') {
+            if (!type || type === 'personal' || type === 'self') return 'رقمه الشخصي';
+            if (type === 'father') return 'هاتف الأب';
+            if (type === 'mother') return 'هاتف الأم';
+            if (type === 'guardian') return 'ولي الأمر';
+            if (type === 'brother') return 'هاتف الأخ';
+            if (type === 'sister') return 'هاتف الأخت';
+            if (type === 'other') return customType ? customType : 'مخصص';
+            const found = PARENT_RELATIONS.find(t => t.value === type);
+            return found ? found.label : type;
+        }
+
+        function formatBirthdayForDisplay(bday) {
+            if (!bday) return '---';
+            const parts = bday.split('/');
+            if (parts.length >= 3 && (parts[2] === '1000' || parts[2] === '1900')) {
+                return `${parts[0]}/${parts[1]}`;
+            }
+            return bday;
+        }
+
+        function parseStudentCustomInfo(student) {
+            if (!student) return {};
+            if (student._customInfo && typeof student._customInfo === 'object') return student._customInfo;
+            const raw = student['معلومات إضافية'] ?? student.custom_info ?? student['custom_info'] ?? '';
+            if (!raw) return {};
+            if (typeof raw === 'object') return raw;
+            try {
+                const parsed = JSON.parse(raw);
+                return parsed && typeof parsed === 'object' ? parsed : {};
+            } catch (e) {
+                return {};
+            }
+        }
+
         function handleMainPhoneTypeChange(selectEl, customInputId) {
             const customInp = document.getElementById(customInputId);
             if (customInp) {
@@ -16940,111 +16975,191 @@
             });
         }
 
-        function showStudentDetails(id) {
-            const s = allStudents.find(x => x['_studentId'] === id); if (!s) return;
-            const init = s['الاسم'] ? s['الاسم'].charAt(0) : '?';
+        async function showStudentDetails(id) {
+            const sid = parseInt(id, 10);
+            let s = allStudents.find(x => parseInt(x['_studentId'] || x.id || 0, 10) === sid);
+            const init = (s && s['الاسم']) ? s['الاسم'].charAt(0) : '?';
+            const imgHtml = (s && s['صورة']) ? `<img src="${s['صورة']}" style="width:100%;height:100%;object-fit:cover;">` : `${init}`;
+
             document.getElementById('studentDetails').innerHTML = `
                 <div style="text-align:center;margin-bottom:20px;">
                     <div style="width:90px;height:90px;border-radius:50%;background:var(--primary-light);color:var(--primary);display:flex;align-items:center;justify-content:center;font-size:2rem;font-weight:700;margin:0 auto 12px;border:3px solid var(--primary);overflow:hidden;">
-                        ${s['صورة'] ? `<img src="${s['صورة']}" style="width:100%;height:100%;object-fit:cover;">` : `${init}`}
+                        ${imgHtml}
                     </div>
-                    <h3 style="font-size:1.1rem;">${s['الاسم'] || ''}</h3>
+                    <h3 style="font-size:1.1rem;margin-bottom:4px;">${escHtml((s && s['الاسم']) || 'جاري التحميل...')}</h3>
+                    ${(s && s['الفصل']) ? `<span class="badge badge-primary">${escHtml(s['الفصل'])}</span>` : ''}
                 </div>
-                ${typeof panelInlineSkeleton === 'function' ? panelInlineSkeleton(5) : ''}
+                ${typeof panelInlineSkeleton === 'function' ? panelInlineSkeleton(5) : '<div style="text-align:center;padding:24px;color:var(--text-3);"><i class="fas fa-spinner fa-spin fa-2x"></i><div style="margin-top:8px;">جاري التحميل...</div></div>'}
             `;
             openModal('studentDetailsModal');
-            const fd = new FormData(); fd.append('action', 'getStudentAttendanceDetails'); fd.append('studentId', id);
-            fetch(API_URL, { method: 'POST', body: fd }).then(r => r.json()).then(d => {
-                if (d.success) renderStudentDetailsModal(s, d);
-                else showToast('خطأ في تحميل التفاصيل', 'error');
-            }).catch(() => { showToast('خطأ في تحميل التفاصيل', 'error'); });
+
+            try {
+                const fdProfile = mkFd('getStudentProfile');
+                fdProfile.append('studentId', sid);
+
+                const fdAtt = mkFd('getStudentAttendanceDetails');
+                fdAtt.append('studentId', sid);
+
+                const [pRes, aRes] = await Promise.all([
+                    fetch(API_URL, { method: 'POST', body: fdProfile, credentials: 'include' }).then(r => r.json()).catch(() => null),
+                    fetch(API_URL, { method: 'POST', body: fdAtt, credentials: 'include' }).then(r => r.json()).catch(() => null)
+                ]);
+
+                if (pRes && pRes.success && pRes.student) {
+                    const prof = pRes.student;
+                    s = Object.assign({}, s || {}, prof, {
+                        'الاسم': prof.name || (s && s['الاسم']) || '',
+                        'الفصل': prof.class || (s && s['الفصل']) || '',
+                        'العنوان': prof.address || (s && s['العنوان']) || '',
+                        'address': prof.address || (s && s.address) || '',
+                        'رقم التليفون': prof.phone || (s && s['رقم التليفون']) || '',
+                        'phone': prof.phone || (s && s.phone) || '',
+                        'عيد الميلاد': prof.birthday || (s && s['عيد الميلاد']) || '',
+                        'birthday': prof.birthday || (s && s.birthday) || '',
+                        'تاريخ الميلاد': prof.birthday || (s && s['تاريخ الميلاد']) || '',
+                        'ولي الأمر': prof.guardian_name || (s && s['ولي الأمر']) || '',
+                        'guardian_name': prof.guardian_name || (s && s.guardian_name) || '',
+                        'phone_label': prof.phone_label || (s && s.phone_label) || 'personal',
+                        'phone_custom_label': prof.phone_custom_label || (s && s.phone_custom_label) || '',
+                        'كوبونات': (prof.coupons !== undefined) ? prof.coupons : (s ? s['كوبونات'] : 0),
+                        'ملاحظات طبية': prof.medical_notes || (s && s['ملاحظات طبية']) || '',
+                        'تليفون الطوارئ': prof.emergency_phone || (s && s['تليفون الطوارئ']) || '',
+                        '_parentPhones': prof.parent_phones || (s && s._parentPhones) || [],
+                        'parent_phones': prof.parent_phones || (s && s.parent_phones) || [],
+                        'custom_info': prof.custom_info || (s && s.custom_info) || {},
+                        '_customInfo': prof._customInfo || (s && s._customInfo) || {},
+                        '_studentId': prof.id || sid
+                    });
+                }
+
+                if (!s) {
+                    showToast('لم يتم العثور على بيانات الطفل', 'error');
+                    return;
+                }
+
+                renderStudentDetailsModal(s, (aRes && aRes.success) ? aRes : { stats: { total: 0, present: 0, attendance_rate: 0 } });
+            } catch (err) {
+                console.error('Error fetching student details:', err);
+                if (s) {
+                    renderStudentDetailsModal(s, { stats: { total: 0, present: 0, attendance_rate: 0 } });
+                } else {
+                    showToast('خطأ في تحميل التفاصيل', 'error');
+                }
+            }
         }
 
         function renderStudentDetailsModal(s, d) {
-            const init = s['الاسم'].charAt(0);
+            const name = s['الاسم'] || s.name || '';
+            const init = name ? name.charAt(0) : '?';
             const medNotes = s['ملاحظات طبية'] || s['medical_notes'] || '';
-            const emergPhone = s['هاتف الطوارئ'] || s['emergency_phone'] || '';
+            const emergPhone = s['هاتف الطوارئ'] || s['emergency_phone'] || s['تليفون الطوارئ'] || '';
             const address = s['العنوان'] || s['address'] || '';
-            // Resolve guardian name from custom_info or top-level field
-            let guardianName = '';
-            try {
-                const ci = typeof s.custom_info === 'string' ? JSON.parse(s.custom_info) : (s.custom_info || {});
-                guardianName = ci.guardian_name || ci.father_name || ci.parent_name || ci.mother_name || ci.field_0 || '';
-            } catch (e) { }
-            if (!guardianName) guardianName = s['اسم ولي الأمر'] || s['ولي الأمر'] || '';
+            const info = parseStudentCustomInfo(s);
 
+            // Resolve guardian name from multiple sources
+            let guardianName = s['ولي الأمر'] || s['اسم ولي الأمر'] || s.guardian_name || info.guardian_name || info.father_name || info.parent_name || info.mother_name || info.field_0 || '';
             let pPhones = s._parentPhones || s.parent_phones || [];
             if (typeof pPhones === 'string' && pPhones.trim()) {
                 try { pPhones = JSON.parse(pPhones); } catch (e) { pPhones = []; }
             }
+            if (!guardianName && Array.isArray(pPhones) && pPhones.length > 0) {
+                const foundP = pPhones.find(p => p && p.name);
+                if (foundP) guardianName = foundP.name;
+            }
+
+            // Parent phones HTML
             let parentPhonesHtml = '';
             if (Array.isArray(pPhones) && pPhones.length > 0) {
                 parentPhonesHtml = pPhones.map(p => {
                     const rel = getRelationLabel(p.relation, p.custom_relation);
                     const nameStr = p.name ? ` (${escHtml(p.name)})` : '';
-                    return `<div class="info-box"><small>هاتف ${rel}${nameStr}</small><div dir="ltr"><a href="tel:${escAttr(p.phone)}" style="color:var(--primary);text-decoration:none;font-weight:600;"><i class="fas fa-phone-alt" style="font-size:0.75rem;"></i> ${escHtml(p.phone)}</a></div></div>`;
+                    const phone = p.phone || '';
+                    return `<div class="info-box"><small>هاتف ${rel}${nameStr}</small><div dir="ltr">${phone ? `<a href="tel:${escAttr(phone)}" style="color:var(--primary);text-decoration:none;font-weight:600;"><i class="fas fa-phone-alt" style="font-size:0.75rem;"></i> ${escHtml(phone)}</a>` : '---'}</div></div>`;
                 }).join('');
             } else if (emergPhone) {
                 parentPhonesHtml = `<div class="info-box"><small>هاتف الطوارئ</small><div dir="ltr"><a href="tel:${escAttr(emergPhone)}" style="color:var(--primary);text-decoration:none;font-weight:600;"><i class="fas fa-phone-alt" style="font-size:0.75rem;"></i> ${escHtml(emergPhone)}</a></div></div>`;
             }
 
-            let mainPhoneLabel = 'رقم الهاتف';
-            let rawPhoneLabel = s['phone_label'] || (typeof s.custom_info === 'object' ? s.custom_info?.phone_label : '') || '';
-            let rawCustomLabel = s['phone_custom_label'] || (typeof s.custom_info === 'object' ? s.custom_info?.phone_custom_label : '') || '';
-            if (!rawPhoneLabel && s.extra_data) {
-                try {
-                    const ed = typeof s.extra_data === 'string' ? JSON.parse(s.extra_data) : s.extra_data;
-                    rawPhoneLabel = ed.phone_owner || ed.phone_label || '';
-                    rawCustomLabel = ed.phone_custom_owner || ed.phone_custom_label || '';
-                } catch (e) { }
-            }
-            if (rawPhoneLabel && rawPhoneLabel !== 'self') {
-                mainPhoneLabel = `رقم الهاتف (${getRelationLabel(rawPhoneLabel, rawCustomLabel)})`;
-            }
-
+            // Main phone and label
+            const mainPhoneType = s.phone_label || s.phone_type || info.phone_label || info.phone_type || 'personal';
+            const mainPhoneCustomType = s.phone_custom_label || info.phone_custom_label || info.phone_custom_type || '';
+            const mainPhoneLabel = 'رقم الهاتف (' + getMainPhoneLabelText(mainPhoneType, mainPhoneCustomType) + ')';
             const mainPhoneVal = s['رقم التليفون'] || s['phone'] || s['الهاتف'] || '';
             const mainPhoneHtml = mainPhoneVal ? `<div dir="ltr"><a href="tel:${escAttr(mainPhoneVal)}" style="color:var(--primary);text-decoration:none;font-weight:600;"><i class="fas fa-phone-alt" style="font-size:0.75rem;"></i> ${escHtml(mainPhoneVal)}</a></div>` : '---';
+
+            // Birthday formatting
+            const rawBday = s['عيد الميلاد'] || s['تاريخ الميلاد'] || s.birthday || '';
+            const displayBday = formatBirthdayForDisplay(rawBday);
+
+            const studentId = s['_studentId'] || s.id || 0;
+            const couponsCount = (s['كوبونات'] !== undefined) ? s['كوبونات'] : (s.coupons || 0);
 
             document.getElementById('studentDetails').innerHTML = `
         <div style="text-align:center;margin-bottom:20px;">
             <div style="width:90px;height:90px;border-radius:50%;background:var(--primary-light);color:var(--primary);display:flex;align-items:center;justify-content:center;font-size:2rem;font-weight:700;margin:0 auto 12px;border:3px solid var(--primary);overflow:hidden;">
-                ${s['صورة'] ? `<img src="${s['صورة']}" style="width:100%;height:100%;object-fit:cover;">` : `${init}`}
+                ${s['صورة'] ? `<img src="${escAttr(s['صورة'])}" style="width:100%;height:100%;object-fit:cover;">` : `${escHtml(init)}`}
             </div>
-            <h3 style="font-size:1.1rem;">${s['الاسم']}</h3>
-            <span class="badge badge-primary">${s['الفصل']}</span>
+            <h3 style="font-size:1.1rem;">${escHtml(name || '---')}</h3>
+            <span class="badge badge-primary">${escHtml(s['الفصل'] || s.class || '---')}</span>
         </div>
         <div class="info-grid" style="margin-bottom:16px;">
             <div class="info-box"><small>${mainPhoneLabel}</small>${mainPhoneHtml}</div>
             ${parentPhonesHtml}
-            <div class="info-box"><small>تاريخ الميلاد</small><div>${s['عيد الميلاد'] || '---'}</div></div>
+            <div class="info-box"><small>تاريخ الميلاد</small><div>${displayBday || '---'}</div></div>
             <div class="info-box"><small>ولي الأمر</small><div>${escHtml(guardianName || '---')}</div></div>
             <div class="info-box"><small>العنوان</small><div>${escHtml(address || '---')}</div></div>
-            <div class="info-box"><small>الكوبونات</small><div style="color:var(--warning);font-size:1.2rem;">${s['كوبونات'] || 0}</div></div>
+            <div class="info-box"><small>الكوبونات</small><div style="color:var(--warning);font-size:1.2rem;">${couponsCount}</div></div>
         </div>
-        ${medNotes ? `<div style="background:var(--warning-light);color:#92400e;padding:12px;border-radius:10px;margin-bottom:16px;font-size:0.88rem;"><i class="fas fa-notes-medical"></i> <strong>ملاحظات طبية:</strong> ${medNotes}</div>` : ''}
+        ${medNotes ? `<div style="background:var(--warning-light);color:#92400e;padding:12px;border-radius:10px;margin-bottom:16px;font-size:0.88rem;"><i class="fas fa-notes-medical"></i> <strong>ملاحظات طبية:</strong> ${escHtml(medNotes)}</div>` : ''}
         <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:20px;">
-            <div class="sbox"><div class="sv">${d.stats.total || 0}</div><div class="sl">إجمالي الأيام</div></div>
-            <div class="sbox"><div class="sv" style="color:var(--success);">${d.stats.present || 0}</div><div class="sl">أيام الحضور</div></div>
-            <div class="sbox"><div class="sv" style="color:${(d.stats.attendance_rate || 0) >= 70 ? 'var(--success)' : 'var(--danger)'};">${d.stats.attendance_rate || 0}%</div><div class="sl">نسبة الحضور</div></div>
+            <div class="sbox"><div class="sv">${d.stats ? (d.stats.total || 0) : 0}</div><div class="sl">إجمالي الأيام</div></div>
+            <div class="sbox"><div class="sv" style="color:var(--success);">${d.stats ? (d.stats.present || 0) : 0}</div><div class="sl">أيام الحضور</div></div>
+            <div class="sbox"><div class="sv" style="color:${((d.stats && d.stats.attendance_rate) || 0) >= 70 ? 'var(--success)' : 'var(--danger)'};">${(d.stats && d.stats.attendance_rate) || 0}%</div><div class="sl">نسبة الحضور</div></div>
         </div>
         <div style="display:flex;gap:10px;">
-            <button class="btn btn-primary btn-sm" style="flex:1;" onclick="showCouponLogs(${s['_studentId']})"><i class="fas fa-history"></i> سجل الكوبونات</button>
-            <button class="btn btn-success btn-sm" style="flex:1;" onclick="editCoupons(${s['_studentId']},'${escHtml(s['الاسم'])}',${s['كوبونات'] || 0})"><i class="fas fa-star"></i> تعديل الكوبونات</button>
+            <button class="btn btn-primary btn-sm" style="flex:1;" onclick="showCouponLogs(${studentId})"><i class="fas fa-history"></i> سجل الكوبونات</button>
+            <button class="btn btn-success btn-sm" style="flex:1;" onclick="editCoupons(${studentId},'${escAttr(name)}',${couponsCount})"><i class="fas fa-star"></i> تعديل الكوبونات</button>
         </div>`;
             openModal('studentDetailsModal');
         }
 
         function showCouponLogs(id) {
-            const fd = new FormData(); fd.append('action', 'getCouponLogs'); fd.append('studentId', id);
-            fetch(API_URL, { method: 'POST', body: fd }).then(r => r.json()).then(d => {
-                if (!d.success) { showToast('خطأ في تحميل السجل', 'error'); return; }
-                const c = document.getElementById('couponLogs');
-                if (!d.logs.length) c.innerHTML = `<div class="empty-state"><i class="fas fa-history"></i><h3>لا يوجد سجل</h3></div>`;
-                else c.innerHTML = `<div class="table-wrap"><table><thead><tr><th>التاريخ</th><th>القديم</th><th>الجديد</th><th>التغيير</th><th>السبب</th><th>بواسطة</th></tr></thead><tbody>
-            ${d.logs.map(l => `<tr><td>${l.created_at}</td><td>${l.old_count}</td><td>${l.new_count}</td><td><span class="badge ${l.change_amount > 0 ? 'badge-success' : 'badge-danger'}">${l.change_amount > 0 ? '+' : ''}${l.change_amount}</span></td><td>${l.reason || '---'}</td><td>${l.uncle_name}</td></tr>`).join('')}
-            </tbody></table></div>`;
-                openModal('couponLogsModal');
-            });
+            const sid = parseInt(id, 10);
+            const c = document.getElementById('couponLogs');
+            if (c) {
+                c.innerHTML = '<div style="text-align:center;padding:30px;color:var(--text-3);"><i class="fas fa-spinner fa-spin fa-2x"></i><div style="margin-top:10px;font-size:0.9rem;">جاري تحميل سجل الكوبونات...</div></div>';
+            }
+            openModal('couponLogsModal');
+
+            const fd = mkFd('getCouponLogs');
+            fd.append('studentId', sid);
+            fd.append('student_id', sid);
+
+            fetch(API_URL, { method: 'POST', body: fd, credentials: 'include' })
+                .then(r => r.json())
+                .then(d => {
+                    if (!d || !d.success) {
+                        if (c) c.innerHTML = `<div class="empty-state" style="padding:30px 15px;text-align:center;"><i class="fas fa-exclamation-triangle" style="font-size:2rem;color:var(--danger);margin-bottom:10px;"></i><h3 style="font-size:1rem;color:var(--text);">${escHtml((d && d.message) || 'خطأ في تحميل السجل')}</h3></div>`;
+                        return;
+                    }
+                    const logs = d.logs || d.data || [];
+                    if (!logs.length) {
+                        c.innerHTML = `<div class="empty-state" style="padding:40px 15px;text-align:center;"><i class="fas fa-history" style="font-size:2.5rem;color:var(--text-3);margin-bottom:12px;"></i><h3 style="font-size:1.1rem;color:var(--text-2);">لا يوجد سجل كوبونات لهذا الطفل</h3></div>`;
+                    } else {
+                        c.innerHTML = `<div class="table-wrap"><table><thead><tr><th>التاريخ</th><th>القديم</th><th>الجديد</th><th>التغيير</th><th>السبب</th><th>بواسطة</th></tr></thead><tbody>
+                    ${logs.map(l => {
+                        const change = parseInt(l.change_amount || 0, 10);
+                        const badgeClass = change > 0 ? 'badge-success' : (change < 0 ? 'badge-danger' : 'badge-secondary');
+                        const sign = change > 0 ? '+' : '';
+                        return `<tr><td>${escHtml(l.created_at || '---')}</td><td>${l.old_count ?? '---'}</td><td>${l.new_count ?? '---'}</td><td><span class="badge ${badgeClass}">${sign}${change}</span></td><td>${escHtml(l.reason || '---')}</td><td>${escHtml(l.uncle_name || 'النظام')}</td></tr>`;
+                    }).join('')}
+                    </tbody></table></div>`;
+                    }
+                })
+                .catch(err => {
+                    console.error('Error fetching coupon logs:', err);
+                    if (c) c.innerHTML = `<div class="empty-state" style="padding:30px 15px;text-align:center;"><i class="fas fa-exclamation-triangle" style="font-size:2rem;color:var(--danger);margin-bottom:10px;"></i><h3 style="font-size:1rem;color:var(--text);">حدث خطأ أثناء تحميل السجل</h3></div>`;
+                });
         }
 
         function editCoupons(id, name, curr) {
@@ -17062,7 +17177,7 @@
             fd.append('studentId', document.getElementById('couponStudentId').value);
             fd.append('coupons', document.getElementById('newCoupons').value);
             fd.append('reason', document.getElementById('couponReason').value);
-            fetch(API_URL, { method: 'POST', body: fd }).then(r => r.json()).then(d => {
+            fetch(API_URL, { method: 'POST', body: fd, credentials: 'include' }).then(r => r.json()).then(d => {
                 if (d.success) { showToast('تم تحديث الكوبونات', 'success'); closeModal('editCouponsModal'); loadStudents(); }
                 else showToast(d.message || 'فشل', 'error');
             });

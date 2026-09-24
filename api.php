@@ -7428,7 +7428,7 @@ function getData()
 
             $stmt = $conn->prepare("
                 SELECT 
-                    s.id, s.name, s.phone, s.birthday, s.coupons,
+                    s.id, s.name, s.address, s.phone, s.birthday, s.coupons,
                     s.attendance_coupons, s.commitment_coupons, s.task_coupons,
                     s.emergency_phone, s.parent_phones, s.medical_notes, s.custom_info,
                     s.image_url, s.class_id, s.gender, s.is_guest,
@@ -7455,7 +7455,7 @@ function getData()
                     'الفصل' => $row['class'] ?? 'بدون فصل',
                     '_classCode' => $row['class_code'] ?? '',
                     '_classId' => intval($row['class_id']),
-                    'العنوان' => '',
+                    'العنوان' => $row['address'] ?? '',
                     'رقم التليفون' => $row['phone'] ?? '',
                     'عيد الميلاد' => formatDateFromDB($row['birthday']),
                     'كوبونات' => intval($row['coupons']),
@@ -7471,9 +7471,25 @@ function getData()
                     '_studentId' => intval($row['id']),
                     'النوع' => $row['gender'] ?? 'male',
                     '_isGuest' => intval($row['is_guest'] ?? 0),
+                    'name' => $row['name'],
+                    'class' => $row['class'] ?? 'بدون فصل',
+                    'address' => $row['address'] ?? '',
+                    'phone' => $row['phone'] ?? '',
+                    'birthday' => formatDateFromDB($row['birthday']),
+                    'coupons' => intval($row['coupons']),
+                    'custom_info' => $row['custom_info'] ?? '',
                     '_customInfo' => !empty($row['custom_info'])
                         ? json_decode($row['custom_info'], true)
                         : null,
+                    'phone_label' => (!empty($row['custom_info']) && is_array(json_decode($row['custom_info'], true))) 
+                        ? (json_decode($row['custom_info'], true)['phone_label'] ?? json_decode($row['custom_info'], true)['phone_type'] ?? 'personal')
+                        : 'personal',
+                    'phone_custom_label' => (!empty($row['custom_info']) && is_array(json_decode($row['custom_info'], true))) 
+                        ? (json_decode($row['custom_info'], true)['phone_custom_label'] ?? json_decode($row['custom_info'], true)['phone_custom_type'] ?? '')
+                        : '',
+                    'guardian_name' => (!empty($row['custom_info']) && is_array(json_decode($row['custom_info'], true)))
+                        ? (json_decode($row['custom_info'], true)['guardian_name'] ?? json_decode($row['custom_info'], true)['father_name'] ?? json_decode($row['custom_info'], true)['parent_name'] ?? json_decode($row['custom_info'], true)['mother_name'] ?? '')
+                        : '',
                 ];
 
                 $students[] = $studentData;
@@ -7481,11 +7497,11 @@ function getData()
 
             sendJSON([
                 'success' => true,
-                'data' => [
-                    'students' => $students,
-                    'classes' => [],
-                    'churchCustomFields' => [],
-                ]
+                'data' => $students,
+                'allStudents' => $students,
+                'students' => $students,
+                'classes' => [],
+                'churchCustomFields' => [],
             ]);
             return;
         }
@@ -7735,6 +7751,13 @@ function getData()
                 'phone_custom_label' => (!empty($row['custom_info']) && is_array(json_decode($row['custom_info'], true))) 
                     ? (json_decode($row['custom_info'], true)['phone_custom_label'] ?? json_decode($row['custom_info'], true)['phone_custom_type'] ?? '')
                     : '',
+                'guardian_name' => (!empty($row['custom_info']) && is_array(json_decode($row['custom_info'], true)))
+                    ? (json_decode($row['custom_info'], true)['guardian_name'] ?? json_decode($row['custom_info'], true)['father_name'] ?? json_decode($row['custom_info'], true)['parent_name'] ?? json_decode($row['custom_info'], true)['mother_name'] ?? '')
+                    : '',
+                'address' => $row['address'] ?? '',
+                'phone' => $row['phone'] ?? '',
+                'birthday' => formatDateFromDB($row['birthday']),
+                'custom_info' => $row['custom_info'] ?? '',
             ];
 
             appendSiblingGroupToStudentPayload($studentData, $row);
@@ -23281,6 +23304,36 @@ function getStudentProfile()
             $row['birthday'] = formatDateFromDB($row['birthday']);
             $row['class'] = $row['class'] ?? '---';
 
+            // Custom info, phone labels, guardian resolution
+            $ci = !empty($row['custom_info']) ? json_decode($row['custom_info'], true) : [];
+            if (!is_array($ci)) { $ci = []; }
+            $row['phone_label'] = $ci['phone_label'] ?? $ci['phone_type'] ?? 'personal';
+            $row['phone_custom_label'] = $ci['phone_custom_label'] ?? $ci['phone_custom_type'] ?? '';
+            $row['guardian_name'] = $ci['guardian_name'] ?? $ci['father_name'] ?? $ci['parent_name'] ?? $ci['mother_name'] ?? ($ci['field_0'] ?? '');
+            if (empty($row['guardian_name']) && !empty($row['parent_phones']) && is_array($row['parent_phones'])) {
+                foreach ($row['parent_phones'] as $pp) {
+                    if (!empty($pp['name'])) {
+                        $row['guardian_name'] = $pp['name'];
+                        break;
+                    }
+                }
+            }
+            // Add Arabic field aliases so consumer code receives both English & Arabic keys
+            $row['الاسم'] = $row['name'] ?? '';
+            $row['الفصل'] = $row['class'] ?? '';
+            $row['العنوان'] = $row['address'] ?? '';
+            $row['رقم التليفون'] = $row['phone'] ?? '';
+            $row['عيد الميلاد'] = $row['birthday'] ?? '';
+            $row['تاريخ الميلاد'] = $row['birthday'] ?? '';
+            $row['ولي الأمر'] = $row['guardian_name'] ?? '';
+            $row['كوبونات'] = intval($row['coupons'] ?? 0);
+            $row['تليفون الطوارئ'] = $row['emergency_phone'] ?? '';
+            $row['ملاحظات طبية'] = $row['medical_notes'] ?? '';
+            $row['معلومات إضافية'] = $row['custom_info'] ?? '';
+            $row['_studentId'] = intval($row['id']);
+            $row['_parentPhones'] = $row['parent_phones'];
+            $row['_customInfo'] = $ci;
+
             $tripPoints = [];
             $tripPointsDetails = [];
             if (!empty($row['trip_points'])) {
@@ -24863,21 +24916,25 @@ function updateCouponsKids()
 }
 
 function formatDateFromDB($dbDate)
-
 {
-
-    if (empty($dbDate) || $dbDate === '0000-00-00') {
-
+    if (empty($dbDate) || $dbDate === '0000-00-00' || $dbDate === '0000-00-00 00:00:00') {
         return '';
-
     }
 
-
+    $trimmed = trim($dbDate);
+    if (preg_match('/^\d{1,2}\/\d{1,2}(\/\d{2,4})?$/', $trimmed)) {
+        return $trimmed;
+    }
 
     try {
-
-        $date = DateTime::createFromFormat('Y-m-d', $dbDate);
-
+        $clean = substr($trimmed, 0, 10);
+        $date = DateTime::createFromFormat('Y-m-d', $clean);
+        if (!$date) {
+            $ts = strtotime($trimmed);
+            if ($ts !== false) {
+                $date = (new DateTime())->setTimestamp($ts);
+            }
+        }
         if ($date) {
             if ($date->format('Y') === '1000' || $date->format('Y') === '1900') {
                 return $date->format('d/m');
@@ -24885,15 +24942,10 @@ function formatDateFromDB($dbDate)
             return $date->format('d/m/Y');
         }
         return '';
-
     } catch (Exception $e) {
-
         error_log("Date format error: $dbDate - " . $e->getMessage());
-
         return $dbDate;
-
     }
-
 }
 
 
@@ -25621,37 +25673,42 @@ function getStudentAttendanceDetails()
 
 
 
-function updateCouponsWithReason()
-
+function ensureCouponLogsTable($conn)
 {
+    if (!$conn) return;
+    $conn->query("
+        CREATE TABLE IF NOT EXISTS coupon_logs (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            student_id INT NOT NULL,
+            uncle_id INT DEFAULT NULL,
+            old_count INT DEFAULT 0,
+            new_count INT DEFAULT 0,
+            change_amount INT DEFAULT 0,
+            change_type VARCHAR(50) DEFAULT 'manual',
+            reason VARCHAR(255) DEFAULT '',
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            INDEX idx_student_id (student_id),
+            INDEX idx_created_at (created_at)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+    ");
+}
 
+function updateCouponsWithReason()
+{
     checkAuth();
-
-
-
     try {
-
         $studentId = intval($_POST['studentId'] ?? 0);
-
         $coupons = max(0, intval($_POST['coupons'] ?? 0));
-
         $reason = sanitize($_POST['reason'] ?? 'تعديل يدوي');
-
         $uncleId = $_SESSION['uncle_id'] ?? null;
 
-
-
         if ($studentId === 0) {
-
             sendJSON(['success' => false, 'message' => 'بيانات غير كاملة']);
-
             return;
-
         }
 
-
-
         $conn = getDBConnection();
+        ensureCouponLogsTable($conn);
 
 
 
@@ -25876,13 +25933,9 @@ function getCouponLogs()
 
     checkAuth();
 
-
-
     try {
 
-        $studentId = intval($_POST['studentId'] ?? 0);
-
-
+        $studentId = intval($_POST['studentId'] ?? $_POST['student_id'] ?? $_GET['studentId'] ?? $_GET['student_id'] ?? 0);
 
         if ($studentId === 0) {
 
@@ -25892,11 +25945,8 @@ function getCouponLogs()
 
         }
 
-
-
         $conn = getDBConnection();
-
-
+        ensureCouponLogsTable($conn);
 
         $stmt = $conn->prepare("
 
@@ -25904,7 +25954,7 @@ function getCouponLogs()
 
                 cl.*,
 
-                u.name as uncle_name,
+                COALESCE(u.name, 'النظام') as uncle_name,
 
                 DATE_FORMAT(cl.created_at, '%d/%m/%Y %H:%i') as formatted_date
 
