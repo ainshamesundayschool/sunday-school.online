@@ -14455,32 +14455,22 @@ function getPublicStats()
 
 
 
-        $kids_count = $conn->query("SELECT COUNT(*) as cnt FROM students")->fetch_assoc()['cnt'] ?? 0;
-
+        $kids_count = $conn->query("SELECT COUNT(*) as cnt FROM students WHERE COALESCE(is_guest, 0) = 0")->fetch_assoc()['cnt'] ?? 0;
         $servants_count = $conn->query("SELECT COUNT(*) as cnt FROM uncles WHERE deleted = 0 AND role NOT IN ('developer', 'dev')")->fetch_assoc()['cnt'] ?? 0;
-
-        $churches_count = $conn->query("SELECT COUNT(*) as cnt FROM churches WHERE admin_email IS NOT NULL AND admin_email != ''")->fetch_assoc()['cnt'] ?? 0;
-
-
+        $churches_count = $conn->query("SELECT COUNT(*) as cnt FROM churches WHERE admin_email IS NOT NULL AND admin_email != '' AND COALESCE(is_approved, 1) = 1")->fetch_assoc()['cnt'] ?? 0;
 
         sendJSON([
-
             'success' => true,
-
             'kids_count' => (int) $kids_count,
-
             'servants_count' => (int) $servants_count,
-
             'churches_count' => (int) $churches_count,
-
+            'total_kids' => (int) $kids_count,
+            'total_uncles' => (int) $servants_count,
+            'active_churches' => (int) $churches_count,
         ]);
-
     } catch (Exception $e) {
-
         error_log("getPublicStats error: " . $e->getMessage());
-
         sendJSON(['success' => false, 'message' => 'خطأ في جلب الإحصائيات']);
-
     }
 
 }

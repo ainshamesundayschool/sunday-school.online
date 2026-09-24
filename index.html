@@ -2217,17 +2217,17 @@
                 <p class="subtitle">نظام متكامل لإدارة وتتبع نشاط الأطفال والاناكل في مدارس الأحد</p>
 
                 <!-- Dynamic System Stats -->
-                <div class="hero-stats">
-                    <div class="hero-stat-item">
-                        <div class="stat-value">1,250+</div>
+                <div class="hero-stats" id="heroStatsContainer">
+                    <div class="hero-stat-item" title="عدد الأطفال المسجلين في النظام">
+                        <div class="stat-value" id="statKids">1,112</div>
                         <div class="stat-label">طفل مسجل</div>
                     </div>
-                    <div class="hero-stat-item">
-                        <div class="stat-value">150+</div>
+                    <div class="hero-stat-item" title="عدد الخدام والخادمات في النظام">
+                        <div class="stat-value" id="statUncles">188</div>
                         <div class="stat-label">خادم وخادمة</div>
                     </div>
-                    <div class="hero-stat-item">
-                        <div class="stat-value">45+</div>
+                    <div class="hero-stat-item" title="عدد الكنائس المشتركة في النظام">
+                        <div class="stat-value" id="statChurches">22</div>
                         <div class="stat-label">كنيسة</div>
                     </div>
                 </div>
@@ -2907,18 +2907,80 @@
             });
         }
 
-        // بيانات إحصائية ديناميكية
-        const stats = {
-            totalKids: 1250,
-            totalUncles: 150,
-            activeChurches: 45
-        };
+        // دالة لتحريك الأرقام تدريجياً (Count-Up Animation)
+        function animateValue(element, start, end, duration = 750) {
+            if (!element) return;
+            if (isNaN(end)) return;
+            if (start === end) {
+                element.textContent = Number(end).toLocaleString();
+                return;
+            }
+            const startTime = performance.now();
+            function step(currentTime) {
+                const progress = Math.min((currentTime - startTime) / duration, 1);
+                const easeOut = 1 - Math.pow(1 - progress, 3);
+                const currentVal = Math.round(start + (end - start) * easeOut);
+                element.textContent = currentVal.toLocaleString();
+                if (progress < 1) {
+                    requestAnimationFrame(step);
+                } else {
+                    element.textContent = Number(end).toLocaleString();
+                }
+            }
+            requestAnimationFrame(step);
+        }
 
-        // دالة لتحديث الإحصائيات
-        function updateStats() {
-            document.querySelectorAll('.stat-value')[0].textContent = `${stats.totalKids.toLocaleString()}+`;
-            document.querySelectorAll('.stat-value')[1].textContent = `${stats.totalUncles.toLocaleString()}+`;
-            document.querySelectorAll('.stat-value')[2].textContent = `${stats.activeChurches}+`;
+        // دالة لتحديث الإحصائيات ديناميكياً من قاعدة البيانات
+        async function updateStats() {
+            const kidsEl = document.getElementById('statKids') || document.querySelectorAll('.stat-value')[0];
+            const unclesEl = document.getElementById('statUncles') || document.querySelectorAll('.stat-value')[1];
+            const churchesEl = document.getElementById('statChurches') || document.querySelectorAll('.stat-value')[2];
+
+            // 1. قراءة البيانات المخزنة محلياً للعرض الفوري السريع
+            let cached = null;
+            try {
+                cached = JSON.parse(localStorage.getItem('ss_public_stats') || 'null');
+                if (cached && kidsEl && unclesEl && churchesEl) {
+                    if (cached.kids_count) kidsEl.textContent = Number(cached.kids_count).toLocaleString();
+                    if (cached.servants_count) unclesEl.textContent = Number(cached.servants_count).toLocaleString();
+                    if (cached.churches_count) churchesEl.textContent = Number(cached.churches_count).toLocaleString();
+                }
+            } catch (e) {}
+
+            // 2. طلب الأرقام الحقيقية المحدثة من الـ API
+            try {
+                const res = await fetch('/api.php?action=getPublicStats', {
+                    cache: 'no-cache',
+                    headers: { 'Accept': 'application/json' }
+                });
+                if (!res.ok) throw new Error('Network error: ' + res.status);
+                const data = await res.json();
+
+                if (data && data.success) {
+                    const kids = parseInt(data.kids_count ?? data.total_kids ?? 0, 10);
+                    const servants = parseInt(data.servants_count ?? data.total_uncles ?? 0, 10);
+                    const churches = parseInt(data.churches_count ?? data.active_churches ?? 0, 10);
+
+                    try {
+                        localStorage.setItem('ss_public_stats', JSON.stringify({
+                            kids_count: kids,
+                            servants_count: servants,
+                            churches_count: churches,
+                            timestamp: Date.now()
+                        }));
+                    } catch (e) {}
+
+                    const startKids = parseInt((kidsEl?.textContent || '0').replace(/[^0-9]/g, ''), 10) || 0;
+                    const startServants = parseInt((unclesEl?.textContent || '0').replace(/[^0-9]/g, ''), 10) || 0;
+                    const startChurches = parseInt((churchesEl?.textContent || '0').replace(/[^0-9]/g, ''), 10) || 0;
+
+                    animateValue(kidsEl, startKids, kids);
+                    animateValue(unclesEl, startServants, servants);
+                    animateValue(churchesEl, startChurches, churches);
+                }
+            } catch (err) {
+                console.warn('Could not refresh public stats from DB:', err);
+            }
         }
 
         // دالة اختيار المستخدم
