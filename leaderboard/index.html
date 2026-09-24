@@ -913,7 +913,7 @@ async function doLogin(){
 }
 
 async function doLogout(){
-  try{await fetch(API_URL,{method:'POST',body:new URLSearchParams({action:'logout'})});}catch(e){}
+  try{await fetch(API_URL,{method:'POST',body:new URLSearchParams({action:'logout'}),credentials:'include'});}catch(e){}
   localStorage.clear();
   _isLoggedIn=false;_sessionInfo=null;_students=[];_attMap={};_churchName='مدارس الأحد';
   updateSessionUI(null);

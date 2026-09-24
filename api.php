@@ -4079,6 +4079,20 @@ function revokeSessionFamily(?string $familyId = null, ?string $plainToken = nul
             $familyId = $_SESSION['family_id'];
         }
 
+        // Check if access_token or Authorization Bearer header was passed
+        if (empty($familyId)) {
+            $rawToken = trim($_POST['access_token'] ?? $_POST['auth_token'] ?? $_POST['authToken'] ?? '');
+            if (empty($rawToken) && !empty($_SERVER['HTTP_AUTHORIZATION']) && preg_match('/Bearer\s+(\S+)/i', $_SERVER['HTTP_AUTHORIZATION'], $m)) {
+                $rawToken = $m[1];
+            }
+            if (!empty($rawToken) && strpos($rawToken, '.') !== false) {
+                $payload = verifyAccessToken($rawToken);
+                if (!empty($payload['family_id'])) {
+                    $familyId = $payload['family_id'];
+                }
+            }
+        }
+
         if (!empty($familyId)) {
             $stmt = $conn->prepare("
                 UPDATE auth_refresh_tokens 
@@ -4091,6 +4105,24 @@ function revokeSessionFamily(?string $familyId = null, ?string $plainToken = nul
                 $stmt->bind_param("ss", $reason, $familyId);
                 $stmt->execute();
                 $stmt->close();
+            }
+        }
+
+        // Also revoke all active refresh tokens for the user in session
+        $uType = !empty($_SESSION['uncle_id']) ? 'uncle' : (!empty($_SESSION['church_id']) ? 'church' : '');
+        $uId = intval($_SESSION['uncle_id'] ?? $_SESSION['church_id'] ?? 0);
+        if (!empty($uType) && $uId > 0) {
+            $stmtUser = $conn->prepare("
+                UPDATE auth_refresh_tokens 
+                SET status = 'revoked', 
+                    revocation_reason = ?, 
+                    revoked_at = NOW() 
+                WHERE user_type = ? AND user_id = ? AND status = 'active'
+            ");
+            if ($stmtUser) {
+                $stmtUser->bind_param("ssi", $reason, $uType, $uId);
+                $stmtUser->execute();
+                $stmtUser->close();
             }
         }
 
@@ -4495,132 +4527,6 @@ function handleRestoreSession(): void
             'auth_token' => $authToken
         ]);
         return;
-    }
-
-    // Explicit fallback by username
-    $username = sanitize($_POST['username'] ?? $_GET['username'] ?? '');
-    if (!empty($username)) {
-        try {
-            $conn = getDBConnection();
-            ensureChurchTypeColumn($conn);
-            $stmt = $conn->prepare("
-                SELECT u.id, u.name, u.username, u.role, u.image_url, u.church_id,
-                       c.church_name, c.church_code, c.admin_email,
-                       COALESCE(c.church_type, 'kids') AS church_type,
-                       COALESCE(c.is_approved, 1) AS is_approved
-                FROM uncles u
-                LEFT JOIN churches c ON u.church_id = c.id
-                WHERE u.username = ? AND (u.deleted IS NULL OR u.deleted = 0)
-                LIMIT 1
-            ");
-            if ($stmt) {
-                $stmt->bind_param("s", $username);
-                $stmt->execute();
-                $uRow = $stmt->get_result()->fetch_assoc();
-                $stmt->close();
-                if ($uRow) {
-                    if (isset($uRow['is_approved']) && intval($uRow['is_approved']) === 0) {
-                        sendJSON(['success' => false, 'message' => 'هذه الكنيسة معلقة وفي انتظار موافقة المطور']);
-                        return;
-                    }
-                    ensureActiveSession();
-                    $_SESSION['uncle_id'] = intval($uRow['id']);
-                    $_SESSION['uncle_name'] = $uRow['name'];
-                    $_SESSION['uncle_username'] = $uRow['username'];
-                    $_SESSION['uncle_image'] = $uRow['image_url'];
-                    $_SESSION['uncle_role'] = $uRow['role'] ?? 'uncle';
-                    $_SESSION['role'] = $uRow['role'] ?? 'uncle';
-                    if (in_array(strtolower(trim($uRow['role'] ?? '')), ['developer', 'dev'])) {
-                        $_SESSION['is_developer'] = true;
-                    }
-                    $_SESSION['church_id'] = intval($uRow['church_id']);
-                    $_SESSION['church_name'] = $uRow['church_name'];
-                    $_SESSION['church_code'] = $uRow['church_code'];
-                    $_SESSION['church_type'] = $uRow['church_type'];
-                    $_SESSION['admin_email'] = $uRow['admin_email'] ?? '';
-                    $_SESSION['login_type'] = 'uncle';
-                    $_SESSION['uncle_logged_in'] = true;
-                    $authToken = issueAuthToken('uncle', intval($uRow['id']));
-                    sendJSON([
-                        'success' => true,
-                        'uncle_id' => $_SESSION['uncle_id'],
-                        'church_id' => $_SESSION['church_id'],
-                        'church_type' => $_SESSION['church_type'],
-                        'church_name' => $_SESSION['church_name'],
-                        'church_code' => $_SESSION['church_code'],
-                        'uncle_name' => $_SESSION['uncle_name'],
-                        'uncle_username' => $_SESSION['uncle_username'],
-                        'uncle_role' => $_SESSION['uncle_role'],
-                        'uncle' => [
-                            'id' => $_SESSION['uncle_id'],
-                            'name' => $_SESSION['uncle_name'],
-                            'role' => $_SESSION['uncle_role']
-                        ],
-                        'role' => $_SESSION['uncle_role'],
-                        'login_type' => 'uncle',
-                        'auth_token' => $authToken
-                    ]);
-                    return;
-                }
-            }
-        } catch (Exception $e) {
-            error_log("handleRestoreSession username error: " . $e->getMessage());
-        }
-    }
-
-    // Explicit fallback by church_code
-    $churchCode = sanitize($_POST['church_code'] ?? $_GET['church_code'] ?? '');
-    if (!empty($churchCode)) {
-        try {
-            $conn = getDBConnection();
-            ensureChurchTypeColumn($conn);
-            $stmt = $conn->prepare("
-                SELECT id, church_name, church_code, admin_email,
-                       COALESCE(church_type, 'kids') AS church_type,
-                       COALESCE(is_approved, 1) AS is_approved
-                FROM churches
-                WHERE church_code = ?
-                LIMIT 1
-            ");
-            if ($stmt) {
-                $stmt->bind_param("s", $churchCode);
-                $stmt->execute();
-                $cRow = $stmt->get_result()->fetch_assoc();
-                $stmt->close();
-                if ($cRow) {
-                    if (isset($cRow['is_approved']) && intval($cRow['is_approved']) === 0) {
-                        sendJSON(['success' => false, 'message' => 'هذه الكنيسة معلقة وفي انتظار موافقة المطور']);
-                        return;
-                    }
-                    ensureActiveSession();
-                    $_SESSION['church_id'] = intval($cRow['id']);
-                    $_SESSION['church_name'] = $cRow['church_name'];
-                    $_SESSION['church_code'] = $cRow['church_code'];
-                    $_SESSION['church_type'] = $cRow['church_type'];
-                    $_SESSION['admin_email'] = $cRow['admin_email'] ?? '';
-                    $_SESSION['login_type'] = 'church';
-                    $_SESSION['uncle_role'] = 'admin';
-                    $_SESSION['role'] = 'admin';
-                    $_SESSION['loggedIn'] = true;
-                    $authToken = issueAuthToken('church', intval($cRow['id']));
-                    sendJSON([
-                        'success' => true,
-                        'church_id' => $_SESSION['church_id'],
-                        'church_code' => $_SESSION['church_code'],
-                        'church_type' => $_SESSION['church_type'],
-                        'church_name' => $_SESSION['church_name'],
-                        'admin_email' => $_SESSION['admin_email'],
-                        'uncle_role' => 'admin',
-                        'role' => 'admin',
-                        'login_type' => 'church',
-                        'auth_token' => $authToken
-                    ]);
-                    return;
-                }
-            }
-        } catch (Exception $e) {
-            error_log("handleRestoreSession church_code error: " . $e->getMessage());
-        }
     }
 
     sendJSON(['success' => false, 'message' => 'not found - No credentials found to restore session']);
@@ -5232,11 +5138,14 @@ try {
             $_SESSION = [];
             if (ini_get("session.use_cookies")) {
                 $params = session_get_cookie_params();
-                setcookie(session_name(), '', time() - 42000,
+                @setcookie(session_name(), '', time() - 86400,
                     $params["path"], $params["domain"],
                     $params["secure"], $params["httponly"]
                 );
             }
+            @setcookie(session_name(), '', time() - 86400, '/');
+            @setcookie('PHPSESSID', '', time() - 86400, '/');
+            clearRefreshTokenCookie();
             @session_destroy();
             sendJSON(['success' => true, 'message' => 'تم تسجيل الخروج بنجاح']);
             break;

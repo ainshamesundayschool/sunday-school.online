@@ -213,7 +213,7 @@
         },
 
         /**
-         * Clear stored tokens locally.
+         * Clear stored tokens and all auth state locally.
          */
         clearSession(broadcast = true) {
             inMemoryToken = null;
@@ -222,12 +222,45 @@
                 refreshTimer = null;
             }
             try {
+                // Wipe token keys
                 sessionStorage.removeItem(ACCESS_TOKEN_KEY);
                 sessionStorage.removeItem(EXPIRES_AT_KEY);
                 localStorage.removeItem(ACCESS_TOKEN_KEY);
                 localStorage.removeItem(EXPIRES_AT_KEY);
                 localStorage.removeItem('authToken');
                 localStorage.removeItem('auth_token');
+
+                // Wipe all user identity & session state flags (preserve UI preferences like theme)
+                const authKeys = [
+                    'loggedIn', 'uncleLoggedIn', 'loginType',
+                    'churchCode', 'church_code', 'churchName',
+                    'churchId', 'church_id', 'churchType',
+                    'adminEmail', 'admin_email',
+                    'uncleId', 'uncle_id', 'uncleName',
+                    'uncleRole', 'role', 'uncleImage', 'uncleUsername',
+                    'unclePassword', 'savedPassword', 'savedUsername',
+                    'rememberMe', 'userPhone', 'isDeveloper', 'devViewChurchId',
+                    'assignedClasses', 'lastStudentsData', 'churchSettings',
+                    'currentClass', 'lastVisitedPortal', 'activeKidAccountId',
+                    '_loginRestoreAttempted', '_ss_restoring', 'justLoggedInMultiAccounts'
+                ];
+                authKeys.forEach(k => {
+                    try { localStorage.removeItem(k); } catch (e) {}
+                    try { sessionStorage.removeItem(k); } catch (e) {}
+                });
+
+                // Clear cached trip & exam answer temporary data
+                try {
+                    Object.keys(localStorage).forEach(k => {
+                        if (k.startsWith('ss_cached_trip_') || k.startsWith('ta_')) {
+                            localStorage.removeItem(k);
+                        }
+                    });
+                } catch (e) {}
+
+                // Reset per-tab sessionStorage
+                try { sessionStorage.clear(); } catch (e) {}
+
                 if (broadcast) {
                     localStorage.setItem('ss_logout_event', String(Date.now()));
                 }
@@ -238,10 +271,14 @@
          * Perform full user logout:
          * Informs backend to revoke all family tokens, deletes cookie, and clears storage.
          */
-        async logout(redirectUrl = '/') {
+        async logout(redirectUrl = '/login/') {
             try {
                 const fd = new FormData();
                 fd.append('action', 'logout');
+                const token = this.getAccessToken();
+                if (token) {
+                    fd.append('access_token', token);
+                }
                 await fetch(API_ENDPOINT, {
                     method: 'POST',
                     body: fd,

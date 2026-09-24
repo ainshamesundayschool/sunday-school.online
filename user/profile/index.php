@@ -10604,9 +10604,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'logou
     // ── Logout ────────────────────────────────────────────────────────
     function doLogout() {
       closeOv('settingsOv');
-      ['savedUsername', 'savedPassword', 'rememberMe', 'userPhone', 'loginType', 'lastVisitedPortal'].forEach(k => localStorage.removeItem(k));
+      ['savedUsername', 'savedPassword', 'rememberMe', 'userPhone', 'loginType', 'lastVisitedPortal', 'authToken', 'auth_token', 'ss_access_token', 'ss_token_expires_at', 'activeKidAccountId'].forEach(k => localStorage.removeItem(k));
+      try { sessionStorage.clear(); } catch(e) {}
       const fd = new FormData(); fd.append('action', 'logout');
-      fetch(location.href, { method: 'POST', body: fd }).finally(() => location.href = '/user/login');
+      fetch(location.href, { method: 'POST', body: fd, credentials: 'include' }).finally(() => location.href = '/user/login');
     }
 
     // ── UI helpers ────────────────────────────────────────────────────

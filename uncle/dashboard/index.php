@@ -15876,12 +15876,37 @@ $showSettings = $hasChurchId || $isDevOrAdmin;
         }
         function confirmLogout() {
             closeLogoutModal();
+            const redirectTarget = '<?php echo $pathPrefix; ?>/login/';
             if (window.SessionManager) {
-                window.SessionManager.logout('<?php echo $pathPrefix; ?>/');
+                window.SessionManager.logout(redirectTarget);
             } else {
-                fetch(API_URL + '?action=logout', { method: 'POST', credentials: 'include' })
-                    .then(() => { localStorage.clear(); sessionStorage.clear(); window.location.href = '<?php echo $pathPrefix; ?>/'; })
-                    .catch(() => { window.location.href = '<?php echo $pathPrefix; ?>/'; });
+                fetch(API_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                    body: 'action=logout',
+                    credentials: 'include'
+                }).finally(() => {
+                    const authKeys = [
+                        'loggedIn', 'uncleLoggedIn', 'loginType',
+                        'churchCode', 'church_code', 'churchName',
+                        'churchId', 'church_id', 'churchType',
+                        'adminEmail', 'admin_email',
+                        'uncleId', 'uncle_id', 'uncleName',
+                        'uncleRole', 'role', 'uncleImage', 'uncleUsername',
+                        'unclePassword', 'savedPassword', 'savedUsername',
+                        'rememberMe', 'userPhone', 'isDeveloper', 'devViewChurchId',
+                        'assignedClasses', 'lastStudentsData', 'churchSettings',
+                        'currentClass', 'lastVisitedPortal', 'activeKidAccountId',
+                        'authToken', 'auth_token', 'ss_access_token', 'ss_token_expires_at',
+                        '_loginRestoreAttempted', '_ss_restoring'
+                    ];
+                    authKeys.forEach(k => {
+                        try { localStorage.removeItem(k); } catch (e) { }
+                        try { sessionStorage.removeItem(k); } catch (e) { }
+                    });
+                    try { sessionStorage.clear(); } catch (e) { }
+                    window.location.href = redirectTarget;
+                });
             }
         }
 

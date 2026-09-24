@@ -9002,6 +9002,7 @@
     <script src="/js/og-meta.js"></script>
     <script src="/js/rooms_helpers.js"></script>
     <script src="/js/search_intelligent.js"></script>
+    <script src="/js/session_manager.js"></script>
 </head>
 
 <body>
@@ -15939,15 +15940,43 @@
 
         async function logout() {
             if (!(await showConfirm({ message: 'هل أنت متأكد من تسجيل الخروج؟' }))) return;
-            fetch(API_URL, { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: 'action=logout' })
-                .finally(() => {
-                    // Only clear auth keys — preserve app preferences (theme, etc.)
-                    ['loggedIn', 'uncleLoggedIn', 'loginType', 'churchCode', 'church_code',
-                        'churchName', 'churchId', 'church_id', 'uncleId', 'uncle_id',
-                        'uncleName', 'uncleRole', 'role', 'uncleImage', 'uncleUsername',
-                        'assignedClasses', 'lastStudentsData', 'churchSettings', 'currentClass', 'lastVisitedPortal'].forEach(k => localStorage.removeItem(k));
-                    window.location.href = '/login/';
+            const dest = '/login/';
+            if (window.SessionManager && typeof window.SessionManager.logout === 'function') {
+                await window.SessionManager.logout(dest);
+                return;
+            }
+            try {
+                const fd = new FormData();
+                fd.append('action', 'logout');
+                const at = localStorage.getItem('ss_access_token') || localStorage.getItem('authToken');
+                if (at) fd.append('access_token', at);
+                await fetch(API_URL, {
+                    method: 'POST',
+                    body: fd,
+                    credentials: 'include'
                 });
+            } catch (e) { }
+            const authKeys = [
+                'loggedIn', 'uncleLoggedIn', 'loginType', 'churchCode', 'church_code',
+                'churchName', 'churchId', 'church_id', 'churchType', 'uncleId', 'uncle_id',
+                'uncleName', 'uncleRole', 'role', 'uncleImage', 'uncleUsername',
+                'unclePassword', 'savedPassword', 'savedUsername', 'rememberMe', 'userPhone',
+                'isDeveloper', 'devViewChurchId', 'adminEmail', 'admin_email',
+                'authToken', 'auth_token', 'ss_access_token', 'ss_token_expires_at',
+                'assignedClasses', 'lastStudentsData', 'churchSettings', 'currentClass',
+                'lastVisitedPortal', 'activeKidAccountId', '_loginRestoreAttempted', '_ss_restoring'
+            ];
+            authKeys.forEach(k => {
+                try { localStorage.removeItem(k); } catch (e) { }
+                try { sessionStorage.removeItem(k); } catch (e) { }
+            });
+            try {
+                Object.keys(localStorage).forEach(k => {
+                    if (k.startsWith('ss_cached_trip_')) localStorage.removeItem(k);
+                });
+            } catch (e) { }
+            try { sessionStorage.clear(); } catch (e) { }
+            window.location.href = dest;
         }
 
         function refreshData() {
