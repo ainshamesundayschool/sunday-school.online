@@ -1,0 +1,2565 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+
+<head>
+    <script>
+        (function () {
+            const saved = localStorage.getItem('app_theme') || 'light';
+            document.documentElement.setAttribute('data-theme', saved);
+
+            // Set churchType as youth
+            try {
+                localStorage.setItem('churchType', 'youth');
+            } catch (e) { }
+
+            // If running inside installed PWA standalone app and logged in, redirect directly to Uncle Dashboard / User portal
+            const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+            if (isStandalone) {
+                const loggedIn = localStorage.getItem('loggedIn') === 'true' || localStorage.getItem('uncleLoggedIn') === 'true';
+                if (loggedIn) {
+                    const loginType = localStorage.getItem('loginType') || 'uncle';
+                    const role = localStorage.getItem('uncleRole') || 'uncle';
+                    if (loginType === 'church' || role === 'developer') {
+                        window.location.replace('https://sunday-school.online/uncle/church/');
+                    } else {
+                        window.location.replace('https://sunday-school.online/uncle/dashboard/');
+                    }
+                } else if (localStorage.getItem('studentLoggedIn') === 'true') {
+                    window.location.replace('https://sunday-school.online/user/');
+                }
+            }
+        })();
+    </script>
+
+    <meta name="google-site-verification" content="4o_Lc-mTVMKNMBTtoKG5Ae_F_L1P655EMTGAN1yf8bI" />
+
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="manifest" href="https://sunday-school.online/manifest.json">
+    <link rel="icon" type="image/x-icon" href="https://sunday-school.online/favicon.ico">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="mobile-web-app-capable" content="yes">
+
+    <!-- ═══ Open Graph — WhatsApp / Facebook / Telegram preview ═══ -->
+    <meta property="og:type" content="website">
+    <meta property="og:site_name" content="Sunday School Youth">
+    <meta property="og:title" content="Sunday School Youth Online Egypt - نظام خدمة واجتماعات الشباب">
+    <meta property="og:description"
+        content="Sunday School Youth Online — المنصة الذكية المتكاملة لإدارة وتتبع حضور وأنشطة اجتماعات الشباب والخدام أونلاين.">
+    <meta property="og:url" content="https://youth.sunday-school.online/">
+    <meta property="og:image" content="https://sunday-school.online/imgs/Sunday-School-Og.png">
+    <meta property="og:image:width" content="1000">
+    <meta property="og:image:height" content="1000">
+    <meta property="og:image:type" content="image/png">
+    <meta property="og:image:alt" content="Sunday School Youth">
+    <meta property="og:locale" content="ar_AR">
+
+    <!-- ═══ Twitter / X Card ═══ -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Sunday School Youth Online Egypt - نظام خدمة واجتماعات الشباب">
+    <meta name="twitter:description"
+        content="Sunday School Youth Online — المنصة الذكية المتكاملة لإدارة وتتبع حضور وأنشطة اجتماعات الشباب والخدام أونلاين.">
+    <meta name="twitter:image" content="https://sunday-school.online/imgs/Sunday%20School%20App.png">
+
+    <!-- ═══ Standard SEO & Discoverability meta tags ═══ -->
+    <title>Sunday School Youth Online Egypt - نظام إدارة خدمة واجتماعات الشباب</title>
+    <meta name="description"
+        content="Sunday School Youth Online — المنصة الذكية المتكاملة لإدارة وتتبع حضور الشباب، الكوبونات والجوائز، والأنشطة لاجتماعات الشباب أونلاين.">
+    <meta name="keywords"
+        content="Sunday School Youth, خدمة الشباب, اجتماعات الشباب, شباب مدارس الأحد, Brethren Youth, Online Sunday School Youth, إدارة خدمة الشباب, تسجيل حضور الشباب, كوبونات الشباب">
+    <link rel="canonical" href="https://youth.sunday-school.online/">
+
+    <!-- JSON-LD Structured Data for Search Engine Rich Snippets -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "SoftwareApplication",
+      "name": "Sunday School Youth Online",
+      "operatingSystem": "All",
+      "applicationCategory": "EducationalApplication",
+      "description": "نظام متكامل لإدارة وتتبع نشاط الشباب والخدام لاجتماعات وخدمة الشباب أونلاين.",
+      "url": "https://youth.sunday-school.online/",
+      "offers": {
+        "@type": "Offer",
+        "price": "0.00",
+        "priceCurrency": "USD"
+      }
+    }
+    </script>
+
+    <!-- Facebook Verification -->
+    <meta name="facebook-domain-verification" content="hp0d2j5rjf51gc5j0ak6djiauvpthr">
+    <meta property="fb:app_id" content="422015245890190">
+
+    <!-- Stylesheets (Asynchronously loaded to prevent render blocking) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" crossorigin>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="preload" href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;600;700;800;900&display=swap"
+        as="style" onload="this.onload=null;this.rel='stylesheet'">
+    <noscript>
+        <link rel="stylesheet"
+            href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;600;700;800;900&display=swap">
+    </noscript>
+
+    <link rel="preload" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" as="style"
+        onload="this.onload=null;this.rel='stylesheet'">
+    <noscript>
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    </noscript>
+
+    <style>
+        /* Minimal critical CSS */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Cairo', sans-serif;
+            direction: rtl;
+        }
+
+        .hidden-for-crawlers {
+            display: none;
+        }
+
+        :root {
+            --primary: #6366f1;
+            --primary-dark: #4f46e5;
+            --primary-light: #a5b4fc;
+            --primary-bg: #eef2ff;
+            --secondary: #64748b;
+            --success: #10b981;
+            --danger: #ef4444;
+            --warning: #f59e0b;
+            --light: #f8fafc;
+            --dark: #1e293b;
+            --border: #e2e8f0;
+            --coupon: #8b5cf6;
+            --coupon-light: #ede9fe;
+            --coupon-dark: #7c3aed;
+            --coupon-gradient: linear-gradient(135deg, #8b5cf6, #7c3aed);
+
+            --radius-sm: 8px;
+            --radius-md: 16px;
+            --radius-lg: 24px;
+            --radius-xl: 32px;
+            --radius-2xl: 48px;
+
+            --spacing-xs: 4px;
+            --spacing-sm: 8px;
+            --spacing-md: 16px;
+            --spacing-lg: 24px;
+            --spacing-xl: 32px;
+            --spacing-2xl: 48px;
+            --spacing-3xl: 64px;
+
+            --shadow-sm: 0 2px 8px -2px rgba(0, 0, 0, 0.08);
+            --shadow-md: 0 8px 25px -5px rgba(0, 0, 0, 0.12);
+            --shadow-lg: 0 20px 40px -10px rgba(0, 0, 0, 0.15);
+            --shadow-xl: 0 32px 64px -12px rgba(0, 0, 0, 0.18);
+
+            --transition-fast: 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+            --transition-normal: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            --transition-slow: 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        html {
+            background: linear-gradient(135deg, #f8fafc 0%, #f0f4ff 50%, #e0e7ff 100%);
+            min-height: 100vh;
+        }
+
+        body {
+            font-family: 'Cairo', sans-serif;
+            background: transparent;
+            color: var(--dark);
+            line-height: 1.7;
+            min-height: 100vh;
+            padding: var(--spacing-lg);
+            position: relative;
+            font-size: 14px;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background:
+                radial-gradient(circle at 20% 80%, rgba(99, 102, 241, 0.1) 0%, transparent 50%),
+                radial-gradient(circle at 80% 20%, rgba(139, 92, 246, 0.08) 0%, transparent 50%),
+                radial-gradient(circle at 40% 40%, rgba(16, 185, 129, 0.05) 0%, transparent 50%);
+            pointer-events: none;
+            z-index: -1;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 0 var(--spacing-md);
+        }
+
+        /* ===== HERO BANNER SECTION ===== */
+        .hero-card {
+            display: grid;
+            grid-template-columns: 1.4fr 1fr;
+            align-items: center;
+            gap: 24px;
+            padding: 16px 24px;
+            border-radius: var(--radius-lg);
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.85) 0%, rgba(255, 255, 255, 0.95) 100%);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            box-shadow: var(--shadow-md);
+            margin-bottom: var(--spacing-lg);
+        }
+
+        [data-theme="dark"] .hero-card {
+            background: linear-gradient(135deg, rgba(24, 27, 38, 0.85) 0%, rgba(24, 27, 38, 0.95) 100%);
+            box-shadow: 0 4px 24px rgba(0, 0, 0, 0.2);
+        }
+
+        .hero-content {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .hero-illustration {
+            overflow: hidden;
+            height: 240px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .hero-img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            display: block;
+        }
+
+        .title {
+            font-size: 1.6rem;
+            font-weight: 800;
+            margin-bottom: var(--spacing-xs);
+            color: var(--primary);
+            letter-spacing: -0.02em;
+        }
+
+        .title.main {
+            font-size: 2.3rem;
+            font-family: 'Cairo', sans-serif;
+            margin-bottom: 2px;
+            color: var(--primary-dark);
+        }
+
+        .subtitle {
+            color: var(--secondary);
+            font-size: 0.95rem;
+            font-weight: 600;
+            opacity: 0.9;
+        }
+
+        .hero-stats {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px 10px;
+            margin-top: 6px;
+        }
+
+        .hero-stat-item {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            background: rgba(99, 102, 241, 0.05);
+            border: 1px solid rgba(99, 102, 241, 0.1);
+            padding: 3px 10px;
+            border-radius: 99px;
+            transition: var(--transition-fast);
+        }
+
+        [data-theme="dark"] .hero-stat-item {
+            background: rgba(255, 255, 255, 0.03);
+            border-color: rgba(255, 255, 255, 0.06);
+        }
+
+        .stat-value {
+            font-size: 0.85rem;
+            font-weight: 800;
+            color: var(--primary);
+        }
+
+        [data-theme="dark"] .stat-value {
+            color: var(--primary-light);
+        }
+
+        .stat-label {
+            color: var(--secondary);
+            font-weight: 600;
+            font-size: 0.75rem;
+        }
+
+        /* ===== USER CARDS ===== */
+        .user-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: var(--spacing-lg);
+            margin-bottom: var(--spacing-xl);
+        }
+
+        .user-card {
+            background: linear-gradient(135deg,
+                    rgba(255, 255, 255, 0.95) 0%,
+                    rgba(255, 255, 255, 0.98) 100%);
+            backdrop-filter: blur(20px);
+            padding: var(--spacing-xl);
+            border-radius: var(--radius-lg);
+            text-align: center;
+            cursor: pointer;
+            transition: var(--transition-normal);
+            box-shadow: var(--shadow-md);
+            border: none;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .user-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, var(--primary), var(--success));
+            transform: scaleX(0);
+            transition: var(--transition-normal);
+        }
+
+        .user-card:hover {
+            transform: translateY(-8px) scale(1.02);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .user-card:hover::before {
+            transform: scaleX(1);
+        }
+
+        .user-icon {
+            font-size: 4rem;
+            margin-bottom: var(--spacing-md);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 100px;
+            height: 100px;
+            border-radius: var(--radius-xl);
+            background: linear-gradient(135deg, var(--primary-bg), rgba(165, 180, 252, 0.3));
+            color: var(--primary);
+            transition: var(--transition-normal);
+        }
+
+        .user-card:hover .user-icon {
+            transform: scale(1.1) rotate(5deg);
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            color: white;
+        }
+
+        .user-title {
+            font-size: 1.4rem;
+            font-weight: 700;
+            margin-bottom: var(--spacing-sm);
+            color: var(--dark);
+            letter-spacing: -0.01em;
+        }
+
+        .user-action {
+            display: inline-flex;
+            align-items: center;
+            gap: var(--spacing-sm);
+            color: var(--primary);
+            font-weight: 600;
+            transition: var(--transition-normal);
+        }
+
+        .user-card:hover .user-action {
+            transform: translateX(-8px);
+            color: var(--primary-dark);
+        }
+
+        [data-theme="dark"] {
+            --dark: #f8fafc;
+            --light: #0f172a;
+            --secondary: #94a3b8;
+            --border: rgba(255, 255, 255, 0.08);
+            --primary-bg: rgba(99, 102, 241, 0.15);
+        }
+
+        [data-theme="dark"] body {
+            background: linear-gradient(135deg, #0b1329 0%, #080b18 50%, #03040c 100%);
+            color: #f8fafc;
+        }
+
+        [data-theme="dark"] body::before {
+            background:
+                radial-gradient(circle at 20% 80%, rgba(99, 102, 241, 0.15) 0%, transparent 50%),
+                radial-gradient(circle at 80% 20%, rgba(139, 92, 246, 0.12) 0%, transparent 50%),
+                radial-gradient(circle at 40% 40%, rgba(16, 185, 129, 0.08) 0%, transparent 50%);
+        }
+
+        [data-theme="dark"] .user-card,
+        [data-theme="dark"] .hero-card {
+            background: linear-gradient(135deg, rgba(24, 27, 38, 0.85) 0%, rgba(24, 27, 38, 0.95) 100%);
+            border: none;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        }
+
+        [data-theme="dark"] .title,
+        [data-theme="dark"] .title.main {
+            color: #fff !important;
+        }
+
+        [data-theme="dark"] .user-title,
+        [data-theme="dark"] .stat-label {
+            color: #fff;
+        }
+
+        /* ===== RESPONSIVE DESIGN ===== */
+        @media (max-width: 768px) {
+            body {
+                padding: var(--spacing-sm);
+                font-size: 12px;
+            }
+
+            .container {
+                padding: 0 var(--spacing-sm);
+            }
+
+            .hero-card {
+                grid-template-columns: 1fr;
+                padding: 12px;
+                gap: 12px;
+                margin-bottom: var(--spacing-md);
+            }
+
+            .hero-illustration {
+                display: flex;
+                height: 180px;
+                order: -1;
+            }
+
+            .title.main {
+                font-size: 1.8rem;
+            }
+
+            .subtitle {
+                font-size: 0.85rem;
+            }
+
+            .hero-stats {
+                gap: 4px 8px;
+            }
+
+            .hero-stat-item {
+                padding: 2px 8px;
+            }
+
+            .stat-value {
+                font-size: 0.82rem;
+            }
+
+            .stat-label {
+                font-size: 0.72rem;
+            }
+
+            .user-cards {
+                gap: var(--spacing-sm);
+                grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+            }
+
+            .user-card {
+                padding: var(--spacing-md);
+                border-radius: var(--radius-md);
+            }
+
+            .user-icon {
+                font-size: 3.2rem;
+                width: 80px;
+                height: 80px;
+                margin-bottom: var(--spacing-sm);
+            }
+
+            .user-title {
+                font-size: 1.1rem;
+            }
+        }
+
+        /* ===== SCREENSHOTS SHOWCASE ===== */
+        .ss-section {
+            margin-bottom: var(--spacing-xl);
+            padding: clamp(42px, 6vw, 72px) 0 var(--spacing-md);
+        }
+
+        .ss-section-header {
+            text-align: center;
+            margin-bottom: 28px;
+        }
+
+        .ss-eyebrow {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: var(--primary-bg);
+            color: var(--primary);
+            border: 1.5px solid rgba(99, 102, 241, .2);
+            border-radius: 999px;
+            padding: 5px 16px;
+            font-size: .82rem;
+            font-weight: 700;
+        }
+
+        .ss-outer {
+            position: relative;
+        }
+
+        .ss-track {
+            display: flex;
+            gap: 18px;
+            overflow-x: auto;
+            scroll-snap-type: x mandatory;
+            -webkit-overflow-scrolling: touch;
+            padding: 14px 32px 20px;
+            cursor: grab;
+            user-select: none;
+        }
+
+        .ss-track::-webkit-scrollbar {
+            height: 6px;
+            display: block;
+        }
+
+        .ss-track::-webkit-scrollbar-track {
+            background: rgba(99, 102, 241, 0.04);
+            border-radius: 999px;
+        }
+
+        .ss-track::-webkit-scrollbar-thumb {
+            background: rgba(99, 102, 241, 0.2);
+            border-radius: 999px;
+            transition: var(--transition-fast);
+        }
+
+        .ss-track::-webkit-scrollbar-thumb:hover {
+            background: rgba(99, 102, 241, 0.4);
+        }
+
+        .ss-track.is-dragging {
+            cursor: grabbing;
+        }
+
+        .ss-phone-card {
+            flex: 0 0 172px;
+            scroll-snap-align: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+            cursor: pointer;
+            transition: transform .3s cubic-bezier(.4, 0, .2, 1), filter .3s ease;
+        }
+
+        .ss-phone-card:hover {
+            transform: translateY(-8px) scale(1.02);
+            filter: saturate(1.03);
+        }
+
+        @media(max-width: 480px) {
+            .ss-phone-card {
+                flex: 0 0 42vw;
+            }
+
+            .ss-track {
+                padding: 10px 16px 18px;
+            }
+        }
+
+        @media(min-width: 768px) {
+            .ss-phone-card {
+                flex: 0 0 182px;
+            }
+        }
+
+        @media(min-width: 1100px) {
+            .ss-section {
+                padding-top: 72px;
+            }
+
+            .ss-section-header {
+                text-align: right;
+                display: flex;
+                justify-content: space-between;
+                align-items: end;
+                margin-bottom: 20px;
+            }
+
+            .ss-track {
+                gap: 24px;
+                padding: 18px 48px 32px;
+            }
+
+            .ss-phone-card {
+                flex: 0 0 266px;
+            }
+
+            .ss-phone {
+                padding: 8px;
+                border-radius: 24px;
+                background: #0f172a;
+                border: 1px solid rgba(255, 255, 255, 0.08);
+                box-shadow: 0 18px 40px rgba(15, 23, 42, 0.25);
+            }
+
+            .ss-phone::before,
+            .ss-phone::after {
+                display: none;
+            }
+
+            .ss-screen {
+                border-radius: 18px;
+            }
+
+            .ss-phone-label {
+                align-items: flex-start;
+                width: 100%;
+                padding: 0 4px;
+            }
+
+            .ss-phone-badge {
+                font-size: .74rem;
+                padding: 4px 12px;
+            }
+
+            .ss-phone-desc {
+                display: block;
+                font-size: .76rem;
+                line-height: 1.45;
+                color: var(--secondary);
+                max-width: 100%;
+            }
+        }
+
+        .ss-phone {
+            width: 100%;
+            border-radius: 28px;
+            background: #0f172a;
+            padding: 7px;
+            box-shadow: 0 12px 32px rgba(15, 23, 42, 0.15),
+                0 0 0 1px rgba(255, 255, 255, 0.08);
+            position: relative;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .ss-phone-card:hover .ss-phone {
+            box-shadow: 0 20px 48px rgba(99, 102, 241, 0.2),
+                0 0 0 1px rgba(99, 102, 241, 0.2);
+        }
+
+        .ss-screen {
+            border-radius: 22px;
+            overflow: hidden;
+            position: relative;
+            height: 0;
+            padding-bottom: 185%;
+            background: #000;
+        }
+
+        .ss-screen img {
+            position: absolute;
+            top: -7%;
+            left: 0;
+            width: 100%;
+            height: 115%;
+            object-fit: cover;
+            object-position: top center;
+            display: block;
+            transition: transform .45s ease;
+        }
+
+        .ss-phone-card:hover .ss-screen img {
+            transform: scale(1.03);
+        }
+
+        .ss-zoom-hint {
+            position: absolute;
+            inset: 0;
+            border-radius: 22px;
+            background: rgba(99, 102, 241, 0);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background .25s ease;
+            z-index: 2;
+        }
+
+        .ss-zoom-hint i {
+            color: #fff;
+            font-size: 1.4rem;
+            opacity: 0;
+            transform: scale(.7);
+            transition: all .25s ease;
+            filter: drop-shadow(0 2px 8px rgba(0, 0, 0, .5));
+        }
+
+        .ss-phone-card:hover .ss-zoom-hint {
+            background: rgba(99, 102, 241, .18);
+        }
+
+        .ss-phone-card:hover .ss-zoom-hint i {
+            opacity: 1;
+            transform: scale(1);
+        }
+
+        .ss-phone-label {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 5px;
+            text-align: center;
+        }
+
+        .ss-phone-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            border-radius: 999px;
+            padding: 3px 10px;
+            font-size: .7rem;
+            font-weight: 700;
+        }
+
+        .ss-phone-desc {
+            display: none;
+        }
+
+        .ss-nav {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            margin-top: 10px;
+        }
+
+        .ss-dots-row {
+            display: flex;
+            gap: 6px;
+            align-items: center;
+        }
+
+        .ss-dot {
+            width: 7px;
+            height: 7px;
+            border-radius: 999px;
+            background: var(--border);
+            border: none;
+            cursor: pointer;
+            padding: 0;
+            transition: all .28s ease;
+        }
+
+        .ss-dot.active {
+            background: var(--primary);
+            width: 20px;
+        }
+
+        .ss-btn {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            border: 1.5px solid rgba(99, 102, 241, .2);
+            background: #fff;
+            color: var(--primary);
+            font-size: .85rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all .18s ease;
+            box-shadow: var(--shadow-sm);
+            flex-shrink: 0;
+        }
+
+        .ss-btn:hover {
+            background: var(--primary);
+            color: #fff;
+            border-color: var(--primary);
+            transform: scale(1.1);
+        }
+
+        .ss-btn:disabled {
+            opacity: .3;
+            pointer-events: none;
+        }
+
+        /* ===== LIGHTBOX ===== */
+        .ss-lightbox {
+            position: fixed;
+            inset: 0;
+            z-index: 9999;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity .3s ease;
+        }
+
+        .ss-lightbox.open {
+            opacity: 1;
+            pointer-events: all;
+        }
+
+        .ss-lb-backdrop {
+            position: absolute;
+            inset: 0;
+            background: rgba(0, 0, 0, .88);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+        }
+
+        .ss-lb-inner {
+            position: relative;
+            z-index: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 20px;
+            width: 100%;
+            height: 100%;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .ss-lb-img-wrap {
+            position: relative;
+            max-height: 78vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .ss-lb-img-wrap img {
+            max-height: 82vh;
+            max-width: min(1120px, 92vw);
+            width: auto;
+            border-radius: 24px;
+            box-shadow: 0 30px 80px -10px rgba(0, 0, 0, .7);
+            display: block;
+            object-fit: contain;
+            background: #0b1220;
+            transform: scale(.94);
+            transition: transform .35s cubic-bezier(.4, 0, .2, 1), opacity .3s ease;
+            opacity: 0;
+        }
+
+        .ss-lightbox.open .ss-lb-img-wrap img {
+            transform: scale(1);
+            opacity: 1;
+        }
+
+        .ss-lb-close {
+            position: absolute;
+            top: 16px;
+            left: 16px;
+            width: 42px;
+            height: 42px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, .12);
+            border: 1px solid rgba(255, 255, 255, .18);
+            color: #fff;
+            font-size: 1.1rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all .2s ease;
+            backdrop-filter: blur(8px);
+            z-index: 10;
+        }
+
+        .ss-lb-close:hover {
+            background: rgba(255, 255, 255, .25);
+            transform: scale(1.1);
+        }
+
+        .ss-lb-fullscreen {
+            position: absolute;
+            top: 16px;
+            left: 68px;
+            width: 42px;
+            height: 42px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, .12);
+            border: 1px solid rgba(255, 255, 255, .18);
+            color: #fff;
+            font-size: 1rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all .2s ease;
+            backdrop-filter: blur(8px);
+            z-index: 10;
+        }
+
+        .ss-lb-fullscreen:hover {
+            background: rgba(255, 255, 255, .25);
+            transform: scale(1.08);
+        }
+
+        .ss-lb-prev,
+        .ss-lb-next {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, .12);
+            border: 1px solid rgba(255, 255, 255, .18);
+            color: #fff;
+            font-size: 1.1rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all .2s ease;
+            backdrop-filter: blur(8px);
+            z-index: 10;
+        }
+
+        .ss-lb-prev {
+            right: 16px;
+        }
+
+        .ss-lb-next {
+            left: 16px;
+        }
+
+        .ss-lb-prev:hover,
+        .ss-lb-next:hover {
+            background: var(--primary);
+            border-color: var(--primary);
+            transform: translateY(-50%) scale(1.1);
+        }
+
+        .ss-lb-prev:disabled,
+        .ss-lb-next:disabled {
+            opacity: .25;
+            pointer-events: none;
+        }
+
+        .ss-lb-fullscreen.is-active {
+            background: var(--primary);
+            border-color: var(--primary);
+        }
+
+        .ss-lb-label {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .ss-lb-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            border-radius: 999px;
+            padding: 5px 14px;
+            font-size: .82rem;
+            font-weight: 700;
+        }
+
+        .ss-lb-counter {
+            font-size: .75rem;
+            color: rgba(255, 255, 255, .45);
+            font-weight: 500;
+        }
+
+        .ss-lightbox.is-fullscreen .ss-lb-img-wrap img {
+            max-width: min(1280px, 96vw);
+            max-height: 90vh;
+        }
+
+        /* ===== EXCLUSIVE SONG SECTION ===== */
+        .exclusive-song-section {
+            margin-bottom: var(--spacing-lg);
+            position: relative;
+            z-index: 10;
+        }
+
+        .song-card-container {
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.85) 0%, rgba(255, 255, 255, 0.95) 100%);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: none;
+            border-radius: var(--radius-lg);
+            padding: 10px 14px;
+            box-shadow: var(--shadow-sm);
+            position: relative;
+            overflow: visible;
+            transition: var(--transition-normal);
+            z-index: 15;
+        }
+
+        [data-theme="dark"] .song-card-container {
+            background: linear-gradient(135deg, rgba(24, 27, 38, 0.85) 0%, rgba(24, 27, 38, 0.95) 100%);
+            border: none;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+        }
+
+        .song-card {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+            width: 100%;
+        }
+
+        .song-cover-container {
+            flex-shrink: 0;
+            width: 58px;
+            height: 58px;
+            position: relative;
+            cursor: pointer;
+            transition: var(--transition-normal);
+            box-shadow: var(--shadow-sm);
+            border-radius: var(--radius-md);
+        }
+
+        .song-cover-container:hover {
+            transform: scale(1.03);
+            box-shadow: var(--shadow-md);
+        }
+
+        .song-cover {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+            border-radius: var(--radius-md);
+        }
+
+        .song-player-details {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            min-width: 0;
+        }
+
+        .big-play-btn {
+            position: absolute;
+            bottom: -5px;
+            left: -5px;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            border: none;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            color: white;
+            font-size: 0.65rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            box-shadow: 0 2px 6px rgba(99, 102, 241, 0.25);
+            transition: var(--transition-normal);
+            z-index: 5;
+        }
+
+        .big-play-btn:hover {
+            transform: scale(1.1);
+            box-shadow: 0 4px 10px rgba(99, 102, 241, 0.4);
+        }
+
+        .progress-container {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-sm);
+            direction: rtl;
+            background: rgba(99, 102, 241, 0.04);
+            padding: 4px 8px;
+            border-radius: var(--radius-md);
+            border: none;
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        [data-theme="dark"] .progress-container {
+            background: rgba(255, 255, 255, 0.01);
+            border: none;
+        }
+
+        .time-label {
+            font-size: 0.8rem;
+            color: var(--secondary);
+            min-width: 38px;
+            text-align: center;
+            font-variant-numeric: tabular-nums;
+            font-family: 'Cairo', sans-serif;
+        }
+
+        [data-theme="dark"] .time-label {
+            color: #94a3b8;
+        }
+
+        .progress-bar-wrapper {
+            flex: 1;
+            height: 6px;
+            background: rgba(99, 102, 241, 0.15);
+            border-radius: 3px;
+            position: relative;
+            cursor: pointer;
+            overflow: visible;
+        }
+
+        [data-theme="dark"] .progress-bar-wrapper {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .progress-bar-filled {
+            height: 100%;
+            background: linear-gradient(90deg, var(--primary) 0%, var(--primary-dark) 100%);
+            border-radius: 3px;
+            width: 0%;
+            position: absolute;
+            top: 0;
+            right: 0;
+        }
+
+        .progress-bar-knob {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: var(--primary-dark);
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%) translateX(50%);
+            right: 0%;
+            border: 2px solid white;
+            box-shadow: var(--shadow-sm);
+            display: none;
+            transition: transform 0.1s ease;
+        }
+
+        .progress-bar-wrapper:hover .progress-bar-knob {
+            display: block;
+        }
+
+        .song-actions {
+            display: flex;
+            gap: var(--spacing-md);
+            flex-wrap: wrap;
+            margin-top: 2px;
+        }
+
+        .action-btn {
+            display: inline-flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            width: 32px !important;
+            min-width: 32px !important;
+            height: 32px !important;
+            min-height: 32px !important;
+            border-radius: 50% !important;
+            font-size: 0.82rem !important;
+            cursor: pointer;
+            border: none !important;
+            transition: var(--transition-normal);
+            text-decoration: none !important;
+            box-shadow: var(--shadow-sm);
+            flex-shrink: 0 !important;
+            padding: 0 !important;
+            box-sizing: border-box !important;
+        }
+
+        .download-btn {
+            background: linear-gradient(135deg, var(--success) 0%, #0da271 100%);
+            color: white;
+            position: relative;
+        }
+
+        .download-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(16, 185, 129, 0.25);
+        }
+
+        .share-btn {
+            background: rgba(99, 102, 241, 0.08);
+            color: var(--primary-dark);
+            border: 1px solid rgba(99, 102, 241, 0.18);
+        }
+
+        [data-theme="dark"] .share-btn {
+            background: rgba(255, 255, 255, 0.03);
+            color: var(--primary-light);
+            border-color: rgba(255, 255, 255, 0.08);
+        }
+
+        .share-btn:hover {
+            background: var(--primary-bg);
+            color: var(--primary-dark);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(99, 102, 241, 0.1);
+        }
+
+        .loop-btn {
+            background: rgba(99, 102, 241, 0.08);
+            color: var(--primary-dark);
+            border: 1px solid rgba(99, 102, 241, 0.18);
+        }
+
+        [data-theme="dark"] .loop-btn {
+            background: rgba(255, 255, 255, 0.03);
+            color: var(--primary-light);
+            border-color: rgba(255, 255, 255, 0.08);
+        }
+
+        .loop-btn:hover {
+            background: var(--primary-bg);
+            color: var(--primary-dark);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(99, 102, 241, 0.1);
+        }
+
+        .loop-btn.active {
+            background: linear-gradient(135deg, var(--primary) 0%, #4338ca 100%) !important;
+            color: white !important;
+            border: none !important;
+            box-shadow: 0 4px 14px rgba(79, 70, 229, 0.4) !important;
+        }
+
+        .download-dropdown-wrapper {
+            position: relative;
+            display: inline-block;
+        }
+
+        .download-dropdown-menu {
+            position: absolute;
+            top: calc(100% + 4px);
+            left: 0;
+            background: white;
+            border: 1px solid var(--border);
+            border-radius: var(--radius-md);
+            box-shadow: var(--shadow-lg);
+            display: none;
+            flex-direction: column;
+            min-width: 200px;
+            z-index: 999;
+            overflow: hidden;
+            animation: slideUp 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        [data-theme="dark"] .download-dropdown-menu {
+            background: #181b26;
+            border-color: var(--border);
+        }
+
+        .download-dropdown-menu.show {
+            display: flex;
+        }
+
+        .dropdown-item {
+            padding: 12px 16px;
+            background: none;
+            border: none;
+            width: 100%;
+            font-family: 'Cairo', sans-serif;
+            font-size: 0.9rem;
+            color: var(--dark);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: var(--spacing-sm);
+            transition: var(--transition-fast);
+            white-space: nowrap;
+        }
+
+        .dropdown-item-text {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-sm);
+            white-space: nowrap;
+        }
+
+        .file-size-badge {
+            font-size: 0.75rem;
+            background: rgba(99, 102, 241, 0.15);
+            color: var(--primary-dark);
+            padding: 2px 8px;
+            border-radius: var(--radius-sm);
+            font-weight: 700;
+            font-variant-numeric: tabular-nums;
+            transition: var(--transition-fast);
+            direction: ltr;
+            display: inline-block;
+        }
+
+        [data-theme="dark"] .file-size-badge {
+            background: rgba(255, 255, 255, 0.08);
+            color: var(--primary-light);
+        }
+
+        .dropdown-item:hover .file-size-badge {
+            background: var(--primary);
+            color: white;
+        }
+
+        [data-theme="dark"] .dropdown-item {
+            color: #e2e8f0;
+        }
+
+        .dropdown-item:hover {
+            background: var(--light);
+            color: var(--primary-dark);
+        }
+
+        [data-theme="dark"] .dropdown-item:hover {
+            background: rgba(255, 255, 255, 0.05);
+            color: white;
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* ── FOOTER ── */
+        .site-footer {
+            background: transparent;
+            border-radius: 0;
+            border: none;
+            box-shadow: none;
+            padding: 18px 22px;
+            margin-top: 10px;
+        }
+
+        .footer-inner {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 12px;
+            margin-bottom: 14px;
+        }
+
+        .footer-brand {
+            display: flex;
+            align-items: center;
+            gap: 9px;
+            text-decoration: none;
+            color: inherit;
+        }
+
+        .brand-icon {
+            width: 36px;
+            height: 36px;
+            background: var(--primary);
+            border-radius: var(--radius-sm);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+        }
+
+        .brand-icon img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .brand-name {
+            font-size: .92rem;
+            font-weight: 800;
+            color: var(--dark);
+        }
+
+        [data-theme="dark"] .brand-name {
+            color: #f8fafc;
+        }
+
+        .footer-copy {
+            font-size: .78rem;
+            color: var(--secondary);
+            text-align: end;
+            line-height: 1.6;
+        }
+
+        .footer-links {
+            display: flex;
+            justify-content: center;
+            gap: 18px;
+            flex-wrap: wrap;
+            padding-top: 14px;
+            border-top: 1px solid var(--border);
+        }
+
+        .footer-link {
+            color: var(--primary);
+            text-decoration: none;
+            font-size: .84rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            transition: var(--transition-normal);
+        }
+
+        .footer-link:hover {
+            color: var(--primary-dark);
+            transform: translateY(-2px);
+        }
+
+        @media(max-width:480px) {
+            .footer-inner {
+                flex-direction: column;
+                text-align: center;
+            }
+
+            .footer-copy {
+                text-align: center;
+            }
+
+            .footer-links {
+                gap: 14px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- ══ PWA FULL-SCREEN LOADER / SPLASH SCREEN ══ -->
+    <div id="pwaSplashScreen" onclick="window.dismissPwaSplashScreen && window.dismissPwaSplashScreen()">
+        <style>
+            #pwaSplashScreen {
+                position: fixed;
+                inset: 0;
+                z-index: 9999999;
+                background: linear-gradient(135deg, #f8fafc 0%, #edf2f7 100%);
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                justify-content: center;
+                padding: 32px 24px;
+                transition: opacity 0.35s cubic-bezier(0.4, 0, 0.2, 1), visibility 0.35s;
+                direction: rtl;
+                font-family: 'Cairo', sans-serif;
+                user-select: none;
+                cursor: pointer;
+            }
+
+            [data-theme="dark"] #pwaSplashScreen {
+                background: linear-gradient(135deg, #0f172a 0%, #090d16 100%);
+            }
+
+            .pwa-splash-logo-card {
+                width: 96px;
+                height: 96px;
+                background: transparent !important;
+                box-shadow: none !important;
+                border: none !important;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                margin-bottom: 24px;
+                animation: pwaSplashPulse 2.4s ease-in-out infinite alternate;
+                position: relative;
+            }
+
+            .pwa-splash-logo-card img {
+                width: 88px;
+                height: 88px;
+                object-fit: contain;
+                border-radius: 18px;
+                filter: drop-shadow(0 10px 24px rgba(79, 70, 229, 0.25));
+            }
+
+            [data-theme="dark"] .pwa-splash-logo-card img {
+                filter: drop-shadow(0 10px 24px rgba(0, 0, 0, 0.5));
+            }
+
+            .pwa-splash-title {
+                font-size: 1.25rem;
+                font-weight: 900;
+                color: #1e293b;
+                margin: 0 auto 8px auto;
+                text-align: center;
+                width: 100%;
+                max-width: 92vw;
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                letter-spacing: -0.01em;
+            }
+
+            @media (max-width: 480px) {
+                .pwa-splash-title {
+                    font-size: 1.1rem !important;
+                    white-space: nowrap !important;
+                }
+            }
+
+            [data-theme="dark"] .pwa-splash-title {
+                color: #f8fafc;
+            }
+
+            .pwa-splash-status {
+                font-size: 0.95rem;
+                font-weight: 700;
+                color: #4f46e5;
+                margin-bottom: 28px;
+                min-height: 28px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                text-align: center;
+            }
+
+            [data-theme="dark"] .pwa-splash-status {
+                color: #818cf8;
+            }
+
+            .pwa-splash-status-text {
+                animation: pwaTextFadeIn 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+            }
+
+            .pwa-splash-progress-track {
+                width: 140px;
+                height: 4px;
+                background: rgba(79, 70, 229, 0.12);
+                border-radius: 999px;
+                overflow: hidden;
+            }
+
+            [data-theme="dark"] .pwa-splash-progress-track {
+                background: rgba(255, 255, 255, 0.1);
+            }
+
+            .pwa-splash-progress-bar {
+                height: 100%;
+                width: 0%;
+                background: linear-gradient(90deg, #4f46e5, #818cf8);
+                border-radius: 999px;
+                transition: width 0.35s ease;
+            }
+
+            @keyframes pwaTextFadeIn {
+                from {
+                    opacity: 0;
+                    transform: translateY(6px);
+                }
+
+                to {
+                    opacity: 1;
+                    transform: translateY(0);
+                }
+            }
+
+            @keyframes pwaSplashPulse {
+                0% {
+                    transform: scale(1);
+                }
+
+                100% {
+                    transform: scale(1.05);
+                }
+            }
+        </style>
+        <div class="pwa-splash-logo-card">
+            <img src="https://sunday-school.online/logo.png" alt="Logo" onerror="this.src='https://sunday-school.online/favicon.ico'">
+        </div>
+        <div class="pwa-splash-title">Sunday School Youth Online</div>
+        <div class="pwa-splash-status" id="pwaSplashStatusBox">
+            <span class="pwa-splash-status-text" id="pwaSplashStatusText">جاري فتح منصة الشباب...</span>
+        </div>
+        <div class="pwa-splash-progress-track">
+            <div class="pwa-splash-progress-bar" id="pwaSplashProgressBar"></div>
+        </div>
+    </div>
+    <script>
+        (function () {
+            var textEl = document.getElementById('pwaSplashStatusText');
+            var barEl = document.getElementById('pwaSplashProgressBar');
+
+            function updateStatus(msg, progress) {
+                if (textEl && msg) {
+                    textEl.textContent = msg;
+                    textEl.classList.remove('pwa-splash-status-text');
+                    void textEl.offsetWidth;
+                    textEl.classList.add('pwa-splash-status-text');
+                }
+                if (barEl && progress !== undefined) {
+                    barEl.style.width = progress + '%';
+                }
+            }
+
+            setTimeout(function () { updateStatus('جاري التحقق من الاتصال بالشبكة...', 35); }, 150);
+            setTimeout(function () { updateStatus('جاري استرجاع وقراءة البيانات...', 70); }, 350);
+            setTimeout(function () { updateStatus('جاري تجهيز المنصة...', 100); }, 550);
+
+            window.dismissPwaSplashScreen = function () {
+                var el = document.getElementById('pwaSplashScreen');
+                if (el && !el.classList.contains('dismissed')) {
+                    el.classList.add('dismissed');
+                    el.style.opacity = '0';
+                    el.style.pointerEvents = 'none';
+                    setTimeout(function () {
+                        if (el && el.parentNode) el.parentNode.removeChild(el);
+                    }, 400);
+                }
+            };
+
+            setTimeout(window.dismissPwaSplashScreen, 750);
+            if (document.readyState === 'complete') {
+                setTimeout(window.dismissPwaSplashScreen, 300);
+            } else {
+                document.addEventListener('DOMContentLoaded', function () { setTimeout(window.dismissPwaSplashScreen, 400); });
+                window.addEventListener('load', function () { setTimeout(window.dismissPwaSplashScreen, 300); });
+            }
+        })();
+    </script>
+
+    <!-- Hidden content for WhatsApp crawler (non-JS fallback) -->
+    <div class="hidden-for-crawlers" aria-hidden="true">
+        <h1>Sunday School Youth Online</h1>
+        <p>نظام متكامل لإدارة وتتبع نشاط الشباب والخدام في الكنائس والاجتماعات</p>
+        <img src="https://sunday-school.online/imgs/Sunday-School-Og.png" alt="Sunday School Youth Management System">
+        <a href="https://youth.sunday-school.online/">/</a>
+    </div>
+
+    <main class="container">
+        <!-- Top Section: Unified Responsive Hero Card -->
+        <div class="hero-card">
+            <div class="hero-content">
+                <h1 class="title main">Sunday School Youth</h1>
+                <p class="subtitle">نظام متكامل لإدارة وتتبع نشاط واجتماعات الشباب والخدام</p>
+
+                <!-- Dynamic System Stats -->
+                <div class="hero-stats" id="heroStatsContainer">
+                    <div class="hero-stat-item" title="عدد الشباب المسجلين في النظام">
+                        <div class="stat-value" id="statKids">1,112</div>
+                        <div class="stat-label">شاب وشابة</div>
+                    </div>
+                    <div class="hero-stat-item" title="عدد الخدام والخادمات في النظام">
+                        <div class="stat-value" id="statUncles">188</div>
+                        <div class="stat-label">خادم وخادمة</div>
+                    </div>
+                    <div class="hero-stat-item" title="عدد الكنائس والاجتماعات المشتركة">
+                        <div class="stat-value" id="statChurches">22</div>
+                        <div class="stat-label">كنيسة واجتماع</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="hero-illustration">
+                <img src="https://sunday-school.online/imgs/Sunday-School-App.webp" alt="Sunday School Youth Cover" class="hero-img" width="400"
+                    height="180">
+            </div>
+        </div>
+
+        <!-- User Type Selection -->
+        <section id="user-selection" style="margin-bottom: var(--spacing-xl);">
+            <h2 class="title" style="text-align: center;">اختر نوع المستخدم للبدء</h2>
+            <div class="user-cards">
+                <div class="user-card" onclick="selectUser('youth')">
+                    <div class="user-icon" style="margin-top: 10px;">
+                        <i class="fas fa-user-graduate"></i>
+                    </div>
+                    <h3 class="user-title">شاب / شابة</h3>
+                    <div class="user-action">
+                        <span>الدخول كـ شاب / شابة</span>
+                        <i class="fas fa-arrow-left"></i>
+                    </div>
+                </div>
+
+                <div class="user-card" onclick="selectUser('uncle')">
+                    <div class="user-icon" style="margin-top: 10px;">
+                        <i class="fas fa-user-tie"></i>
+                    </div>
+                    <h3 class="user-title">خادم / خادمة</h3>
+                    <div class="user-action">
+                        <span>الدخول كـ خادم / خادمة</span>
+                        <i class="fas fa-arrow-left"></i>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Exclusive Song Section -->
+        <section class="exclusive-song-section">
+            <div class="song-card-container">
+                <div class="song-card">
+                    <!-- Cover image + Play Button combined -->
+                    <div class="song-cover-container">
+                        <img src="https://sunday-school.online/exclusive/song/2026/cover/cover.png" alt="غلاف ترنيمة صحي النايمين شبهك اكون"
+                            class="song-cover">
+                        <button id="play-pause-btn" class="big-play-btn" aria-label="تشغيل">
+                            <i class="fas fa-play"></i>
+                        </button>
+                    </div>
+
+                    <!-- Right Side: Player controls & Actions -->
+                    <div class="song-player-details">
+                        <div style="display:flex; align-items:center; gap:10px; width:100%;">
+                            <!-- Progress container -->
+                            <div class="progress-container" style="flex:1;">
+                                <span id="current-time" class="time-label">0:00</span>
+                                <div id="progress-bar" class="progress-bar-wrapper">
+                                    <div id="progress-filled" class="progress-bar-filled"></div>
+                                    <div id="progress-knob" class="progress-bar-knob"></div>
+                                </div>
+                                <span id="duration-time" class="time-label">0:00</span>
+                            </div>
+
+                            <!-- Actions: Download, Share & Loop -->
+                            <div class="song-actions" style="display:flex; gap:6px; flex-shrink:0;">
+                                <button id="loop-btn" class="action-btn loop-btn" title="تكرار الترنيمة"
+                                    aria-label="تكرار الترنيمة">
+                                    <i class="fas fa-redo"></i>
+                                </button>
+
+                                <div class="download-dropdown-wrapper">
+                                    <button id="download-btn" class="action-btn download-btn" title="تحميل">
+                                        <i class="fas fa-download"></i>
+                                    </button>
+                                    <div id="download-dropdown" class="download-dropdown-menu">
+                                        <button id="download-mp3-btn" class="dropdown-item">
+                                            <span class="dropdown-item-text"><i class="far fa-file-audio"></i>
+                                                MP3</span>
+                                            <span class="file-size-badge">6.0 MB</span>
+                                        </button>
+                                        <button id="download-wav-btn" class="dropdown-item">
+                                            <span class="dropdown-item-text"><i class="far fa-file-code"></i> WAV</span>
+                                            <span class="file-size-badge">44 MB</span>
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <button id="share-btn" class="action-btn share-btn" title="مشاركة">
+                                    <i class="fas fa-share-alt"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Audio Element -->
+                        <audio id="exclusive-audio" src="https://sunday-school.online/exclusive/song/2026/files/song.mp3" preload="none"></audio>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ═══ SCREENSHOTS SHOWCASE ═══ -->
+        <section class="ss-section" id="screenshots">
+            <div class="ss-section-header">
+                <div class="ss-eyebrow"><i class="fas fa-mobile-alt"></i> لقطات من النظام</div>
+            </div>
+            <div class="ss-outer">
+                <div class="ss-track" id="ssTrack" dir="ltr">
+
+                    <div class="ss-phone-card">
+                        <div class="ss-phone">
+                            <div class="ss-screen"><img src="https://sunday-school.online/imgs/screenshots/class attendance view.PNG"
+                                    alt="عرض الحضور" loading="lazy"></div>
+                        </div>
+                        <div class="ss-phone-label">
+                            <div class="ss-phone-badge" style="background:#eef2ff;color:#4f46e5"><i
+                                    class="fas fa-users"></i> المجموعة</div>
+                            <div class="ss-phone-desc">عرض الحضور داخل المجموعة بسرعة ووضوح.</div>
+                        </div>
+                    </div>
+
+                    <div class="ss-phone-card">
+                        <div class="ss-phone">
+                            <div class="ss-screen"><img src="https://sunday-school.online/imgs/screenshots/attendance assigning.PNG"
+                                    alt="تسجيل الحضور" loading="lazy"></div>
+                        </div>
+                        <div class="ss-phone-label">
+                            <div class="ss-phone-badge" style="background:#ecfdf5;color:#059669"><i
+                                    class="fas fa-user-check"></i> الحضور</div>
+                            <div class="ss-phone-desc">تسجيل الحضور من شاشة واحدة بدون تعقيد.</div>
+                        </div>
+                    </div>
+
+                    <div class="ss-phone-card">
+                        <div class="ss-phone">
+                            <div class="ss-screen"><img src="https://sunday-school.online/imgs/screenshots/attendance date.PNG" alt="تاريخ الحضور"
+                                    loading="lazy"></div>
+                        </div>
+                        <div class="ss-phone-label">
+                            <div class="ss-phone-badge" style="background:#eff6ff;color:#1d4ed8"><i
+                                    class="fas fa-calendar-alt"></i> التاريخ</div>
+                            <div class="ss-phone-desc">اختيار تاريخ الحضور ومراجعة الأيام السابقة.</div>
+                        </div>
+                    </div>
+
+                    <div class="ss-phone-card">
+                        <div class="ss-phone">
+                            <div class="ss-screen"><img src="https://sunday-school.online/imgs/screenshots/swipe attendance feature.PNG"
+                                    alt="سحب للحضور" loading="lazy"></div>
+                        </div>
+                        <div class="ss-phone-label">
+                            <div class="ss-phone-badge" style="background:#ecfdf5;color:#059669"><i
+                                    class="fas fa-hand-pointer"></i> سحب</div>
+                            <div class="ss-phone-desc">تمرير أسرع بين المجموعات والأسماء.</div>
+                        </div>
+                    </div>
+
+                    <div class="ss-phone-card">
+                        <div class="ss-phone">
+                            <div class="ss-screen"><img src="https://sunday-school.online/imgs/screenshots/kid profile view.PNG" alt="ملف الشاب"
+                                    loading="lazy"></div>
+                        </div>
+                        <div class="ss-phone-label">
+                            <div class="ss-phone-badge" style="background:#fdf4ff;color:#7c3aed"><i
+                                    class="fas fa-user-graduate"></i> الشاب</div>
+                            <div class="ss-phone-desc">ملف الشاب مع بياناته الأساسية في لمحة واحدة.</div>
+                        </div>
+                    </div>
+
+                    <div class="ss-phone-card">
+                        <div class="ss-phone">
+                            <div class="ss-screen"><img src="https://sunday-school.online/imgs/screenshots/kid profile view 2.PNG" alt="الكوبونات"
+                                    loading="lazy"></div>
+                        </div>
+                        <div class="ss-phone-label">
+                            <div class="ss-phone-badge" style="background:#fdf4ff;color:#7c3aed"><i
+                                    class="fas fa-star"></i> الكوبونات</div>
+                            <div class="ss-phone-desc">متابعة الكوبونات والرصد اليومي للأنشطة.</div>
+                        </div>
+                    </div>
+
+                    <div class="ss-phone-card">
+                        <div class="ss-phone">
+                            <div class="ss-screen"><img src="https://sunday-school.online/imgs/screenshots/kid info.PNG" alt="معلومات الشاب"
+                                    loading="lazy"></div>
+                        </div>
+                        <div class="ss-phone-label">
+                            <div class="ss-phone-badge" style="background:#fff7ed;color:#c2410c"><i
+                                    class="fas fa-info-circle"></i> البيانات</div>
+                            <div class="ss-phone-desc">معلومات الشاب الأساسية وصورته الشخصية.</div>
+                        </div>
+                    </div>
+
+                    <div class="ss-phone-card">
+                        <div class="ss-phone">
+                            <div class="ss-screen"><img src="https://sunday-school.online/imgs/screenshots/withdraw couons feature.PNG"
+                                    alt="سحب كوبونات" loading="lazy"></div>
+                        </div>
+                        <div class="ss-phone-label">
+                            <div class="ss-phone-badge" style="background:#fef9c3;color:#a16207"><i
+                                    class="fas fa-star"></i> الكوبونات</div>
+                            <div class="ss-phone-desc">سحب الكوبونات وإدارة الرصيد المتاح.</div>
+                        </div>
+                    </div>
+
+                    <div class="ss-phone-card">
+                        <div class="ss-phone">
+                            <div class="ss-screen"><img src="https://sunday-school.online/imgs/screenshots/bulk add kids feature.PNG"
+                                    alt="إضافة جماعية" loading="lazy"></div>
+                        </div>
+                        <div class="ss-phone-label">
+                            <div class="ss-phone-badge" style="background:#eef2ff;color:#4f46e5"><i
+                                    class="fas fa-users-cog"></i> إضافة</div>
+                            <div class="ss-phone-desc">إضافة جماعية للشباب والمجموعات بسهولة.</div>
+                        </div>
+                    </div>
+
+                    <div class="ss-phone-card">
+                        <div class="ss-phone">
+                            <div class="ss-screen"><img src="https://sunday-school.online/imgs/screenshots/uncle class view.PNG" alt="عرض الخادم"
+                                    loading="lazy"></div>
+                        </div>
+                        <div class="ss-phone-label">
+                            <div class="ss-phone-badge" style="background:#ecfdf5;color:#059669"><i
+                                    class="fas fa-user-tie"></i> الخادم</div>
+                            <div class="ss-phone-desc">عرض خدام المجموعة وأدوات المتابعة اليومية.</div>
+                        </div>
+                    </div>
+
+                    <div class="ss-phone-card">
+                        <div class="ss-phone">
+                            <div class="ss-screen"><img src="https://sunday-school.online/imgs/screenshots/task exams.PNG" alt="التاسكات"
+                                    loading="lazy"></div>
+                        </div>
+                        <div class="ss-phone-label">
+                            <div class="ss-phone-badge" style="background:#fff1f2;color:#be123c"><i
+                                    class="fas fa-tasks"></i> التاسكات</div>
+                            <div class="ss-phone-desc">اختبارات وتاسكات مع تقييم أوضح وأسهل.</div>
+                        </div>
+                    </div>
+
+                    <div class="ss-phone-card">
+                        <div class="ss-phone">
+                            <div class="ss-screen"><img src="https://sunday-school.online/imgs/screenshots/qr code game points.PNG" alt="نقاط QR"
+                                    loading="lazy"></div>
+                        </div>
+                        <div class="ss-phone-label">
+                            <div class="ss-phone-badge" style="background:#eff6ff;color:#1d4ed8"><i
+                                    class="fas fa-gamepad"></i> الأنشطة</div>
+                            <div class="ss-phone-desc">نقاط QR والتحفيز التفاعلي للشباب.</div>
+                        </div>
+                    </div>
+
+                    <div class="ss-phone-card">
+                        <div class="ss-phone">
+                            <div class="ss-screen"><img src="https://sunday-school.online/imgs/screenshots/game qr codes customization print.PNG"
+                                    alt="طباعة QR" loading="lazy"></div>
+                        </div>
+                        <div class="ss-phone-label">
+                            <div class="ss-phone-badge" style="background:#eff6ff;color:#1d4ed8"><i
+                                    class="fas fa-qrcode"></i> QR</div>
+                            <div class="ss-phone-desc">تخصيص وطباعة أكواد QR من نفس الشاشة.</div>
+                        </div>
+                    </div>
+
+                </div><!-- end .ss-track -->
+            </div><!-- end .ss-outer -->
+
+            <div class="ss-nav">
+                <button class="ss-btn" id="ssBtnPrev" aria-label="السابق"><i class="fas fa-chevron-right"></i></button>
+                <div class="ss-dots-row" id="ssDots2"></div>
+                <button class="ss-btn" id="ssBtnNext" aria-label="التالي"><i class="fas fa-chevron-left"></i></button>
+            </div>
+        </section>
+
+        <!-- ═══ LIGHTBOX ═══ -->
+        <div class="ss-lightbox" id="ssLightbox" role="dialog" aria-modal="true" aria-label="معرض لقطات شاشة التطبيق">
+            <div class="ss-lb-backdrop" id="ssLbBackdrop"></div>
+            <button class="ss-lb-close" id="ssLbClose" aria-label="إغلاق"><i class="fas fa-times"></i></button>
+            <button class="ss-lb-fullscreen" id="ssLbFullscreen" aria-label="ملء الشاشة"><i
+                    class="fas fa-expand"></i></button>
+            <button class="ss-lb-prev" id="ssLbPrev" aria-label="السابق"><i class="fas fa-chevron-right"></i></button>
+            <button class="ss-lb-next" id="ssLbNext" aria-label="التالي"><i class="fas fa-chevron-left"></i></button>
+            <div class="ss-lb-inner">
+                <div class="ss-lb-img-wrap"><img id="ssLbImg" src="" alt=""></div>
+                <div class="ss-lb-label">
+                    <div class="ss-lb-badge" id="ssLbBadge"></div>
+                    <div class="ss-lb-counter" id="ssLbCounter"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <footer class="site-footer">
+            <div class="footer-inner"
+                style="flex-direction: column; align-items: center; gap: 8px; margin-bottom: 16px;">
+                <a href="https://youth.sunday-school.online/" class="footer-brand">
+                    <div class="brand-icon">
+                        <img src="https://sunday-school.online/logo.png" alt="Logo" width="40" height="40"
+                            onerror="this.parentElement.innerHTML='&lt;i class=\'fas fa-cross\' style=\'color:#fff;font-size:15px\'&gt;&lt;/i&gt;'">
+                    </div>
+                    <span class="brand-name">Sunday School Youth Online 2026</span>
+                </a>
+                <div class="footer-copy" style="text-align: center; direction: rtl;">مُكْثِرِينَ فِي عَمَلِ ٱلرَّبِّ
+                    كُلَّ حِينٍ، عَالِمِينَ أَنَّ تَعَبَكُمْ لَيْسَ بَاطِلًا فِي ٱلرَّبِّ.” - كُورِنْثُوسَ ٱلأُولَى
+                    ١٥:‏٥٨</div>
+            </div>
+            <div class="footer-links">
+                <a href="https://sunday-school.online/help/" class="footer-link"><i class="fas fa-question-circle"></i> المساعدة</a>
+                <a href="https://api.whatsapp.com/send?phone=201037011355" class="footer-link"><i
+                        class="fab fa-whatsapp"></i> تواصل معنا</a>
+                <a href="https://ipn.eg/S/peterfyqnb/instapay/4OGoKS" target="_blank" class="footer-link">
+                    <img src="https://sunday-school.online/imgs/InstaPay-Logo.webp" alt="InstaPay" width="54" height="14"
+                        style="height: 14px; width: auto; vertical-align: middle; border-radius: 2px;">
+                    <span>تبرّع للمشروع</span>
+                </a>
+                <a href="https://sunday-school.online/about" class="footer-link"><i class="fas fa-info-circle"></i> حول التطبيق</a>
+            </div>
+        </footer>
+    </main>
+
+    <script>
+        // ── SCREENSHOTS CAROUSEL + LIGHTBOX ─────────────
+        (function () {
+            const track = document.getElementById('ssTrack');
+            const dotsRow = document.getElementById('ssDots2');
+            const btnPrev = document.getElementById('ssBtnPrev');
+            const btnNext = document.getElementById('ssBtnNext');
+            if (!track) return;
+
+            const cards = Array.from(track.querySelectorAll('.ss-phone-card'));
+            const total = cards.length;
+            let currentIdx = 0;
+
+            const data = cards.map(card => ({
+                src: card.querySelector('img').src,
+                alt: card.querySelector('img').alt,
+                badge: card.querySelector('.ss-phone-badge').outerHTML
+            }));
+
+            cards.forEach((card, i) => {
+                const screen = card.querySelector('.ss-screen');
+                const hint = document.createElement('div');
+                hint.className = 'ss-zoom-hint';
+                hint.innerHTML = '<i class="fas fa-expand"></i>';
+                screen.appendChild(hint);
+
+                card.addEventListener('click', () => {
+                    if (track.classList.contains('is-dragging') || didDrag) return;
+                    openLightbox(i);
+                });
+            });
+
+            cards.forEach((_, i) => {
+                const d = document.createElement('button');
+                d.className = 'ss-dot' + (i === 0 ? ' active' : '');
+                d.setAttribute('aria-label', 'انتقل للقطة ' + (i + 1));
+                d.addEventListener('click', () => goTo(i));
+                dotsRow.appendChild(d);
+            });
+
+            function getCardWidth() { return cards[0] ? cards[0].offsetWidth + 14 : 164; }
+
+            function goTo(index) {
+                currentIdx = Math.max(0, Math.min(index, total - 1));
+                const cw = getCardWidth();
+                const trackW = track.offsetWidth;
+                const offset = (cw * currentIdx) - (trackW / 2) + (cards[currentIdx].offsetWidth / 2);
+                track.scrollTo({ left: -offset, behavior: 'smooth' });
+                updateCarouselUI();
+            }
+
+            function updateCarouselUI() {
+                dotsRow.querySelectorAll('.ss-dot').forEach((d, i) =>
+                    d.classList.toggle('active', i === currentIdx));
+                if (btnPrev) btnPrev.disabled = currentIdx === 0;
+                if (btnNext) btnNext.disabled = currentIdx >= total - 1;
+            }
+
+            track.addEventListener('scroll', () => {
+                const cw = getCardWidth();
+                currentIdx = Math.min(total - 1, Math.max(0, Math.round(Math.abs(track.scrollLeft) / cw)));
+                updateCarouselUI();
+            }, { passive: true });
+
+            if (btnPrev) btnPrev.addEventListener('click', () => goTo(currentIdx - 1));
+            if (btnNext) btnNext.addEventListener('click', () => goTo(currentIdx + 1));
+
+            let isDown = false, startX = 0, startScroll = 0, didDrag = false;
+            track.addEventListener('mousedown', e => {
+                isDown = true; didDrag = false;
+                track.classList.add('is-dragging');
+                startX = e.pageX - track.offsetLeft;
+                startScroll = track.scrollLeft;
+            });
+            track.addEventListener('mouseleave', () => { isDown = false; track.classList.remove('is-dragging'); });
+            track.addEventListener('mouseup', () => {
+                isDown = false;
+                setTimeout(() => track.classList.remove('is-dragging'), 50);
+            });
+            track.addEventListener('mousemove', e => {
+                if (!isDown) return;
+                e.preventDefault();
+                const dx = e.pageX - track.offsetLeft - startX;
+                if (Math.abs(dx) > 4) didDrag = true;
+                track.scrollLeft = startScroll + dx * 1.4;
+            });
+
+            updateCarouselUI();
+
+            // ── LIGHTBOX ────────────────────────────
+            const lb = document.getElementById('ssLightbox');
+            const lbImg = document.getElementById('ssLbImg');
+            const lbBadge = document.getElementById('ssLbBadge');
+            const lbCount = document.getElementById('ssLbCounter');
+            const lbClose = document.getElementById('ssLbClose');
+            const lbPrev = document.getElementById('ssLbPrev');
+            const lbNext = document.getElementById('ssLbNext');
+            const lbBack = document.getElementById('ssLbBackdrop');
+            const lbFullscreen = document.getElementById('ssLbFullscreen');
+            let lbIdx = 0;
+            let isFullscreen = false;
+
+            function openLightbox(index) {
+                lbIdx = Math.max(0, Math.min(index, total - 1));
+                lbImg.src = data[lbIdx].src;
+                lbImg.alt = data[lbIdx].alt;
+                lbBadge.innerHTML = data[lbIdx].badge;
+                lbCount.textContent = (lbIdx + 1) + ' / ' + total;
+                lbPrev.disabled = lbIdx === 0;
+                lbNext.disabled = lbIdx >= total - 1;
+                lb.classList.add('open');
+                document.body.style.overflow = 'hidden';
+                updateFullscreenButton();
+            }
+
+            function closeLightbox() {
+                lb.classList.remove('open');
+                lb.classList.remove('is-fullscreen');
+                document.body.style.overflow = '';
+                setTimeout(() => { lbImg.src = ''; }, 320);
+                if (document.fullscreenElement) {
+                    document.exitFullscreen().catch(() => { });
+                }
+                isFullscreen = false;
+                updateFullscreenButton();
+            }
+
+            function updateFullscreenButton() {
+                if (!lbFullscreen) return;
+                const active = isFullscreen || !!document.fullscreenElement;
+                lbFullscreen.classList.toggle('is-active', active);
+                lbFullscreen.innerHTML = active
+                    ? '<i class="fas fa-compress"></i>'
+                    : '<i class="fas fa-expand"></i>';
+                lbFullscreen.setAttribute('aria-label', active ? 'الخروج من ملء الشاشة' : 'ملء الشاشة');
+            }
+
+            async function toggleFullscreen() {
+                if (!lb.classList.contains('open')) return;
+                try {
+                    if (document.fullscreenElement) {
+                        await document.exitFullscreen();
+                        isFullscreen = false;
+                        lb.classList.remove('is-fullscreen');
+                    } else {
+                        await lb.requestFullscreen?.();
+                        isFullscreen = true;
+                        lb.classList.add('is-fullscreen');
+                    }
+                } catch (e) {
+                    isFullscreen = !isFullscreen;
+                    lb.classList.toggle('is-fullscreen', isFullscreen);
+                }
+                updateFullscreenButton();
+            }
+
+            function lbGoTo(index) {
+                lbIdx = Math.max(0, Math.min(index, total - 1));
+                lbImg.style.opacity = '0';
+                lbImg.style.transform = 'scale(.88)';
+                setTimeout(() => {
+                    lbImg.src = data[lbIdx].src;
+                    lbImg.alt = data[lbIdx].alt;
+                    lbBadge.innerHTML = data[lbIdx].badge;
+                    lbCount.textContent = (lbIdx + 1) + ' / ' + total;
+                    lbPrev.disabled = lbIdx === 0;
+                    lbNext.disabled = lbIdx >= total - 1;
+                    lbImg.style.opacity = '1';
+                    lbImg.style.transform = 'scale(1)';
+                }, 160);
+            }
+
+            if (lbClose) lbClose.addEventListener('click', closeLightbox);
+            if (lbBack) lbBack.addEventListener('click', closeLightbox);
+            if (lbFullscreen) lbFullscreen.addEventListener('click', toggleFullscreen);
+            if (lbPrev) lbPrev.addEventListener('click', () => lbGoTo(lbIdx - 1));
+            if (lbNext) lbNext.addEventListener('click', () => lbGoTo(lbIdx + 1));
+
+            document.addEventListener('keydown', e => {
+                if (!lb.classList.contains('open')) return;
+                if (e.key === 'Escape') closeLightbox();
+                if (e.key === 'ArrowRight' && lbIdx > 0) lbGoTo(lbIdx - 1);
+                if (e.key === 'ArrowLeft' && lbIdx < total - 1) lbGoTo(lbIdx + 1);
+            });
+        })();
+
+        // دالة لتحريك الأرقام تدريجياً (Count-Up Animation)
+        function animateValue(element, start, end, duration = 750) {
+            if (!element) return;
+            if (isNaN(end)) return;
+            if (start === end) {
+                element.textContent = Number(end).toLocaleString();
+                return;
+            }
+            const startTime = performance.now();
+            function step(currentTime) {
+                const progress = Math.min((currentTime - startTime) / duration, 1);
+                const easeOut = 1 - Math.pow(1 - progress, 3);
+                const currentVal = Math.round(start + (end - start) * easeOut);
+                element.textContent = currentVal.toLocaleString();
+                if (progress < 1) {
+                    requestAnimationFrame(step);
+                } else {
+                    element.textContent = Number(end).toLocaleString();
+                }
+            }
+            requestAnimationFrame(step);
+        }
+
+        // دالة لتحديث الإحصائيات ديناميكياً من قاعدة البيانات
+        async function updateStats() {
+            const kidsEl = document.getElementById('statKids') || document.querySelectorAll('.stat-value')[0];
+            const unclesEl = document.getElementById('statUncles') || document.querySelectorAll('.stat-value')[1];
+            const churchesEl = document.getElementById('statChurches') || document.querySelectorAll('.stat-value')[2];
+
+            let cached = null;
+            try {
+                cached = JSON.parse(localStorage.getItem('ss_public_stats') || 'null');
+                if (cached && kidsEl && unclesEl && churchesEl) {
+                    if (cached.kids_count) kidsEl.textContent = Number(cached.kids_count).toLocaleString();
+                    if (cached.servants_count) unclesEl.textContent = Number(cached.servants_count).toLocaleString();
+                    if (cached.churches_count) churchesEl.textContent = Number(cached.churches_count).toLocaleString();
+                }
+            } catch (e) {}
+
+            try {
+                const res = await fetch('https://sunday-school.online/api.php?action=getPublicStats', {
+                    cache: 'no-cache',
+                    headers: { 'Accept': 'application/json' }
+                });
+                if (!res.ok) throw new Error('Network error: ' + res.status);
+                const data = await res.json();
+
+                if (data && data.success) {
+                    const kids = parseInt(data.kids_count ?? data.total_kids ?? 0, 10);
+                    const servants = parseInt(data.servants_count ?? data.total_uncles ?? 0, 10);
+                    const churches = parseInt(data.churches_count ?? data.active_churches ?? 0, 10);
+
+                    try {
+                        localStorage.setItem('ss_public_stats', JSON.stringify({
+                            kids_count: kids,
+                            servants_count: servants,
+                            churches_count: churches,
+                            timestamp: Date.now()
+                        }));
+                    } catch (e) {}
+
+                    const startKids = parseInt((kidsEl?.textContent || '0').replace(/[^0-9]/g, ''), 10) || 0;
+                    const startServants = parseInt((unclesEl?.textContent || '0').replace(/[^0-9]/g, ''), 10) || 0;
+                    const startChurches = parseInt((churchesEl?.textContent || '0').replace(/[^0-9]/g, ''), 10) || 0;
+
+                    animateValue(kidsEl, startKids, kids);
+                    animateValue(unclesEl, startServants, servants);
+                    animateValue(churchesEl, startChurches, churches);
+                }
+            } catch (err) {
+                console.warn('Could not refresh public stats from DB:', err);
+            }
+        }
+
+        // دالة اختيار نوع المستخدم والانتقال المباشر للمنصة
+        function selectUser(type) {
+            const card = event.currentTarget;
+
+            // تأثير النقر
+            card.style.transform = 'scale(0.95)';
+
+            setTimeout(() => {
+                card.style.transform = 'translateY(-8px) scale(1.02)';
+
+                setTimeout(() => {
+                    // تثبيت نمط الشباب في التخزين المحلي
+                    try {
+                        localStorage.setItem('churchType', 'youth');
+                    } catch (e) {}
+
+                    if (type === 'youth' || type === 'kid') {
+                        window.location.href = 'https://sunday-school.online/user/';
+                    } else if (type === 'uncle' || type === 'servant') {
+                        window.location.href = 'https://sunday-school.online/login/';
+                    }
+                }, 300);
+            }, 150);
+        }
+
+        function scrollToSelection() {
+            document.getElementById('user-selection').scrollIntoView({
+                behavior: 'smooth',
+                block: 'start'
+            });
+        }
+
+        // تهيئة مشغل الترنيمة الحصرية
+        function initExclusivePlayer() {
+            const audio = document.getElementById('exclusive-audio');
+            const playPauseBtn = document.getElementById('play-pause-btn');
+            const coverContainer = document.querySelector('.song-cover-container');
+            const progressBar = document.getElementById('progress-bar');
+            const progressFilled = document.getElementById('progress-filled');
+            const progressKnob = document.getElementById('progress-knob');
+            const currentTimeEl = document.getElementById('current-time');
+            const durationTimeEl = document.getElementById('duration-time');
+            const downloadBtn = document.getElementById('download-btn');
+            const downloadDropdown = document.getElementById('download-dropdown');
+            const downloadMp3Btn = document.getElementById('download-mp3-btn');
+            const downloadWavBtn = document.getElementById('download-wav-btn');
+            const loopBtn = document.getElementById('loop-btn');
+
+            if (!audio || !playPauseBtn) return;
+
+            let isLoopMode = localStorage.getItem('song_loop_mode') === 'true';
+
+            function updateLoopState() {
+                audio.loop = isLoopMode;
+                if (loopBtn) {
+                    if (isLoopMode) {
+                        loopBtn.classList.add('active');
+                        loopBtn.setAttribute('title', 'التكرار مفعل');
+                        loopBtn.setAttribute('aria-label', 'التكرار مفعل');
+                    } else {
+                        loopBtn.classList.remove('active');
+                        loopBtn.setAttribute('title', 'تكرار الترنيمة');
+                        loopBtn.setAttribute('aria-label', 'تكرار الترنيمة');
+                    }
+                }
+            }
+
+            updateLoopState();
+
+            if (loopBtn) {
+                loopBtn.addEventListener('click', function (e) {
+                    e.stopPropagation();
+                    isLoopMode = !isLoopMode;
+                    localStorage.setItem('song_loop_mode', isLoopMode ? 'true' : 'false');
+                    updateLoopState();
+                });
+            }
+
+            let trackerUuid = localStorage.getItem('song_tracker_uuid');
+            if (!trackerUuid) {
+                trackerUuid = 'tr_' + Math.random().toString(36).substring(2, 15) + '_' + Date.now().toString(36);
+                localStorage.setItem('song_tracker_uuid', trackerUuid);
+            }
+
+            function sendSongTrackingRequest(format) {
+                const fd = new FormData();
+                fd.append('action', 'trackSongDownload');
+                fd.append('format', format);
+                fd.append('tracker_uuid', trackerUuid);
+
+                const uId = localStorage.getItem('uncleId') || localStorage.getItem('uncle_id');
+                const sId = localStorage.getItem('studentId') || localStorage.getItem('student_id');
+                const cId = localStorage.getItem('churchId') || localStorage.getItem('church_id');
+                if (uId) {
+                    fd.append('uncle_id', uId);
+                } else if (sId) {
+                    fd.append('student_id', sId);
+                } else if (cId) {
+                    fd.append('church_id', cId);
+                }
+
+                fetch('https://sunday-school.online/api.php', {
+                    method: 'POST',
+                    body: fd,
+                    credentials: 'include'
+                }).catch(err => console.error('Tracking failed:', err));
+            }
+
+            function formatTime(secs) {
+                if (isNaN(secs)) return '0:00';
+                const minutes = Math.floor(secs / 60);
+                const seconds = Math.floor(secs % 60);
+                return `${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
+            }
+
+            audio.addEventListener('loadedmetadata', function () {
+                durationTimeEl.textContent = formatTime(audio.duration);
+            });
+
+            if (audio.readyState >= 1) {
+                durationTimeEl.textContent = formatTime(audio.duration);
+            }
+
+            function togglePlay() {
+                if (audio.paused) {
+                    audio.play();
+                } else {
+                    audio.pause();
+                }
+            }
+
+            let playTrackedThisSession = false;
+            audio.addEventListener('play', function () {
+                playPauseBtn.innerHTML = '<i class="fas fa-pause"></i>';
+                playPauseBtn.setAttribute('aria-label', 'إيقاف مؤقت');
+
+                if (!playTrackedThisSession) {
+                    playTrackedThisSession = true;
+                    sendSongTrackingRequest('play');
+                }
+            });
+
+            audio.addEventListener('pause', function () {
+                playPauseBtn.innerHTML = '<i class="fas fa-play"></i>';
+                playPauseBtn.setAttribute('aria-label', 'تشغيل');
+            });
+
+            playPauseBtn.addEventListener('click', function (e) {
+                e.stopPropagation();
+                togglePlay();
+            });
+
+            if (coverContainer) {
+                coverContainer.addEventListener('click', function () {
+                    togglePlay();
+                });
+            }
+
+            audio.addEventListener('timeupdate', function () {
+                const percent = (audio.currentTime / audio.duration) * 100;
+                progressFilled.style.width = `${percent}%`;
+                progressKnob.style.right = `${percent}%`;
+                currentTimeEl.textContent = formatTime(audio.currentTime);
+            });
+
+            audio.addEventListener('ended', function () {
+                if (isLoopMode) {
+                    audio.currentTime = 0;
+                    audio.play().catch(err => console.error('Loop playback failed:', err));
+                } else {
+                    playPauseBtn.innerHTML = '<i class="fas fa-play"></i>';
+                    playPauseBtn.setAttribute('aria-label', 'تشغيل');
+                    progressFilled.style.width = '0%';
+                    progressKnob.style.right = '0%';
+                    currentTimeEl.textContent = '0:00';
+                }
+            });
+
+            function setProgress(e) {
+                const rect = progressBar.getBoundingClientRect();
+                let clickX = rect.right - e.clientX;
+                if (clickX < 0) clickX = 0;
+                if (clickX > rect.width) clickX = rect.width;
+
+                const percentage = clickX / rect.width;
+                audio.currentTime = percentage * audio.duration;
+            }
+
+            let isDragging = false;
+
+            progressBar.addEventListener('mousedown', function (e) {
+                isDragging = true;
+                setProgress(e);
+            });
+
+            document.addEventListener('mousemove', function (e) {
+                if (isDragging) {
+                    setProgress(e);
+                }
+            });
+
+            document.addEventListener('mouseup', function () {
+                isDragging = false;
+            });
+
+            progressBar.addEventListener('touchstart', function (e) {
+                isDragging = true;
+                setProgress(e.touches[0]);
+            });
+
+            progressBar.addEventListener('touchmove', function (e) {
+                if (isDragging) {
+                    setProgress(e.touches[0]);
+                    e.preventDefault();
+                }
+            });
+
+            progressBar.addEventListener('touchend', function () {
+                isDragging = false;
+            });
+
+            downloadBtn.addEventListener('click', function (e) {
+                e.stopPropagation();
+                downloadDropdown.classList.toggle('show');
+            });
+
+            document.addEventListener('click', function () {
+                downloadDropdown.classList.remove('show');
+            });
+
+            downloadDropdown.addEventListener('click', function (e) {
+                e.stopPropagation();
+            });
+
+            function triggerDownload(format, url, filename) {
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = filename;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+
+                downloadDropdown.classList.remove('show');
+                sendSongTrackingRequest(format);
+            }
+
+            downloadMp3Btn.addEventListener('click', function () {
+                triggerDownload('mp3', 'https://sunday-school.online/exclusive/song/2026/files/song.mp3', 'صحي النايمين شبهك اكون ٢٠٢٦.mp3');
+            });
+
+            downloadWavBtn.addEventListener('click', function () {
+                triggerDownload('wav', 'https://sunday-school.online/exclusive/song/2026/files/song.wav', 'صحي النايمين شبهك اكون ٢٠٢٦.wav');
+            });
+
+            const shareBtn = document.getElementById('share-btn');
+            if (shareBtn) {
+                shareBtn.addEventListener('click', function () {
+                    const shareTitle = 'ترنيمة صحي النايمين - شبهك أكون ٢٠٢٦';
+                    const shareText = 'استمع إلى ترنيمة "صحي النايمين - شبهك أكون" على خدمة الشباب 🎵';
+                    const shareUrl = 'https://youth.sunday-school.online';
+
+                    if (navigator.share) {
+                        navigator.share({
+                            title: shareTitle,
+                            text: shareText,
+                            url: shareUrl
+                        }).then(() => {
+                            sendSongTrackingRequest('share');
+                        }).catch(err => console.log('Share canceled:', err));
+                    } else {
+                        navigator.clipboard.writeText(shareUrl).then(() => {
+                            alert('تم نسخ رابط الترنيمة بنجاح! شاركها الآن.');
+                            sendSongTrackingRequest('share');
+                        }).catch(err => console.error('Copy failed:', err));
+                    }
+                });
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', function () {
+            updateStats();
+            initExclusivePlayer();
+
+            const observerOptions = {
+                threshold: 0.1,
+                rootMargin: '0px 0px -50px 0px'
+            };
+
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.style.opacity = '1';
+                        entry.target.style.transform = 'translateY(0)';
+                    }
+                });
+            }, observerOptions);
+
+            document.querySelectorAll('.user-card').forEach(el => {
+                el.style.opacity = '0';
+                el.style.transform = 'translateY(20px)';
+                el.style.transition = 'all 0.6s cubic-bezier(0.4, 0, 0.2, 1)';
+                observer.observe(el);
+            });
+        });
+
+        window.selectUser = selectUser;
+        window.scrollToSelection = scrollToSelection;
+    </script>
+</body>
+
+</html>

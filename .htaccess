@@ -72,6 +72,9 @@ RewriteRule ^user/?$ /user/index.html [L,QSA]
 # Redirect /login to the actual directory entry point
 RewriteRule ^login/?$ /login/index.html [L,QSA]
 
+# Redirect /youth to the actual youth directory entry point
+RewriteRule ^youth/?$ /youth/index.html [L,QSA]
+
 # Redirect /registration to the actual user registration directory
 RewriteRule ^registration/?$ /user/registration/index.html [L,QSA]
 
