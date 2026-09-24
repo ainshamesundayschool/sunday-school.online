@@ -25748,7 +25748,7 @@ function getClassesForChurch(int $churchId): array
                    MIN(cc.color) AS color, MIN(cc.icon) AS icon, MIN(cc.church_id) AS church_id,
                    COUNT(s.id) AS student_count
             FROM   church_classes cc
-            LEFT JOIN students s ON s.class_id = cc.id
+            LEFT JOIN students s ON (s.class_id = cc.id OR s.class = cc.arabic_name) AND COALESCE(s.enrollment_status, 'active') = 'active'
             WHERE  cc.is_active = 1
             GROUP  BY cc.arabic_name
             ORDER  BY class_order, cc.arabic_name
@@ -25771,7 +25771,7 @@ function getClassesForChurch(int $churchId): array
                    c.color, '' AS icon,
                    COUNT(s.id) AS student_count
             FROM   classes c
-            LEFT JOIN students s ON s.class_id = c.id
+            LEFT JOIN students s ON (s.class_id = c.id OR s.class = c.arabic_name) AND COALESCE(s.enrollment_status, 'active') = 'active'
             GROUP  BY c.id
             ORDER  BY c.display_order
         ");
@@ -25791,7 +25791,7 @@ function getClassesForChurch(int $churchId): array
                    cc.color, cc.icon,
                    COUNT(s.id) AS student_count
             FROM   church_classes cc
-            LEFT JOIN students s ON s.class_id = cc.id AND s.church_id = ?
+            LEFT JOIN students s ON (s.class_id = cc.id OR s.class = cc.arabic_name) AND s.church_id = ? AND COALESCE(s.enrollment_status, 'active') = 'active'
             WHERE  cc.church_id = ? AND cc.is_active = 1
             GROUP  BY cc.id
             ORDER  BY class_order, cc.arabic_name
@@ -36287,6 +36287,22 @@ function gradeUpStudentsForChurch(int $churchId, ?array $customMapping = null): 
 
     }
 
+    $classByName = [];
+    foreach ($ordered as $c) {
+        $cname = trim($c['arabic_name'] ?? '');
+        if ($cname !== '') {
+            $classByName[$cname] = (int)$c['id'];
+        }
+    }
+
+    $globalClassesMap = [];
+    $gRes = $conn->query("SELECT id, arabic_name FROM classes");
+    if ($gRes) {
+        while ($gr = $gRes->fetch_assoc()) {
+            $globalClassesMap[(int)$gr['id']] = trim($gr['arabic_name']);
+        }
+    }
+
     $upd = $conn->prepare("
 
         UPDATE students
@@ -36301,7 +36317,7 @@ function gradeUpStudentsForChurch(int $churchId, ?array $customMapping = null): 
 
         UPDATE students
 
-        SET graduate_from_class_id = class_id,
+        SET graduate_from_class_id = ?,
 
             graduate_from_class = ?,
 
@@ -36313,7 +36329,7 @@ function gradeUpStudentsForChurch(int $churchId, ?array $customMapping = null): 
 
             updated_at = NOW()
 
-        WHERE id = ? AND church_id = ? AND class_id = ?
+        WHERE id = ? AND church_id = ?
 
     ");
 
@@ -36329,6 +36345,17 @@ function gradeUpStudentsForChurch(int $churchId, ?array $customMapping = null): 
 
         $cid = (int) $s['class_id'];
 
+        $sClassName = trim($s['class'] ?? '');
+
+        // Resolve $cid if missing or if $cid doesn't match custom church class ID
+        if (!isset($mapping[$cid])) {
+            if ($sClassName !== '' && isset($classByName[$sClassName])) {
+                $cid = $classByName[$sClassName];
+            } elseif (isset($globalClassesMap[$cid]) && isset($classByName[$globalClassesMap[$cid]])) {
+                $cid = $classByName[$globalClassesMap[$cid]];
+            }
+        }
+
         if (!isset($mapping[$cid])) {
 
             $unchanged++;
@@ -36341,9 +36368,9 @@ function gradeUpStudentsForChurch(int $churchId, ?array $customMapping = null): 
 
         if ($rule['type'] === 'graduate') {
 
-            $gradClass = $rule['source_name'] ?? ($classById[$cid]['arabic_name'] ?? '');
+            $gradClass = $rule['source_name'] ?? ($classById[$cid]['arabic_name'] ?? ($sClassName ?: ''));
 
-            $gradStmt->bind_param("siii", $gradClass, $sid, $churchId, $cid);
+            $gradStmt->bind_param("isii", $cid, $gradClass, $sid, $churchId);
 
             if ($gradStmt->execute() && $gradStmt->affected_rows > 0) {
 

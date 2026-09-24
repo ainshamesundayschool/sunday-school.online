@@ -1645,6 +1645,29 @@
             font-family: 'Cairo', sans-serif;
         }
 
+        /* Universal Select & Option Theme Styling (Ensures high contrast in all dropdowns) */
+        select option,
+        .form-select option,
+        .form-input option {
+            background-color: var(--surface, #ffffff) !important;
+            color: var(--text, #1a1d2e) !important;
+        }
+
+        [data-theme="dark"] select,
+        [data-theme="dark"] .form-select,
+        [data-theme="dark"] .form-input {
+            background-color: var(--surface-2, #1e2132) !important;
+            color: var(--text, #e8eaf6) !important;
+            border-color: var(--border-solid, #2a2d42) !important;
+        }
+
+        [data-theme="dark"] select option,
+        [data-theme="dark"] .form-select option,
+        [data-theme="dark"] .form-input option {
+            background-color: var(--surface-2, #1e2132) !important;
+            color: var(--text, #e8eaf6) !important;
+        }
+
         /* ═══════════════════════════════════════════════════════════════════
            UNIVERSAL CUSTOM DROPDOWN SYSTEM (Stroke-Free, Soft, Smooth & Compact)
         ═══════════════════════════════════════════════════════════════════ */
@@ -8148,6 +8171,21 @@
             overflow-y: auto;
         }
 
+        .tab-export-panel.tab-export-fields-panel {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            min-height: 260px;
+        }
+
+        .tab-export-panel.tab-export-fields-panel .tab-export-field-list,
+        .tab-export-fields-panel .tab-export-field-list {
+            flex: 1;
+            max-height: none;
+            min-height: 200px;
+            overflow-y: auto;
+        }
+
         .tab-export-field-row {
             display: flex;
             align-items: center;
@@ -9094,9 +9132,9 @@
                                     <button type="button" class="btn btn-primary btn-sm"
                                         style="font-size:0.75rem; padding:4px 10px;"
                                         onclick="copyKidRegLink(document.getElementById('studentsKidRegUrl').textContent,'الكنيسة')"
-                                        title="نسخ الرابط مباشرة">
-                                        <i class="fas fa-copy"></i>
-                                        <span>نسخ الرابط</span>
+                                        title="نسخ رابط التسجيل">
+                                        <i class="fas fa-link"></i>
+                                        <span>نسخ رابط التسجيل</span>
                                     </button>
                                     <div class="share-popover-wrap">
                                         <button type="button" class="btn btn-outline btn-sm share-btn"
@@ -9108,11 +9146,6 @@
                                                 style="font-size:0.65rem;margin-inline-start:3px;"></i>
                                         </button>
                                         <div class="share-popover-menu">
-                                            <button type="button" class="share-popover-item"
-                                                onclick="copyKidRegLink(document.getElementById('studentsKidRegUrl').textContent,'الكنيسة')">
-                                                <i class="fas fa-copy" style="color:var(--text-2);"></i>
-                                                <span>نسخ الرابط</span>
-                                            </button>
                                             <button type="button" class="share-popover-item"
                                                 onclick="shareWhatsApp(document.getElementById('studentsKidRegUrl').textContent,'رابط تسجيل الأطفال في الكنيسة')">
                                                 <i class="fab fa-whatsapp" style="color:#25D366;"></i>
@@ -9135,12 +9168,6 @@
                                 style="display:flex; justify-content:space-between; align-items:center; gap:8px;">
                                 <div class="card-title"><i class="fas fa-user-plus"></i> إضافة طفل جديد</div>
                                 <div style="display:flex; align-items:center; gap:6px;">
-                                    <button type="button" class="btn btn-outline btn-sm"
-                                        onclick="copyKidRegLink(document.getElementById('studentsKidRegUrl')?.textContent || getKidRegUrl(), 'الكنيسة')"
-                                        style="font-size:0.75rem; padding:3px 9px; font-weight:700;"
-                                        title="نسخ رابط تسجيل الأطفال">
-                                        <i class="fas fa-link" style="color:var(--primary);"></i> نسخ رابط التسجيل
-                                    </button>
                                     <button type="button" class="mobile-close-btn" onclick="closeMobileAddModal(this)"
                                         style="display:none; background:none; border:none; color:var(--text-3); font-size:1.2rem; cursor:pointer; padding:4px;"><i
                                             class="fas fa-times"></i></button>
@@ -13666,7 +13693,7 @@
                         </div>
 
                         <!-- Field Checklist Panel -->
-                        <div class="tab-export-panel">
+                        <div class="tab-export-panel tab-export-fields-panel">
                             <div class="tab-export-panel-title"
                                 style="display:flex; justify-content:space-between; align-items:center;">
                                 <span><i class="fas fa-th-list"></i> الأعمدة والحقول المتاحة</span>
@@ -18239,20 +18266,24 @@
                 _gradeUpClassesData = clsList;
                 _gradeUpInitialMapping = {};
 
-                // Count active students per class
-                const studentCountByClass = {};
+                // Count active students per class (matching BOTH by class ID and class name)
+                const studentCountById = {};
+                const studentCountByName = {};
                 if (Array.isArray(allStudents)) {
                     allStudents.forEach(s => {
-                        const cid = s._classId || 0;
-                        studentCountByClass[cid] = (studentCountByClass[cid] || 0) + 1;
+                        const cid = s._classId || s.class_id || 0;
+                        const cname = (s['الفصل'] || s.class || '').trim();
+                        if (cid) studentCountById[cid] = (studentCountById[cid] || 0) + 1;
+                        if (cname) studentCountByName[cname] = (studentCountByName[cname] || 0) + 1;
                     });
                 }
 
                 const n = clsList.length;
                 container.innerHTML = clsList.map((c, i) => {
-                    const count = (studentCountByClass[c.id] !== undefined)
-                        ? studentCountByClass[c.id]
-                        : (c.student_count || 0);
+                    const cName = (c.arabic_name || '').trim();
+                    const byName = studentCountByName[cName] || 0;
+                    const byId = studentCountById[c.id] || 0;
+                    const count = Math.max(byName, byId, c.student_count || 0);
 
                     // Default target: next class or 'graduate' for highest class
                     const defaultTarget = (i < n - 1) ? String(clsList[i + 1].id) : 'graduate';
@@ -32577,9 +32608,9 @@
                     label.textContent = 'تصفية حسب الفصل:';
 
                     const sel = document.createElement('select');
-                    sel.className = 'form-input';
+                    sel.className = 'form-select';
                     sel.id = 'tabExportFilterClass';
-                    sel.style.cssText = 'font-size:0.75rem; padding:4px 8px; height:32px; width:100%;';
+                    sel.style.cssText = 'font-size:0.75rem; padding:4px 8px; height:32px; width:100%; background:var(--surface); color:var(--text); border:1.5px solid var(--border-solid); border-radius:var(--r-md);';
                     sel.onchange = () => { onTabExportFilterChange(); };
 
                     let uniqueClasses = [];
@@ -32591,8 +32622,8 @@
                     }
                     uniqueClasses.sort();
 
-                    sel.innerHTML = '<option value="all">جميع الفصول</option>' +
-                        uniqueClasses.map(c => `<option value="${escHtml(c)}">${escHtml(c)}</option>`).join('');
+                    sel.innerHTML = '<option value="all" style="background:var(--surface); color:var(--text);">جميع الفصول</option>' +
+                        uniqueClasses.map(c => `<option value="${escHtml(c)}" style="background:var(--surface); color:var(--text);">${escHtml(c)}</option>`).join('');
 
                     wrap.appendChild(label);
                     wrap.appendChild(sel);
@@ -32607,11 +32638,11 @@
                     label.textContent = 'تصفية حسب الدور:';
 
                     const sel = document.createElement('select');
-                    sel.className = 'form-input';
+                    sel.className = 'form-select';
                     sel.id = 'tabExportFilterRole';
-                    sel.style.cssText = 'font-size:0.75rem; padding:4px 8px; height:32px; width:100%;';
+                    sel.style.cssText = 'font-size:0.75rem; padding:4px 8px; height:32px; width:100%; background:var(--surface); color:var(--text); border:1.5px solid var(--border-solid); border-radius:var(--r-md);';
                     sel.onchange = () => { onTabExportFilterChange(); };
-                    sel.innerHTML = '<option value="all">جميع الأدوار</option><option value="admin">مسؤول فقط</option><option value="uncle">خادم فقط</option>';
+                    sel.innerHTML = '<option value="all" style="background:var(--surface); color:var(--text);">جميع الأدوار</option><option value="admin" style="background:var(--surface); color:var(--text);">مسؤول فقط</option><option value="uncle" style="background:var(--surface); color:var(--text);">خادم فقط</option>';
 
                     wrap.appendChild(label);
                     wrap.appendChild(sel);
