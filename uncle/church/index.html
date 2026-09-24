@@ -13752,6 +13752,16 @@
     <!-- ══════════════════ SCRIPT ══════════════════ -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <script>
+        // Global HTML & Attribute Escapers
+        function escAttr(s) {
+            return String(s ?? '').replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/'/g, '&#39;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+        }
+        function escHtml(s) {
+            return String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+        }
+        window.escAttr = escAttr;
+        window.escHtml = escHtml;
+
         // Redirect to home screen if offline and in PWA standalone mode
         if (!navigator.onLine && (window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone)) {
             window.location.href = '/';
@@ -17118,7 +17128,7 @@
         </div>
         <div style="display:flex;gap:10px;">
             <button class="btn btn-primary btn-sm" style="flex:1;" onclick="showCouponLogs(${studentId})"><i class="fas fa-history"></i> سجل الكوبونات</button>
-            <button class="btn btn-success btn-sm" style="flex:1;" onclick="editCoupons(${studentId},'${escAttr(name)}',${couponsCount})"><i class="fas fa-star"></i> تعديل الكوبونات</button>
+            <button class="btn btn-success btn-sm" style="flex:1;" onclick="editCoupons(${studentId}, decodeURIComponent('${encodeURIComponent(name || '')}'), ${Number(couponsCount) || 0})"><i class="fas fa-star"></i> تعديل الكوبونات</button>
         </div>`;
             openModal('studentDetailsModal');
         }
