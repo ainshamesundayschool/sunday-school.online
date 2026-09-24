@@ -231,7 +231,7 @@ body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
         <div class="topbar-sub">أكمل الخطوات لإنشاء حساب الكنيسة والمسؤول</div>
       </div>
     </div>
-    <div class="key-badge" id="keyBadge"><i class="fas fa-key"></i> <span id="keyText">جاري التحقق...</span></div>
+    <div class="key-badge" id="keyBadge"><i class="fas fa-church"></i> <span id="keyText">تسجيل جديد</span></div>
   </div>
 
   <!-- STEP RAIL -->
@@ -255,10 +255,18 @@ body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
 
   <!-- INVALID KEY -->
   <div class="fs-state" id="invalidScreen">
-    <div class="state-card">
-      <div class="state-icon danger"><i class="fas fa-ban"></i></div>
-      <h2 style="color:var(--danger);">رابط غير صالح أو منتهي</h2>
-      <p>هذا الرابط غير صالح أو تم استخدامه مسبقاً أو تم إلغاؤه.<br>يرجى التواصل مع المطوّر للحصول على رابط جديد.</p>
+    <div class="state-card" style="max-width:540px;">
+      <div class="state-icon danger"><i class="fas fa-exclamation-triangle"></i></div>
+      <h2 style="color:var(--danger);" id="invalidTitle">رابط الدعوة غير متاح</h2>
+      <p id="invalidDesc">هذا الرابط غير صالح أو تم استخدامه مسبقاً أو تم إلغاؤه.<br>يمكنك المتابعة بطلب تسجيل كنيسة جديدة بدون مفتاح وسيقوم المطوّر باعتماده.</p>
+      <div style="margin-top:24px;display:flex;flex-direction:column;gap:12px;align-items:center;">
+        <button type="button" class="btn btn-next" onclick="continueWithoutKey()" style="width:100%;max-width:340px;">
+          <i class="fas fa-church"></i> المتابعة وتسجيل الكنيسة الآن
+        </button>
+        <a href="/login" style="color:var(--text-3);font-size:0.84rem;text-decoration:none;display:inline-flex;align-items:center;gap:6px;">
+          <i class="fas fa-arrow-right"></i> العودة لصفحة تسجيل الدخول
+        </a>
+      </div>
     </div>
   </div>
 
@@ -453,7 +461,7 @@ body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
           <div class="spin" id="submitSpin"></div>
         </button>
       </div>
-      <div class="sec-note"><i class="fas fa-shield-halved"></i> هذا الرابط مؤمَّن وصالح للاستخدام مرة واحدة فقط</div>
+      <div class="sec-note" id="secNote"><i class="fas fa-clock"></i> طلب التسجيل سيتم إرساله للمراجعة والتفعيل من قِبل إدارة المنصة قبل الاستخدام</div>
     </div>
 
   </div><!-- /content -->
@@ -461,20 +469,22 @@ body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
   <!-- SUCCESS -->
   <div class="fs-state" id="successScreen">
     <div class="state-card" style="max-width:580px;">
-      <div class="state-icon success"><i class="fas fa-check"></i></div>
-      <h2>تم التسجيل بنجاح!</h2>
-      <p>تم إنشاء الكنيسة وحساب المسؤول — احفظ بيانات الدخول التالية في مكان آمن.</p>
+      <div class="state-icon success" id="successIcon"><i class="fas fa-check"></i></div>
+      <div id="successStatusBadge" style="margin-bottom:12px;"></div>
+      <h2 id="successTitle">تم التسجيل بنجاح!</h2>
+      <p id="successDesc">تم إنشاء الكنيسة وحساب المسؤول — احفظ بيانات الدخول التالية في مكان آمن.</p>
       <!-- Credentials Grid -->
       <div id="successCredentials" style="margin-top:20px;text-align:right;display:grid;gap:10px;"></div>
-      <div style="margin-top:18px;display:flex;gap:10px;flex-wrap:wrap;justify-content:center;">
+      <div style="margin-top:20px;display:flex;gap:10px;flex-wrap:wrap;justify-content:center;">
         <button onclick="copyAllCredentials()"
           style="padding:11px 22px;border-radius:10px;background:linear-gradient(135deg,var(--success),var(--success-dark));color:white;border:none;font-family:inherit;font-size:.92rem;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:8px;">
           <i class="fas fa-copy"></i> نسخ كل البيانات
         </button>
-        <a href="/login" style="padding:11px 22px;border-radius:10px;background:linear-gradient(135deg,var(--brand),var(--brand-dark));color:white;border:none;font-family:inherit;font-size:.92rem;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:8px;text-decoration:none;">
-          <i class="fas fa-sign-in-alt"></i> تسجيل الدخول
+        <a id="successLoginBtn" href="/login" style="padding:11px 22px;border-radius:10px;background:linear-gradient(135deg,var(--brand),var(--brand-dark));color:white;border:none;font-family:inherit;font-size:.92rem;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:8px;text-decoration:none;">
+          <i class="fas fa-sign-in-alt"></i> الانتقال لتسجيل الدخول
         </a>
       </div>
+      <div id="successLoginNote" style="margin-top:12px;font-size:0.8rem;color:var(--text-3);line-height:1.6;"></div>
     </div>
   </div>
 
@@ -483,7 +493,7 @@ body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
 'use strict';
 const API = '/api.php';
 const urlParams = new URLSearchParams(location.search);
-const regKey = urlParams.get('key') || '';
+let regKey = urlParams.get('key') || '';
 let step = 1;
 
 /* ── type cards ── */
@@ -672,7 +682,7 @@ async function submitForm() {
     await new Promise(r => setTimeout(r, 300));
 
     if (data.success) {
-      showSuccess(churchName, adminName, val('adminUsername'));
+      showSuccess(churchName, adminName, val('adminUsername'), data.pending, data.church_code);
     } else {
       showErr(3, data.message || 'حدث خطأ، يرجى المحاولة مرة أخرى');
       btn.disabled = false;
@@ -691,12 +701,12 @@ async function submitForm() {
 
 let _successData = {};
 
-function showSuccess(churchName, adminName, adminUsername) {
-  const churchCode     = val('churchCode');
+function showSuccess(churchName, adminName, adminUsername, isPending, serverChurchCode) {
+  const churchCode     = serverChurchCode || val('churchCode');
   const churchPassword = val('churchPassword');
   const adminPassword  = val('adminPassword');
+  const adminPhone     = val('adminPhone');
 
-  const adminPhone = val('adminPhone');
   _successData = { churchName, churchCode, churchPassword, adminName, adminUsername, adminPassword, adminPhone };
 
   document.getElementById('mainContent').classList.remove('show');
@@ -704,7 +714,39 @@ function showSuccess(churchName, adminName, adminUsername) {
   document.getElementById('progStrip').style.display  = 'none';
   document.getElementById('keyBadge').style.display   = 'none';
   document.querySelector('.topbar-sub').textContent   = '';
-  document.querySelector('.topbar-title').textContent = 'مرحباً بك!';
+  document.querySelector('.topbar-title').textContent = isPending ? 'طلب التسجيل' : 'مرحباً بك!';
+
+  const iconEl  = document.getElementById('successIcon');
+  const badgeEl = document.getElementById('successStatusBadge');
+  const titleEl = document.getElementById('successTitle');
+  const descEl  = document.getElementById('successDesc');
+  const noteEl  = document.getElementById('successLoginNote');
+
+  if (isPending) {
+    if (iconEl) {
+      iconEl.className = 'state-icon';
+      iconEl.style.cssText = 'background:linear-gradient(135deg,#f59e0b,#d97706);box-shadow:0 8px 28px rgba(245,158,11,.3);color:white;';
+      iconEl.innerHTML = '<i class="fas fa-hourglass-half"></i>';
+    }
+    if (badgeEl) {
+      badgeEl.innerHTML = '<span style="display:inline-flex;align-items:center;gap:6px;background:var(--warning-bg,#fef3c7);color:var(--warning-dark,#b45309);padding:6px 16px;border-radius:20px;font-size:0.85rem;font-weight:700;"><i class="fas fa-clock"></i> في انتظار موافقة وتفعيل المطوّر</span>';
+    }
+    if (titleEl) titleEl.textContent = 'تم إرسال طلب التسجيل بنجاح!';
+    if (descEl) descEl.innerHTML = 'تم إنشاء بيانات الكنيسة وحساب المسؤول بنجاح، والحساب الآن <strong>قيد المراجعة لدى المطوّر</strong> وسيتم تفعيله قريباً.<br><strong>احفظ بيانات الدخول التالية</strong> لاستخدامها فور إتمام التفعيل والموافقة.';
+    if (noteEl) noteEl.textContent = 'ملاحظة: يمكنك تسجيل الدخول فور اعتماد وتفعيل الكنيسة من قِبل المطوّر.';
+  } else {
+    if (iconEl) {
+      iconEl.className = 'state-icon success';
+      iconEl.style.cssText = '';
+      iconEl.innerHTML = '<i class="fas fa-check"></i>';
+    }
+    if (badgeEl) {
+      badgeEl.innerHTML = '<span style="display:inline-flex;align-items:center;gap:6px;background:var(--success-bg,#d1fae5);color:var(--success-dark,#059669);padding:6px 16px;border-radius:20px;font-size:0.85rem;font-weight:700;"><i class="fas fa-check-circle"></i> مفعل وجاهز للاستخدام فوراً</span>';
+    }
+    if (titleEl) titleEl.textContent = 'تم التسجيل والتفعيل بنجاح!';
+    if (descEl) descEl.textContent = 'تم إنشاء الكنيسة وحساب المسؤول وتفعيلهما بنجاح — احفظ بيانات الدخول التالية في مكان آمن.';
+    if (noteEl) noteEl.textContent = '';
+  }
 
   // Build credentials grid
   const creds = document.getElementById('successCredentials');
@@ -736,10 +778,10 @@ function showSuccess(churchName, adminName, adminUsername) {
           </div>
         </div>
         <div style="display:flex;gap:5px;flex-shrink:0;">
-          ${r.secret ? `<button type="button" onclick="toggleSuccessCred(${i},'${r.value.replace(/'/g,"\'")}')"
+          ${r.secret ? `<button type="button" onclick="toggleSuccessCred(${i},'${r.value.replace(/'/g,"\\'")}')"
             style="border:none;background:var(--brand-bg);color:var(--brand);border-radius:7px;padding:5px 9px;cursor:pointer;font-size:.72rem;">
             <i class="fas fa-eye" id="sc_eye_${i}"></i></button>` : ''}
-          <button type="button" onclick="navigator.clipboard.writeText('${r.copy.replace(/'/g,"\'")}').then(()=>showSuccessToast('تم النسخ ✅')).catch(()=>prompt('',\'${r.copy.replace(/'/g,"\'")}\'  ))"
+          <button type="button" onclick="navigator.clipboard.writeText('${r.copy.replace(/'/g,"\\\'")}').then(()=>showSuccessToast('تم النسخ ✅')).catch(()=>prompt('',\'${r.copy.replace(/'/g,"\\\'")}\'  ))"
             style="border:none;background:var(--success-bg);color:var(--success-dark);border-radius:7px;padding:5px 9px;cursor:pointer;font-size:.72rem;">
             <i class="fas fa-copy"></i>
           </button>
@@ -793,7 +835,21 @@ function showSuccessToast(msg) {
 
 /* ── key validation ── */
 async function validateKey() {
-  if (!regKey) { showInvalid('missing'); return; }
+  if (!regKey) {
+    // Open / Public Registration Mode: No key required!
+    const kb = document.getElementById('keyBadge');
+    if (kb) {
+      kb.innerHTML = '<i class="fas fa-church"></i> <span id="keyText">تسجيل جديد</span>';
+      kb.classList.remove('invalid');
+    }
+    const sn = document.getElementById('secNote');
+    if (sn) {
+      sn.innerHTML = '<i class="fas fa-clock"></i> طلب التسجيل سيتم إرساله للمراجعة والتفعيل من قِبل إدارة المنصة قبل الاستخدام';
+    }
+    showForm();
+    return;
+  }
+
   document.getElementById('keyText').textContent = regKey.substring(0, 8) + '...';
   try {
     const fd = new FormData();
@@ -803,13 +859,26 @@ async function validateKey() {
     const text = await res.text();
     const data = JSON.parse(text.slice(text.indexOf('{')));
     if (data.success && data.valid) {
+      const kb = document.getElementById('keyBadge');
+      if (kb) {
+        kb.innerHTML = '<i class="fas fa-check-circle" style="color:var(--success);"></i> <span id="keyText">مفتاح دعوة معتمد</span>';
+        kb.classList.remove('invalid');
+      }
+      const sn = document.getElementById('secNote');
+      if (sn) {
+        sn.innerHTML = '<i class="fas fa-shield-halved"></i> تم التحقق من مفتاح الدعوة — تفعيل فوري للحساب بمجرد الإنشاء';
+      }
       showForm();
     } else {
       showInvalid(data.reason);
     }
   } catch (e) {
-    /* offline / demo mode */
-    document.getElementById('keyText').textContent = 'وضع العرض';
+    /* offline / fallback */
+    const kb = document.getElementById('keyBadge');
+    if (kb) {
+      kb.innerHTML = '<i class="fas fa-church"></i> <span id="keyText">تسجيل جديد</span>';
+      kb.classList.remove('invalid');
+    }
     showForm();
   }
 }
@@ -821,18 +890,36 @@ function showForm() {
 
 function showInvalid(reason) {
   const msgs = {
-    not_found:    'الرابط غير موجود.',
-    revoked:      'تم إلغاء هذا الرابط.',
-    already_used: 'تم استخدام هذا الرابط مسبقاً.',
-    missing:      'لم يتم تقديم مفتاح تسجيل.'
+    not_found:    'الرابط أو مفتاح الدعوة غير موجود.',
+    revoked:      'تم إلغاء هذا المفتاح من قِبل المطوّر.',
+    already_used: 'تم استخدام هذا المفتاح مسبقاً.'
   };
-  document.querySelector('#invalidScreen p').textContent =
-    (msgs[reason] || 'رابط غير صالح.') + ' يرجى التواصل مع المطوّر للحصول على رابط جديد.';
+  const desc = document.getElementById('invalidDesc');
+  if (desc) {
+    desc.innerHTML = (msgs[reason] || 'هذا الرابط غير صالح.') + '<br>يمكنك المتابعة بطلب تسجيل عادي وسيقوم المطوّر باعتماده وتفعيله لك.';
+  }
   document.getElementById('stepRail').style.display  = 'none';
   document.getElementById('progStrip').style.display = 'none';
   document.getElementById('keyBadge').classList.add('invalid');
   document.getElementById('keyText').textContent = 'رابط غير صالح';
   document.getElementById('invalidScreen').classList.add('on');
+}
+
+function continueWithoutKey() {
+  regKey = '';
+  document.getElementById('invalidScreen').classList.remove('on');
+  const kb = document.getElementById('keyBadge');
+  if (kb) {
+    kb.classList.remove('invalid');
+    kb.innerHTML = '<i class="fas fa-church"></i> <span id="keyText">تسجيل جديد</span>';
+  }
+  const sn = document.getElementById('secNote');
+  if (sn) {
+    sn.innerHTML = '<i class="fas fa-clock"></i> طلب التسجيل سيتم إرساله للمراجعة والتفعيل من قِبل إدارة المنصة قبل الاستخدام';
+  }
+  document.getElementById('stepRail').style.display  = '';
+  document.getElementById('progStrip').style.display = '';
+  showForm();
 }
 
 validateKey();

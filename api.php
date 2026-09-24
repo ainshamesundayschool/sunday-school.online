@@ -42320,53 +42320,46 @@ function createChurchWithAdmin()
 
 
 
-        // Generate unique church code from name
-
-        $baseCode = preg_replace('/[^a-z0-9]/i', '', str_replace(' ', '_', strtolower(iconv('UTF-8', 'ASCII//TRANSLIT', $churchName))));
-
-        $churchCode = $baseCode ?: 'church' . time();
-
-        $codeCheck = $conn->prepare("SELECT id FROM churches WHERE church_code = ? LIMIT 1");
-
-        $codeCheck->bind_param("s", $churchCode);
-
-        $codeCheck->execute();
-
-        if ($codeCheck->get_result()->fetch_assoc()) {
-
-            $churchCode .= '_' . rand(100, 999);
-
+        // Generate unique church code from name or provided code
+        $providedCode = sanitize($_POST['church_code'] ?? '');
+        $providedCode = preg_replace('/[^a-z0-9_]/i', '', strtolower($providedCode));
+        if (!empty($providedCode)) {
+            $churchCode = $providedCode;
+        } else {
+            $baseCode = preg_replace('/[^a-z0-9]/i', '', str_replace(' ', '_', strtolower(iconv('UTF-8', 'ASCII//TRANSLIT', $churchName))));
+            $churchCode = $baseCode ?: 'church' . time();
         }
 
-
+        $codeCheck = $conn->prepare("SELECT id FROM churches WHERE church_code = ? LIMIT 1");
+        $codeCheck->bind_param("s", $churchCode);
+        $codeCheck->execute();
+        if ($codeCheck->get_result()->fetch_assoc()) {
+            $churchCode .= '_' . rand(100, 999);
+        }
 
         // Create church — password for direct church login (same hashing as addChurch)
-
-        $hashedChurchPw = hash('sha256', $adminPassword);
+        $churchPw = !empty($_POST['church_password']) ? $_POST['church_password'] : $adminPassword;
+        $hashedChurchPw = hash('sha256', $churchPw);
 
         $insChurch = $conn->prepare("
-
             INSERT INTO churches (church_name, church_code, admin_email, password, password_hash, church_type, is_approved, created_at)
-
             VALUES (?, ?, ?, ?, ?, ?, ?, NOW())
-
         ");
-
         $insChurch->bind_param("ssssssi", $churchName, $churchCode, $churchEmail, $hashedChurchPw, $hashedChurchPw, $churchType, $isApproved);
-
         if (!$insChurch->execute())
-
             throw new Exception('فشل إنشاء الكنيسة: ' . $conn->error);
-
         $newChurchId = $conn->insert_id;
 
-
-
         // Create admin uncle
-
         $hashedUnclePw = hash('sha256', $adminPassword);
-
         $adminUsername = sanitize($_POST['admin_username'] ?? '') ?: $adminPhone;
+        $adminUsername = preg_replace('/\s+/', '', strtolower($adminUsername));
+
+        $uchk = $conn->prepare("SELECT id FROM uncles WHERE username = ? LIMIT 1");
+        $uchk->bind_param("s", $adminUsername);
+        $uchk->execute();
+        if ($uchk->get_result()->fetch_assoc())
+            throw new Exception('اسم المستخدم للمسؤول مستخدم بالفعل، يرجى اختيار اسم مستخدم آخر');
 
 
 
@@ -42449,17 +42442,12 @@ function createChurchWithAdmin()
 
 
         sendJSON([
-
             'success' => true,
-
             'message' => 'تم إنشاء الكنيسة بنجاح',
-
             'church_id' => $newChurchId,
-
             'church_name' => $churchName,
-
+            'church_code' => $churchCode,
             'pending' => !$isApproved
-
         ]);
 
     } catch (Exception $e) {
