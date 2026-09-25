@@ -6,9 +6,8 @@ if (!headers_sent()) {
 }
 
 $origin = $_SERVER['HTTP_ORIGIN'] ?? '';
-$allowedHosts = ['sunday-school.online', 'sunday-school.rf.gd', 'localhost', '127.0.0.1'];
 $host = parse_url($origin, PHP_URL_HOST);
-if ($host && in_array(strtolower($host), $allowedHosts)) {
+if ($origin && ($host === 'localhost' || $host === '127.0.0.1' || preg_match('/(^|\.)(sunday-school\.online|sunday-school\.rf.gd)$/i', (string)$host))) {
     header("Access-Control-Allow-Origin: $origin");
 }
 header('Access-Control-Allow-Methods: POST, OPTIONS');
@@ -26,12 +25,26 @@ ini_set('display_errors', 0);
 ini_set('log_errors', 1);
 ini_set('error_log', __DIR__ . '/upload_errors.log');
 
-if (file_exists(__DIR__ . '/config.php')) {
-    require_once __DIR__ . '/config.php';
+$rootPath = dirname(__FILE__);
+while ($rootPath && !file_exists($rootPath . '/api.php')) {
+    $parent = dirname($rootPath);
+    if ($parent === $rootPath)
+        break;
+    $rootPath = $parent;
+}
+$sessionPath = $rootPath . '/.sessions';
+if (!is_dir($sessionPath)) {
+    @mkdir($sessionPath, 0777, true);
+    @chmod($sessionPath, 0777);
+}
+if (is_writable($sessionPath)) {
+    session_save_path($sessionPath);
 }
 
+$cookieLifetime = 315360000;
+ini_set('session.gc_maxlifetime', $cookieLifetime);
+ini_set('session.cookie_lifetime', $cookieLifetime);
 if (session_status() === PHP_SESSION_NONE) {
-    $cookieLifetime = 315360000;
     @session_set_cookie_params([
         'lifetime' => $cookieLifetime,
         'path' => '/',
@@ -43,6 +56,10 @@ if (session_status() === PHP_SESSION_NONE) {
     @session_start();
 }
 
+if (file_exists($rootPath . '/config.php')) {
+    require_once $rootPath . '/config.php';
+}
+
 function sendJson($data) {
     echo json_encode($data, JSON_UNESCAPED_UNICODE);
     exit;
@@ -51,7 +68,29 @@ function sendJson($data) {
 // ── Check Servant / Admin Authentication ──────────────────────
 $isServantOrAdmin = !empty($_SESSION['uncle_id']) || 
                     !empty($_SESSION['church_id']) || 
-                    !empty($_SESSION['uncle_logged_in']);
+                    !empty($_SESSION['uncle_logged_in']) ||
+                    !empty($_SESSION['loggedIn']);
+
+$uncleId = intval($_POST['uncle_id'] ?? $_POST['uncleId'] ?? 0);
+$username = trim($_POST['username'] ?? '');
+
+// Database fallback check if session cookie was omitted
+if (!$isServantOrAdmin && ($uncleId > 0 || !empty($username))) {
+    if (function_exists('getDBConnection')) {
+        try {
+            $conn = getDBConnection();
+            $stmt = $conn->prepare("SELECT id FROM uncles WHERE (id = ? AND id > 0) OR (username = ? AND username != '') LIMIT 1");
+            if ($stmt) {
+                $stmt->bind_param("is", $uncleId, $username);
+                $stmt->execute();
+                if ($stmt->get_result()->num_rows > 0) {
+                    $isServantOrAdmin = true;
+                }
+                $stmt->close();
+            }
+        } catch (Throwable $e) {}
+    }
+}
 
 if (!$isServantOrAdmin) {
     http_response_code(401);
@@ -104,7 +143,8 @@ try {
     
     $uploadDir = __DIR__ . '/uploads/uncle/';
     if (!is_dir($uploadDir)) {
-        mkdir($uploadDir, 0755, true);
+        @mkdir($uploadDir, 0777, true);
+        @chmod($uploadDir, 0777);
     }
     
     $filePath = $uploadDir . $filename;
@@ -113,13 +153,16 @@ try {
         sendJson(['success' => false, 'message' => 'فشل في حفظ الملف على السيرفر']);
     }
     
+    $relativeUrl = '/uploads/uncle/' . $filename;
     $baseUrl = 'https://' . ($_SERVER['HTTP_HOST'] ?? 'sunday-school.online');
-    $imageUrl = $baseUrl . '/uploads/uncle/' . $filename;
+    $fullUrl = $baseUrl . $relativeUrl;
     
     sendJson([
         'success' => true,
         'message' => 'تم رفع الصورة بنجاح',
-        'imageUrl' => $imageUrl,
+        'imageUrl' => $relativeUrl,
+        'fullUrl' => $fullUrl,
+        'url' => $relativeUrl,
         'fileName' => $filename,
         'studentName' => $studentName,
         'studentPhone' => $studentPhone

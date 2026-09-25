@@ -25,9 +25,9 @@
     <meta name="twitter:image" content="https://sunday-school.online/imgs/Sunday%20School%20App.png">
 
 <title>تسجيل طفل جديد</title>
-<link href="https://fonts.googleapis.com/css2?family=Baloo+Bhaijaan+2:wght@400;500;600;700;800;900&family=Cairo:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css" media="print" onload="this.media='all'">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
 <script src="/js/search_intelligent.js"></script>
 <style>
@@ -44,7 +44,7 @@
   --r-sm:10px;--r-md:14px;--r-lg:18px;--r-xl:24px;--r-2xl:32px;--r-full:9999px;
   --ease:cubic-bezier(.4,0,.2,1);--spring:cubic-bezier(.16,1,.3,1);--t:.22s;
 }
-html,body{height:100%;font-family:'Baloo Bhaijaan 2',cursive;background:var(--bg);color:var(--text);overflow-x:hidden;user-select:none;touch-action:manipulation;-webkit-touch-callout:none;-webkit-user-select:none;}
+html,body{height:100%;font-family:'Cairo',sans-serif;background:var(--bg);color:var(--text);overflow-x:hidden;user-select:none;touch-action:manipulation;-webkit-touch-callout:none;-webkit-user-select:none;}
 body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
   background:radial-gradient(ellipse 60% 50% at 15% -5%,rgba(91,108,245,.13) 0%,transparent 60%),
              radial-gradient(ellipse 50% 40% at 85% 105%,rgba(91,108,245,.09) 0%,transparent 55%);}
@@ -119,7 +119,7 @@ body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
 .ff label i{color:var(--brand-light);font-size:.78rem;}
 .req{color:var(--danger);}
 .ff input,.ff select,.ff textarea{width:100%;padding:13px 16px;border:1.5px solid var(--border-solid);
-  border-radius:var(--r-sm);font-family:'Baloo Bhaijaan 2',cursive;font-size:.95rem;
+  border-radius:var(--r-sm);font-family:'Cairo',sans-serif;font-size:.95rem;
   background:var(--surface-2);color:var(--text);
   transition:border-color var(--t) var(--ease),box-shadow var(--t) var(--ease),background var(--t);outline:none;}
 .ff input:focus,.ff select:focus{border-color:var(--brand);background:var(--surface);box-shadow:0 0 0 4px var(--brand-glow);}
@@ -145,7 +145,7 @@ body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
 
 /* ── ACTIONS ── */
 .act-bar{display:flex;align-items:center;gap:14px;width:100%;max-width:800px;margin-top:4px;}
-.btn{padding:14px 26px;border-radius:var(--r-sm);font-family:'Baloo Bhaijaan 2',cursive;
+.btn{padding:14px 26px;border-radius:var(--r-sm);font-family:'Cairo',sans-serif;
   font-size:.98rem;font-weight:700;cursor:pointer;border:none;
   display:flex;align-items:center;justify-content:center;gap:9px;transition:all var(--t) var(--ease);}
 .btn-back{background:transparent;border:2px solid var(--border-solid);color:var(--text-2);flex-shrink:0;}
@@ -187,14 +187,14 @@ body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
 
 .btn-login{display:inline-flex;align-items:center;gap:8px;margin-top:20px;padding:14px 28px;
   border-radius:var(--r-sm);background:linear-gradient(135deg,var(--success),var(--success-dark));
-  color:white;font-family:'Baloo Bhaijaan 2',cursive;font-size:.97rem;font-weight:700;
+  color:white;font-family:'Cairo',sans-serif;font-size:.97rem;font-weight:700;
   cursor:pointer;border:none;box-shadow:0 6px 20px rgba(16,185,129,.3);text-decoration:none;
   transition:all var(--t) var(--ease);}
 .btn-login:hover{transform:translateY(-2px);box-shadow:0 10px 28px rgba(16,185,129,.4);}
 
 .btn-new-reg{display:inline-flex;align-items:center;gap:8px;margin-top:12px;padding:12px 24px;
   border-radius:var(--r-sm);background:transparent;border:2px solid var(--border-solid);
-  color:var(--text-2);font-family:'Baloo Bhaijaan 2',cursive;font-size:.92rem;font-weight:700;
+  color:var(--text-2);font-family:'Cairo',sans-serif;font-size:.92rem;font-weight:700;
   cursor:pointer;transition:all var(--t) var(--ease);}
 .btn-new-reg:hover{border-color:var(--brand);color:var(--brand);background:var(--brand-bg);}
 
@@ -317,21 +317,21 @@ body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
   </div>
 
   <!-- CROP MODAL -->
-  <div id="cropModal" style="display:none;position:fixed;inset:0;z-index:1000;background:#000;flex-direction:column;">
-    <div style="padding:16px;display:flex;justify-content:space-between;align-items:center;background:var(--surface);border-bottom:1px solid var(--border-solid);">
-      <h3 style="margin:0;font-size:1rem;color:var(--text);">قص الصورة</h3>
-      <button onclick="closeCropModal()" style="background:none;border:none;font-size:1.3rem;cursor:pointer;color:var(--text);padding:4px 8px;">✕</button>
+  <div id="cropModal" style="display:none;position:fixed;inset:0;z-index:999999;background:rgba(0,0,0,0.85);backdrop-filter:blur(6px);flex-direction:column;">
+    <div style="padding:16px 20px;display:flex;justify-content:space-between;align-items:center;background:var(--surface);border-bottom:1px solid var(--border-solid);">
+      <h3 style="margin:0;font-size:1.1rem;font-weight:700;color:var(--text);">قص وتعديل الصورة</h3>
+      <button onclick="closeCropModal()" style="background:var(--surface-3);border:none;border-radius:50%;width:34px;height:34px;font-size:1.2rem;cursor:pointer;color:var(--text-2);display:inline-flex;align-items:center;justify-content:center;">✕</button>
     </div>
     
-    <div id="cropPreview" style="flex:1;display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden;cursor:grab;touch-action:none;">
-      <img id="cropImg" style="max-width:none;max-height:none;position:absolute;" />
+    <div id="cropPreview" style="flex:1;display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden;padding:16px;max-height:calc(100vh - 140px);">
+      <img id="cropImg" style="max-width:100%;max-height:100%;display:block;" />
     </div>
     
-    <div style="padding:16px;background:var(--surface);border-top:1px solid var(--border-solid);display:flex;gap:12px;">
-      <button onclick="cropZoomOut()" style="flex:0.3;padding:12px;border-radius:var(--r-sm);border:1.5px solid var(--border-solid);background:transparent;color:var(--text-2);font-weight:700;cursor:pointer;font-size:1.2rem;">−</button>
-      <button onclick="closeCropModal()" style="flex:1;padding:12px;border-radius:var(--r-sm);border:1.5px solid var(--border-solid);background:transparent;color:var(--text-2);font-weight:700;cursor:pointer;font-family:'Baloo Bhaijaan 2',cursive;">إلغاء</button>
-      <button onclick="cropZoomIn()" style="flex:0.3;padding:12px;border-radius:var(--r-sm);border:1.5px solid var(--border-solid);background:transparent;color:var(--text-2);font-weight:700;cursor:pointer;font-size:1.2rem;">+</button>
-      <button onclick="applyCrop()" style="flex:1;padding:12px;border-radius:var(--r-sm);border:none;background:var(--brand);color:white;font-weight:700;cursor:pointer;font-family:'Baloo Bhaijaan 2',cursive;">تطبيق</button>
+    <div style="padding:16px 20px;background:var(--surface);border-top:1px solid var(--border-solid);display:flex;gap:12px;">
+      <button onclick="cropZoomOut()" style="flex:0.3;padding:12px;border-radius:var(--r-md);border:1.5px solid var(--border-solid);background:transparent;color:var(--text-2);font-weight:700;cursor:pointer;font-size:1.2rem;">−</button>
+      <button onclick="closeCropModal()" style="flex:1;padding:12px;border-radius:var(--r-md);border:1.5px solid var(--border-solid);background:transparent;color:var(--text-2);font-weight:700;cursor:pointer;font-family:'Cairo',sans-serif;">إلغاء</button>
+      <button onclick="cropZoomIn()" style="flex:0.3;padding:12px;border-radius:var(--r-md);border:1.5px solid var(--border-solid);background:transparent;color:var(--text-2);font-weight:700;cursor:pointer;font-size:1.2rem;">+</button>
+      <button onclick="applyCrop()" style="flex:1;padding:12px;border-radius:var(--r-md);border:none;background:var(--brand);color:white;font-weight:700;cursor:pointer;font-family:'Cairo',sans-serif;">تطبيق</button>
     </div>
   </div>
 
@@ -361,7 +361,7 @@ body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
                 <button type="button" id="removeAvatarBtn" onclick="removeAvatar()" style="display:none;position:absolute;top:-4px;left:-4px;width:24px;height:24px;border-radius:50%;background:var(--danger);border:none;color:white;font-size:.6rem;cursor:pointer;align-items:center;justify-content:center;"><i class="fas fa-times"></i></button>
               </div>
               <div>
-                <button type="button" onclick="document.getElementById('kidAvatar').click()" style="padding:9px 18px;border-radius:var(--r-sm);background:var(--brand-bg);border:1.5px solid var(--border);color:var(--brand);font-family:'Baloo Bhaijaan 2',cursive;font-size:.88rem;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:7px;margin-bottom:6px;transition:all .2s;">
+                <button type="button" onclick="document.getElementById('kidAvatar').click()" style="padding:9px 18px;border-radius:var(--r-sm);background:var(--brand-bg);border:1.5px solid var(--border);color:var(--brand);font-family:'Cairo',sans-serif;font-size:.88rem;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:7px;margin-bottom:6px;transition:all .2s;">
                   <i class="fas fa-upload"></i> رفع صورة
                 </button>
                 <p style="font-size:.72rem;color:var(--text-3);margin:0;">JPG أو PNG · اي حجم</p>
@@ -714,10 +714,20 @@ function openCropModal(src) {
     return;
   }
   if (cropper) { cropper.destroy(); cropper = null; }
-  const img = document.getElementById('cropImg'); img.src = src;
+  const img = document.getElementById('cropImg');
   document.getElementById('cropModal').style.display = 'flex';
   document.body.style.overflow = 'hidden';
-  img.onload = function() { cropper = new Cropper(img, { aspectRatio: 1, viewMode: 1, autoCropArea: .8 }); };
+
+  const initCropper = function() {
+    if (cropper) { cropper.destroy(); cropper = null; }
+    cropper = new Cropper(img, { aspectRatio: 1, viewMode: 1, autoCropArea: .8 });
+  };
+
+  img.onload = initCropper;
+  img.src = src;
+  if (img.complete && img.naturalWidth > 0) {
+    initCropper();
+  }
 }
 
 function closeCropModal() {

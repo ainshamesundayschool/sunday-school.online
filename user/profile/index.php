@@ -10359,7 +10359,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'logou
       fd.append('studentId', student.id); fd.append('studentName', student.name);
       fd.append('studentPhone', student.phone); fd.append('studentClass', student.class); fd.append('churchId', student.church_id || 1);
       try {
-        const r = await fetch('/upload.php', { method: 'POST', body: fd, headers: { Accept: 'application/json' } });
+        const r = await fetch('/upload.php', { method: 'POST', body: fd, credentials: 'include', headers: { Accept: 'application/json' } });
         const up = await r.json();
         if (!up.success) throw new Error(up.message || 'فشل رفع الملف');
         const d = await api({ action: 'updateStudentImageAfterCreation', studentId: student.id, imageUrl: up.imageUrl });

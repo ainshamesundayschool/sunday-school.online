@@ -10,7 +10,9 @@ config.php
 *.env
 
 # User Uploads & Temporary Media
-uploads/
+uploads/*
+!uploads/.htaccess
+!uploads/**/.gitkeep
 upload_errors/
 
 # Logs & Debugging

@@ -26495,7 +26495,7 @@ $showSettings = $hasChurchId || $isDevOrAdmin;
                     fd.append('studentName', currentStudentForEdit['الاسم']);
                     fd.append('studentClass', currentStudentForEdit['الفصل']);
                     fd.append('enhanceImage', 'false');
-                    fetch('/upload.php', { method: 'POST', body: fd }).then(r => r.json()).then(d => {
+                    fetch('/upload.php', { method: 'POST', body: fd, credentials: 'include' }).then(r => r.json()).then(d => {
                         if (d.success) {
                             const isUncle = !!currentStudentForEdit._isUncle;
                             const isGuest = !!currentStudentForEdit._isGuest;
@@ -26525,7 +26525,7 @@ $showSettings = $hasChurchId || $isDevOrAdmin;
             showLoading('جاري الرفع...');
             const fd = new FormData(); fd.append('photo', new File([currentCroppedBlob], `profile_${Date.now()}.jpg`, { type: 'image/jpeg' })); fd.append('studentName', currentStudentForEdit['الاسم']); fd.append('studentClass', currentStudentForEdit['الفصل']);
             fd.append('enhanceImage', 'false');
-            fetch('/upload.php', { method: 'POST', body: fd }).then(r => r.json()).then(d => {
+            fetch('/upload.php', { method: 'POST', body: fd, credentials: 'include' }).then(r => r.json()).then(d => {
                 if (d.success) {
                     const isUncle = !!currentStudentForEdit._isUncle;
                     const isGuest = !!currentStudentForEdit._isGuest;
@@ -26665,8 +26665,11 @@ $showSettings = $hasChurchId || $isDevOrAdmin;
         }
         function uploadUnclePhoto(blob) {
             showLoading('جاري رفع الصورة...');
-            const fd = new FormData(); fd.append('photo', new File([blob], `uncle_${Date.now()}.jpg`, { type: 'image/jpeg' })); fd.append('username', window.currentUncle?.username || 'user');
-            fetch('https://sunday-school.online/upload_uncle.php', { method: 'POST', body: fd }).then(r => r.json()).then(d => {
+            const fd = new FormData();
+            fd.append('photo', new File([blob], `uncle_${Date.now()}.jpg`, { type: 'image/jpeg' }));
+            fd.append('username', window.currentUncle?.username || 'user');
+            if (window.currentUncle?.id) fd.append('uncle_id', window.currentUncle.id);
+            fetch('/upload_uncle.php', { method: 'POST', body: fd, credentials: 'include' }).then(r => r.json()).then(d => {
                 if (d.success) {
                     makeApiCall({ action: 'updateUncleImage', imageUrl: d.imageUrl }, () => {
                         showToast('تم التحديث', 'success');

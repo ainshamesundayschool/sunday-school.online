@@ -6,9 +6,8 @@ if (!headers_sent()) {
 }
 
 $origin = $_SERVER['HTTP_ORIGIN'] ?? '';
-$allowedHosts = ['sunday-school.online', 'sunday-school.rf.gd', 'localhost', '127.0.0.1'];
 $host = parse_url($origin, PHP_URL_HOST);
-if ($host && in_array(strtolower($host), $allowedHosts)) {
+if ($origin && ($host === 'localhost' || $host === '127.0.0.1' || preg_match('/(^|\.)(sunday-school\.online|sunday-school\.rf\.gd)$/i', (string)$host))) {
     header("Access-Control-Allow-Origin: $origin");
 }
 header('Access-Control-Allow-Methods: POST, OPTIONS');
@@ -26,12 +25,26 @@ ini_set('display_errors', 0);
 ini_set('log_errors', 1);
 ini_set('error_log', __DIR__ . '/upload_errors.log');
 
-if (file_exists(__DIR__ . '/config.php')) {
-    require_once __DIR__ . '/config.php';
+$rootPath = dirname(__FILE__);
+while ($rootPath && !file_exists($rootPath . '/api.php')) {
+    $parent = dirname($rootPath);
+    if ($parent === $rootPath)
+        break;
+    $rootPath = $parent;
+}
+$sessionPath = $rootPath . '/.sessions';
+if (!is_dir($sessionPath)) {
+    @mkdir($sessionPath, 0777, true);
+    @chmod($sessionPath, 0777);
+}
+if (is_writable($sessionPath)) {
+    session_save_path($sessionPath);
 }
 
+$cookieLifetime = 315360000;
+ini_set('session.gc_maxlifetime', $cookieLifetime);
+ini_set('session.cookie_lifetime', $cookieLifetime);
 if (session_status() === PHP_SESSION_NONE) {
-    $cookieLifetime = 315360000;
     @session_set_cookie_params([
         'lifetime' => $cookieLifetime,
         'path' => '/',
@@ -41,6 +54,10 @@ if (session_status() === PHP_SESSION_NONE) {
         'samesite' => 'Lax'
     ]);
     @session_start();
+}
+
+if (file_exists($rootPath . '/config.php')) {
+    require_once $rootPath . '/config.php';
 }
 
 function sendJson($data) {
@@ -53,10 +70,33 @@ $isAuthenticated = !empty($_SESSION['uncle_id']) ||
                    !empty($_SESSION['church_id']) || 
                    !empty($_SESSION['student_id']) || 
                    !empty($_SESSION['loggedIn']) || 
-                   !empty($_SESSION['uncle_logged_in']);
+                   !empty($_SESSION['uncle_logged_in']) ||
+                   !empty($_SESSION['student_logged_in']);
 
-// Allow registration temporary upload if registration session flag is set
-$isRegistration = !empty($_POST['is_registration']) && !empty($_SESSION['registration_active']);
+$studentId = intval($_POST['studentId'] ?? $_POST['student_id'] ?? 0);
+$studentPhone = preg_replace('/[^\d]/', '', $_POST['studentPhone'] ?? '');
+
+// If session cookie wasn't available, authenticate student against database
+if (!$isAuthenticated && $studentId > 0 && !empty($studentPhone)) {
+    if (function_exists('getDBConnection')) {
+        try {
+            $conn = getDBConnection();
+            $chk = $conn->prepare("SELECT id FROM students WHERE id = ? AND (phone = ? OR emergency_phone = ? OR parent_phones LIKE ?) LIMIT 1");
+            if ($chk) {
+                $likePhone = '%' . $studentPhone . '%';
+                $chk->bind_param("isss", $studentId, $studentPhone, $studentPhone, $likePhone);
+                $chk->execute();
+                if ($chk->get_result()->num_rows > 0) {
+                    $isAuthenticated = true;
+                }
+                $chk->close();
+            }
+        } catch (Throwable $e) {}
+    }
+}
+
+// Allow registration upload
+$isRegistration = !empty($_POST['is_registration']);
 
 if (!$isAuthenticated && !$isRegistration) {
     http_response_code(401);

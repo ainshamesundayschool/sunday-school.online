@@ -12507,7 +12507,7 @@ function approveRegistration()
 
         $birthday = $regData['birthday'] ?? '';
 
-        $imageUrl = $regData['image_url'] ?? null;
+        $imageUrl = !empty($regData['image_url']) ? $regData['image_url'] : ($regData['profile_photo'] ?? null);
 
         $passwordHash = $regData['password_hash'] ?? null;
 
@@ -13997,7 +13997,7 @@ function getPendingRegistrations()
 
                     COALESCE(username, '') as username,
 
-                    COALESCE(image_url, '') as image_url,
+                    COALESCE(image_url, profile_photo, '') as image_url,
 
                     COALESCE(parent_phones, '') as parent_phones,
 
@@ -15569,35 +15569,26 @@ function submitRegistrationRequest()
         $imageUrl = null;
 
         if (!empty($profilePicBase64)) {
-
-            // Expect data:image/...;base64,...
-
-            if (preg_match('/^data:image\/(jpeg|jpg|png|webp);base64,(.+)$/', $profilePicBase64, $m)) {
-
-                $ext = $m[1] === 'jpg' ? 'jpeg' : $m[1];
-
+            $imgData = null;
+            $ext = 'jpg';
+            if (preg_match('/^data:image\/(jpeg|jpg|png|webp);base64,(.+)$/is', $profilePicBase64, $m)) {
+                $ext = ($m[1] === 'jpeg' || $m[1] === 'jpg') ? 'jpg' : $m[1];
                 $imgData = base64_decode($m[2]);
-
-                if ($imgData && strlen($imgData) < 3 * 1024 * 1024) {
-
-                    $uploadDir = __DIR__ . '/uploads/profiles/';
-
-                    if (!is_dir($uploadDir))
-
-                        @mkdir($uploadDir, 0755, true);
-
-                    $filename = 'reg_' . $churchId . '_' . time() . '_' . bin2hex(random_bytes(4)) . '.' . $ext;
-
-                    if (file_put_contents($uploadDir . $filename, $imgData) !== false) {
-
-                        $imageUrl = '/uploads/profiles/' . $filename;
-
-                    }
-
-                }
-
+            } elseif (preg_match('/^[a-zA-Z0-9\/+=\r\n]+$/', $profilePicBase64)) {
+                $imgData = base64_decode($profilePicBase64);
             }
 
+            if ($imgData && strlen($imgData) < 10 * 1024 * 1024) {
+                $uploadDir = __DIR__ . '/uploads/profiles/';
+                if (!is_dir($uploadDir)) {
+                    @mkdir($uploadDir, 0777, true);
+                    @chmod($uploadDir, 0777);
+                }
+                $filename = 'reg_' . $churchId . '_' . time() . '_' . bin2hex(random_bytes(4)) . '.' . $ext;
+                if (file_put_contents($uploadDir . $filename, $imgData) !== false) {
+                    $imageUrl = '/uploads/profiles/' . $filename;
+                }
+            }
         }
 
 
