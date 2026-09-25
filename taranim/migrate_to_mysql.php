@@ -2,11 +2,15 @@
 header('Content-Type: text/html; charset=utf-8');
 set_time_limit(600); // 10 minutes timeout for bulk insertion
 
-$mysqlHost = 'sql311.infinityfree.com';
-$mysqlPort = 3306;
-$mysqlDb   = 'if0_42112851_taranim';
-$mysqlUser = 'if0_42112851';
-$mysqlPass = 'MwfgtlTqep1';
+if (file_exists(__DIR__ . '/../config.php')) {
+    require_once __DIR__ . '/../config.php';
+}
+
+$mysqlHost = defined('TARANIM_DB_HOST') ? TARANIM_DB_HOST : (getenv('TARANIM_DB_HOST') ?: 'localhost');
+$mysqlPort = defined('TARANIM_DB_PORT') ? TARANIM_DB_PORT : (getenv('TARANIM_DB_PORT') ?: 3306);
+$mysqlDb   = defined('TARANIM_DB_NAME') ? TARANIM_DB_NAME : (getenv('TARANIM_DB_NAME') ?: '');
+$mysqlUser = defined('TARANIM_DB_USER') ? TARANIM_DB_USER : (getenv('TARANIM_DB_USER') ?: '');
+$mysqlPass = defined('TARANIM_DB_PASS') ? TARANIM_DB_PASS : (getenv('TARANIM_DB_PASS') ?: '');
 
 $sqlitePath = __DIR__ . '/database.sqlite';
 

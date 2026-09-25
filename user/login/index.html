@@ -29,19 +29,19 @@
 
     <title>تسجيل الدخول - مدارس الأحد</title>
 
-    <!-- Google Fonts: Baloo Bhaijaan 2 & Cairo -->
+    <!-- Google Fonts: Cairo Only -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Baloo+Bhaijaan+2:wght@400;500;600;700;800&family=Cairo:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800;900&display=swap">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="/js/search_intelligent.js"></script>
 
     <style>
         :root {
-            --primary: #4f46e5;
-            --primary-light: #eef2ff;
-            --primary-dark: #4338ca;
-            --primary-glow: rgba(79, 70, 229, 0.18);
+            --primary: #5b6cf5;
+            --primary-light: #eef0ff;
+            --primary-dark: #4354e8;
+            --primary-glow: rgba(91, 108, 245, 0.18);
             --secondary: #64748b;
             --success: #10b981;
             --success-bg: #ecfdf5;
@@ -50,14 +50,14 @@
             --warning: #f59e0b;
             --warning-bg: #fffbeb;
             --light: #f8fafc;
-            --dark: #0f172a;
+            --dark: #1a1d2e;
             --card-bg: rgba(255, 255, 255, 0.96);
             --border: #e2e8f0;
             --border-hover: #cbd5e1;
             --shadow-sm: 0 2px 8px -2px rgba(0, 0, 0, 0.05);
             --shadow-md: 0 10px 25px -4px rgba(15, 23, 42, 0.08);
             --shadow-lg: 0 20px 48px -8px rgba(15, 23, 42, 0.12);
-            --shadow-brand: 0 8px 24px -4px rgba(79, 70, 229, 0.35);
+            --shadow-brand: 0 8px 24px -4px rgba(91, 108, 245, 0.35);
             --radius-sm: 10px;
             --radius-md: 14px;
             --radius-lg: 20px;
@@ -69,7 +69,7 @@
             margin: 0;
             padding: 0;
             box-sizing: border-box;
-            font-family: 'Baloo Bhaijaan 2', 'Cairo', system-ui, -apple-system, sans-serif;
+            font-family: 'Cairo', system-ui, -apple-system, sans-serif;
             -webkit-tap-highlight-color: transparent;
         }
 
@@ -873,19 +873,19 @@
             لديك كلمة مرور مسجلة، الرجاء إدخالها
         </div>
 
-        <!-- Phone Login Form -->
+        <!-- Phone/Email Login Form -->
         <div class="form-container active" id="phoneLoginForm">
             <form class="login-form" data-login-type="phone">
                 <!-- Unified identifier Input -->
                 <div class="form-group">
-                    <label for="phoneInput" class="form-label">رقم الهاتف أو اسم المستخدم</label>
+                    <label for="phoneInput" class="form-label">البريد الإلكتروني أو رقم الهاتف</label>
                     <div class="input-container">
                         <i class="fas fa-user-circle input-icon"></i>
                         <input type="text" 
                                id="phoneInput" 
                                class="form-input" 
                                required 
-                               placeholder="أدخل رقم الهاتف أو اسم المستخدم"
+                               placeholder="أدخل البريد الإلكتروني أو رقم الهاتف"
                                autocomplete="username">
                     </div>
                 </div>
@@ -905,8 +905,8 @@
                         </button>
                     </div>
                     <a href="#" class="forgot-password" id="forgotPasswordLink" style="display: none;" onclick="event.preventDefault(); showPasswordRecovery();">
-                        <i class="fab fa-whatsapp" style="color:#25D366; font-size:1.05rem;"></i>
-                        نسيت كلمة المرور؟ (إعادة التعيين عبر WhatsApp)
+                        <i class="fas fa-key" style="color:var(--primary); font-size:0.95rem;"></i>
+                        <span>نسيت كلمة المرور؟ استعادة الحساب</span>
                     </a>
                 </div>
 
@@ -918,8 +918,8 @@
 
                 <div style="text-align:center; margin-top:14px;">
                     <a href="#" onclick="event.preventDefault(); showPasswordRecovery();" style="color:var(--primary); font-size:0.87rem; font-weight:700; text-decoration:none; display:inline-flex; align-items:center; gap:6px;">
-                        <i class="fab fa-whatsapp" style="font-size:1rem; color:#25D366;"></i>
-                        <span>إعادة تعيين كلمة المرور عبر WhatsApp</span>
+                        <i class="fas fa-shield-alt" style="font-size:0.95rem; color:var(--primary);"></i>
+                        <span>نسيت كلمة المرور؟ استعادة الحساب</span>
                     </a>
                 </div>
             </form>
@@ -972,25 +972,26 @@
             <!-- Will be populated dynamically -->
         </div>
 
-        <!-- Phone WhatsApp OTP Verification Container -->
-        <div class="password-setup-container" id="otpVerificationContainer">
+        <!-- Email OTP Verification Container -->
+        <div class="password-setup-container" id="emailOtpContainer">
             <div style="text-align:center; margin-bottom:18px;">
-                <div style="background:#f0fdf4; border:1px solid #bbf7d0; border-radius:var(--radius-sm); padding:10px 14px; font-size:0.86rem; color:#166534; display:flex; align-items:center; justify-content:center; gap:8px; font-weight:600;">
-                    <i class="fab fa-whatsapp" style="color:#16a34a; font-size:1.1rem;"></i>
-                    <span id="otpStatusNotice">تم إرسال رمز التحقق إلى WhatsApp. يرجى التحقق من هاتفك.</span>
+                <div style="width:58px; height:58px; border-radius:50%; background:var(--primary-light); color:var(--primary); display:flex; align-items:center; justify-content:center; margin:0 auto 12px; font-size:1.4rem;">
+                    <i class="fas fa-envelope-open-text"></i>
                 </div>
-                <div style="margin-top:10px; font-weight:800; color:#128C7E; font-size:1.1rem;" dir="ltr">
-                    <span id="otpPhoneDisplay"></span>
-                </div>
+                <h3 style="font-size:1.15rem; font-weight:800; color:var(--dark); margin-bottom:6px;">التحقق من البريد الإلكتروني</h3>
+                <p style="font-size:0.86rem; color:var(--secondary); font-weight:600; line-height:1.5;">
+                    تم إرسال كود التحقق المكون من 6 أرقام إلى بريدك الإلكتروني:
+                </p>
+                <div id="emailOtpDisplay" style="font-weight:800; color:var(--primary); font-size:0.96rem; margin-top:4px;" dir="ltr"></div>
             </div>
 
-            <form id="otpVerificationForm" onsubmit="event.preventDefault(); submitPhoneOTP();">
+            <form id="emailOtpForm" onsubmit="event.preventDefault(); submitEmailOTP();">
                 <div class="form-group" style="margin-bottom:16px;">
-                    <label for="otpCodeInput" class="form-label" style="text-align:center; display:block;">أدخل الكود المكون من 6 أرقام</label>
+                    <label for="emailOtpCodeInput" class="form-label" style="text-align:center; display:block;">أدخل كود التحقق (6 أرقام)</label>
                     <div class="input-container">
                         <i class="fas fa-shield-alt input-icon"></i>
                         <input type="text"
-                               id="otpCodeInput"
+                               id="emailOtpCodeInput"
                                class="form-input"
                                required
                                maxlength="6"
@@ -1002,30 +1003,62 @@
                     </div>
                 </div>
 
-                <div class="error-message" id="otpErrorMessage" style="display:none; margin-bottom:14px;"></div>
-                <div class="success-message" id="otpSuccessMessage" style="display:none; margin-bottom:14px; background:#f0fdf4; color:#166534; border:1px solid #bbf7d0; padding:12px; border-radius:var(--radius-sm); text-align:center; font-weight:700; font-size:0.9rem;"></div>
+                <div class="error-message" id="emailOtpErrorMessage" style="display:none; margin-bottom:14px;"></div>
+                <div class="success-message" id="emailOtpSuccessMessage" style="display:none; margin-bottom:14px; background:#f0fdf4; color:#166534; border:1px solid #bbf7d0; padding:12px; border-radius:var(--radius-sm); text-align:center; font-weight:700; font-size:0.9rem;"></div>
 
-                <button type="submit" class="login-btn" id="verifyOtpBtn" style="margin-bottom:12px;">
+                <button type="submit" class="login-btn" id="verifyEmailOtpBtn" style="margin-bottom:12px;">
                     <i class="fas fa-check-circle"></i>
-                    <span id="verifyOtpText">تأكيد الكود ومتابعة</span>
+                    <span id="verifyEmailOtpText">تأكيد الكود ومتابعة</span>
                 </button>
 
                 <div style="text-align:center; display:flex; flex-direction:column; gap:8px;">
-                    <button type="button" id="resendOtpBtn" onclick="resendPhoneOTP()" style="background:none; border:none; color:#128C7E; font-size:0.86rem; font-weight:700; cursor:pointer;" disabled>
-                        إعادة إرسال الكود عبر واتساب (<span id="otpCountdown">60</span> ثانية)
+                    <button type="button" id="resendEmailOtpBtn" onclick="resendEmailOTP()" style="background:none; border:none; color:var(--primary); font-size:0.86rem; font-weight:700; cursor:pointer;" disabled>
+                        إعادة إرسال الكود (<span id="emailOtpCountdown">60</span> ثانية)
                     </button>
-                    <button type="button" onclick="cancelOTPVerification()" style="background:none; border:none; color:var(--secondary); font-size:0.83rem; cursor:pointer; text-decoration:underline;">
-                        تغيير رقم الهاتف أو العودة
-                    </button>
-                </div>
-
-                <div style="text-align:center; margin-top:14px; padding-top:12px; border-top:1px dashed #e2e8f0;">
-                    <button type="button" onclick="openWhatsAppOtpHelp()" style="display:inline-flex; align-items:center; justify-content:center; gap:8px; width:100%; background:#f0fdf4; border:1px solid #bbf7d0; color:#166534; padding:10px 14px; border-radius:var(--radius-md); font-size:0.86rem; font-weight:700; cursor:pointer; font-family:inherit; transition:all 0.2s ease;">
-                        <i class="fab fa-whatsapp" style="font-size:1.15rem; color:#25D366;"></i>
-                        <span>لم يصلك الكود؟ أرسل رسالة عبر واتساب</span>
+                    <button type="button" onclick="cancelEmailOTPVerification()" style="background:none; border:none; color:var(--secondary); font-size:0.83rem; cursor:pointer; text-decoration:underline;">
+                        العودة لتسجيل الدخول
                     </button>
                 </div>
             </form>
+        </div>
+
+        <!-- Uncle Contact Container (When student has no email linked) -->
+        <div class="password-setup-container" id="uncleContactContainer">
+            <div style="text-align:center; margin-bottom:18px;">
+                <div style="width:62px; height:62px; border-radius:50%; background:#fff7ed; color:#ea580c; display:flex; align-items:center; justify-content:center; margin:0 auto 12px; font-size:1.5rem; border:2px solid #fed7aa;">
+                    <i class="fas fa-church"></i>
+                </div>
+                <h3 style="font-size:1.15rem; font-weight:800; color:var(--dark); margin-bottom:6px;">استعادة الحساب عبر خادم الكنيسة</h3>
+                <p style="font-size:0.85rem; color:var(--secondary); font-weight:600; line-height:1.6;">
+                    لم يتم ربط بريد إلكتروني بحسابك بعد. يمكنك التواصل مباشرة مع خادم كنيستك لمساعدتك في استعادة الحساب وتعيين كلمة المرور:
+                </p>
+            </div>
+
+            <!-- Uncle Contact Card -->
+            <div style="background:#f8fafc; border:1.5px solid #e2e8f0; border-radius:var(--radius-md); padding:16px; margin-bottom:18px; text-align:center;">
+                <div style="display:flex; align-items:center; justify-content:center; gap:10px; margin-bottom:6px;">
+                    <i class="fas fa-user-tie" style="color:var(--primary); font-size:1.2rem;"></i>
+                    <span id="recoveryUncleName" style="font-size:1.05rem; font-weight:800; color:var(--dark);"></span>
+                </div>
+                <div style="font-size:0.83rem; color:var(--secondary); font-weight:600; margin-bottom:4px;">
+                    <span id="recoveryUncleRole">خادم الكنيسة</span> — <span id="recoveryChurchName">مدارس الأحد</span>
+                </div>
+                <div id="recoveryStudentSnippet" style="font-size:0.8rem; color:#64748b; background:#edf2f7; padding:4px 10px; border-radius:6px; display:inline-block; margin-top:4px;"></div>
+            </div>
+
+            <div style="display:flex; flex-direction:column; gap:10px;">
+                <a id="recoveryWhatsAppLink" href="#" target="_blank" class="login-btn" style="background:linear-gradient(135deg, #10b981, #059669); text-decoration:none; display:flex; align-items:center; justify-content:center; gap:8px;">
+                    <i class="fab fa-whatsapp" style="font-size:1.2rem;"></i>
+                    <span>مراسلة الخادم عبر واتساب</span>
+                </a>
+                <a id="recoveryCallLink" href="#" class="login-btn" style="background:#f1f5f9; color:var(--dark); border:1.5px solid #cbd5e1; text-decoration:none; display:flex; align-items:center; justify-content:center; gap:8px;">
+                    <i class="fas fa-phone-alt" style="color:var(--primary);"></i>
+                    <span>اتصال هاتفي بالخادم</span>
+                </a>
+                <button type="button" onclick="cancelUncleContact()" style="background:none; border:none; color:var(--secondary); font-size:0.85rem; cursor:pointer; text-decoration:underline; margin-top:8px;">
+                    العودة لتسجيل الدخول
+                </button>
+            </div>
         </div>
 
         <!-- Loading State -->
@@ -1165,42 +1198,27 @@
                 });
             });
 
-            // Phone login form — also handles username input
+            // Phone/Email login form
             document.querySelector('[data-login-type="phone"]').addEventListener('submit', function(e) {
                 e.preventDefault();
-                const identifier = elements.phoneInput.value.trim();
-                if (!identifier) {
-                    showPhoneError('الرجاء إدخال رقم الهاتف أو اسم المستخدم');
+                const rawIdentifier = elements.phoneInput.value.trim();
+                if (!rawIdentifier) {
+                    showPhoneError('الرجاء إدخال البريد الإلكتروني أو رقم الهاتف');
                     return;
                 }
 
-                // Detect: if input has any non-digit chars → treat as username → show password field directly
-                const isUsernameInput = /[^\d\s\+\-\(\)]/.test(identifier);
+                const identifier = formatIdentifier(rawIdentifier);
 
-                if (isUsernameInput) {
-                    // Username: need password field shown
-                    if (!phoneLoginHasPassword) {
-                        phoneLoginHasPassword = true;
-                        elements.phonePasswordWarning.style.display = 'none';
-                        elements.phonePasswordField.style.display = 'block';
-                        elements.forgotPasswordLink.style.display = 'none';
-                        elements.phoneLoginText.textContent = 'تسجيل الدخول';
+                if (phoneLoginHasPassword) {
+                    const password = elements.phonePasswordInput.value.trim();
+                    if (!password) {
+                        showPhoneError('الرجاء إدخال كلمة المرور');
                         elements.phonePasswordInput.focus();
                         return;
                     }
-                    const password = elements.phonePasswordInput.value.trim();
-                    if (!password) { showPhoneError('الرجاء إدخال كلمة المرور'); return; }
-                    // Use kidLogin which handles both phone and username
-                    attemptUnifiedLogin(identifier, password);
+                    attemptPhoneLoginWithPassword(identifier, password);
                 } else {
-                    // Phone number
-                    if (phoneLoginHasPassword) {
-                        const password = elements.phonePasswordInput.value.trim();
-                        if (!password) { showPhoneError('الرجاء إدخال كلمة المرور'); return; }
-                        attemptPhoneLoginWithPassword(identifier, password);
-                    } else {
-                        checkPhonePassword(identifier);
-                    }
+                    checkPhonePassword(identifier);
                 }
             });
 
@@ -1348,13 +1366,15 @@
             });
         }
 
-        // ===== PHONE LOGIN WITH PASSWORD CHECK =====
-        function checkPhonePassword(phone) {
-            showLoading('جاري التحقق من رقم الهاتف...');
+        // ===== PHONE/EMAIL LOGIN WITH PASSWORD CHECK =====
+        function checkPhonePassword(rawIdentifier) {
+            const identifier = formatIdentifier(rawIdentifier);
+            showLoading('جاري التحقق من الحساب...');
             
             const formData = new FormData();
             formData.append('action', 'checkKidPasswordByPhone');
-            formData.append('phone', cleanPhoneNumber(phone));
+            formData.append('phone', identifier);
+            formData.append('identifier', identifier);
             
             fetch(API_URL, {
                 method: 'POST',
@@ -1378,20 +1398,18 @@
                         elements.phoneLoginText.textContent = 'تسجيل الدخول بكلمة المرور';
                         elements.phonePasswordInput.focus();
                     } else {
-                        // User doesn't have password - verify phone first via WhatsApp!
-                        currentPhoneForSetup = cleanPhoneNumber(phone);
-                        startPhoneVerification(phone, data.student_id, 'first_time');
+                        // User doesn't have password yet - login directly, dashboard prompts for email/password
+                        attemptPhoneLogin(identifier);
                     }
                 } else {
-                    // If check fails, try normal phone login
-                    attemptPhoneLogin(phone);
+                    // If check fails, try normal login
+                    attemptPhoneLogin(identifier);
                 }
             })
             .catch(error => {
                 hideLoading();
                 console.error('Password check error:', error);
-                // Fallback to normal phone login
-                attemptPhoneLogin(phone);
+                attemptPhoneLogin(identifier);
             });
         }
 
@@ -1695,18 +1713,26 @@
             });
         }
 
-        // ===== WHATSAPP OTP CODE VERIFICATION =====
-        let pendingVerification = null;
-        let otpCountdownInterval = null;
+        // ===== EMAIL OTP CODE VERIFICATION & UNCLE RECOVERY =====
+        let pendingEmailVerification = null;
+        let emailOtpCountdownInterval = null;
 
-        function startPhoneVerification(phone, studentId, mode = 'first_time') {
-            pendingVerification = { phone, studentId, mode };
+        function showPasswordRecovery() {
+            const rawVal = elements.phoneInput.value.trim();
+            if (!rawVal) {
+                showPhoneError('الرجاء إدخال البريد الإلكتروني أو رقم الهاتف أولاً لإعادة تعيين كلمة المرور');
+                elements.phoneInput.focus();
+                return;
+            }
+
+            const identifier = formatIdentifier(rawVal);
             clearErrors();
-            showLoading('جاري إرسال كود التحقق عبر واتساب...');
+            showLoading('جاري التحضير لاستعادة كلمة المرور...');
 
             const formData = new FormData();
-            formData.append('action', 'sendCustomWhatsAppOTP');
-            formData.append('phone', cleanPhoneNumber(phone));
+            formData.append('action', 'requestStudentPasswordRecovery');
+            formData.append('identifier', identifier);
+            formData.append('phone', identifier);
 
             fetch(API_URL, {
                 method: 'POST',
@@ -1720,37 +1746,97 @@
                     window.location.reload();
                     return;
                 }
+
                 if (data.success) {
-                    elements.phoneLoginForm.classList.remove('active');
-                    elements.usernameLoginForm.classList.remove('active');
-                    elements.passwordSetupContainer.classList.remove('active');
+                    if (data.has_email) {
+                        // CASE 1: Student has email -> Email OTP
+                        pendingEmailVerification = {
+                            studentId: data.student_id,
+                            identifier: identifier,
+                            maskedEmail: data.masked_email
+                        };
 
-                    const otpContainer = document.getElementById('otpVerificationContainer');
-                    if (otpContainer) otpContainer.classList.add('active');
+                        elements.phoneLoginForm.classList.remove('active');
+                        elements.usernameLoginForm.classList.remove('active');
+                        elements.passwordSetupContainer.classList.remove('active');
+                        const uncleBox = document.getElementById('uncleContactContainer');
+                        if (uncleBox) uncleBox.classList.remove('active');
 
-                    const displayEl = document.getElementById('otpPhoneDisplay');
-                    if (displayEl) displayEl.textContent = phone;
+                        const emailContainer = document.getElementById('emailOtpContainer');
+                        if (emailContainer) emailContainer.classList.add('active');
 
-                    const codeInput = document.getElementById('otpCodeInput');
-                    if (codeInput) {
-                        codeInput.value = '';
-                        setTimeout(() => codeInput.focus(), 150);
+                        const displayEl = document.getElementById('emailOtpDisplay');
+                        if (displayEl) displayEl.textContent = data.masked_email || identifier;
+
+                        const codeInput = document.getElementById('emailOtpCodeInput');
+                        if (codeInput) {
+                            codeInput.value = '';
+                            setTimeout(() => codeInput.focus(), 150);
+                        }
+
+                        const errEl = document.getElementById('emailOtpErrorMessage');
+                        if (errEl) errEl.style.display = 'none';
+                        const succEl = document.getElementById('emailOtpSuccessMessage');
+                        if (succEl) succEl.style.display = 'none';
+
+                        startEmailOtpCountdown(60);
+                    } else {
+                        // CASE 2: Student has NO email linked -> Uncle contact fallback
+                        elements.phoneLoginForm.classList.remove('active');
+                        elements.usernameLoginForm.classList.remove('active');
+                        elements.passwordSetupContainer.classList.remove('active');
+                        const emailBox = document.getElementById('emailOtpContainer');
+                        if (emailBox) emailBox.classList.remove('active');
+
+                        const uncleContainer = document.getElementById('uncleContactContainer');
+                        if (uncleContainer) uncleContainer.classList.add('active');
+
+                        const uncleNameEl = document.getElementById('recoveryUncleName');
+                        if (uncleNameEl) uncleNameEl.textContent = data.uncle_name || 'أمين الخدمة / الخادم المسؤول';
+
+                        const uncleRoleEl = document.getElementById('recoveryUncleRole');
+                        if (uncleRoleEl) uncleRoleEl.textContent = data.uncle_role || 'خادم الكنيسة';
+
+                        const churchNameEl = document.getElementById('recoveryChurchName');
+                        if (churchNameEl) churchNameEl.textContent = data.church_name || 'مدارس الأحد';
+
+                        const snippetEl = document.getElementById('recoveryStudentSnippet');
+                        if (snippetEl) {
+                            const stName = data.student_name || 'المخدوم';
+                            const stPhone = data.student_phone || identifier;
+                            snippetEl.textContent = `المخدوم: ${stName} (${stPhone})`;
+                        }
+
+                        const unclePhoneDigits = (data.uncle_phone || '').toString().replace(/\D/g, '');
+                        const waLink = document.getElementById('recoveryWhatsAppLink');
+                        const callLink = document.getElementById('recoveryCallLink');
+
+                        if (unclePhoneDigits) {
+                            const studentName = data.student_name || 'أحد المخدومين';
+                            const churchName = data.church_name || 'الكنيسة';
+                            const studentPhone = data.student_phone || identifier;
+                            const uncleName = data.uncle_name || 'يا خادم المسيح';
+                            const prefilledMsg = `سلام ونعمة يا ${uncleName}، أنا ${studentName} مخدوم بكنيسة ${churchName}. نسيت كلمة المرور الخاصة بحسابي (رقم هاتفي: ${studentPhone}) وليس لدي بريد إلكتروني مسجل. برجاء مساعدتي في استعادة حسابي وتعيين كلمة المرور.`;
+
+                            let waTarget = unclePhoneDigits;
+                            if (waTarget.startsWith('0') && waTarget.length === 11) {
+                                waTarget = '2' + waTarget;
+                            }
+                            if (waLink) {
+                                waLink.href = `https://wa.me/${waTarget}?text=${encodeURIComponent(prefilledMsg)}`;
+                                waLink.style.display = 'flex';
+                            }
+                            if (callLink) {
+                                callLink.href = `tel:${unclePhoneDigits}`;
+                                callLink.style.display = 'flex';
+                            }
+                        } else {
+                            if (waLink) waLink.style.display = 'none';
+                            if (callLink) callLink.style.display = 'none';
+                        }
                     }
-
-                    const errEl = document.getElementById('otpErrorMessage');
-                    if (errEl) errEl.style.display = 'none';
-
-                    const succEl = document.getElementById('otpSuccessMessage');
-                    if (succEl) succEl.style.display = 'none';
-
-                    const noticeEl = document.getElementById('otpStatusNotice');
-                    if (noticeEl && data.message) {
-                        noticeEl.textContent = data.message;
-                    }
-
-                    startOtpCountdown(60);
                 } else {
-                    showPhoneError(data.message || 'فشل في إرسال كود التحقق عبر واتساب');
+                    showPhoneError(data.message || 'تعذر استعادة كلمة المرور');
                 }
             })
             .catch(err => {
@@ -1759,43 +1845,44 @@
             });
         }
 
-        function startOtpCountdown(seconds = 60) {
-            if (otpCountdownInterval) clearInterval(otpCountdownInterval);
+        function startEmailOtpCountdown(seconds = 60) {
+            if (emailOtpCountdownInterval) clearInterval(emailOtpCountdownInterval);
             let remaining = seconds;
-            const resendBtn = document.getElementById('resendOtpBtn');
+            const resendBtn = document.getElementById('resendEmailOtpBtn');
 
             const updateDisplay = () => {
                 if (!resendBtn) return;
                 if (remaining > 0) {
-                    resendBtn.innerHTML = `إعادة إرسال الكود عبر واتساب (<span id="otpCountdown">${remaining}</span> ثانية)`;
+                    resendBtn.innerHTML = `إعادة إرسال الكود (<span id="emailOtpCountdown">${remaining}</span> ثانية)`;
                     resendBtn.disabled = true;
                     resendBtn.style.opacity = '0.6';
                     resendBtn.style.cursor = 'not-allowed';
                 } else {
-                    resendBtn.innerHTML = `<i class="fab fa-whatsapp" style="margin-left:4px;"></i> إعادة إرسال الكود عبر واتساب`;
+                    resendBtn.innerHTML = `<i class="fas fa-redo-alt" style="margin-left:4px;"></i> إعادة إرسال الكود`;
                     resendBtn.disabled = false;
                     resendBtn.style.opacity = '1';
                     resendBtn.style.cursor = 'pointer';
-                    clearInterval(otpCountdownInterval);
+                    clearInterval(emailOtpCountdownInterval);
                 }
             };
 
             updateDisplay();
-            otpCountdownInterval = setInterval(() => {
+            emailOtpCountdownInterval = setInterval(() => {
                 remaining--;
                 updateDisplay();
             }, 1000);
         }
 
-        function resendPhoneOTP() {
-            if (!pendingVerification || !pendingVerification.phone) return;
-            const errEl = document.getElementById('otpErrorMessage');
+        function resendEmailOTP() {
+            if (!pendingEmailVerification || !pendingEmailVerification.identifier) return;
+            const errEl = document.getElementById('emailOtpErrorMessage');
             if (errEl) errEl.style.display = 'none';
-            showLoading('جاري إعادة إرسال كود التحقق عبر واتساب...');
+            showLoading('جاري إعادة إرسال كود التحقق إلى البريد الإلكتروني...');
 
             const formData = new FormData();
-            formData.append('action', 'sendCustomWhatsAppOTP');
-            formData.append('phone', cleanPhoneNumber(pendingVerification.phone));
+            formData.append('action', 'requestStudentPasswordRecovery');
+            formData.append('identifier', pendingEmailVerification.identifier);
+            formData.append('phone', pendingEmailVerification.identifier);
 
             fetch(API_URL, {
                 method: 'POST',
@@ -1806,8 +1893,8 @@
             .then(data => {
                 hideLoading();
                 if (data.success) {
-                    startOtpCountdown(60);
-                    showSuccess('تم إرسال كود تحقق جديد عبر واتساب بنجاح');
+                    startEmailOtpCountdown(60);
+                    showSuccess('تم إعادة إرسال كود التحقق إلى بريدك الإلكتروني بنجاح');
                 } else {
                     if (errEl) {
                         errEl.textContent = data.message || 'فشل في إعادة الإرسال';
@@ -1824,12 +1911,12 @@
             });
         }
 
-        function submitPhoneOTP() {
-            const codeInput = document.getElementById('otpCodeInput');
+        function submitEmailOTP() {
+            const codeInput = document.getElementById('emailOtpCodeInput');
             const code = (codeInput ? codeInput.value : '').trim();
-            const errEl = document.getElementById('otpErrorMessage');
-            const verifyBtn = document.getElementById('verifyOtpBtn');
-            const verifyText = document.getElementById('verifyOtpText');
+            const errEl = document.getElementById('emailOtpErrorMessage');
+            const verifyBtn = document.getElementById('verifyEmailOtpBtn');
+            const verifyText = document.getElementById('verifyEmailOtpText');
 
             if (errEl) errEl.style.display = 'none';
 
@@ -1842,14 +1929,14 @@
                 return;
             }
 
-            if (!pendingVerification || !pendingVerification.phone) return;
+            if (!pendingEmailVerification || !pendingEmailVerification.studentId) return;
 
             if (verifyBtn) verifyBtn.disabled = true;
             if (verifyText) verifyText.textContent = 'جاري التحقق...';
 
             const formData = new FormData();
-            formData.append('action', 'verifyCustomWhatsAppOTP');
-            formData.append('phone', cleanPhoneNumber(pendingVerification.phone));
+            formData.append('action', 'verifyStudentEmailOTP');
+            formData.append('studentId', pendingEmailVerification.studentId);
             formData.append('code', code);
 
             fetch(API_URL, {
@@ -1868,21 +1955,18 @@
                 }
 
                 if (data.success) {
-                    if (otpCountdownInterval) clearInterval(otpCountdownInterval);
+                    if (emailOtpCountdownInterval) clearInterval(emailOtpCountdownInterval);
 
-                    const succEl = document.getElementById('otpSuccessMessage');
+                    const succEl = document.getElementById('emailOtpSuccessMessage');
                     if (succEl) {
-                        succEl.innerHTML = '<i class="fas fa-check-circle" style="margin-left:6px;"></i> تم التأكد من الكود بنجاح! جاري المتابعة...';
+                        succEl.innerHTML = '<i class="fas fa-check-circle" style="margin-left:6px;"></i> تم التحقق من البريد بنجاح! جاري المتابعة...';
                         succEl.style.display = 'block';
                     }
 
                     setTimeout(() => {
-                        const otpContainer = document.getElementById('otpVerificationContainer');
-                        if (otpContainer) otpContainer.classList.remove('active');
-                        if (pendingVerification) {
-                            const { phone, studentId, mode } = pendingVerification;
-                            showPasswordSetup(phone, studentId, mode);
-                        }
+                        const emailContainer = document.getElementById('emailOtpContainer');
+                        if (emailContainer) emailContainer.classList.remove('active');
+                        showPasswordResetWithToken(data.student_id, data.token);
                     }, 600);
                 } else {
                     if (errEl) {
@@ -1902,64 +1986,171 @@
             });
         }
 
-        function cancelOTPVerification() {
-            if (otpCountdownInterval) clearInterval(otpCountdownInterval);
-            const otpContainer = document.getElementById('otpVerificationContainer');
-            if (otpContainer) otpContainer.classList.remove('active');
+        function cancelEmailOTPVerification() {
+            if (emailOtpCountdownInterval) clearInterval(emailOtpCountdownInterval);
+            const emailContainer = document.getElementById('emailOtpContainer');
+            if (emailContainer) emailContainer.classList.remove('active');
             elements.phoneLoginForm.classList.add('active');
             clearErrors();
         }
 
-        function openWhatsAppOtpHelp(overridePhone) {
-            const phone = overridePhone || (pendingVerification && pendingVerification.phone) || elements.phoneInput.value.trim();
-            const cleanPh = cleanPhoneNumber(phone);
-            const msg = `مرحباً، لم أستلم كود التحقق عبر واتساب لرقم هاتفي: ${cleanPh}`;
-            const url = `https://wa.me/201037011355?text=${encodeURIComponent(msg)}`;
-            window.open(url, '_blank');
+        function cancelUncleContact() {
+            const uncleContainer = document.getElementById('uncleContactContainer');
+            if (uncleContainer) uncleContainer.classList.remove('active');
+            elements.phoneLoginForm.classList.add('active');
+            clearErrors();
         }
 
-        // ===== PASSWORD RECOVERY =====
-        function showPasswordRecovery() {
-            const phone = elements.phoneInput.value.trim();
-            if (!phone) {
-                showPhoneError('الرجاء إدخال رقم الهاتف أولاً لإعادة تعيين كلمة المرور');
-                elements.phoneInput.focus();
-                return;
-            }
+        function showPasswordResetWithToken(studentId, token) {
+            const container = elements.passwordSetupContainer;
+            elements.phoneLoginForm.classList.remove('active');
+            elements.usernameLoginForm.classList.remove('active');
+            const emailBox = document.getElementById('emailOtpContainer');
+            if (emailBox) emailBox.classList.remove('active');
+            const uncleBox = document.getElementById('uncleContactContainer');
+            if (uncleBox) uncleBox.classList.remove('active');
 
-            showLoading('جاري التحضير لإعادة تعيين كلمة المرور...');
-            
-            const formData = new FormData();
-            formData.append('action', 'checkKidPasswordByPhone');
-            formData.append('phone', cleanPhoneNumber(phone));
-            
-            fetch(API_URL, {
-                method: 'POST',
-                body: formData,
-                credentials: 'include'
-            })
-            .then(res => res.json())
-            .then(data => {
-                if (data && (data.cookie_check || (data.message && data.message.includes('الكوكيز')))) {
-                    window.location.reload();
-                    return;
-                }
-                hideLoading();
-                if (data.success && data.student_id) {
-                    startPhoneVerification(phone, data.student_id, 'reset_password');
-                } else {
-                    showPhoneError(data.message || 'رقم الهاتف غير مسجل في النظام');
-                }
-            })
-            .catch(err => {
-                hideLoading();
-                showPhoneError('خطأ في الاتصال بالخادم');
-            });
+            container.classList.add('active');
+            clearErrors();
+
+            container.innerHTML = `
+                <h3 style="color: var(--dark); font-size: 1.15rem; margin-bottom: 14px; text-align: center; font-weight: 800;">
+                    <i class="fas fa-key" style="color: var(--primary);"></i>
+                    تعيين كلمة المرور الجديدة
+                </h3>
+                
+                <div style="background: #f0fdf4; color: #166534; padding: 12px 14px; border-radius: var(--radius-sm); margin-bottom: 16px; border: 1px solid #bbf7d0; text-align: center; font-size: 0.85rem; font-weight: 600;">
+                    <i class="fas fa-check-circle" style="color: #16a34a; margin-left: 4px;"></i>
+                    تم التحقق من بريدك الإلكتروني بنجاح. يمكنك الآن تعيين كلمة المرور الجديدة لحسابك.
+                </div>
+                
+                <form id="passwordResetForm">
+                    <div class="form-group" style="margin-bottom: 14px;">
+                        <label for="newPassword" class="form-label" style="font-size: 0.85rem;">كلمة المرور الجديدة (6 أحرف أو أرقام على الأقل)</label>
+                        <div class="input-container">
+                            <i class="fas fa-lock input-icon"></i>
+                            <input type="password" 
+                                   id="newPassword" 
+                                   class="form-input" 
+                                   required 
+                                   placeholder="كلمة المرور الجديدة"
+                                   autocomplete="new-password">
+                            <button type="button" class="password-toggle" data-target="newPassword">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group" style="margin-bottom: 16px;">
+                        <label for="confirmPassword" class="form-label" style="font-size: 0.85rem;">تأكيد كلمة المرور الجديدة</label>
+                        <div class="input-container">
+                            <i class="fas fa-lock input-icon"></i>
+                            <input type="password" 
+                                   id="confirmPassword" 
+                                   class="form-input" 
+                                   required 
+                                   placeholder="تأكيد كلمة المرور"
+                                   autocomplete="new-password">
+                            <button type="button" class="password-toggle" data-target="confirmPassword">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <button type="submit" class="login-btn" id="savePasswordBtn" style="padding: 11px 14px; font-size: 0.9rem; margin-bottom: 10px;">
+                        <i class="fas fa-save"></i>
+                        <span>حفظ كلمة المرور والدخول</span>
+                    </button>
+
+                    <div style="text-align: center;">
+                        <button type="button" onclick="cancelPasswordSetup()" style="background: none; border: none; color: var(--secondary); font-size: 0.82rem; cursor: pointer; text-decoration: underline;">
+                            إلغاء والعودة
+                        </button>
+                    </div>
+                </form>
+            `;
+
+            setTimeout(() => {
+                document.getElementById('passwordResetForm').addEventListener('submit', function(e) {
+                    e.preventDefault();
+                    const p1 = document.getElementById('newPassword').value.trim();
+                    const p2 = document.getElementById('confirmPassword').value.trim();
+
+                    if (!p1 || !p2) {
+                        showSetupError('الرجاء إدخال كلمة المرور وتأكيدها');
+                        return;
+                    }
+                    if (p1.length < 6) {
+                        showSetupError('كلمة المرور يجب أن تكون 6 أحرف على الأقل');
+                        return;
+                    }
+                    if (p1 !== p2) {
+                        showSetupError('كلمتا المرور غير متطابقتين');
+                        return;
+                    }
+
+                    showLoading('جاري حفظ كلمة المرور...');
+                    const fd = new FormData();
+                    fd.append('action', 'resetStudentPasswordWithToken');
+                    fd.append('studentId', studentId);
+                    fd.append('token', token);
+                    fd.append('password', p1);
+
+                    fetch(API_URL, { method: 'POST', body: fd, credentials: 'include' })
+                    .then(res => res.json())
+                    .then(d => {
+                        hideLoading();
+                        if (d.success) {
+                            localStorage.setItem('savedPassword', p1);
+                            localStorage.setItem('rememberMe', 'true');
+                            showSuccess('تم حفظ كلمة المرور بنجاح! جاري التوجيه...');
+                            setTimeout(() => {
+                                window.location.href = isTestingEnv ? '/testing/user/profile/' : '/user/profile/';
+                            }, 1200);
+                        } else {
+                            showSetupError(d.message || 'فشل في حفظ كلمة المرور');
+                        }
+                    })
+                    .catch(() => {
+                        hideLoading();
+                        showSetupError('خطأ في الاتصال بالخادم');
+                    });
+                });
+
+                document.querySelectorAll('.password-toggle').forEach(toggle => {
+                    toggle.addEventListener('click', function() {
+                        const targetId = this.dataset.target;
+                        const passwordInput = document.getElementById(targetId);
+                        const icon = this.querySelector('i');
+                        if (passwordInput.type === 'password') {
+                            passwordInput.type = 'text';
+                            icon.classList.remove('fa-eye');
+                            icon.classList.add('fa-eye-slash');
+                        } else {
+                            passwordInput.type = 'password';
+                            icon.classList.remove('fa-eye-slash');
+                            icon.classList.add('fa-eye');
+                        }
+                    });
+                });
+            }, 100);
         }
 
         // ===== HELPER FUNCTIONS =====
+        function formatIdentifier(val) {
+            if (!val) return '';
+            const trimmed = val.toString().trim();
+            if (trimmed.includes('@')) {
+                return trimmed.toLowerCase();
+            }
+            return cleanPhoneNumber(trimmed);
+        }
+
         function cleanPhoneNumber(phone) {
             if (!phone) return '';
+            if (typeof phone === 'string' && phone.includes('@')) {
+                return phone.trim().toLowerCase();
+            }
             return phone.toString().replace(/[^\d]/g, '');
         }
 

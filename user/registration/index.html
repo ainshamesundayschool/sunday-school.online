@@ -630,60 +630,6 @@ body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
     </div>
   </div>
 
-  <!-- WHATSAPP OTP VERIFICATION MODAL -->
-  <div id="otpModal" style="display:none; position:fixed; inset:0; background:rgba(15,23,42,0.65); backdrop-filter:blur(6px); z-index:9999; align-items:center; justify-content:center; padding:16px;">
-    <div style="background:var(--surface); border-radius:var(--r-xl); width:100%; max-width:420px; box-shadow:var(--shadow-lg); border:1px solid var(--border-solid); padding:28px 22px; animation:slideDown 0.25s var(--spring) both;">
-      
-      <div style="text-align:center; margin-bottom:18px;">
-        <div style="background:#f0fdf4; border:1px solid #bbf7d0; border-radius:var(--r-sm); padding:10px 14px; font-size:0.85rem; color:#166534; line-height:1.5;">
-          <i class="fab fa-whatsapp" style="color:#16a34a; margin-left:4px;"></i>
-          <span id="regOtpStatusNotice">تم إرسال رمز التحقق إلى WhatsApp. يرجى التحقق من هاتفك.</span>
-        </div>
-        <div style="margin-top:10px; font-weight:700; color:#128C7E; font-size:1.15rem;" dir="ltr">
-          <span id="regOtpPhoneDisplay"></span>
-        </div>
-      </div>
-
-      <form id="regOtpForm" onsubmit="event.preventDefault(); verifyRegistrationOTP();">
-        <div style="margin-bottom:16px;">
-          <label for="regOtpCodeInput" style="display:block; text-align:center; font-size:0.86rem; font-weight:700; color:var(--text); margin-bottom:8px;">أدخل الكود المكون من 6 أرقام</label>
-          <input type="text"
-                 id="regOtpCodeInput"
-                 required
-                 maxlength="6"
-                 inputmode="numeric"
-                 pattern="[0-9]*"
-                 style="width:100%; text-align:center; font-size:1.5rem; font-weight:800; letter-spacing:8px; padding:12px; border:2px solid var(--border-solid); border-radius:var(--r-md); direction:ltr; font-family:monospace;"
-                 placeholder="------"
-                 autocomplete="one-time-code">
-        </div>
-
-        <div class="alert alert-err" id="regOtpErr" style="display:none; margin-bottom:12px;"><i class="fas fa-circle-exclamation"></i><span id="regOtpErrTxt"></span></div>
-
-        <button type="submit" class="btn btn-next" id="regOtpVerifyBtn" style="width:100%; padding:13px; font-size:0.95rem; font-weight:700; justify-content:center; margin-bottom:12px;">
-          <span id="regOtpVerifyTxt"><i class="fas fa-check-circle"></i> &nbsp;تأكيد الكود وإرسال الطلب</span>
-          <div class="spin" id="regOtpSpin"></div>
-        </button>
-
-        <div style="text-align:center; display:flex; flex-direction:column; gap:8px;">
-          <button type="button" id="regOtpResendBtn" onclick="resendRegistrationOTP()" style="background:none; border:none; color:#128C7E; font-size:0.86rem; font-weight:700; cursor:pointer;" disabled>
-            إعادة إرسال الكود عبر واتساب (<span id="regOtpCountdown">60</span> ثانية)
-          </button>
-          <button type="button" onclick="closeRegistrationOTPModal()" style="background:none; border:none; color:var(--text-3); font-size:0.83rem; cursor:pointer; text-decoration:underline;">
-            تعديل رقم الهاتف أو العودة
-          </button>
-        </div>
-
-        <div style="text-align:center; margin-top:14px; padding-top:12px; border-top:1px dashed var(--border-solid);">
-          <button type="button" onclick="openRegistrationWhatsAppHelp()" style="display:inline-flex; align-items:center; justify-content:center; gap:8px; width:100%; background:#f0fdf4; border:1px solid #bbf7d0; color:#166534; padding:9px 14px; border-radius:var(--r-sm); font-size:0.85rem; font-weight:700; cursor:pointer; font-family:inherit; transition:all 0.2s ease;">
-            <i class="fab fa-whatsapp" style="font-size:1.1rem; color:#25D366;"></i>
-            <span>لم يصلك الكود؟ أرسل رسالة عبر واتساب</span>
-          </button>
-        </div>
-      </form>
-    </div>
-  </div>
-
 </div><!-- /app -->
 
 <script>
@@ -1489,9 +1435,6 @@ function prevStep() {
   window.scrollTo({top:0,behavior:'smooth'});
 }
 
-let isPhoneVerifiedForReg = false;
-let regOtpCountdownInterval = null;
-
 /* ════════════════ SUBMIT ════════════════ */
 async function submitForm() {
   const phone = (val('kidPhone') || '').replace(/\D/g, '');
@@ -1500,181 +1443,11 @@ async function submitForm() {
     return;
   }
 
-  // If phone not yet verified via WhatsApp OTP, trigger OTP verification flow first
-  if (!isPhoneVerifiedForReg) {
-    initiateRegistrationOTP(phone);
-    return;
-  }
-
-  // Proceed with actual registration submission
+  // Submit registration request directly for church servant/admin approval
   doSubmitRegistrationRequest();
 }
 
-async function initiateRegistrationOTP(phone) {
-  const btn  = document.getElementById('submitBtn');
-  const spin = document.getElementById('submitSpin');
-  const txt  = document.getElementById('submitTxt');
-  btn.disabled = true; spin.classList.add('on'); txt.style.display = 'none';
 
-  try {
-    const fd = new FormData();
-    fd.append('action', 'sendRegistrationWhatsAppOTP');
-    fd.append('phone', phone);
-    if (churchId) {
-      fd.append('church_id', churchId);
-      fd.append('churchId', churchId);
-    }
-    const kidName = val('kidName');
-    if (kidName) {
-      fd.append('name', kidName);
-    }
-
-    const res = await fetch(API, { method: 'POST', body: fd });
-    const data = await res.json();
-
-    btn.disabled = false; spin.classList.remove('on'); txt.style.display = '';
-
-    if (data.success) {
-      document.getElementById('regOtpPhoneDisplay').textContent = phone;
-      document.getElementById('regOtpCodeInput').value = '';
-      document.getElementById('regOtpErr').style.display = 'none';
-      const notice = document.getElementById('regOtpStatusNotice');
-      if (notice && data.message) notice.textContent = data.message;
-
-      document.getElementById('otpModal').style.display = 'flex';
-      startRegOtpCountdown(60);
-      setTimeout(() => document.getElementById('regOtpCodeInput').focus(), 150);
-    } else {
-      showErr(5, data.message || 'فشل في إرسال كود التحقق عبر واتساب');
-    }
-  } catch (err) {
-    btn.disabled = false; spin.classList.remove('on'); txt.style.display = '';
-    showErr(5, 'خطأ في الاتصال بالخادم لإرسال كود التحقق');
-  }
-}
-
-async function verifyRegistrationOTP() {
-  const phone = (val('kidPhone') || '').replace(/\D/g, '');
-  const code = (document.getElementById('regOtpCodeInput').value || '').trim();
-  const errEl = document.getElementById('regOtpErr');
-  const errTxt = document.getElementById('regOtpErrTxt');
-  const btn = document.getElementById('regOtpVerifyBtn');
-  const spin = document.getElementById('regOtpSpin');
-  const txt = document.getElementById('regOtpVerifyTxt');
-
-  if (errEl) errEl.style.display = 'none';
-
-  if (!code || code.length !== 6) {
-    if (errEl && errTxt) {
-      errTxt.textContent = 'يرجى إدخال الكود المكون من 6 أرقام';
-      errEl.style.display = 'flex';
-    }
-    document.getElementById('regOtpCodeInput').focus();
-    return;
-  }
-
-  btn.disabled = true; spin.classList.add('on'); txt.style.display = 'none';
-
-  try {
-    const fd = new FormData();
-    fd.append('action', 'verifyCustomWhatsAppOTP');
-    fd.append('phone', phone);
-    fd.append('code', code);
-
-    const res = await fetch(API, { method: 'POST', body: fd });
-    const data = await res.json();
-
-    btn.disabled = false; spin.classList.remove('on'); txt.style.display = '';
-
-    if (data.success) {
-      isPhoneVerifiedForReg = true;
-      closeRegistrationOTPModal();
-      doSubmitRegistrationRequest();
-    } else {
-      if (errEl && errTxt) {
-        errTxt.textContent = data.message || 'كود التحقق غير صحيح أو منتهي الصلاحية';
-        errEl.style.display = 'flex';
-      }
-      document.getElementById('regOtpCodeInput').focus();
-    }
-  } catch (e) {
-    btn.disabled = false; spin.classList.remove('on'); txt.style.display = '';
-    if (errEl && errTxt) {
-      errTxt.textContent = 'خطأ في الاتصال بالخادم للتحقق من الكود';
-      errEl.style.display = 'flex';
-    }
-  }
-}
-
-async function resendRegistrationOTP() {
-  const phone = (val('kidPhone') || '').replace(/\D/g, '');
-  const resendBtn = document.getElementById('regOtpResendBtn');
-  if (resendBtn) resendBtn.disabled = true;
-
-  try {
-    const fd = new FormData();
-    fd.append('action', 'sendRegistrationWhatsAppOTP');
-    fd.append('phone', phone);
-    if (churchId) {
-      fd.append('church_id', churchId);
-      fd.append('churchId', churchId);
-    }
-    const kidName = val('kidName');
-    if (kidName) {
-      fd.append('name', kidName);
-    }
-
-    const res = await fetch(API, { method: 'POST', body: fd });
-    const data = await res.json();
-
-    if (data.success) {
-      startRegOtpCountdown(60);
-      const notice = document.getElementById('regOtpStatusNotice');
-      if (notice && data.message) notice.textContent = data.message;
-    } else {
-      const errEl = document.getElementById('regOtpErr');
-      const errTxt = document.getElementById('regOtpErrTxt');
-      if (errEl && errTxt) {
-        errTxt.textContent = data.message || 'فشل في إعادة الإرسال';
-        errEl.style.display = 'flex';
-      }
-    }
-  } catch (e) {
-    // non-blocking
-  }
-}
-
-function startRegOtpCountdown(seconds = 60) {
-  if (regOtpCountdownInterval) clearInterval(regOtpCountdownInterval);
-  let remaining = seconds;
-  const resendBtn = document.getElementById('regOtpResendBtn');
-  const countSpan = document.getElementById('regOtpCountdown');
-  if (resendBtn) resendBtn.disabled = true;
-
-  regOtpCountdownInterval = setInterval(() => {
-    remaining--;
-    if (countSpan) countSpan.textContent = remaining;
-    if (remaining <= 0) {
-      clearInterval(regOtpCountdownInterval);
-      if (resendBtn) {
-        resendBtn.disabled = false;
-        resendBtn.innerHTML = `<i class="fab fa-whatsapp" style="margin-left:4px;"></i> إعادة إرسال الكود عبر واتساب`;
-      }
-    }
-  }, 1000);
-}
-
-function closeRegistrationOTPModal() {
-  if (regOtpCountdownInterval) clearInterval(regOtpCountdownInterval);
-  document.getElementById('otpModal').style.display = 'none';
-}
-
-function openRegistrationWhatsAppHelp() {
-  const phone = (val('kidPhone') || '').replace(/\D/g, '');
-  const msg = `مرحباً، أقوم بتسجيل طفل جديد في مدارس الأحد ولم أستلم كود التحقق عبر واتساب لرقم هاتفي: ${phone}`;
-  const url = `https://wa.me/201037011355?text=${encodeURIComponent(msg)}`;
-  window.open(url, '_blank');
-}
 
 async function doSubmitRegistrationRequest() {
   const btn  = document.getElementById('submitBtn');

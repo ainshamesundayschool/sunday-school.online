@@ -1,43 +1,36 @@
+# OS & Editor files
 .DS_Store
-uploads/
+Thumbs.db
+*.swp
+*.swo
+
+# Environment & Sensitive Configuration
 config.php
+.auth_secret
+*.env
+
+# User Uploads & Temporary Media
+uploads/
+upload_errors/
+
+# Logs & Debugging
+*.log
 php_errors.log
-php_errors
-upload_errors
-if0_40860329_sunday_school
-if0_40860329_sunday_school.sql
-uncle/dashboard/oldgoogleappscript.js
-uncle/dashboard/currentgoogleaiscript.js
-db_migrations/20260509_add_trip_points_and_config.sql
-game/.DS_Store
-scripts/google_apps_notify.gs
-TRIP_COLLABORATION_GUIDE.md
-db_migrations/20260509_add_trip_collaboration.sql
-db_test.php
-db_migrations/add_donation_to_trip_registrations.sql
-db_migrations/add_trip_registered_kids_visibility.sql
-db_migrations/add_soft_delete_to_trip_payments.sql
-if0_40860329_sunday_school (7).sql
-db_migrations/add_custom_field_icons.sql
-db_migrations/migrate_custom_fields.sql
-uncle/.DS_Store
-migration_custom_field_templates.sql
-if0_40860329_sunday_school 2026.sql
-db_migrations/2026-05-22_student_sibling_groups.sql
-db_migrations/2026-05-22_students_graduates_and_transfers.sql
-db_migrations/20260527_add_guest_and_multichurch_trip_support.sql
-config.php.example
-db_migrations/20260606_migrate_domains.sql
-db_migrations/20260610_add_rooms_support.sql
-u430683844_testingServer.sql
-db_migrations/20260619_add_paper_exams.sql
+php_errors/
 
-# Composer
+# Backups & Raw Database Dumps
+backups/
+*.sql.gz
+*.tar.gz
+
+# Dependencies & Local Cache
+vendor/
 composer.phar
-
-# Python
 __pycache__/
 *.pyc
+.sessions/
 
-# Local Backups
-backups/
+# Internal Documentation & Scripts
+ANALYSIS.md
+TRIP_COLLABORATION_GUIDE.md
+scripts/google_apps_notify.gs

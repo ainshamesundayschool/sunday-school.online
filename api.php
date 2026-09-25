@@ -3619,10 +3619,28 @@ function base64UrlDecode(string $data): string
     return base64_decode(strtr($data, '-_', '+/') . str_repeat('=', (4 - strlen($data) % 4) % 4));
 }
 
+function getAuthTokenSecret(): string
+{
+    if (defined('AUTH_TOKEN_SECRET') && !empty(AUTH_TOKEN_SECRET)) {
+        return AUTH_TOKEN_SECRET;
+    }
+    $secretFile = __DIR__ . '/.auth_secret';
+    if (file_exists($secretFile)) {
+        $sec = trim(@file_get_contents($secretFile));
+        if (!empty($sec)) {
+            return $sec;
+        }
+    }
+    $newSecret = bin2hex(random_bytes(32));
+    @file_put_contents($secretFile, $newSecret);
+    @chmod($secretFile, 0600);
+    return $newSecret;
+}
+
 function generateAccessToken(string $userType, int $userId, string $familyId, array $extra = []): string
 {
     $lifetime = defined('ACCESS_TOKEN_LIFETIME') ? ACCESS_TOKEN_LIFETIME : 900; // 15 minutes
-    $secret = defined('AUTH_TOKEN_SECRET') ? AUTH_TOKEN_SECRET : 'ss_sec_k9f2_7d1b8c4e0a3f6e9124589dbe710a34c5';
+    $secret = getAuthTokenSecret();
 
     $header = base64UrlEncode(json_encode(['typ' => 'JWT', 'alg' => 'HS256']));
     $payloadData = [
@@ -3650,7 +3668,7 @@ function verifyAccessToken(string $token): ?array
         return null;
     }
     [$headerB64, $payloadB64, $sigB64] = $parts;
-    $secret = defined('AUTH_TOKEN_SECRET') ? AUTH_TOKEN_SECRET : 'ss_sec_k9f2_7d1b8c4e0a3f6e9124589dbe710a34c5';
+    $secret = getAuthTokenSecret();
     $expectedSig = base64UrlEncode(hash_hmac('sha256', "$headerB64.$payloadB64", $secret, true));
 
     if (!hash_equals($expectedSig, $sigB64)) {
@@ -4663,7 +4681,8 @@ function getChurchId()
 {
     // 1. Developer override — sent explicitly by the JS church-switcher
     //    This takes priority over session ONLY when verified as developer/admin
-    if (isDeveloperRole() || isAdminOrDevRole()) {
+    // 1. Developer override — ONLY allowed for verified developer accounts
+    if (isDeveloperRole() || !empty($_SESSION['is_developer'])) {
         if (isset($_POST['dev_override_church_id']) && $_POST['dev_override_church_id'] !== '') {
             return intval($_POST['dev_override_church_id']);
         }
@@ -4672,17 +4691,21 @@ function getChurchId()
         }
     }
 
-    // 2. Session — normal path for both church and uncle logins
+    // 2. Session — normal authenticated path
     if (isset($_SESSION['church_id']) && !empty($_SESSION['church_id'])) {
         return intval($_SESSION['church_id']);
     }
 
-    // 3. Fallback for public student forms where church_id is explicitly provided
-    if (isset($_POST['church_id']) && !empty($_POST['church_id'])) {
-        return intval($_POST['church_id']);
-    }
-    if (isset($_GET['church_id']) && !empty($_GET['church_id'])) {
-        return intval($_GET['church_id']);
+    // 3. Fallback for public student registration / public forms only
+    $allowedPublicActions = ['registerStudent', 'getPublicClasses', 'getPublicChurchInfo', 'getChurchSettingsPublic'];
+    $currentAction = $_POST['action'] ?? $_GET['action'] ?? '';
+    if (in_array($currentAction, $allowedPublicActions, true)) {
+        if (isset($_POST['church_id']) && !empty($_POST['church_id'])) {
+            return intval($_POST['church_id']);
+        }
+        if (isset($_GET['church_id']) && !empty($_GET['church_id'])) {
+            return intval($_GET['church_id']);
+        }
     }
 
     // 4. Session uncle_id lookup
@@ -5639,68 +5662,24 @@ try {
 
             break;
 
-        case 'sendCustomWhatsAppOTP':
-
-            sendCustomWhatsAppOTP();
-
+        case 'requestStudentEmailVerification':
+            requestStudentEmailVerification();
             break;
 
-        case 'sendRegistrationWhatsAppOTP':
-
-            sendRegistrationWhatsAppOTP();
-
+        case 'verifyStudentEmailOTP':
+            verifyStudentEmailOTP();
             break;
 
-        case 'verifyCustomWhatsAppOTP':
-
-            verifyCustomWhatsAppOTP();
-
+        case 'requestStudentPasswordRecovery':
+            requestStudentPasswordRecovery();
             break;
 
-        case 'enqueueMirrorOTP':
-            enqueueMirrorOTP();
+        case 'resetStudentPasswordWithToken':
+            resetStudentPasswordWithToken();
             break;
 
-        case 'getPendingOTPMessages':
-            getPendingOTPMessages();
-            break;
-
-        case 'markOTPSent':
-            markOTPSent();
-            break;
-
-        case 'getWhatsAppBotStatus':
-            getWhatsAppBotStatus();
-            break;
-
-        case 'testWhatsAppBotWake':
-            testWhatsAppBotWake();
-            break;
-
-        case 'getLatestPhoneOTP':
-
-            getLatestPhoneOTP();
-
-            break;
-
-        case 'adminCheckUserOTP':
-            adminCheckUserOTP();
-            break;
-
-        case 'adminResendUserOTP':
-            adminResendUserOTP();
-            break;
-
-        case 'verifyAndGetOTPToken':
-
-            verifyAndGetOTPToken();
-
-            break;
-
-        case 'checkWhatsAppVerificationStatus':
-
-            checkWhatsAppVerificationStatus();
-
+        case 'updateStudentEmail':
+            updateStudentEmail();
             break;
 
         case 'getStudentProfile':
@@ -5773,10 +5752,12 @@ try {
             break;
 
         case 'getMergeComparison':
+            checkUncleAuth();
             getMergeComparison();
             break;
 
         case 'mergeDuplicateStudents':
+            checkUncleAuth();
             mergeDuplicateStudents();
             break;
 
@@ -11169,7 +11150,12 @@ function resetStudentPassword()
 function getMergeComparison()
 {
     try {
+        checkUncleAuth();
         $churchId = getChurchId();
+        if ($churchId <= 0) {
+            sendJSON(['success' => false, 'message' => 'غير مصرح بالوصول']);
+            return;
+        }
         $studentIdA = intval($_POST['studentIdA'] ?? $_GET['studentIdA'] ?? 0);
         $studentIdB = intval($_POST['studentIdB'] ?? $_GET['studentIdB'] ?? 0);
 
@@ -11422,7 +11408,12 @@ function getMergeStudentSnapshot($studentId, $conn) {
 function mergeDuplicateStudents()
 {
     try {
+        checkUncleAuth();
         $churchId = getChurchId();
+        if ($churchId <= 0) {
+            sendJSON(['success' => false, 'message' => 'غير مصرح بالوصول']);
+            return;
+        }
         
         $targetId = intval($_POST['target_id'] ?? 0);
         $duplicateId = intval($_POST['duplicate_id'] ?? 0);
@@ -20402,667 +20393,556 @@ function transliterateEnglishToArabicPHP($englishName) {
 }
 
 function sendCustomWhatsAppOTP() {
-    try {
-        $phone = sanitize($_POST['phone'] ?? '');
-        $cleanPhone = preg_replace('/[^\d]/', '', $phone);
-        $forRegistration = !empty($_POST['for_registration']) || !empty($_POST['is_registration']);
-        
-        if (empty($cleanPhone) || strlen($cleanPhone) < 10) {
-            sendJSON(['success' => false, 'message' => 'يرجى إدخال رقم هاتف صحيح']);
-        }
-        
-        $conn = getDBConnection();
-
-        $ownerName = '';
-        $ownerChurchId = 0;
-        $ownerType = '';
-        $ownerId = null;
-
-        if (!$forRegistration) {
-            $studentId = (int)($_POST['student_id'] ?? 0);
-            if ($studentId > 0) {
-                $stStmt = $conn->prepare("SELECT id, name, church_id FROM students WHERE id = ? LIMIT 1");
-                if ($stStmt) {
-                    $stStmt->bind_param("i", $studentId);
-                    $stStmt->execute();
-                    $stRes = $stStmt->get_result();
-                    if ($stRes && $stRes->num_rows > 0) {
-                        $sRow = $stRes->fetch_assoc();
-                        $ownerName = $sRow['name'] ?? '';
-                        $ownerChurchId = (int)($sRow['church_id'] ?? 0);
-                        $ownerType = 'student';
-                        $ownerId = (int)$sRow['id'];
-                    }
-                    $stStmt->close();
-                }
-            }
-
-            if (empty($ownerName)) {
-                // Check student phone across primary phone, emergency phone, and parent phones
-                $studentStmt = $conn->prepare("
-                    SELECT id, name, church_id FROM students 
-                    WHERE (RIGHT(phone, 10) = RIGHT(?, 10) OR phone = ?
-                       OR RIGHT(emergency_phone, 10) = RIGHT(?, 10) OR emergency_phone = ?
-                       OR parent_phones LIKE CONCAT('%', ?) OR custom_info LIKE CONCAT('%', ?)) 
-                    LIMIT 1
-                ");
-                $studentStmt->bind_param("ssssss", $cleanPhone, $cleanPhone, $cleanPhone, $cleanPhone, $cleanPhone, $cleanPhone);
-                $studentStmt->execute();
-                $studentRes = $studentStmt->get_result();
-                
-                if ($studentRes && $studentRes->num_rows > 0) {
-                    $sRow = $studentRes->fetch_assoc();
-                    $ownerName = $sRow['name'] ?? '';
-                    $ownerChurchId = (int)($sRow['church_id'] ?? 0);
-                    $ownerType = 'student';
-                    $ownerId = (int)$sRow['id'];
-                } else {
-                    // Also check uncles / servants
-                    $uncleStmt = $conn->prepare("
-                        SELECT id, name, church_id FROM uncles 
-                        WHERE RIGHT(phone, 10) = RIGHT(?, 10) OR phone = ?
-                        LIMIT 1
-                    ");
-                    $uncleFound = false;
-                    if ($uncleStmt) {
-                        $uncleStmt->bind_param("ss", $cleanPhone, $cleanPhone);
-                        $uncleStmt->execute();
-                        $uncleRes = $uncleStmt->get_result();
-                        if ($uncleRes && $uncleRes->num_rows > 0) {
-                            $uncleFound = true;
-                            $uRow = $uncleRes->fetch_assoc();
-                            $ownerName = $uRow['name'] ?? '';
-                            $ownerChurchId = (int)($uRow['church_id'] ?? 0);
-                            $ownerType = 'uncle';
-                            $ownerId = (int)$uRow['id'];
-                        }
-                        $uncleStmt->close();
-                    }
-
-                    if (!$uncleFound) {
-                        sendJSON(['success' => false, 'message' => 'عذراً، رقم الهاتف غير مسجل في نظام مدارس الأحد. يرجى التواصل مع الخادم للتسجيل.']);
-                    }
-                }
-                $studentStmt->close();
-            }
-        } else {
-            // Registration mode
-            if (!empty($_POST['church_id'])) {
-                $ownerChurchId = (int)$_POST['church_id'];
-            } elseif (!empty($_POST['churchId'])) {
-                $ownerChurchId = (int)$_POST['churchId'];
-            }
-            if (!empty($_POST['name'])) {
-                $ownerName = sanitize($_POST['name']);
-            }
-            if ($ownerChurchId === 0) {
-                try {
-                    $chkTable = $conn->query("SHOW TABLES LIKE 'pending_registrations'");
-                    if ($chkTable && $chkTable->num_rows > 0) {
-                        $regStmt = $conn->prepare("SELECT church_id, name FROM pending_registrations WHERE RIGHT(phone, 10) = RIGHT(?, 10) OR phone = ? ORDER BY id DESC LIMIT 1");
-                        if ($regStmt) {
-                            $regStmt->bind_param("ss", $cleanPhone, $cleanPhone);
-                            $regStmt->execute();
-                            $regRes = $regStmt->get_result();
-                            if ($regRes && $regRes->num_rows > 0) {
-                                $rRow = $regRes->fetch_assoc();
-                                $ownerChurchId = (int)($rRow['church_id'] ?? 0);
-                                if (empty($ownerName)) $ownerName = $rRow['name'] ?? '';
-                            }
-                            $regStmt->close();
-                        }
-                    }
-                } catch (Throwable $ignore) {
-                    error_log("Failed checking pending_registrations for OTP: " . $ignore->getMessage());
-                }
-            }
-        }
-
-        if ($ownerChurchId === 0 && !empty($_POST['church_id'])) {
-            $ownerChurchId = (int)$_POST['church_id'];
-        } elseif ($ownerChurchId === 0 && !empty($_POST['churchId'])) {
-            $ownerChurchId = (int)$_POST['churchId'];
-        }
-        if ($ownerChurchId === 0 && !empty($_SESSION['church_id'])) {
-            $ownerChurchId = (int)$_SESSION['church_id'];
-        }
-        
-        $tableCheck = $conn->query("SHOW TABLES LIKE 'phone_verifications'");
-        if ($tableCheck->num_rows === 0) {
-            $conn->query("
-                CREATE TABLE IF NOT EXISTS phone_verifications (
-                    id INT AUTO_INCREMENT PRIMARY KEY,
-                    church_id INT NULL DEFAULT NULL,
-                    phone VARCHAR(20) NOT NULL,
-                    request_token VARCHAR(32) DEFAULT NULL,
-                    otp_code VARCHAR(10) NOT NULL,
-                    is_verified TINYINT(1) DEFAULT 0,
-                    is_sent TINYINT(1) DEFAULT 0,
-                    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
-            ");
-        } else {
-            $colCheck = $conn->query("SHOW COLUMNS FROM phone_verifications LIKE 'is_sent'");
-            if ($colCheck && $colCheck->num_rows === 0) {
-                $conn->query("ALTER TABLE phone_verifications ADD COLUMN is_sent TINYINT(1) DEFAULT 0;");
-            }
-            @$conn->query("ALTER TABLE phone_verifications ADD COLUMN IF NOT EXISTS church_id INT NULL DEFAULT NULL AFTER id;");
-        }
-        
-        $normalizedPhone = normalizeEgyptianPhone($cleanPhone);
-        $last10 = (strlen($normalizedPhone) >= 10) ? substr($normalizedPhone, -10) : $normalizedPhone;
-
-        // Check if an active OTP was already generated for this phone within the last 24 hours (86400 seconds)
-        $existingOtp = null;
-        $chkStmt = $conn->prepare("
-            SELECT id, request_token, otp_code, church_id, is_sent, created_at,
-                   TIMESTAMPDIFF(SECOND, created_at, NOW()) AS elapsed_sec
-            FROM phone_verifications 
-            WHERE (RIGHT(phone, 10) = ? OR phone = ? OR phone = ?)
-              AND TIMESTAMPDIFF(SECOND, created_at, NOW()) BETWEEN 0 AND 86400
-            ORDER BY id DESC LIMIT 1
-        ");
-        if ($chkStmt) {
-            $chkStmt->bind_param("sss", $last10, $cleanPhone, $normalizedPhone);
-            $chkStmt->execute();
-            $chkRes = $chkStmt->get_result();
-            if ($chkRes && $cRow = $chkRes->fetch_assoc()) {
-                $existingOtp = $cRow;
-            }
-            $chkStmt->close();
-        }
-
-        // If an active code was created in the last 24 hours, reuse it!
-        // Do NOT generate a new code and do NOT send a new alert to the developer or bot
-        if ($existingOtp && !empty($existingOtp['otp_code'])) {
-            $newOtpId = (int)$existingOtp['id'];
-            $otp = $existingOtp['otp_code'];
-            $requestToken = $existingOtp['request_token'];
-
-            if (empty($requestToken)) {
-                $bytes = random_bytes(4);
-                $requestToken = 'REQ-' . strtoupper(bin2hex($bytes));
-                $upStmt = $conn->prepare("UPDATE phone_verifications SET request_token = ? WHERE id = ?");
-                if ($upStmt) {
-                    $upStmt->bind_param("si", $requestToken, $newOtpId);
-                    $upStmt->execute();
-                    $upStmt->close();
-                }
-            }
-
-            error_log(sprintf("[WhatsAppQueue] 24h window: Reusing active OTP id=%d for phone=%s (generated %d sec ago)", $newOtpId, $normalizedPhone, $existingOtp['elapsed_sec'] ?? 0));
-
-            sendJSON([
-                'success' => true,
-                'message' => 'رمز التحقق تم إرساله مسبقاً وهو صالح لمدة 24 ساعة. يرجى إدخال الكود المستلم عبر واتساب.',
-                'request_token' => $requestToken,
-                'queue_id' => $newOtpId,
-                'is_existing' => true
-            ]);
-            return;
-        }
-
-        // Step 1: Generate the OTP
-        $otp = sprintf("%06d", mt_rand(100000, 999999));
-        $bytes = random_bytes(4);
-        $requestToken = 'REQ-' . strtoupper(bin2hex($bytes));
-        
-        // Step 2: Store/enqueue a pending WhatsApp message (id, phone, otp_code, is_sent=0)
-        if ($ownerChurchId > 0) {
-            $stmt = $conn->prepare("INSERT INTO phone_verifications (church_id, phone, request_token, otp_code, is_sent, is_verified, created_at) VALUES (?, ?, ?, ?, 0, 0, NOW())");
-            $stmt->bind_param("isss", $ownerChurchId, $normalizedPhone, $requestToken, $otp);
-        } else {
-            $stmt = $conn->prepare("INSERT INTO phone_verifications (phone, request_token, otp_code, is_sent, is_verified, created_at) VALUES (?, ?, ?, 0, 0, NOW())");
-            $stmt->bind_param("sss", $normalizedPhone, $requestToken, $otp);
-        }
-        $stmt->execute();
-        $newOtpId = intval($conn->insert_id ?: $stmt->insert_id);
-        $stmt->close();
-
-        if ($newOtpId <= 0) {
-            throw new Exception("فشل في حفظ رمز التحقق في قاعدة البيانات");
-        }
-
-        // Resolve church name if available for clearer notification
-        $churchName = '';
-        if ($ownerChurchId > 0) {
-            $cStmt = $conn->prepare("SELECT church_name FROM churches WHERE id = ? LIMIT 1");
-            if ($cStmt) {
-                $cStmt->bind_param("i", $ownerChurchId);
-                $cStmt->execute();
-                $cRes = $cStmt->get_result();
-                if ($cRes && $cRow = $cRes->fetch_assoc()) {
-                    $churchName = $cRow['church_name'] ?? '';
-                }
-                $cStmt->close();
-            }
-        }
-
-        $notifTitle = "طلب كود واتساب: " . $otp;
-        $notifBody = "كود: " . $otp . " لرقم: " . $normalizedPhone;
-        if (!empty($ownerName)) {
-            $notifBody .= " (" . $ownerName . ")";
-        }
-        if (!empty($churchName)) {
-            $notifBody .= " - كنيسة " . $churchName;
-        }
-
-        // Notify developer account in-app
-        $devChurchId = 0;
-        $devQ = $conn->query("SELECT church_id FROM uncles WHERE (LOWER(TRIM(role)) IN ('developer', 'dev') OR LOWER(TRIM(username)) = 'peterfayez' OR LOWER(TRIM(email)) = 'peterfayez107@gmail.com') AND (deleted IS NULL OR deleted = 0) LIMIT 1");
-        if ($devQ && $dRow = $devQ->fetch_assoc()) {
-            $devChurchId = (int)($dRow['church_id'] ?? 0);
-        }
-        $targetInAppChurchId = $devChurchId > 0 ? $devChurchId : $ownerChurchId;
-        if ($targetInAppChurchId > 0 && function_exists('pushNotification')) {
-            pushNotification($conn, $targetInAppChurchId, 'whatsapp_otp', $notifTitle, $notifBody, 'phone_verification', $newOtpId);
-        }
-
-        // Send PWA push notification to developer account only (for all churches across all environments)
-        if (function_exists('_sendWebPushToDeveloper')) {
-            _sendWebPushToDeveloper($conn, $notifTitle, $notifBody, '/uncle/dashboard/?open_otp=1', [
-                'otp_code' => $otp,
-                'phone' => $normalizedPhone,
-                'owner_name' => $ownerName,
-                'church_name' => $churchName,
-                'church_id' => $ownerChurchId
-            ]);
-        }
-
-        error_log(sprintf("[WhatsAppQueue] Step 2 Success: Enqueued pending OTP id=%d, church_id=%d, phone=%s, is_sent=0", $newOtpId, $ownerChurchId, $normalizedPhone));
-        
-        // Step 3: Confirm the item is available in the pending queue
-        $confirmedItem = verifyPendingOTPInQueue($newOtpId);
-        if (!$confirmedItem) {
-            error_log(sprintf("[WhatsAppQueue] Step 3 Failed: OTP id=%d not found in pending queue", $newOtpId));
-            throw new Exception("تعذر تأكيد إضافة رمز التحقق إلى قائمة الانتظار");
-        }
-
-        error_log(sprintf("[WhatsAppQueue] Step 3 Confirmed: Pending OTP id=%d is available for bot polling (phone=%s)", $confirmedItem['id'], $confirmedItem['phone']));
-
-        // If running on testing environment, mirror the OTP to production queue so the central WhatsApp bot (polling production) sends it
-        $isTestingServer = (
-            strpos($_SERVER['HTTP_HOST'] ?? '', 'testing.') !== false ||
-            strpos(__DIR__, '/testing') !== false
-        );
-
-        if ($isTestingServer) {
-            $mCh = curl_init('https://sunday-school.online/api.php');
-            $mirrorFields = [
-                'action' => 'enqueueMirrorOTP',
-                'phone' => $normalizedPhone,
-                'otp_code' => $otp,
-                'request_token' => $requestToken,
-                'church_id' => $ownerChurchId,
-                'owner_name' => $ownerName
-            ];
-            curl_setopt_array($mCh, [
-                CURLOPT_POST => true,
-                CURLOPT_POSTFIELDS => http_build_query($mirrorFields),
-                CURLOPT_RETURNTRANSFER => true,
-                CURLOPT_TIMEOUT => 5,
-                CURLOPT_SSL_VERIFYPEER => false,
-                CURLOPT_SSL_VERIFYHOST => false
-            ]);
-            $mirrorResp = curl_exec($mCh);
-            curl_close($mCh);
-            error_log(sprintf("[WhatsAppQueue] Mirrored testing OTP id=%d to production queue: %s", $newOtpId, substr(strval($mirrorResp), 0, 100)));
-        }
-
-        // Step 4: Call the published bot API: POST BOT_API_URL/api/wake
-        error_log(sprintf("[WhatsAppQueue] Step 4: Calling published bot API POST /api/wake for queue item id=%d", $newOtpId));
-        $wakeResult = notifyWhatsAppOTPPending($newOtpId);
-        error_log(sprintf("[WhatsAppQueue] Step 4 Result: Bot wake acknowledged=%s, http_code=%d, status=%s", 
-            !empty($wakeResult['success']) ? 'true' : 'false', 
-            $wakeResult['http_code'] ?? 0,
-            $wakeResult['status'] ?? 'unknown'
-        ));
-        
-        // Treat wake as acknowledgement only; keep OTP flow usable even if wake temporarily fails
-        $userMessage = 'تم إرسال رمز التحقق إلى WhatsApp. يرجى التحقق من هاتفك.';
-        if (empty($wakeResult['success'])) {
-            $userMessage = 'تم إنشاء رمز التحقق. قد يستغرق وصول رسالة WhatsApp بضع لحظات، يرجى التحقق من هاتفك.';
-        }
-        
-        sendJSON([
-            'success' => true,
-            'message' => $userMessage,
-            'request_token' => $requestToken,
-            'queue_id' => $newOtpId
-        ]);
-    } catch (Exception $e) {
-        error_log("[WhatsAppQueue] Error in sendCustomWhatsAppOTP: " . $e->getMessage());
-        sendJSON(['success' => false, 'message' => 'خطأ في إرسال الكود: ' . $e->getMessage()]);
-    }
+    sendJSON(['success' => false, 'message' => 'تم استبدال نظام التحقق القديم بالبريد الإلكتروني.']);
 }
 
-/**
- * Enqueue a mirror OTP record from testing server to production queue
- * so the central WhatsApp bot picks it up and delivers it immediately.
- */
 function enqueueMirrorOTP() {
-    try {
-        $phone = sanitize($_POST['phone'] ?? '');
-        $code = sanitize($_POST['otp_code'] ?? '');
-        $token = sanitize($_POST['request_token'] ?? '');
-        $mirrorChurchId = (int)($_POST['church_id'] ?? 0);
-        $mirrorOwnerName = sanitize($_POST['owner_name'] ?? '');
-        $cleanPhone = preg_replace('/[^\d]/', '', $phone);
-        $normalizedPhone = normalizeEgyptianPhone($cleanPhone);
-
-        if (empty($normalizedPhone) || empty($code)) {
-            sendJSON(['success' => false, 'message' => 'بيانات غير مكتملة']);
-        }
-
-        $conn = getDBConnection();
-        @$conn->query("ALTER TABLE phone_verifications ADD COLUMN IF NOT EXISTS church_id INT NULL DEFAULT NULL AFTER id;");
-        if ($mirrorChurchId > 0) {
-            $stmt = $conn->prepare("INSERT INTO phone_verifications (church_id, phone, request_token, otp_code, is_sent, is_verified, created_at) VALUES (?, ?, ?, ?, 0, 0, NOW())");
-            $stmt->bind_param("isss", $mirrorChurchId, $normalizedPhone, $token, $code);
-        } else {
-            $stmt = $conn->prepare("INSERT INTO phone_verifications (phone, request_token, otp_code, is_sent, is_verified, created_at) VALUES (?, ?, ?, 0, 0, NOW())");
-            $stmt->bind_param("sss", $normalizedPhone, $token, $code);
-        }
-        $stmt->execute();
-        $newId = intval($conn->insert_id ?: $stmt->insert_id);
-        $stmt->close();
-
-        // Resolve church name if available
-        $churchName = '';
-        if ($mirrorChurchId > 0) {
-            $cStmt = $conn->prepare("SELECT church_name FROM churches WHERE id = ? LIMIT 1");
-            if ($cStmt) {
-                $cStmt->bind_param("i", $mirrorChurchId);
-                $cStmt->execute();
-                $cRes = $cStmt->get_result();
-                if ($cRes && $cRow = $cRes->fetch_assoc()) {
-                    $churchName = $cRow['church_name'] ?? '';
-                }
-                $cStmt->close();
-            }
-        }
-
-        $notifTitle = "طلب كود واتساب: " . $code;
-        $notifBody = "كود: " . $code . " لرقم: " . $normalizedPhone;
-        if (!empty($mirrorOwnerName)) {
-            $notifBody .= " (" . $mirrorOwnerName . ")";
-        }
-        if (!empty($churchName)) {
-            $notifBody .= " - كنيسة " . $churchName;
-        }
-
-        $devChurchId = 0;
-        $devQ = $conn->query("SELECT church_id FROM uncles WHERE (LOWER(TRIM(role)) IN ('developer', 'dev') OR LOWER(TRIM(username)) = 'peterfayez' OR LOWER(TRIM(email)) = 'peterfayez107@gmail.com') AND (deleted IS NULL OR deleted = 0) LIMIT 1");
-        if ($devQ && $dRow = $devQ->fetch_assoc()) {
-            $devChurchId = (int)($dRow['church_id'] ?? 0);
-        }
-        $targetInAppChurchId = $devChurchId > 0 ? $devChurchId : $mirrorChurchId;
-        if ($targetInAppChurchId > 0 && function_exists('pushNotification')) {
-            pushNotification($conn, $targetInAppChurchId, 'whatsapp_otp', $notifTitle, $notifBody, 'phone_verification', $newId);
-        }
-
-        // PWA Web Push notification exclusively to developer account (sends for all churches)
-        if (function_exists('_sendWebPushToDeveloper')) {
-            _sendWebPushToDeveloper($conn, $notifTitle, $notifBody, '/uncle/dashboard/?open_otp=1', [
-                'otp_code' => $code,
-                'phone' => $normalizedPhone,
-                'owner_name' => $mirrorOwnerName,
-                'church_name' => $churchName,
-                'church_id' => $mirrorChurchId
-            ]);
-        }
-
-        // Immediately notify bot to wake up and poll
-        $wakeResult = notifyWhatsAppOTPPending($newId);
-        error_log(sprintf("[WhatsAppQueue] enqueueMirrorOTP enqueued production id=%d for phone=%s, wake=%d", $newId, $normalizedPhone, $wakeResult['http_code'] ?? 0));
-
-        sendJSON(['success' => true, 'id' => $newId, 'wake' => $wakeResult['success'] ?? false]);
-    } catch (Throwable $e) {
-        error_log("[WhatsAppQueue] enqueueMirrorOTP error: " . $e->getMessage());
-        sendJSON(['success' => false, 'message' => $e->getMessage()]);
-    }
+    sendJSON(['success' => false, 'message' => 'تم إيقاف المزامنة القديمة.']);
 }
 
-/**
- * Verify that a specific OTP record is confirmed present and accessible in the pending queue.
- */
-function verifyPendingOTPInQueue(int $otpId): ?array {
-    try {
-        $conn = getDBConnection();
-        $stmt = $conn->prepare("
-            SELECT id, phone, otp_code 
-            FROM phone_verifications 
-            WHERE id = ? 
-              AND is_verified = 0 
-              AND is_sent = 0
-              AND (created_at IS NULL OR TIMESTAMPDIFF(SECOND, created_at, NOW()) BETWEEN 0 AND 86400)
-            LIMIT 1
-        ");
-        if (!$stmt) return null;
-        $stmt->bind_param("i", $otpId);
-        $stmt->execute();
-        $res = $stmt->get_result();
-        $item = $res ? $res->fetch_assoc() : null;
-        $stmt->close();
-        if ($item) {
-            $item['id'] = intval($item['id']);
-            $item['phone'] = normalizeEgyptianPhone($item['phone']);
-        }
-        return $item;
-    } catch (Throwable $t) {
-        error_log("[WhatsAppQueue] verifyPendingOTPInQueue exception: " . $t->getMessage());
-        return null;
-    }
-}
-
-/**
- * Notify the existing Sunday School WhatsApp Bot API to wake up.
- * 
- * Rules:
- * 1. The bot server owns the Baileys/WhatsApp connection, QR code, session, and queue polling.
- * 2. The website only notifies POST ${WHATSAPP_BOT_API_URL}/api/wake immediately after queueing.
- * 3. Timeout is ~5 seconds with up to 3 retries on network failures.
- * 4. Logs success/failure without logging passwords or secrets.
- * 5. Response is an acknowledgement only (HTTP 200 or HTTP 202).
- * 6. Non-blocking: OTP remains pending even if wake temporarily fails.
- */
 function notifyWhatsAppOTPPending($otpId = null): array {
-    static $notifiedOtpIds = [];
-
-    $otpIdStr = $otpId !== null ? strval($otpId) : '';
-    if (!empty($otpIdStr) && isset($notifiedOtpIds[$otpIdStr])) {
-        return [
-            'success' => true,
-            'status' => 'cached',
-            'message' => 'WhatsApp wake signal already sent in this request'
-        ];
-    }
-    if (!empty($otpIdStr)) {
-        $notifiedOtpIds[$otpIdStr] = true;
-    }
-
-    $botApiBase = '';
-    if (getenv('WHATSAPP_BOT_API_URL')) {
-        $botApiBase = getenv('WHATSAPP_BOT_API_URL');
-    } elseif (!empty($_ENV['WHATSAPP_BOT_API_URL'])) {
-        $botApiBase = $_ENV['WHATSAPP_BOT_API_URL'];
-    } elseif (!empty($_SERVER['WHATSAPP_BOT_API_URL'])) {
-        $botApiBase = $_SERVER['WHATSAPP_BOT_API_URL'];
-    } elseif (defined('WHATSAPP_BOT_API_URL') && constant('WHATSAPP_BOT_API_URL')) {
-        $botApiBase = constant('WHATSAPP_BOT_API_URL');
-    } else {
-        $botApiBase = 'https://baileys-qr-code--sundayschooleg.replit.app';
-    }
-
-    $botApiBase = rtrim(trim($botApiBase), '/');
-    $wakeUrl = $botApiBase . '/api/wake';
-
-    $botToken = '';
-    if (getenv('WHATSAPP_BOT_API_TOKEN')) {
-        $botToken = getenv('WHATSAPP_BOT_API_TOKEN');
-    } elseif (!empty($_ENV['WHATSAPP_BOT_API_TOKEN'])) {
-        $botToken = $_ENV['WHATSAPP_BOT_API_TOKEN'];
-    } elseif (!empty($_SERVER['WHATSAPP_BOT_API_TOKEN'])) {
-        $botToken = $_SERVER['WHATSAPP_BOT_API_TOKEN'];
-    } elseif (defined('WHATSAPP_BOT_API_TOKEN') && constant('WHATSAPP_BOT_API_TOKEN')) {
-        $botToken = constant('WHATSAPP_BOT_API_TOKEN');
-    }
-
-    $payload = [
-        'event' => 'otp_pending'
-    ];
-    if (!empty($otpIdStr)) {
-        $payload['otp_id'] = $otpIdStr;
-    }
-    $jsonPayload = json_encode($payload);
-
-    $maxRetries = 3;
-    $lastError = '';
-    $lastHttpCode = 0;
-    $lastStatus = 'unknown';
-
-    for ($attempt = 1; $attempt <= $maxRetries; $attempt++) {
-        $headers = [
-            'Content-Type: application/json',
-            'Accept: application/json',
-            'Content-Length: ' . strlen($jsonPayload)
-        ];
-        if (!empty($botToken)) {
-            $headers[] = 'Authorization: Bearer ' . $botToken;
-        }
-
-        $ch = curl_init($wakeUrl);
-        curl_setopt_array($ch, [
-            CURLOPT_POST => true,
-            CURLOPT_POSTFIELDS => $jsonPayload,
-            CURLOPT_HTTPHEADER => $headers,
-            CURLOPT_RETURNTRANSFER => true,
-            CURLOPT_TIMEOUT => 5,
-            CURLOPT_CONNECTTIMEOUT => 4,
-            CURLOPT_SSL_VERIFYPEER => false,
-            CURLOPT_SSL_VERIFYHOST => false
-        ]);
-
-        $response = curl_exec($ch);
-        $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-        $curlErr = curl_error($ch);
-        curl_close($ch);
-
-        if ($curlErr) {
-            $lastError = $curlErr;
-            $lastHttpCode = $httpCode;
-            if ($attempt < $maxRetries) {
-                usleep(250000); // 250ms backoff
-                continue;
-            }
-            break;
-        }
-
-        $lastHttpCode = $httpCode;
-        $data = json_decode($response, true);
-        if (is_array($data) && isset($data['status'])) {
-            $lastStatus = strval($data['status']);
-        }
-
-        // Accept HTTP 200 or HTTP 202 as wake acknowledgement
-        if ($httpCode === 200 || $httpCode === 202) {
-            error_log(sprintf(
-                "[WhatsAppBotWake] Wake signal accepted on attempt %d: HTTP %d, status=%s",
-                $attempt,
-                $httpCode,
-                $lastStatus
-            ));
-            return [
-                'success' => true,
-                'http_code' => $httpCode,
-                'status' => $lastStatus,
-                'message' => $data['message'] ?? 'WhatsApp wake signal accepted',
-                'attempts' => $attempt
-            ];
-        }
-
-        // Non-2xx response retry
-        $lastError = 'HTTP ' . $httpCode;
-        if ($attempt < $maxRetries && ($httpCode >= 500 || $httpCode === 0)) {
-            usleep(250000);
-            continue;
-        }
-        break;
-    }
-
-    // Safe error log without passwords or secrets
-    error_log(sprintf(
-        "[WhatsAppBotWake] Wake signal failed after %d attempts: HTTP %d, error=%s",
-        $attempt,
-        $lastHttpCode,
-        $lastError
-    ));
-
     return [
         'success' => false,
-        'http_code' => $lastHttpCode,
-        'status' => $lastStatus,
-        'message' => 'WhatsApp wake signal could not be acknowledged; OTP remains pending in queue for automatic polling.',
-        'error' => $lastError,
-        'attempts' => $attempt
+        'status' => 'disabled',
+        'message' => 'WhatsApp bot service has been retired.'
     ];
 }
 
 function sendRegistrationWhatsAppOTP() {
-    $_POST['for_registration'] = '1';
-    sendCustomWhatsAppOTP();
+    sendJSON(['success' => false, 'message' => 'تم استبدال نظام التحقق القديم. التسجيل لا يتطلب رمز واتساب.']);
 }
 
-function getPendingOTPMessages() {
-    try {
-        $conn = getDBConnection();
-        $stmt = $conn->prepare("
-            SELECT id, phone, otp_code FROM phone_verifications 
-            WHERE is_verified = 0 
-              AND is_sent = 0 
-              AND (created_at IS NULL OR TIMESTAMPDIFF(SECOND, created_at, NOW()) BETWEEN 0 AND 86400)
-            ORDER BY id ASC LIMIT 15
-        ");
-        if ($stmt) {
-            $stmt->execute();
-            $res = $stmt->get_result();
-            $rows = [];
-            while ($r = $res->fetch_assoc()) {
-                $r['phone'] = normalizeEgyptianPhone($r['phone']);
-                $rows[] = $r;
-            }
-            sendJSON([
-                'success' => true, 
-                'data' => $rows, 
-                'messages' => $rows,
-                'count' => count($rows)
-            ]);
-        } else {
-            sendJSON(['success' => true, 'data' => [], 'messages' => [], 'count' => 0]);
-        }
-    } catch (Throwable $e) {
-        sendJSON(['success' => false, 'data' => [], 'messages' => [], 'message' => $e->getMessage()]);
+// ══════════════════════════════════════════════════════════════════════════════
+// STUDENT EMAIL VERIFICATION & PASSWORD RECOVERY SYSTEM
+// ══════════════════════════════════════════════════════════════════════════════
+
+function ensureStudentEmailColumns(mysqli $conn): void
+{
+    static $done = false;
+    if ($done) return;
+    $done = true;
+
+    $chkEmail = $conn->query("SHOW COLUMNS FROM students LIKE 'email'");
+    if ($chkEmail && $chkEmail->num_rows === 0) {
+        @$conn->query("ALTER TABLE students ADD COLUMN `email` VARCHAR(255) DEFAULT NULL AFTER `phone`");
+    }
+
+    $chkVerified = $conn->query("SHOW COLUMNS FROM students LIKE 'is_email_verified'");
+    if ($chkVerified && $chkVerified->num_rows === 0) {
+        @$conn->query("ALTER TABLE students ADD COLUMN `is_email_verified` TINYINT(1) DEFAULT 0 AFTER `email`");
+    }
+
+    $chkOtp = $conn->query("SHOW COLUMNS FROM students LIKE 'email_otp'");
+    if ($chkOtp && $chkOtp->num_rows === 0) {
+        @$conn->query("ALTER TABLE students ADD COLUMN `email_otp` VARCHAR(64) DEFAULT NULL AFTER `is_email_verified`");
+    }
+
+    $chkExp = $conn->query("SHOW COLUMNS FROM students LIKE 'email_otp_expires'");
+    if ($chkExp && $chkExp->num_rows === 0) {
+        @$conn->query("ALTER TABLE students ADD COLUMN `email_otp_expires` DATETIME DEFAULT NULL AFTER `email_otp`");
+    }
+
+    $chkToken = $conn->query("SHOW COLUMNS FROM students LIKE 'email_reset_token'");
+    if ($chkToken && $chkToken->num_rows === 0) {
+        @$conn->query("ALTER TABLE students ADD COLUMN `email_reset_token` VARCHAR(64) DEFAULT NULL AFTER `email_otp_expires`");
+    }
+
+    $chkTokenExp = $conn->query("SHOW COLUMNS FROM students LIKE 'email_reset_token_expires'");
+    if ($chkTokenExp && $chkTokenExp->num_rows === 0) {
+        @$conn->query("ALTER TABLE students ADD COLUMN `email_reset_token_expires` DATETIME DEFAULT NULL AFTER `email_reset_token`");
     }
 }
 
-function markOTPSent() {
+function maskEmail(string $email): string
+{
+    $parts = explode('@', $email);
+    if (count($parts) !== 2) return $email;
+    $name = $parts[0];
+    $domain = $parts[1];
+    $len = strlen($name);
+    if ($len <= 2) {
+        $maskedName = substr($name, 0, 1) . '*';
+    } else {
+        $maskedName = substr($name, 0, 1) . str_repeat('*', min(5, $len - 2)) . substr($name, -1);
+    }
+    return $maskedName . '@' . $domain;
+}
+
+function sendSundaySchoolEmail(string $toEmail, string $subject, string $htmlBody, string $plainText = ''): bool
+{
+    $toEmail = trim($toEmail);
+    if (empty($toEmail) || !filter_var($toEmail, FILTER_VALIDATE_EMAIL)) {
+        return false;
+    }
+
+    // 1. Google Apps Script Relay
+    $appsScriptUrl = 'https://script.google.com/macros/s/AKfycbxsDA0veJTA3C_2Bw47coffOagRigWwaZnyxWuGb_gSVUCWM958V1bUcaZDwfIHVZ7b1g/exec';
+    $postData = json_encode([
+        'action' => 'sendCustomEmail',
+        'recipient' => $toEmail,
+        'subject' => $subject,
+        'body' => !empty($plainText) ? $plainText : strip_tags($htmlBody),
+        'htmlBody' => $htmlBody
+    ]);
+
+    if (function_exists('curl_init')) {
+        $ch = curl_init($appsScriptUrl);
+        curl_setopt_array($ch, [
+            CURLOPT_POST => true,
+            CURLOPT_POSTFIELDS => $postData,
+            CURLOPT_HTTPHEADER => ['Content-Type: application/json'],
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_TIMEOUT => 5,
+            CURLOPT_FOLLOWLOCATION => true,
+            CURLOPT_SSL_VERIFYPEER => false
+        ]);
+        @curl_exec($ch);
+        @curl_close($ch);
+    }
+
+    // 2. Fallback to PHP native mail
+    $headers = [
+        'MIME-Version: 1.0',
+        'Content-Type: text/html; charset=UTF-8',
+        'From: Sunday School <noreply@sunday-school.online>',
+        'X-Mailer: PHP/' . phpversion()
+    ];
+    @mail($toEmail, '=?UTF-8?B?' . base64_encode($subject) . '?=', $htmlBody, implode("\r\n", $headers));
+
+    return true;
+}
+
+function getStudentAssignedUncle(mysqli $conn, int $churchId, ?string $className = null): ?array
+{
+    if (!empty($className) && $className !== '---') {
+        $stmt = $conn->prepare("
+            SELECT u.id, u.name, u.phone, u.role
+            FROM uncle_class_assignments a
+            JOIN uncles u ON u.id = a.uncle_id
+            WHERE a.church_id = ? AND a.class_name = ?
+              AND u.phone IS NOT NULL AND u.phone != ''
+              AND (u.deleted IS NULL OR u.deleted = 0)
+            ORDER BY u.id ASC LIMIT 1
+        ");
+        if ($stmt) {
+            $stmt->bind_param("is", $churchId, $className);
+            $stmt->execute();
+            $res = $stmt->get_result();
+            if ($row = $res->fetch_assoc()) {
+                $stmt->close();
+                return $row;
+            }
+            $stmt->close();
+        }
+    }
+
+    $stmtAdmin = $conn->prepare("
+        SELECT id, name, phone, role
+        FROM uncles
+        WHERE church_id = ?
+          AND phone IS NOT NULL AND phone != ''
+          AND (deleted IS NULL OR deleted = 0)
+        ORDER BY (CASE WHEN LOWER(TRIM(role)) IN ('admin', 'church_admin', 'superadmin', 'leader') THEN 1 ELSE 2 END) ASC, id ASC
+        LIMIT 1
+    ");
+    if ($stmtAdmin) {
+        $stmtAdmin->bind_param("i", $churchId);
+        $stmtAdmin->execute();
+        $resAdmin = $stmtAdmin->get_result();
+        if ($row = $resAdmin->fetch_assoc()) {
+            $stmtAdmin->close();
+            return $row;
+        }
+        $stmtAdmin->close();
+    }
+
+    return null;
+}
+
+function requestStudentEmailVerification()
+{
     try {
-        $id = intval($_POST['id'] ?? $_GET['id'] ?? 0);
-        if ($id <= 0) {
-            $jsonInput = json_decode(file_get_contents('php://input'), true);
-            if (isset($jsonInput['id'])) {
-                $id = intval($jsonInput['id']);
+        $email = trim(sanitize($_POST['email'] ?? ''));
+        $studentId = intval($_POST['studentId'] ?? $_POST['student_id'] ?? ($_SESSION['student_id'] ?? 0));
+
+        if (empty($email) || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
+            sendJSON(['success' => false, 'message' => 'يرجى إدخال بريد إلكتروني صحيح']);
+            return;
+        }
+
+        if ($studentId <= 0) {
+            sendJSON(['success' => false, 'message' => 'معرف الطالب مطلوب']);
+            return;
+        }
+
+        $conn = getDBConnection();
+        ensureStudentEmailColumns($conn);
+
+        $stmt = $conn->prepare("SELECT id, name, church_id, email FROM students WHERE id = ? LIMIT 1");
+        $stmt->bind_param("i", $studentId);
+        $stmt->execute();
+        $st = $stmt->get_result()->fetch_assoc();
+        $stmt->close();
+
+        if (!$st) {
+            sendJSON(['success' => false, 'message' => 'الحساب غير موجود']);
+            return;
+        }
+
+        $otp = sprintf("%06d", mt_rand(100000, 999999));
+        $otpHashed = hash('sha256', $otp);
+
+        $upStmt = $conn->prepare("
+            UPDATE students 
+            SET email = ?, email_otp = ?, email_otp_expires = DATE_ADD(NOW(), INTERVAL 15 MINUTE), is_email_verified = 0
+            WHERE id = ?
+        ");
+        $upStmt->bind_param("ssi", $email, $otpHashed, $studentId);
+        $upStmt->execute();
+        $upStmt->close();
+
+        $studentName = htmlspecialchars($st['name'] ?? 'مخدومنا العزيز', ENT_QUOTES, 'UTF-8');
+        $subject = "كود تأكيد البريد الإلكتروني - منصة مدارس الأحد: {$otp}";
+        $htmlBody = "
+            <div dir='rtl' style='font-family:\"Cairo\", Tahoma, Arial, sans-serif; max-width:600px; margin:auto; background:#ffffff; border-radius:16px; padding:28px; border:1px solid #e2e8f0; color:#1e293b;'>
+                <div style='text-align:center; margin-bottom:24px;'>
+                    <h2 style='color:#5b6cf5; margin:0 0 6px 0;'>منصة مدارس الأحد والشباب</h2>
+                    <p style='color:#64748b; font-size:14px; margin:0;'>تأكيد البريد الإلكتروني وتأمين الحساب</p>
+                </div>
+                <p style='font-size:16px;'>سلام ونعمة يا <strong>{$studentName}</strong>،</p>
+                <p style='color:#475569; font-size:15px; line-height:1.7;'>
+                    كود التحقق الخاص بك لتأكيد بريدك الإلكتروني وتأمين حسابك هو:
+                </p>
+                <div style='text-align:center; margin:28px 0;'>
+                    <span style='display:inline-block; font-size:34px; font-weight:800; letter-spacing:8px; color:#5b6cf5; background:#eef0ff; padding:14px 30px; border-radius:12px; border:2px dashed #a5b0ff;'>
+                        {$otp}
+                    </span>
+                </div>
+                <p style='color:#64748b; font-size:13px; text-align:center;'>
+                    هذا الكود صالح لمدة 15 دقيقة فقط. إذا لم تكن قد طلبت هذا الكود، يمكنك تجاهل هذه الرسالة بأمان.
+                </p>
+            </div>
+        ";
+
+        sendSundaySchoolEmail($email, $subject, $htmlBody);
+
+        sendJSON([
+            'success' => true,
+            'message' => 'تم إرسال كود التحقق المكون من 6 أرقام إلى بريدك الإلكتروني بنجاح',
+            'masked_email' => maskEmail($email)
+        ]);
+    } catch (Throwable $e) {
+        sendJSON(['success' => false, 'message' => 'خطأ في إرسال الكود: ' . $e->getMessage()]);
+    }
+}
+
+function verifyStudentEmailOTP()
+{
+    try {
+        $studentId = intval($_POST['studentId'] ?? $_POST['student_id'] ?? ($_SESSION['student_id'] ?? 0));
+        $code = trim($_POST['code'] ?? $_POST['otp'] ?? '');
+        $email = trim(sanitize($_POST['email'] ?? ''));
+
+        if (empty($code) || strlen($code) !== 6) {
+            sendJSON(['success' => false, 'message' => 'يرجى إدخال كود التحقق المكون من 6 أرقام']);
+            return;
+        }
+
+        $conn = getDBConnection();
+        ensureStudentEmailColumns($conn);
+
+        $otpHashed = hash('sha256', $code);
+
+        if ($studentId > 0) {
+            $stmt = $conn->prepare("
+                SELECT id, name, church_id, email, email_otp, email_otp_expires 
+                FROM students 
+                WHERE id = ? AND email_otp = ? AND email_otp_expires >= NOW() 
+                LIMIT 1
+            ");
+            $stmt->bind_param("is", $studentId, $otpHashed);
+        } else {
+            $stmt = $conn->prepare("
+                SELECT id, name, church_id, email, email_otp, email_otp_expires 
+                FROM students 
+                WHERE LOWER(TRIM(email)) = LOWER(?) AND email_otp = ? AND email_otp_expires >= NOW() 
+                LIMIT 1
+            ");
+            $stmt->bind_param("ss", $email, $otpHashed);
+        }
+
+        $stmt->execute();
+        $student = $stmt->get_result()->fetch_assoc();
+        $stmt->close();
+
+        if (!$student) {
+            sendJSON(['success' => false, 'message' => 'كود التحقق غير صحيح أو انتهت صلاحيته (صلاحية الكود 15 دقيقة)']);
+            return;
+        }
+
+        $resetToken = bin2hex(random_bytes(24));
+        $stId = (int)$student['id'];
+
+        $up = $conn->prepare("
+            UPDATE students 
+            SET is_email_verified = 1, email_otp = NULL, email_otp_expires = NULL,
+                email_reset_token = ?, email_reset_token_expires = DATE_ADD(NOW(), INTERVAL 15 MINUTE)
+            WHERE id = ?
+        ");
+        $up->bind_param("si", $resetToken, $stId);
+        $up->execute();
+        $up->close();
+
+        if (!empty($email) && filter_var($email, FILTER_VALIDATE_EMAIL) && $student['email'] !== $email) {
+            @$conn->query("UPDATE students SET email = '" . $conn->real_escape_string($email) . "' WHERE id = {$stId}");
+        }
+
+        $_SESSION['student_id'] = $stId;
+
+        sendJSON([
+            'success' => true,
+            'token' => $resetToken,
+            'student_id' => $stId,
+            'message' => 'تم تأكيد البريد الإلكتروني بنجاح!'
+        ]);
+    } catch (Throwable $e) {
+        sendJSON(['success' => false, 'message' => 'خطأ في التحقق: ' . $e->getMessage()]);
+    }
+}
+
+function requestStudentPasswordRecovery()
+{
+    try {
+        $identifier = trim(sanitize($_POST['identifier'] ?? $_POST['phone'] ?? $_POST['email'] ?? ''));
+        if (empty($identifier)) {
+            sendJSON(['success' => false, 'message' => 'البريد الإلكتروني أو رقم الهاتف مطلوب']);
+            return;
+        }
+
+        $conn = getDBConnection();
+        ensureStudentEmailColumns($conn);
+
+        $isEmail = filter_var($identifier, FILTER_VALIDATE_EMAIL) || strpos($identifier, '@') !== false;
+        $student = null;
+
+        if ($isEmail) {
+            $stmt = $conn->prepare("
+                SELECT s.id, s.name, s.phone, s.email, s.is_email_verified, s.church_id, s.class_id,
+                       c.church_name, COALESCE(cc.arabic_name, cl.arabic_name, s.class) AS class_name
+                FROM students s
+                LEFT JOIN churches c ON s.church_id = c.id
+                LEFT JOIN church_classes cc ON cc.id = s.class_id AND cc.church_id = s.church_id
+                LEFT JOIN classes cl ON cl.id = s.class_id
+                WHERE LOWER(TRIM(s.email)) = LOWER(?)
+                LIMIT 1
+            ");
+            $stmt->bind_param("s", $identifier);
+            $stmt->execute();
+            $student = $stmt->get_result()->fetch_assoc();
+            $stmt->close();
+        } else {
+            $candidates = findStudentsByPhoneOrSiblings($conn, $identifier, true);
+            if (!empty($candidates)) {
+                $student = reset($candidates);
+                foreach ($candidates as $c) {
+                    if (!empty($c['email'])) {
+                        $student = $c;
+                        break;
+                    }
+                }
             }
         }
-        if ($id > 0) {
-            $conn = getDBConnection();
-            $stmt = $conn->prepare("UPDATE phone_verifications SET is_sent = 1 WHERE id = ?");
-            $stmt->bind_param("i", $id);
-            $stmt->execute();
+
+        if (!$student) {
+            sendJSON(['success' => false, 'message' => $isEmail ? 'لم يتم العثور على حساب بهذا البريد الإلكتروني' : 'لم يتم العثور على حساب بهذا الرقم']);
+            return;
         }
-        sendJSON(['success' => true, 'id' => $id]);
-    } catch (Exception $e) {
-        sendJSON(['success' => false, 'message' => $e->getMessage()]);
+
+        $studentId = (int)$student['id'];
+        $churchId = (int)($student['church_id'] ?? 0);
+        $className = $student['class_name'] ?? ($student['class'] ?? '');
+        $email = trim($student['email'] ?? '');
+
+        // CASE 1: Student has an email -> Send OTP to email
+        if (!empty($email) && filter_var($email, FILTER_VALIDATE_EMAIL)) {
+            $otp = sprintf("%06d", mt_rand(100000, 999999));
+            $otpHashed = hash('sha256', $otp);
+
+            $up = $conn->prepare("
+                UPDATE students 
+                SET email_otp = ?, email_otp_expires = DATE_ADD(NOW(), INTERVAL 15 MINUTE)
+                WHERE id = ?
+            ");
+            $up->bind_param("si", $otpHashed, $studentId);
+            $up->execute();
+            $up->close();
+
+            $studentName = htmlspecialchars($student['name'] ?? 'مخدومنا العزيز', ENT_QUOTES, 'UTF-8');
+            $subject = "كود استعادة كلمة المرور: {$otp}";
+            $htmlBody = "
+                <div dir='rtl' style='font-family:\"Cairo\", Tahoma, Arial, sans-serif; max-width:600px; margin:auto; background:#ffffff; border-radius:16px; padding:28px; border:1px solid #e2e8f0; color:#1e293b;'>
+                    <div style='text-align:center; margin-bottom:24px;'>
+                        <h2 style='color:#5b6cf5; margin:0 0 6px 0;'>منصة مدارس الأحد والشباب</h2>
+                        <p style='color:#64748b; font-size:14px; margin:0;'>استعادة كلمة المرور</p>
+                    </div>
+                    <p style='font-size:16px;'>سلام ونعمة يا <strong>{$studentName}</strong>،</p>
+                    <p style='color:#475569; font-size:15px; line-height:1.7;'>
+                        لقد تلقينا طلباً لإعادة تعيين كلمة المرور لحسابك. كود التحقق الخاص بك هو:
+                    </p>
+                    <div style='text-align:center; margin:28px 0;'>
+                        <span style='display:inline-block; font-size:34px; font-weight:800; letter-spacing:8px; color:#5b6cf5; background:#eef0ff; padding:14px 30px; border-radius:12px; border:2px dashed #a5b0ff;'>
+                            {$otp}
+                        </span>
+                    </div>
+                    <p style='color:#64748b; font-size:13px; text-align:center;'>
+                        هذا الكود صالح لمدة 15 دقيقة فقط. إذا لم تكن قد طلبت استعادة كلمة المرور، يرجى تجاهل هذه الرسالة.
+                    </p>
+                </div>
+            ";
+
+            sendSundaySchoolEmail($email, $subject, $htmlBody);
+
+            sendJSON([
+                'success' => true,
+                'has_email' => true,
+                'student_id' => $studentId,
+                'masked_email' => maskEmail($email),
+                'message' => 'تم إرسال كود استعادة كلمة المرور إلى بريدك الإلكتروني'
+            ]);
+            return;
+        }
+
+        // CASE 2: Student has NO email -> Fetch assigned uncle / church admin contact
+        $uncle = getStudentAssignedUncle($conn, $churchId, $className);
+        $churchName = $student['church_name'] ?? '';
+        if (empty($churchName) && $churchId > 0) {
+            $cq = $conn->query("SELECT church_name FROM churches WHERE id = {$churchId} LIMIT 1");
+            if ($cq && $cr = $cq->fetch_assoc()) {
+                $churchName = $cr['church_name'];
+            }
+        }
+
+        sendJSON([
+            'success' => true,
+            'has_email' => false,
+            'student_id' => $studentId,
+            'student_name' => $student['name'] ?? '',
+            'student_phone' => $student['phone'] ?? $identifier,
+            'church_name' => $churchName,
+            'uncle_name' => $uncle['name'] ?? 'أمين الخدمة / الخادم المسؤول',
+            'uncle_phone' => $uncle['phone'] ?? '',
+            'uncle_role' => $uncle['role'] ?? 'خادم',
+            'message' => 'لم يتم ربط بريد إلكتروني بحسابك بعد. يمكنك التواصل مباشرة مع خادم الكنيسة لمساعدتك في استعادة الحساب.'
+        ]);
+
+    } catch (Throwable $e) {
+        sendJSON(['success' => false, 'message' => 'خطأ: ' . $e->getMessage()]);
+    }
+}
+
+function resetStudentPasswordWithToken()
+{
+    try {
+        $studentId = intval($_POST['studentId'] ?? $_POST['student_id'] ?? 0);
+        $token = trim($_POST['token'] ?? '');
+        $newPassword = $_POST['password'] ?? '';
+
+        if ($studentId <= 0 || empty($token) || empty($newPassword)) {
+            sendJSON(['success' => false, 'message' => 'بيانات غير مكتملة']);
+            return;
+        }
+
+        if (strlen($newPassword) < 6) {
+            sendJSON(['success' => false, 'message' => 'كلمة المرور يجب أن تكون 6 أحرف على الأقل']);
+            return;
+        }
+
+        $conn = getDBConnection();
+        ensureStudentEmailColumns($conn);
+
+        $stmt = $conn->prepare("
+            SELECT id, phone FROM students 
+            WHERE id = ? AND email_reset_token = ? AND email_reset_token_expires >= NOW() 
+            LIMIT 1
+        ");
+        $stmt->bind_param("is", $studentId, $token);
+        $stmt->execute();
+        $student = $stmt->get_result()->fetch_assoc();
+        $stmt->close();
+
+        if (!$student) {
+            sendJSON(['success' => false, 'message' => 'رمز التحقق غير صالح أو انتهت صلاحيته']);
+            return;
+        }
+
+        $newHash = hash('sha256', $newPassword);
+
+        $up = $conn->prepare("
+            UPDATE students 
+            SET password_hash = ?, email_reset_token = NULL, email_reset_token_expires = NULL, updated_at = NOW() 
+            WHERE id = ?
+        ");
+        $up->bind_param("si", $newHash, $studentId);
+        $up->execute();
+        $up->close();
+
+        $phone = $student['phone'] ?? '';
+        if (!empty($phone)) {
+            $cleanPhone = preg_replace('/[^\d]/', '', $phone);
+            if (!empty($cleanPhone)) {
+                @$conn->query("UPDATE students SET password_hash = '" . $conn->real_escape_string($newHash) . "' WHERE (phone LIKE CONCAT('%', '$cleanPhone') OR phone = '$cleanPhone') AND id != {$studentId}");
+            }
+        }
+
+        $_SESSION['student_id'] = $studentId;
+
+        sendJSON([
+            'success' => true,
+            'message' => 'تم تغيير كلمة المرور بنجاح! يمكنك الآن تسجيل الدخول.'
+        ]);
+    } catch (Throwable $e) {
+        sendJSON(['success' => false, 'message' => 'خطأ: ' . $e->getMessage()]);
+    }
+}
+
+function updateStudentEmail()
+{
+    try {
+        $studentId = intval($_POST['studentId'] ?? $_POST['student_id'] ?? ($_SESSION['student_id'] ?? 0));
+        $newEmail = trim(sanitize($_POST['email'] ?? ''));
+
+        $isAuthorized = false;
+        if (isAdminOrDevRole() || !empty($_SESSION['uncle_id']) || !empty($_SESSION['church_id'])) {
+            $isAuthorized = true;
+        } elseif (!empty($_SESSION['student_id']) && intval($_SESSION['student_id']) === $studentId) {
+            $isAuthorized = true;
+        }
+
+        if (!$isAuthorized || $studentId <= 0) {
+            http_response_code(403);
+            sendJSON(['success' => false, 'message' => 'غير مصرح بالوصول']);
+            return;
+        }
+
+        if (empty($newEmail) || !filter_var($newEmail, FILTER_VALIDATE_EMAIL)) {
+            sendJSON(['success' => false, 'message' => 'البريد الإلكتروني غير صالح']);
+            return;
+        }
+
+        $conn = getDBConnection();
+        ensureStudentEmailColumns($conn);
+
+        $up = $conn->prepare("UPDATE students SET email = ?, is_email_verified = 0, updated_at = NOW() WHERE id = ?");
+        $up->bind_param("si", $newEmail, $studentId);
+        $up->execute();
+        $up->close();
+
+        $_POST['email'] = $newEmail;
+        $_POST['studentId'] = $studentId;
+        requestStudentEmailVerification();
+
+    } catch (Throwable $e) {
+        sendJSON(['success' => false, 'message' => 'خطأ: ' . $e->getMessage()]);
     }
 }
 
@@ -21726,100 +21606,25 @@ function adminResendUserOTP() {
 }
 
 function notifyWhatsAppOTNGPendingSafe($id) {
-    if (function_exists('notifyWhatsAppOTPPending')) {
-        return notifyWhatsAppOTPPending($id);
-    }
     return ['success' => false];
 }
 
 function getWhatsAppBotStatus() {
-    if (!isAdminOrDevRole()) {
-        sendJSON(['success' => false, 'message' => 'غير مصرح لك بالوصول']);
-    }
-
-    $botApiBase = '';
-    if (getenv('WHATSAPP_BOT_API_URL')) {
-        $botApiBase = getenv('WHATSAPP_BOT_API_URL');
-    } elseif (!empty($_ENV['WHATSAPP_BOT_API_URL'])) {
-        $botApiBase = $_ENV['WHATSAPP_BOT_API_URL'];
-    } elseif (!empty($_SERVER['WHATSAPP_BOT_API_URL'])) {
-        $botApiBase = $_SERVER['WHATSAPP_BOT_API_URL'];
-    } elseif (defined('WHATSAPP_BOT_API_URL') && constant('WHATSAPP_BOT_API_URL')) {
-        $botApiBase = constant('WHATSAPP_BOT_API_URL');
-    } else {
-        $botApiBase = 'https://baileys-qr-code--sundayschooleg.replit.app';
-    }
-
-    $botApiBase = rtrim(trim($botApiBase), '/');
-    $statusUrl = $botApiBase . '/api/whatsapp/status';
-
-    $botToken = '';
-    if (getenv('WHATSAPP_BOT_API_TOKEN')) {
-        $botToken = getenv('WHATSAPP_BOT_API_TOKEN');
-    } elseif (!empty($_ENV['WHATSAPP_BOT_API_TOKEN'])) {
-        $botToken = $_ENV['WHATSAPP_BOT_API_TOKEN'];
-    } elseif (!empty($_SERVER['WHATSAPP_BOT_API_TOKEN'])) {
-        $botToken = $_SERVER['WHATSAPP_BOT_API_TOKEN'];
-    } elseif (defined('WHATSAPP_BOT_API_TOKEN') && constant('WHATSAPP_BOT_API_TOKEN')) {
-        $botToken = constant('WHATSAPP_BOT_API_TOKEN');
-    }
-
-    $headers = ['Accept: application/json'];
-    if (!empty($botToken)) {
-        $headers[] = 'Authorization: Bearer ' . $botToken;
-    }
-
-    $ch = curl_init($statusUrl);
-    curl_setopt_array($ch, [
-        CURLOPT_RETURNTRANSFER => true,
-        CURLOPT_HTTPHEADER => $headers,
-        CURLOPT_TIMEOUT => 5,
-        CURLOPT_CONNECTTIMEOUT => 4,
-        CURLOPT_SSL_VERIFYPEER => false,
-        CURLOPT_SSL_VERIFYHOST => false
+    sendJSON([
+        'success' => false,
+        'status' => 'retired',
+        'message' => 'تم استبدال نظام واتساب القديم بالبريد الإلكتروني.'
     ]);
-
-    $raw = curl_exec($ch);
-    $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-    curl_close($ch);
-
-    $decoded = json_decode($raw, true);
-    if ($httpCode >= 200 && $httpCode < 300 && is_array($decoded)) {
-        sendJSON([
-            'success' => true,
-            'status' => $decoded['status'] ?? 'disconnected',
-            'phone' => $decoded['phone'] ?? null,
-            'hasQR' => !empty($decoded['hasQR']),
-            'qr' => $decoded['qr'] ?? null
-        ]);
-    } else {
-        sendJSON([
-            'success' => false,
-            'http_code' => $httpCode,
-            'status' => 'unreachable',
-            'message' => 'تعذر جلب حالة خادم واتساب في الوقت الحالي'
-        ]);
-    }
 }
 
-/**
- * Server-side Smoke Test:
- * Confirms the website can call POST /api/wake without exposing credentials.
- */
 function testWhatsAppBotWake() {
-    $result = notifyWhatsAppOTPPending('SMOKE_TEST');
-    
-    // Explicitly guarantee zero credentials, tokens, or passwords are leaked
-    unset($result['token'], $result['secret'], $result['password']);
-
     sendJSON([
-        'success' => $result['success'],
-        'http_code' => $result['http_code'] ?? 0,
-        'status' => $result['status'] ?? 'unknown',
-        'message' => $result['message'] ?? '',
+        'success' => false,
+        'message' => 'WhatsApp bot service is retired.',
         'credentials_exposed' => false
     ]);
 }
+
 
 function calculateFuzzyScorePHP($name1, $name2) {
     $n1 = $name1;
@@ -22123,20 +21928,44 @@ function handleKidLogin()
 
 function checkKidPasswordByPhone() {
     try {
-        $phone = sanitize($_POST['phone'] ?? '');
-        $cleanPhone = preg_replace('/[^\d]/', '', $phone);
-
-        if (empty($cleanPhone)) {
-            sendJSON(['success' => false, 'message' => 'رقم الهاتف مطلوب']);
+        $identifier = trim(sanitize($_POST['phone'] ?? $_POST['email'] ?? $_POST['identifier'] ?? ''));
+        if (empty($identifier)) {
+            sendJSON(['success' => false, 'message' => 'البريد الإلكتروني أو رقم الهاتف مطلوب']);
             return;
         }
 
         $conn = getDBConnection();
-        $candidates = findStudentsByPhoneOrSiblings($conn, $phone, true);
+        ensureStudentEmailColumns($conn);
+
+        $candidates = [];
+        $isEmail = filter_var($identifier, FILTER_VALIDATE_EMAIL) || strpos($identifier, '@') !== false;
+
+        if ($isEmail) {
+            $stmt = $conn->prepare("
+                SELECT s.id, s.name, s.phone, s.email, s.is_email_verified, s.password_hash, s.church_id, s.class_id,
+                       c.church_name, COALESCE(cc.arabic_name, cl.arabic_name, s.class) AS class
+                FROM students s
+                LEFT JOIN churches c ON s.church_id = c.id
+                LEFT JOIN church_classes cc ON cc.id = s.class_id AND cc.church_id = s.church_id
+                LEFT JOIN classes cl ON cl.id = s.class_id
+                WHERE LOWER(TRIM(s.email)) = LOWER(?)
+            ");
+            $stmt->bind_param("s", $identifier);
+            $stmt->execute();
+            $res = $stmt->get_result();
+            while ($r = $res->fetch_assoc()) {
+                $candidates[$r['id']] = $r;
+            }
+            $stmt->close();
+        } else {
+            $candidates = findStudentsByPhoneOrSiblings($conn, $identifier, true);
+        }
 
         if (!empty($candidates)) {
             $hasPassword = false;
             $primaryStudentId = null;
+            $hasEmail = false;
+            $isEmailVerified = false;
 
             foreach ($candidates as $cand) {
                 if ($primaryStudentId === null) {
@@ -22145,21 +21974,29 @@ function checkKidPasswordByPhone() {
                 if (!empty($cand['password_hash'])) {
                     $hasPassword = true;
                     $primaryStudentId = (int)$cand['id'];
-                    break;
+                }
+                if (!empty($cand['email'])) {
+                    $hasEmail = true;
+                    if (!empty($cand['is_email_verified'])) {
+                        $isEmailVerified = true;
+                    }
                 }
             }
 
             sendJSON([
                 'success' => true,
                 'has_password' => $hasPassword,
+                'has_email' => $hasEmail,
+                'is_email_verified' => $isEmailVerified,
                 'student_id' => $primaryStudentId,
                 'total_accounts' => count($candidates),
-                'message' => $hasPassword ? 'يوجد كلمة مرور مسجلة لهذا الرقم' : 'لا توجد كلمة مرور مسجلة'
+                'is_email' => $isEmail,
+                'message' => $hasPassword ? 'يوجد كلمة مرور مسجلة لهذا الحساب' : 'لا توجد كلمة مرور مسجلة'
             ]);
         } else {
             sendJSON([
                 'success' => false,
-                'message' => 'لم يتم العثور على طفل بهذا الرقم'
+                'message' => $isEmail ? 'لم يتم العثور على حساب بهذا البريد الإلكتروني' : 'لم يتم العثور على طفل بهذا الرقم'
             ]);
         }
     } catch (Throwable $e) {
@@ -22167,126 +22004,74 @@ function checkKidPasswordByPhone() {
     }
 }
 
-
-
 function setupStudentPassword()
-
 {
-
     try {
-
         $studentId = intval($_POST['studentId'] ?? 0);
-
         $phone = sanitize($_POST['phone'] ?? '');
-
         $password = $_POST['password'] ?? '';
-
+        $token = trim($_POST['token'] ?? '');
         $applyToAllSiblings = isset($_POST['applyToAllSiblings']) && $_POST['applyToAllSiblings'] === 'true';
 
-
-
-        if ($studentId === 0 || empty($phone) || empty($password)) {
-
+        if ($studentId === 0 || empty($password)) {
             sendJSON(['success' => false, 'message' => 'بيانات غير كاملة']);
-
+            return;
         }
 
-
-
-        $passwordHash = hash('sha256', $password);
-
-        $cleanPhone = preg_replace('/[^\d]/', '', $phone);
-
-
+        if (strlen($password) < 6) {
+            sendJSON(['success' => false, 'message' => 'كلمة المرور يجب أن تكون 6 أحرف على الأقل']);
+            return;
+        }
 
         $conn = getDBConnection();
+        ensureStudentEmailColumns($conn);
 
-
-
-        if ($applyToAllSiblings) {
-
-            // Apply password to ALL students with this phone number
-
-            $updateStmt = $conn->prepare("
-
-                UPDATE students 
-
-                SET password_hash = ?, updated_at = NOW()
-
-                WHERE (phone LIKE CONCAT('%', ?) OR phone = ?)
-
-            ");
-
-            $updateStmt->bind_param("sss", $passwordHash, $cleanPhone, $cleanPhone);
-
-
-
-            if ($updateStmt->execute()) {
-
-                $affectedRows = $updateStmt->affected_rows;
-
-                sendJSON([
-
-                    'success' => true,
-
-                    'message' => "تم حفظ كلمة المرور لـ $affectedRows حساب",
-
-                    'updated_count' => $affectedRows
-
-                ]);
-
-            } else {
-
-                sendJSON(['success' => false, 'message' => 'فشل في حفظ كلمة المرور: ' . $conn->error]);
-
+        // Security check: must have verified email token OR authenticated session
+        $isAuthorized = false;
+        if (!empty($token)) {
+            $tokStmt = $conn->prepare("SELECT id FROM students WHERE id = ? AND email_reset_token = ? AND email_reset_token_expires >= NOW() LIMIT 1");
+            $tokStmt->bind_param("is", $studentId, $token);
+            $tokStmt->execute();
+            if ($tokStmt->get_result()->fetch_assoc()) {
+                $isAuthorized = true;
             }
-
-        } else {
-
-            // Apply password only to selected student
-
-            $updateStmt = $conn->prepare("
-
-                UPDATE students 
-
-                SET password_hash = ?, updated_at = NOW()
-
-                WHERE id = ?
-
-            ");
-
-            $updateStmt->bind_param("si", $passwordHash, $studentId);
-
-
-
-            if ($updateStmt->execute()) {
-
-                sendJSON([
-
-                    'success' => true,
-
-                    'message' => 'تم حفظ كلمة المرور بنجاح'
-
-                ]);
-
-            } else {
-
-                sendJSON(['success' => false, 'message' => 'فشل في حفظ كلمة المرور: ' . $conn->error]);
-
-            }
-
+            $tokStmt->close();
         }
 
+        if (!$isAuthorized) {
+            if (isAdminOrDevRole() || !empty($_SESSION['uncle_id']) || !empty($_SESSION['church_id'])) {
+                $isAuthorized = true;
+            } elseif (!empty($_SESSION['student_id']) && intval($_SESSION['student_id']) === $studentId) {
+                $isAuthorized = true;
+            }
+        }
 
+        if (!$isAuthorized) {
+            sendJSON(['success' => false, 'message' => 'غير مصرح بتعيين كلمة المرور بدون التحقق من البريد الإلكتروني أو تسجيل الدخول']);
+            return;
+        }
 
+        $passwordHash = hash('sha256', $password);
+        $cleanPhone = preg_replace('/[^\d]/', '', $phone);
+
+        if ($applyToAllSiblings && !empty($cleanPhone)) {
+            $updateStmt = $conn->prepare("UPDATE students SET password_hash = ?, email_reset_token = NULL, email_reset_token_expires = NULL, updated_at = NOW() WHERE (phone LIKE CONCAT('%', ?) OR phone = ?)");
+            $updateStmt->bind_param("sss", $passwordHash, $cleanPhone, $cleanPhone);
+            $updateStmt->execute();
+            $affectedRows = $updateStmt->affected_rows;
+            $updateStmt->close();
+            sendJSON(['success' => true, 'message' => "تم حفظ كلمة المرور لـ $affectedRows حساب", 'updated_count' => $affectedRows]);
+        } else {
+            $updateStmt = $conn->prepare("UPDATE students SET password_hash = ?, email_reset_token = NULL, email_reset_token_expires = NULL, updated_at = NOW() WHERE id = ?");
+            $updateStmt->bind_param("si", $passwordHash, $studentId);
+            $updateStmt->execute();
+            $updateStmt->close();
+            sendJSON(['success' => true, 'message' => 'تم حفظ كلمة المرور بنجاح']);
+        }
     } catch (Exception $e) {
-
         error_log("setupStudentPassword error: " . $e->getMessage());
-
         sendJSON(['success' => false, 'message' => 'خطأ في إعداد كلمة المرور: ' . $e->getMessage()]);
-
     }
-
 }
 
 
@@ -22407,90 +22192,7 @@ function verifyCustomWhatsAppOTP() {
     }
 }
 
-function checkWhatsAppVerificationStatus() {
-    try {
-        $rawToken = $_POST['token'] ?? $_GET['token'] ?? '';
-        $token = sanitize($rawToken);
-        if (preg_match('/REQ-[A-Z0-9]+/i', $rawToken, $m)) {
-            $token = strtoupper($m[0]);
-        }
-        $phone = sanitize($_POST['phone'] ?? $_GET['phone'] ?? '');
-        $cleanPhone = preg_replace('/[^\d]/', '', $phone);
-
-        if (empty($token) && empty($cleanPhone)) {
-            sendJSON(['success' => false, 'verified' => false, 'message' => 'الرمز أو رقم الهاتف مطلوب']);
-        }
-
-        $conn = getDBConnection();
-        if (!empty($token)) {
-            $stmt = $conn->prepare("
-                SELECT id, is_verified, phone 
-                FROM phone_verifications 
-                WHERE request_token = ? 
-                  AND TIMESTAMPDIFF(SECOND, created_at, NOW()) BETWEEN 0 AND 86400
-                ORDER BY id DESC LIMIT 1
-            ");
-            $stmt->bind_param("s", $token);
-        } else {
-            $stmt = $conn->prepare("
-                SELECT id, is_verified, phone 
-                FROM phone_verifications 
-                WHERE (RIGHT(phone, 10) = RIGHT(?, 10) OR phone = ?) 
-                  AND TIMESTAMPDIFF(SECOND, created_at, NOW()) BETWEEN 0 AND 86400
-                ORDER BY id DESC LIMIT 1
-            ");
-            $stmt->bind_param("ss", $cleanPhone, $cleanPhone);
-        }
-        $stmt->execute();
-        $res = $stmt->get_result();
-
-        if ($row = $res->fetch_assoc()) {
-            $isVerified = intval($row['is_verified']) === 1;
-            sendJSON([
-                'success' => true,
-                'verified' => $isVerified,
-                'message' => $isVerified ? 'تم تأكيد رقم الهاتف بنجاح' : 'في انتظار إرسال الرسالة من تطبيق واتساب'
-            ]);
-        } else {
-            sendJSON(['success' => false, 'verified' => false, 'message' => 'طلب التحقق غير موجود']);
-        }
-    } catch (Exception $e) {
-        sendJSON(['success' => false, 'verified' => false, 'message' => $e->getMessage()]);
-    }
-}
-
-function getLatestPhoneOTP() {
-    try {
-        $phone = sanitize($_POST['phone'] ?? '');
-        $cleanPhone = preg_replace('/[^\d]/', '', $phone);
-        $last8 = (strlen($cleanPhone) >= 8) ? substr($cleanPhone, -8) : $cleanPhone;
-        
-        if (empty($cleanPhone)) {
-            sendJSON(['success' => false, 'message' => 'رقم الهاتف مطلوب']);
-        }
-        
-        $conn = getDBConnection();
-
-        // Query active request created on the website for this phone line
-        $stmt = $conn->prepare("
-            SELECT otp_code FROM phone_verifications 
-            WHERE (phone LIKE CONCAT('%', ?) OR RIGHT(phone, 8) = RIGHT(?, 8) OR phone = ?) 
-              AND TIMESTAMPDIFF(SECOND, created_at, NOW()) BETWEEN 0 AND 86400
-            ORDER BY id DESC LIMIT 1
-        ");
-        $stmt->bind_param("sss", $last8, $cleanPhone, $cleanPhone);
-        $stmt->execute();
-        $res = $stmt->get_result();
-        
-        if ($row = $res->fetch_assoc()) {
-            sendJSON(['success' => true, 'otp_code' => $row['otp_code']]);
-        } else {
-            sendJSON(['success' => false, 'message' => 'عذراً، لا يوجد طلب كود نشط لهذا الرقم. يرجى إدخال رقم هاتفك في الموقع وطلب كود التحقق أولاً.']);
-        }
-    } catch (Exception $e) {
-        sendJSON(['success' => false, 'message' => 'Error: ' . $e->getMessage()]);
-    }
-}
+// OTP polling functions removed for security
 
 
 
@@ -22851,26 +22553,52 @@ function separateKidAccounts() {
 
 function kidLoginByPhoneWithPassword() {
     try {
-        $phone = sanitize($_POST['phone'] ?? '');
+        $identifier = sanitize($_POST['phone'] ?? $_POST['email'] ?? $_POST['identifier'] ?? '');
         $password = $_POST['password'] ?? '';
         $studentId = intval($_POST['studentId'] ?? 0);
 
-        if (empty($phone) || empty($password)) {
-            sendJSON(['success' => false, 'message' => 'رقم الهاتف وكلمة المرور مطلوبان']);
+        if (empty($identifier) || empty($password)) {
+            sendJSON(['success' => false, 'message' => 'البريد الإلكتروني أو رقم الهاتف وكلمة المرور مطلوبان']);
             return;
         }
 
         $sha256Hash = hash('sha256', $password);
         $conn = getDBConnection();
+        ensureStudentEmailColumns($conn);
 
-        // 1. Fetch all candidate accounts linked to this phone (including parent_phones, emergency, and sibling groups)
-        $candidates = findStudentsByPhoneOrSiblings($conn, $phone, true);
+        $candidates = [];
+        $isEmail = filter_var($identifier, FILTER_VALIDATE_EMAIL) || strpos($identifier, '@') !== false;
+
+        if ($isEmail) {
+            $stmtEmail = $conn->prepare("
+                SELECT s.id, s.name, s.address, s.phone, s.emergency_phone, s.parent_phones, s.birthday, s.email,
+                       s.is_email_verified, s.coupons, s.attendance_coupons, s.commitment_coupons, s.task_coupons,
+                       s.image_url, s.church_id, s.class_id, s.custom_info, s.password_hash, s.gender, s.trip_points,
+                       c.church_name,
+                       COALESCE(c.church_type, 'kids') AS church_type,
+                       COALESCE(cc.arabic_name, cl.arabic_name, s.class) AS class
+                FROM students s
+                LEFT JOIN churches c  ON s.church_id = c.id
+                LEFT JOIN church_classes cc ON cc.id = s.class_id AND cc.church_id = s.church_id
+                LEFT JOIN classes cl  ON cl.id = s.class_id
+                WHERE LOWER(TRIM(s.email)) = LOWER(?)
+            ");
+            $stmtEmail->bind_param("s", $identifier);
+            $stmtEmail->execute();
+            $resE = $stmtEmail->get_result();
+            while ($row = $resE->fetch_assoc()) {
+                $candidates[$row['id']] = $row;
+            }
+            $stmtEmail->close();
+        } else {
+            $candidates = findStudentsByPhoneOrSiblings($conn, $identifier, true);
+        }
 
         // If a specific studentId was given and not yet in candidates, load it as well
         if ($studentId > 0 && !isset($candidates[$studentId])) {
             $stmtSingle = $conn->prepare("
                 SELECT s.id, s.name, s.address, s.phone, s.emergency_phone, s.parent_phones, s.birthday, s.email,
-                       s.coupons, s.attendance_coupons, s.commitment_coupons, s.task_coupons,
+                       s.is_email_verified, s.coupons, s.attendance_coupons, s.commitment_coupons, s.task_coupons,
                        s.image_url, s.church_id, s.class_id, s.custom_info, s.password_hash, s.gender, s.trip_points,
                        c.church_name,
                        COALESCE(c.church_type, 'kids') AS church_type,
@@ -22893,7 +22621,7 @@ function kidLoginByPhoneWithPassword() {
         }
 
         if (empty($candidates)) {
-            sendJSON(['success' => false, 'message' => 'لم يتم العثور على حساب بهذا الرقم', 'data' => []]);
+            sendJSON(['success' => false, 'message' => $isEmail ? 'لم يتم العثور على حساب بهذا البريد الإلكتروني' : 'لم يتم العثور على حساب بهذا الرقم', 'data' => []]);
             return;
         }
 
@@ -22916,8 +22644,14 @@ function kidLoginByPhoneWithPassword() {
 
         // 3. Family authenticated! Synchronize password_hash across all sibling accounts if missing/bcrypt
         $students = [];
+        $firstId = null;
+        $firstPhone = null;
         foreach ($candidates as $cand) {
             $cId = (int)$cand['id'];
+            if ($firstId === null) {
+                $firstId = $cId;
+                $firstPhone = $cand['phone'] ?? '';
+            }
             $storedHash = $cand['password_hash'] ?? '';
             if (empty($storedHash) || password_verify($password, $storedHash)) {
                 @$conn->query("UPDATE students SET password_hash = '" . $conn->real_escape_string($sha256Hash) . "' WHERE id = {$cId}");
@@ -22925,8 +22659,17 @@ function kidLoginByPhoneWithPassword() {
             $cand['birthday'] = formatDateFromDB($cand['birthday'] ?? '');
             $cand['class'] = $cand['class'] ?? '---';
             $cand['has_password'] = true;
+            $hasEmail = !empty($cand['email']) && filter_var($cand['email'], FILTER_VALIDATE_EMAIL);
+            $cand['has_email'] = $hasEmail;
+            $cand['is_email_verified'] = !empty($cand['is_email_verified']);
+            $cand['needs_email_verification'] = !$hasEmail || empty($cand['is_email_verified']);
             unset($cand['password_hash']);
             $students[] = $cand;
+        }
+
+        if ($firstId !== null) {
+            $_SESSION['student_id'] = $firstId;
+            $_SESSION['student_phone'] = $firstPhone;
         }
 
         $vals = array_values($students);
@@ -22935,8 +22678,9 @@ function kidLoginByPhoneWithPassword() {
             'data' => $vals,
             'users' => $vals,
             'user' => count($vals) === 1 ? $vals[0] : null,
+            'needs_email_verification' => count($vals) > 0 && ($vals[0]['needs_email_verification'] ?? false),
             'message' => count($vals) > 1
-                ? 'تم تسجيل الدخول بنجاح - ' . count($vals) . ' أطفال مرتبطين'
+                ? 'تم تسجيل الدخول بنجاح - ' . count($vals) . ' حسابات مرتبطة'
                 : 'تم تسجيل الدخول بنجاح'
         ]);
     } catch (Throwable $e) {
@@ -22969,6 +22713,37 @@ function kidLogin()
             $phoneCandidates = findStudentsByPhoneOrSiblings($conn, $usernameInput, true);
             foreach ($phoneCandidates as $id => $row) {
                 $candidates[$id] = $row;
+            }
+        }
+
+        // 1.5 Search by email
+        if (strpos($usernameInput, '@') !== false) {
+            $stmtEmail = $conn->prepare("
+                SELECT s.id, s.name, s.address, s.phone, s.emergency_phone, s.parent_phones, s.birthday, s.email,
+                       s.coupons, s.attendance_coupons, s.commitment_coupons,
+                       s.task_coupons, s.image_url, s.church_id, s.class_id,
+                       s.custom_info, s.password_hash, s.gender, s.trip_points,
+                       c.church_name,
+                       COALESCE(c.church_type, 'kids') AS church_type,
+                       COALESCE(cc.arabic_name, cl.arabic_name, s.class) AS class
+                FROM students s
+                LEFT JOIN churches c  ON s.church_id = c.id
+                LEFT JOIN church_classes cc ON cc.id = s.class_id AND cc.church_id = s.church_id
+                LEFT JOIN classes cl  ON cl.id = s.class_id
+                WHERE LOWER(TRIM(s.email)) = LOWER(?)
+            ");
+            if ($stmtEmail) {
+                $cleanEmail = trim($usernameInput);
+                $stmtEmail->bind_param("s", $cleanEmail);
+                $stmtEmail->execute();
+                $resE = $stmtEmail->get_result();
+                while ($eRow = $resE->fetch_assoc()) {
+                    $eRow['class'] = $eRow['class'] ?? '---';
+                    if (!isset($candidates[$eRow['id']])) {
+                        $candidates[$eRow['id']] = $eRow;
+                    }
+                }
+                $stmtEmail->close();
             }
         }
 
@@ -23228,6 +23003,31 @@ function getStudentProfile()
         $result = $stmt->get_result();
 
         if ($row = $result->fetch_assoc()) {
+            // Security check: restrict profile access to authorized users
+            $isAuthorized = false;
+            $callerChurchId = getChurchId();
+            if (isDeveloperRole() || !empty($_SESSION['is_developer'])) {
+                $isAuthorized = true;
+            } elseif (!empty($_SESSION['uncle_id']) || !empty($_SESSION['church_id']) || !empty($_SESSION['uncle_logged_in'])) {
+                if ($callerChurchId > 0 && intval($row['church_id']) === $callerChurchId) {
+                    $isAuthorized = true;
+                }
+            }
+            if (!$isAuthorized) {
+                $sessionStudentId = intval($_SESSION['student_id'] ?? $_SESSION['user_id'] ?? 0);
+                if ($sessionStudentId > 0 && $sessionStudentId === intval($row['id'])) {
+                    $isAuthorized = true;
+                }
+                if (!$isAuthorized && !empty($_SESSION['student_phone']) && !empty($row['phone']) && cleanPhoneNumber($_SESSION['student_phone']) === cleanPhoneNumber($row['phone'])) {
+                    $isAuthorized = true;
+                }
+            }
+
+            if (!$isAuthorized) {
+                http_response_code(403);
+                sendJSON(['success' => false, 'message' => 'غير مصرح لك بعرض بيانات هذا الملف الشخصي']);
+                return;
+            }
             // Parent phones parsing
             $row['parent_phones'] = normalizeParentPhones($row['parent_phones'] ?? '', $row['emergency_phone'] ?? '');
 

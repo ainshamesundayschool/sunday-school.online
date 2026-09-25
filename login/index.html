@@ -821,9 +821,13 @@ position: absolute;
     }
 
     function getRedirectTarget() {
-        // Respect ?redirect= param so pages can send users back after login
+        // Respect ?redirect= param only if it is a safe relative path
         const params = new URLSearchParams(window.location.search);
-        return params.get('redirect') || null;
+        const redirect = (params.get('redirect') || '').trim();
+        if (redirect && redirect.startsWith('/') && !redirect.startsWith('//') && !redirect.includes('\\') && !redirect.toLowerCase().startsWith('/javascript:')) {
+            return redirect;
+        }
+        return null;
     }
 
     function redirectToDashboard(loginType, role) {

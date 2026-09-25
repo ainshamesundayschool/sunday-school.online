@@ -242,6 +242,81 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'logou
       padding-bottom: 24px !important;
     }
 
+    /* Pinned Email Security Warning Banner */
+    .pinned-email-security-banner {
+      background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%);
+      border: 1px solid #fde68a;
+      border-radius: var(--r-lg, 16px);
+      padding: 12px 18px;
+      margin: 12px 16px 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 14px;
+      box-shadow: 0 4px 14px -3px rgba(245, 158, 11, 0.18);
+      animation: fadeIn 0.3s ease;
+      position: relative;
+      z-index: 10;
+    }
+    .pes-content {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .pes-icon {
+      width: 36px;
+      height: 36px;
+      border-radius: var(--r-md, 12px);
+      background: rgba(245, 158, 11, 0.18);
+      color: #b45309;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.1rem;
+      flex-shrink: 0;
+    }
+    .pes-text {
+      font-size: 0.88rem;
+      color: #92400e;
+      line-height: 1.5;
+      font-weight: 600;
+    }
+    .pes-btn {
+      background: linear-gradient(135deg, #f59e0b, #d97706);
+      color: #ffffff;
+      border: none;
+      padding: 8px 16px;
+      border-radius: var(--r-md, 12px);
+      font-family: 'Cairo', sans-serif;
+      font-size: 0.85rem;
+      font-weight: 700;
+      cursor: pointer;
+      white-space: nowrap;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      box-shadow: 0 4px 12px rgba(245, 158, 11, 0.25);
+      transition: transform 0.2s, box-shadow 0.2s;
+      flex-shrink: 0;
+    }
+    .pes-btn:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 6px 16px rgba(245, 158, 11, 0.35);
+    }
+    @media (max-width: 640px) {
+      .pinned-email-security-banner {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 10px;
+        margin: 8px 10px 14px;
+        padding: 12px 14px;
+      }
+      .pes-btn {
+        justify-content: center;
+        width: 100%;
+      }
+    }
+
     /* ══ TOKENS ══════════════════════════════════════════════════ */
     :root {
       --brand: #4f46e5;
@@ -5670,6 +5745,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'logou
   </aside>
 
   <div class="main-content-desktop" id="mainContentDesktop">
+    <!-- Pinned Security Warning Banner (shown when student has unverified or missing email) -->
+    <div id="pinnedEmailSecurityBanner" class="pinned-email-security-banner" style="display:none;">
+      <div class="pes-content">
+        <div class="pes-icon"><i class="fas fa-shield-alt"></i></div>
+        <div class="pes-text">
+          <strong>تنبيه أمني هام:</strong> حسابك غير محمي ببريد إلكتروني! يرجى إضافة بريدك وتأكيده لحماية حسابك وضمان استعادة كلمة المرور في أي وقت.
+        </div>
+      </div>
+      <button type="button" class="pes-btn" onclick="openEmailSecurityModal()">
+        <i class="fas fa-plus-circle"></i>
+        <span>تأمين الحساب الآن</span>
+      </button>
+    </div>
+
     <!-- Converted bottom-nav placed inside main-content-desktop -->
     <nav class="bottom-nav" id="bottomNavBar" style="display:none;">
       <div class="bottom-nav-item active" data-tab="home" onclick="switchTab('home')">
@@ -6410,6 +6499,69 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'logou
           <span id="passOvBtn">تغيير كلمة المرور</span></button>
       </div>
       <button class="ss-close-btn" onclick="closeOv('passOv')">إغلاق</button>
+    </div>
+  </div>
+
+  <!-- Email Security & Verification Modal -->
+  <div class="overlay settings-overlay" id="emailSecurityOv" style="z-index:99999;">
+    <div class="settings-sheet" style="max-width:440px;">
+      <div class="ss-handle"></div>
+      <div style="padding:18px 22px 8px; border-bottom:1px solid var(--bdr2);">
+        <div style="font-size:1.05rem; font-weight:800; color:var(--t1); display:flex; align-items:center; gap:10px;">
+          <div style="width:38px; height:38px; border-radius:var(--r-sm); background:linear-gradient(135deg, #fef3c7, #fde68a); color:#b45309; display:flex; align-items:center; justify-content:center; flex-shrink:0; font-size:1.1rem;">
+            <i class="fas fa-shield-alt"></i>
+          </div>
+          <div>
+            <div style="font-size:1.02rem; font-weight:800; color:var(--t1);">تأمين الحساب بالبريد الإلكتروني</div>
+            <div style="font-size:0.75rem; color:var(--t3); font-weight:600;">خطوة أمنية ضرورية لحماية بياناتك</div>
+          </div>
+        </div>
+      </div>
+
+      <div style="padding:18px 22px;">
+        <div style="background:#fffbeb; color:#92400e; border:1px solid #fde68a; border-radius:var(--r-md); padding:12px 14px; font-size:0.83rem; font-weight:700; line-height:1.6; margin-bottom:16px;">
+          <i class="fas fa-exclamation-triangle" style="margin-left:6px; color:#d97706;"></i>
+          حسابك غير مؤمّن ببريد إلكتروني. في حال نسيت كلمة المرور لن تتمكن من استعادتها تلقائياً. يرجى إضافة بريدك الإلكتروني وتأكيده الآن.
+        </div>
+
+        <!-- Step 1: Input Email -->
+        <div id="emailSecStepInput">
+          <div class="fg">
+            <label class="flbl">البريد الإلكتروني</label>
+            <div class="pass-wrap">
+              <input class="fi" id="secEmailInput" type="email" placeholder="example@email.com" dir="ltr" style="text-align:left;">
+            </div>
+          </div>
+          <div id="secEmailErr" style="display:none; color:var(--err); font-size:0.82rem; font-weight:700; margin-bottom:12px;"></div>
+          <button class="btn btn-p" id="sendSecEmailBtn" style="width:100%; padding:12px; justify-content:center;" onclick="sendSecurityEmailOTP()">
+            <i class="fas fa-paper-plane"></i>
+            <span>إرسال كود التحقق</span>
+          </button>
+        </div>
+
+        <!-- Step 2: Input 6-digit OTP -->
+        <div id="emailSecStepOtp" style="display:none;">
+          <p style="font-size:0.84rem; color:var(--t2); font-weight:600; text-align:center; margin-bottom:12px;">
+            تم إرسال كود التحقق المكون من 6 أرقام إلى: <strong id="secEmailSentTo" dir="ltr" style="color:var(--brand);"></strong>
+          </p>
+          <div class="fg">
+            <label class="flbl" style="text-align:center;">كود التحقق (6 أرقام)</label>
+            <input class="fi" id="secOtpCodeInput" type="text" maxlength="6" inputmode="numeric" pattern="[0-9]*" placeholder="------" style="text-align:center; font-size:1.35rem; font-weight:800; letter-spacing:8px; direction:ltr;">
+          </div>
+          <div id="secOtpErr" style="display:none; color:var(--err); font-size:0.82rem; font-weight:700; margin-bottom:12px; text-align:center;"></div>
+          <button class="btn btn-p" id="verifySecOtpBtn" style="width:100%; padding:12px; justify-content:center; margin-bottom:10px;" onclick="verifySecurityEmailOTP()">
+            <i class="fas fa-check-circle"></i>
+            <span>تأكيد الكود وتأمين الحساب</span>
+          </button>
+          <div style="text-align:center;">
+            <button type="button" id="resendSecOtpBtn" onclick="sendSecurityEmailOTP()" style="background:none; border:none; color:var(--brand); font-size:0.82rem; font-weight:700; cursor:pointer;" disabled>
+              إعادة إرسال الكود (<span id="secOtpCountdown">60</span> ثانية)
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <button class="ss-close-btn" onclick="dismissEmailSecurityModal()">إغلاق وتذكيري لاحقاً</button>
     </div>
   </div>
 
@@ -7644,6 +7796,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'logou
         })(),
         birthday: s.birthday || '',
         email: s.email || '',
+        is_email_verified: s.is_email_verified === true || s.is_email_verified === 1 || s.is_email_verified === '1',
         coupons: parseInt(s.coupons || 0),
         att_coupons: parseInt(s.attendance_coupons || 0),
         com_coupons: parseInt(s.commitment_coupons || 0),
@@ -7726,6 +7879,182 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'logou
       renderPaperExams(s);
       showMain();
       syncViewMode();
+      checkStudentEmailSecurity(s);
+    }
+
+    // ── Email Security & Verification Alert / Pinned Banner ──────────
+    let secOtpCountdownInterval = null;
+
+    function checkStudentEmailSecurity(s = student) {
+      if (!s) return;
+      const banner = document.getElementById('pinnedEmailSecurityBanner');
+      const hasVerifiedEmail = Boolean(s.email && s.is_email_verified);
+
+      if (hasVerifiedEmail) {
+        if (banner) banner.style.display = 'none';
+        return;
+      }
+
+      // Missing or unverified email -> ALWAYS show the pinned banner
+      if (banner) banner.style.display = 'flex';
+
+      // Show critical security modal on login once per session if not dismissed yet
+      const dismissedKey = 'emailPromptDismissed_' + s.id;
+      if (!sessionStorage.getItem(dismissedKey)) {
+        setTimeout(() => {
+          openEmailSecurityModal();
+        }, 800);
+      }
+    }
+
+    function openEmailSecurityModal() {
+      const modal = document.getElementById('emailSecurityOv');
+      if (!modal) return;
+      const s = student;
+      const input = document.getElementById('secEmailInput');
+      if (input) input.value = (s && s.email) ? s.email : '';
+      document.getElementById('emailSecStepInput').style.display = 'block';
+      document.getElementById('emailSecStepOtp').style.display = 'none';
+      const err1 = document.getElementById('secEmailErr');
+      if (err1) err1.style.display = 'none';
+      const err2 = document.getElementById('secOtpErr');
+      if (err2) err2.style.display = 'none';
+      openOv('emailSecurityOv');
+    }
+
+    function dismissEmailSecurityModal() {
+      if (secOtpCountdownInterval) clearInterval(secOtpCountdownInterval);
+      closeOv('emailSecurityOv');
+      if (student) {
+        sessionStorage.setItem('emailPromptDismissed_' + student.id, '1');
+      }
+      // Ensure pinned banner stays visible
+      const banner = document.getElementById('pinnedEmailSecurityBanner');
+      if (banner) banner.style.display = 'flex';
+    }
+
+    async function sendSecurityEmailOTP() {
+      const s = student;
+      if (!s) return;
+      const input = document.getElementById('secEmailInput');
+      const email = (input ? input.value : '').trim();
+      const errEl = document.getElementById('secEmailErr');
+      const btn = document.getElementById('sendSecEmailBtn');
+
+      if (!email || !email.includes('@')) {
+        if (errEl) {
+          errEl.textContent = 'يرجى إدخال بريد إلكتروني صحيح';
+          errEl.style.display = 'block';
+        }
+        return;
+      }
+      if (errEl) errEl.style.display = 'none';
+      if (btn) btn.disabled = true;
+
+      try {
+        const res = await api({
+          action: 'requestStudentEmailVerification',
+          studentId: s.id,
+          email: email
+        });
+        if (btn) btn.disabled = false;
+
+        if (res.success) {
+          document.getElementById('emailSecStepInput').style.display = 'none';
+          document.getElementById('emailSecStepOtp').style.display = 'block';
+          document.getElementById('secEmailSentTo').textContent = res.masked_email || email;
+          const otpInput = document.getElementById('secOtpCodeInput');
+          if (otpInput) {
+            otpInput.value = '';
+            setTimeout(() => otpInput.focus(), 150);
+          }
+          startSecOtpCountdown(60);
+          toast('تم إرسال كود التحقق إلى بريدك الإلكتروني', 'ok');
+        } else {
+          if (errEl) {
+            errEl.textContent = res.message || 'فشل في إرسال كود التحقق';
+            errEl.style.display = 'block';
+          }
+        }
+      } catch (e) {
+        if (btn) btn.disabled = false;
+        if (errEl) {
+          errEl.textContent = 'خطأ في الاتصال بالخادم';
+          errEl.style.display = 'block';
+        }
+      }
+    }
+
+    function startSecOtpCountdown(seconds = 60) {
+      if (secOtpCountdownInterval) clearInterval(secOtpCountdownInterval);
+      let rem = seconds;
+      const btn = document.getElementById('resendSecOtpBtn');
+      const count = document.getElementById('secOtpCountdown');
+      if (btn) btn.disabled = true;
+
+      secOtpCountdownInterval = setInterval(() => {
+        rem--;
+        if (count) count.textContent = rem;
+        if (rem <= 0) {
+          clearInterval(secOtpCountdownInterval);
+          if (btn) {
+            btn.disabled = false;
+            btn.innerHTML = `<i class="fas fa-redo-alt"></i> إعادة إرسال الكود`;
+          }
+        }
+      }, 1000);
+    }
+
+    async function verifySecurityEmailOTP() {
+      const s = student;
+      if (!s) return;
+      const input = document.getElementById('secEmailInput');
+      const email = (input ? input.value : '').trim();
+      const codeInput = document.getElementById('secOtpCodeInput');
+      const code = (codeInput ? codeInput.value : '').trim();
+      const errEl = document.getElementById('secOtpErr');
+      const btn = document.getElementById('verifySecOtpBtn');
+
+      if (!code || code.length !== 6) {
+        if (errEl) {
+          errEl.textContent = 'يرجى إدخال الكود المكون من 6 أرقام';
+          errEl.style.display = 'block';
+        }
+        return;
+      }
+      if (errEl) errEl.style.display = 'none';
+      if (btn) btn.disabled = true;
+
+      try {
+        const res = await api({
+          action: 'verifyStudentEmailOTP',
+          studentId: s.id,
+          email: email,
+          code: code
+        });
+        if (btn) btn.disabled = false;
+
+        if (res.success) {
+          if (secOtpCountdownInterval) clearInterval(secOtpCountdownInterval);
+          s.email = email;
+          s.is_email_verified = true;
+          closeOv('emailSecurityOv');
+          const banner = document.getElementById('pinnedEmailSecurityBanner');
+          if (banner) banner.style.display = 'none';
+          toast('تم تأكيد البريد الإلكتروني وحماية حسابك بنجاح! ✓', 'ok');
+        } else {
+          if (errEl) {
+            errEl.textContent = res.message || 'كود التحقق غير صحيح أو انتهت صلاحيته';
+            errEl.style.display = 'block';
+          }
+        }
+      } catch (e) {
+        if (btn) btn.disabled = false;
+        if (errEl) {
+          errEl.textContent = 'خطأ في الاتصال بالخادم';
+          errEl.style.display = 'block';
+        }
+      }
     }
 
     // ── Sync Settings Sheet & Edit Form ───────────────────────────────
