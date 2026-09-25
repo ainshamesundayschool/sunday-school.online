@@ -274,6 +274,19 @@ function sendJSON($data) {
 }
 
 // ============================================================
+//  EMAIL CONFIGURATION (Hostinger SMTP & Google Apps Script)
+// ============================================================
+// Option 1: Hostinger SMTP (Recommended for custom domain emails)
+define('HOSTINGER_SMTP_HOST', getenv('HOSTINGER_SMTP_HOST') ?: 'smtp.hostinger.com');
+define('HOSTINGER_SMTP_PORT', intval(getenv('HOSTINGER_SMTP_PORT') ?: 465));
+define('HOSTINGER_SMTP_USER', getenv('HOSTINGER_SMTP_USER') ?: 'your_email@sunday-school.online');
+define('HOSTINGER_SMTP_PASS', getenv('HOSTINGER_SMTP_PASS') ?: 'your_email_password');
+define('HOSTINGER_SMTP_FROM_NAME', getenv('HOSTINGER_SMTP_FROM_NAME') ?: 'منصة مدارس الأحد والشباب');
+
+// Option 2: Google Apps Script Relay (Gmail delivery via Web App)
+define('GOOGLE_APPS_SCRIPT_URL', getenv('GOOGLE_APPS_SCRIPT_URL') ?: 'https://script.google.com/macros/s/AKfycbxsDA0veJTA3C_2Bw47coffOagRigWwaZnyxWuGb_gSVUCWM958V1bUcaZDwfIHVZ7b1g/exec');
+
+// ============================================================
 //  WEB PUSH / VAPID CONFIGURATION
 // ============================================================
 // Generate your own VAPID keys for Web Push Notifications using:
