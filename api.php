@@ -20466,14 +20466,17 @@ function sendSundaySchoolEmail(string $toEmail, string $subject, string $htmlBod
         return false;
     }
 
+    $emailTitle = defined('HOSTINGER_SMTP_FROM_NAME') ? HOSTINGER_SMTP_FROM_NAME : 'Sunday School Online';
+
     // 1. Google Apps Script Relay
-    $appsScriptUrl = 'https://script.google.com/macros/s/AKfycbxsDA0veJTA3C_2Bw47coffOagRigWwaZnyxWuGb_gSVUCWM958V1bUcaZDwfIHVZ7b1g/exec';
+    $appsScriptUrl = defined('GOOGLE_APPS_SCRIPT_URL') ? GOOGLE_APPS_SCRIPT_URL : 'https://script.google.com/macros/s/AKfycbxsDA0veJTA3C_2Bw47coffOagRigWwaZnyxWuGb_gSVUCWM958V1bUcaZDwfIHVZ7b1g/exec';
     $postData = json_encode([
         'action' => 'sendCustomEmail',
         'recipient' => $toEmail,
         'subject' => $subject,
         'body' => !empty($plainText) ? $plainText : strip_tags($htmlBody),
-        'htmlBody' => $htmlBody
+        'htmlBody' => $htmlBody,
+        'senderName' => $emailTitle
     ]);
 
     if (function_exists('curl_init')) {
@@ -20495,7 +20498,7 @@ function sendSundaySchoolEmail(string $toEmail, string $subject, string $htmlBod
     $headers = [
         'MIME-Version: 1.0',
         'Content-Type: text/html; charset=UTF-8',
-        'From: Sunday School <noreply@sunday-school.online>',
+        'From: Sunday School Online <noreply@sunday-school.online>',
         'X-Mailer: PHP/' . phpversion()
     ];
     @mail($toEmail, '=?UTF-8?B?' . base64_encode($subject) . '?=', $htmlBody, implode("\r\n", $headers));
@@ -20593,11 +20596,11 @@ function requestStudentEmailVerification()
         $upStmt->close();
 
         $studentName = htmlspecialchars($st['name'] ?? 'مخدومنا العزيز', ENT_QUOTES, 'UTF-8');
-        $subject = "كود تأكيد البريد الإلكتروني - منصة مدارس الأحد: {$otp}";
+        $subject = "Sunday School Online - كود تأكيد البريد الإلكتروني: {$otp}";
         $htmlBody = "
             <div dir='rtl' style='font-family:\"Cairo\", Tahoma, Arial, sans-serif; max-width:600px; margin:auto; background:#ffffff; border-radius:16px; padding:28px; border:1px solid #e2e8f0; color:#1e293b;'>
                 <div style='text-align:center; margin-bottom:24px;'>
-                    <h2 style='color:#5b6cf5; margin:0 0 6px 0;'>منصة مدارس الأحد والشباب</h2>
+                    <h2 style='color:#5b6cf5; margin:0 0 6px 0;'>Sunday School Online</h2>
                     <p style='color:#64748b; font-size:14px; margin:0;'>تأكيد البريد الإلكتروني وتأمين الحساب</p>
                 </div>
                 <p style='font-size:16px;'>سلام ونعمة يا <strong>{$studentName}</strong>،</p>
@@ -20769,11 +20772,11 @@ function requestStudentPasswordRecovery()
             $up->close();
 
             $studentName = htmlspecialchars($student['name'] ?? 'مخدومنا العزيز', ENT_QUOTES, 'UTF-8');
-            $subject = "كود استعادة كلمة المرور: {$otp}";
+            $subject = "Sunday School Online - كود استعادة كلمة المرور: {$otp}";
             $htmlBody = "
                 <div dir='rtl' style='font-family:\"Cairo\", Tahoma, Arial, sans-serif; max-width:600px; margin:auto; background:#ffffff; border-radius:16px; padding:28px; border:1px solid #e2e8f0; color:#1e293b;'>
                     <div style='text-align:center; margin-bottom:24px;'>
-                        <h2 style='color:#5b6cf5; margin:0 0 6px 0;'>منصة مدارس الأحد والشباب</h2>
+                        <h2 style='color:#5b6cf5; margin:0 0 6px 0;'>Sunday School Online</h2>
                         <p style='color:#64748b; font-size:14px; margin:0;'>استعادة كلمة المرور</p>
                     </div>
                     <p style='font-size:16px;'>سلام ونعمة يا <strong>{$studentName}</strong>،</p>
