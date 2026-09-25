@@ -1,2 +1,0 @@
-ALTER TABLE trips
-  ADD COLUMN hide_from_uncles TINYINT(1) NOT NULL DEFAULT 0;
