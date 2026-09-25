@@ -1812,11 +1812,8 @@
                         const callLink = document.getElementById('recoveryCallLink');
 
                         if (unclePhoneDigits) {
-                            const studentName = data.student_name || 'أحد المخدومين';
-                            const churchName = data.church_name || 'الكنيسة';
                             const studentPhone = data.student_phone || identifier;
-                            const uncleName = data.uncle_name || 'يا خادم المسيح';
-                            const prefilledMsg = `سلام ونعمة يا ${uncleName}، أنا ${studentName} مخدوم بكنيسة ${churchName}. نسيت كلمة المرور الخاصة بحسابي (رقم هاتفي: ${studentPhone}) وليس لدي بريد إلكتروني مسجل. برجاء مساعدتي في استعادة حسابي وتعيين كلمة المرور.`;
+                            const prefilledMsg = `نسيت كلمة المرور الخاصة بحسابي (رقم هاتفي: ${studentPhone}) وليس لدي بريد إلكتروني مسجل. برجاء مساعدتي في استعادة حسابي وتعيين كلمة المرور.`;
 
                             let waTarget = unclePhoneDigits;
                             if (waTarget.startsWith('0') && waTarget.length === 11) {
