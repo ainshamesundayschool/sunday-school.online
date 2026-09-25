@@ -4848,45 +4848,6 @@ $showSettings = $hasChurchId || $isDevOrAdmin;
             border-radius: var(--r-sm)
         }
 
-        #adminOtpFilterTabs {
-            display: flex;
-            gap: 6px;
-            margin-bottom: 10px;
-            overflow-x: auto;
-            flex-wrap: nowrap;
-            -webkit-overflow-scrolling: touch;
-            scrollbar-width: none;
-            padding-bottom: 2px;
-        }
-
-        #adminOtpFilterTabs::-webkit-scrollbar {
-            display: none;
-        }
-
-        .admin-otp-tab {
-            white-space: nowrap !important;
-            flex-shrink: 0 !important;
-            border-radius: var(--r-full) !important;
-            height: 28px !important;
-            padding: 0 12px !important;
-            font-size: 0.72rem !important;
-            font-family: 'Cairo', sans-serif !important;
-            font-weight: 700 !important;
-            display: inline-flex !important;
-            align-items: center !important;
-            justify-content: center !important;
-            cursor: pointer;
-            box-sizing: border-box;
-            line-height: normal !important;
-        }
-
-        .admin-otp-tab.active {
-            background: linear-gradient(135deg, var(--brand), var(--brand-dark)) !important;
-            color: #fff !important;
-            border: none !important;
-            box-shadow: 0 2px 8px rgba(79, 70, 229, 0.25) !important;
-        }
-
         /* ═══════════════════════════════════════════════════════════════
    MODALS  — bottom sheet on mobile, centered on desktop
 ═══════════════════════════════════════════════════════════════ */
@@ -11889,91 +11850,6 @@ $showSettings = $hasChurchId || $isDevOrAdmin;
                     <span class="tool-card-name">دليل مساعدة الخدمة</span>
                     <span class="tool-card-desc">اعرف تفاصيل كل ميزة في الخدمة.</span>
                 </button>
-                <button class="tool-card" onclick="hideAllToolsModal();showAdminOTPModal()">
-                    <span class="tool-card-icon" style="color:#25d366;"><i class="fab fa-whatsapp"></i></span>
-                    <span class="tool-card-name">أكواد التحقق (WhatsApp OTP)</span>
-                    <span class="tool-card-desc">فحص أكواد تحقق المستخدمين وإرسالها يدوياً أو عبر البوت.</span>
-                </button>
-            </div>
-        </div>
-    </div>
-
-    <!-- WhatsApp OTP Management Modal (100% Native Theme & Unified Buttons) -->
-    <div class="modal-overlay" id="adminOTPModal" style="z-index: 1000030;">
-        <div class="modal modal-lg" style="max-width: 620px; max-height: 85vh; display: flex; flex-direction: column;">
-            <div class="modal-header">
-                <h3 style="display:flex; align-items:center; gap:8px; margin:0;">
-                    <i class="fab fa-whatsapp" style="color:#25d366; font-size:1.35rem;"></i>
-                    <span>أكواد التحقق</span>
-                    <span id="adminOtpChurchBadge" style="font-size:0.8rem; font-weight:normal; color:var(--text-3);"></span>
-                </h3>
-                <button class="close-btn" onclick="closeAdminOTPModal()">&times;</button>
-            </div>
-            
-            <div class="modal-body" style="padding:12px 14px; flex:1; overflow-y:auto; direction:rtl; text-align:right;">
-                <!-- Search & Top Actions -->
-                <div style="display:flex; gap:6px; margin-bottom:10px; align-items:center; flex-wrap:wrap;">
-                    <div class="inline-search-box" style="flex:1; min-width:150px; height:32px; min-height:32px !important; padding:0 12px; margin:0; display:flex; align-items:center;">
-                        <i class="fas fa-search search-icon" style="font-size:0.75rem;"></i>
-                        <input type="text" id="adminOtpSearchInput" placeholder="بحث بالرقم أو الاسم أو الكود..." oninput="filterAdminOTPs(this.value)" autocomplete="off" style="font-size:0.78rem; padding:0; height:100%;">
-                        <button id="clearAdminOtpSearchBtn" onclick="clearAdminOtpSearch()" style="display:none; font-size:0.75rem;"><i class="fas fa-times"></i></button>
-                    </div>
-                    <button type="button" class="btn btn-ghost btn-xs" onclick="loadAdminOTPs(true)" id="adminOtpRefreshBtn" title="تحديث" style="border-radius:var(--r-full); height:32px; padding:0 10px; font-size:0.74rem; gap:4px; display:inline-flex; align-items:center;">
-                        <i class="fas fa-sync-alt" id="adminOtpRefreshIcon" style="font-size:0.75rem;"></i>
-                        <span>تحديث</span>
-                    </button>
-                    <button type="button" class="btn btn-xs" onclick="toggleNewOTPGenerator()" style="border-radius:var(--r-full); height:32px; padding:0 10px; font-size:0.74rem; gap:4px; display:inline-flex; align-items:center;">
-                        <i class="fas fa-plus" style="font-size:0.75rem;"></i>
-                        <span>كود يدوي</span>
-                    </button>
-                </div>
-
-                <!-- Segmented Tabs (Native Rounded Site Buttons) -->
-                <div id="adminOtpFilterTabs" style="display:flex; gap:6px; margin-bottom:10px; overflow-x:auto; flex-wrap:nowrap; -webkit-overflow-scrolling:touch; scrollbar-width:none; padding-bottom:2px;">
-                    <button type="button" class="btn btn-xs admin-otp-tab active" data-filter="all" onclick="setAdminOtpFilter('all', this)" style="white-space:nowrap; flex-shrink:0;">الكل (<span id="countOtpAll">0</span>)</button>
-                    <button type="button" class="btn btn-ghost btn-xs admin-otp-tab" data-filter="active" onclick="setAdminOtpFilter('active', this)" style="white-space:nowrap; flex-shrink:0;">نشطة (<span id="countOtpActive">0</span>)</button>
-                    <button type="button" class="btn btn-ghost btn-xs admin-otp-tab" data-filter="pending" onclick="setAdminOtpFilter('pending', this)" style="white-space:nowrap; flex-shrink:0;">في الانتظار (<span id="countOtpPending">0</span>)</button>
-                    <button type="button" class="btn btn-ghost btn-xs admin-otp-tab" data-filter="verified" onclick="setAdminOtpFilter('verified', this)" style="white-space:nowrap; flex-shrink:0;">مؤكدة (<span id="countOtpVerified">0</span>)</button>
-                </div>
-
-                <!-- Manual Generator Drawer -->
-                <div id="adminOtpGenPanel" style="display:none; background:var(--surface-3); border:1px solid var(--border-solid); border-radius:var(--r-md); padding:10px 12px; margin-bottom:10px;">
-                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
-                        <span style="font-weight:700; font-size:0.8rem; color:var(--text-1);">توليد كود يدوي:</span>
-                        <button type="button" onclick="toggleNewOTPGenerator(false)" style="background:none; border:none; color:var(--text-3); cursor:pointer; font-size:1rem; line-height:1;">&times;</button>
-                    </div>
-                    <div style="display:flex; gap:6px;">
-                        <input type="tel" id="adminGenPhoneInput" class="form-input" placeholder="أدخل رقم الهاتف (مثال: 01012345678)" style="flex:1; height:32px; padding:0 10px; font-size:0.78rem;">
-                        <button type="button" class="btn btn-xs" id="adminGenSubmitBtn" onclick="submitAdminGenerateOTP()" style="border-radius:var(--r-full); height:32px; padding:0 12px; font-size:0.74rem;">توليد</button>
-                    </div>
-                    <div id="adminGenResultBox" style="display:none; margin-top:8px; padding:8px 10px; background:var(--surface); border:1px solid var(--border-solid); border-radius:var(--r-sm); font-size:0.78rem;"></div>
-                </div>
-
-                <!-- Loading State -->
-                <div id="adminOtpLoading" style="text-align:center; padding:32px 0; color:var(--text-3);">
-                    <i class="fas fa-spinner fa-spin" style="font-size:1.5rem; color:var(--brand); margin-bottom:8px;"></i>
-                    <div style="font-size:0.84rem;">جاري تحميل أكواد التحقق...</div>
-                </div>
-
-                <!-- Empty State -->
-                <div id="adminOtpEmpty" style="display:none; text-align:center; padding:32px 12px; color:var(--text-3);">
-                    <i class="fas fa-shield-alt" style="font-size:1.5rem; color:var(--text-3); margin-bottom:8px;"></i>
-                    <div style="font-weight:700; font-size:0.9rem; color:var(--text-1);">لا توجد طلبات تحقق لهذه الكنيسة</div>
-                    <div style="font-size:0.75rem; margin-top:3px;">لم يتم تسجيل أي طلبات تطابق هذه التصفية.</div>
-                </div>
-
-                <!-- OTP Cards List -->
-                <div id="adminOtpList" style="display:flex; flex-direction:column; gap:6px;">
-                    <!-- Rendered by JS -->
-                </div>
-            </div>
-            
-            <div style="padding:8px 14px; border-top:1px solid var(--border-solid); display:flex; justify-content:space-between; align-items:center; font-size:0.72rem; color:var(--text-3);">
-                <span>
-                    <i class="fas fa-info-circle" style="margin-left:3px;"></i>
-                    الأكواد صالحة لمدة 24 ساعة وخاصة بأعضاء وخُدام هذه الكنيسة.
-                </span>
-                <button type="button" class="btn btn-ghost btn-xs" onclick="closeAdminOTPModal()" style="height:26px; padding:0 10px; font-size:0.7rem; border-radius:var(--r-full);">إغلاق</button>
             </div>
         </div>
     </div>
@@ -28747,10 +28623,6 @@ $showSettings = $hasChurchId || $isDevOrAdmin;
                         } else {
                             window.location.href = '/uncle/dashboard/tasks/';
                         }
-                    } else if (d.notifType === 'whatsapp_otp') {
-                        if (typeof showAdminOTPModal === 'function') {
-                            showAdminOTPModal();
-                        }
                     } else if (d.notifType === 'sync') {
                         showUnsavedModal();
                     } else if (d.notifType === 'birthday') {
@@ -29567,9 +29439,6 @@ $showSettings = $hasChurchId || $isDevOrAdmin;
                     document.getElementById('pendingRegistrationsSection')?.scrollIntoView({ behavior: 'smooth' });
                 }, 1000);
             }
-            if (urlParams.get('tab') === 'otp' || urlParams.get('open_otp') === '1' || window.location.hash === '#otp') {
-                setTimeout(() => showAdminOTPModal(), 500);
-            }
             checkTaskUrlParamsOnLoad();
         });
 
@@ -30255,7 +30124,6 @@ $showSettings = $hasChurchId || $isDevOrAdmin;
                 developer_message: 'fa-envelope',
                 system: 'fa-circle-check',
                 announcement: 'fa-bullhorn',
-                whatsapp_otp: 'fa-key',
                 naughty_status: 'fa-exclamation-triangle',
                 leaderboard_upgrade: 'fa-trophy',
             };
@@ -30265,7 +30133,6 @@ $showSettings = $hasChurchId || $isDevOrAdmin;
                 developer_message: 'رسالة',
                 system: 'نظام',
                 announcement: 'إعلان',
-                whatsapp_otp: 'كود واتساب',
                 naughty_status: 'سلوك',
                 leaderboard_upgrade: 'ترقية',
             };
@@ -30274,7 +30141,6 @@ $showSettings = $hasChurchId || $isDevOrAdmin;
                 task_submission: 'فتح التاسكات',
                 developer_message: 'فتح الرسالة',
                 announcement: 'عرض الإعلان',
-                whatsapp_otp: 'عرض الكود',
                 naughty_status: 'عرض التفاصيل',
                 leaderboard_upgrade: 'عرض لوحة الصدارة',
             };
@@ -30285,7 +30151,6 @@ $showSettings = $hasChurchId || $isDevOrAdmin;
                     : '/uncle/dashboard/tasks/',
                 developer_message: '/uncle/dashboard/', // Fallback, will be overridden dynamically
                 announcement: '/uncle/dashboard/',
-                whatsapp_otp: '/uncle/dashboard/?open_otp=1',
             };
             el.innerHTML = _notifData.map(n => {
                 const icon = typeIcon[n.type] || 'fa-bell';
@@ -30329,13 +30194,7 @@ $showSettings = $hasChurchId || $isDevOrAdmin;
             // Navigate
             toggleNotifPanel();
 
-            if (type === 'whatsapp_otp') {
-                if (typeof showAdminOTPModal === 'function') {
-                    showAdminOTPModal();
-                } else {
-                    window.location.href = '/uncle/dashboard/?open_otp=1';
-                }
-            } else if (type === 'registration') {
+            if (type === 'registration') {
                 const body = document.getElementById('pendingBody');
                 const btn = document.getElementById('pendingCollapseBtn');
                 if (body && body.style.display === 'none') {
@@ -33210,439 +33069,6 @@ $showSettings = $hasChurchId || $isDevOrAdmin;
             const url = new URL(window.location.href);
             url.searchParams.delete('kid_id');
             window.history.replaceState({}, '', url.toString());
-        }
-
-        // ── ADMIN WHATSAPP OTP VERIFICATION TOOL (NATIVE THEME & UNIFIED BUTTONS) ──
-        let allAdminOTPs = [];
-        let currentAdminOtpFilter = 'all';
-
-        function showAdminOTPModal() {
-            const modal = document.getElementById('adminOTPModal');
-            if (modal) {
-                if (typeof openModal === 'function') {
-                    openModal('adminOTPModal');
-                } else {
-                    modal.classList.add('active');
-                }
-            }
-            loadAdminOTPs();
-        }
-
-        function closeAdminOTPModal() {
-            const modal = document.getElementById('adminOTPModal');
-            if (modal) {
-                if (typeof closeModal === 'function') {
-                    closeModal('adminOTPModal');
-                } else {
-                    modal.classList.remove('active');
-                }
-            }
-        }
-
-        function getAdminOtpAuthParams() {
-            const params = new URLSearchParams();
-            const uncleId = localStorage.getItem('uncleId') || localStorage.getItem('uncle_id') || '';
-            const churchId = localStorage.getItem('churchId') || localStorage.getItem('church_id') || '';
-            const churchCode = localStorage.getItem('churchCode') || localStorage.getItem('church_code') || '';
-            const username = localStorage.getItem('uncleUsername') || localStorage.getItem('username') || '';
-            const role = localStorage.getItem('uncleRole') || localStorage.getItem('role') || '';
-
-            if (uncleId) params.append('uncle_id', uncleId);
-            if (churchId) params.append('church_id', churchId);
-            if (churchCode) params.append('church_code', churchCode);
-            if (username) params.append('username', username);
-            if (role) params.append('role', role);
-            return params;
-        }
-
-        function appendAdminOtpAuthFormData(fd) {
-            const uncleId = localStorage.getItem('uncleId') || localStorage.getItem('uncle_id') || '';
-            const churchId = localStorage.getItem('churchId') || localStorage.getItem('church_id') || '';
-            const churchCode = localStorage.getItem('churchCode') || localStorage.getItem('church_code') || '';
-            const username = localStorage.getItem('uncleUsername') || localStorage.getItem('username') || '';
-            const role = localStorage.getItem('uncleRole') || localStorage.getItem('role') || '';
-
-            if (uncleId && !fd.has('uncle_id')) fd.append('uncle_id', uncleId);
-            if (churchId && !fd.has('church_id')) fd.append('church_id', churchId);
-            if (churchCode && !fd.has('church_code')) fd.append('church_code', churchCode);
-            if (username && !fd.has('username')) fd.append('username', username);
-            if (role && !fd.has('role')) fd.append('role', role);
-        }
-
-        async function loadAdminOTPs(forceRefresh = false) {
-            const loading = document.getElementById('adminOtpLoading');
-            const empty = document.getElementById('adminOtpEmpty');
-            const list = document.getElementById('adminOtpList');
-            const refreshIcon = document.getElementById('adminOtpRefreshIcon');
-
-            if (loading) loading.style.display = 'block';
-            if (empty) empty.style.display = 'none';
-            if (list) list.style.display = 'none';
-            if (refreshIcon) refreshIcon.classList.add('fa-spin');
-
-            try {
-                const endpoint = (typeof API_URL !== 'undefined' ? API_URL : '/api.php');
-                const authParams = getAdminOtpAuthParams();
-                authParams.append('action', 'adminCheckUserOTP');
-                authParams.append('limit', '50');
-
-                const res = await fetch(`${endpoint}?${authParams.toString()}`, {
-                    method: 'GET',
-                    credentials: 'include',
-                    cache: 'no-store'
-                });
-                const data = await res.json();
-
-                if (!data.success) {
-                    showToast(data.message || 'تعذر تحميل بيانات الأكواد', 'error');
-                    allAdminOTPs = [];
-                } else {
-                    allAdminOTPs = data.records || [];
-                    const badgeEl = document.getElementById('adminOtpChurchBadge');
-                    if (badgeEl) {
-                        if (data.is_developer) {
-                            badgeEl.textContent = '(جميع الكنائس)';
-                        } else {
-                            const churchName = data.church_name || localStorage.getItem('churchName') || '';
-                            badgeEl.textContent = churchName ? `(${churchName})` : '';
-                        }
-                    }
-
-                    if (forceRefresh) {
-                        showToast('تم تحديث قائمة الأكواد', 'success');
-                    }
-                }
-            } catch (err) {
-                console.error('[AdminOTP] Fetch error:', err);
-                showToast('حدث خطأ في الاتصال بالسيرفر', 'error');
-                allAdminOTPs = [];
-            } finally {
-                if (loading) loading.style.display = 'none';
-                if (refreshIcon) refreshIcon.classList.remove('fa-spin');
-                updateAdminOtpCounts();
-                applyAdminOtpFilterAndSearch();
-            }
-        }
-
-        function updateAdminOtpCounts() {
-            const countAll = allAdminOTPs.length;
-            const countActive = allAdminOTPs.filter(i => !i.is_expired && !i.is_verified).length;
-            const countPending = allAdminOTPs.filter(i => !i.is_verified && !i.is_sent).length;
-            const countVerified = allAdminOTPs.filter(i => i.is_verified === 1).length;
-
-            const cAllEl = document.getElementById('countOtpAll');
-            const cActEl = document.getElementById('countOtpActive');
-            const cPenEl = document.getElementById('countOtpPending');
-            const cVerEl = document.getElementById('countOtpVerified');
-
-            if (cAllEl) cAllEl.textContent = countAll;
-            if (cActEl) cActEl.textContent = countActive;
-            if (cPenEl) cPenEl.textContent = countPending;
-            if (cVerEl) cVerEl.textContent = countVerified;
-        }
-
-        function setAdminOtpFilter(filterType, btn) {
-            currentAdminOtpFilter = filterType;
-            document.querySelectorAll('#adminOtpFilterTabs .admin-otp-tab').forEach(b => {
-                b.classList.remove('active');
-                b.classList.add('btn-ghost');
-            });
-            if (btn) {
-                btn.classList.remove('btn-ghost');
-                btn.classList.add('active');
-            }
-            applyAdminOtpFilterAndSearch();
-        }
-
-        function filterAdminOTPs(val) {
-            const clearBtn = document.getElementById('clearAdminOtpSearchBtn');
-            if (clearBtn) clearBtn.style.display = val ? 'block' : 'none';
-            applyAdminOtpFilterAndSearch();
-        }
-
-        function clearAdminOtpSearch() {
-            const input = document.getElementById('adminOtpSearchInput');
-            if (input) input.value = '';
-            const clearBtn = document.getElementById('clearAdminOtpSearchBtn');
-            if (clearBtn) clearBtn.style.display = 'none';
-            applyAdminOtpFilterAndSearch();
-        }
-
-        function applyAdminOtpFilterAndSearch() {
-            const searchInput = document.getElementById('adminOtpSearchInput');
-            const query = (searchInput ? searchInput.value : '').trim();
-
-            let filtered = allAdminOTPs;
-
-            // Status filter
-            if (currentAdminOtpFilter === 'active') {
-                filtered = filtered.filter(i => !i.is_expired && !i.is_verified);
-            } else if (currentAdminOtpFilter === 'pending') {
-                filtered = filtered.filter(i => !i.is_verified && !i.is_sent);
-            } else if (currentAdminOtpFilter === 'verified') {
-                filtered = filtered.filter(i => i.is_verified === 1);
-            }
-
-            // Search filter
-            if (query) {
-                const q = query.toLowerCase();
-                filtered = filtered.filter(item => {
-                    const phone = (item.phone || '').toLowerCase();
-                    const code = (item.otp_code || '').toLowerCase();
-                    const name = (item.owner_name || '').toLowerCase();
-                    const church = (item.church_name || '').toLowerCase();
-                    return phone.includes(q) || code.includes(q) || name.includes(q) || church.includes(q);
-                });
-            }
-
-            renderAdminOtpList(filtered);
-        }
-
-        function formatAdminOtpTime(minutes) {
-            const mins = Math.max(0, parseInt(minutes, 10) || 0);
-            if (mins === 0) return 'الآن';
-            if (mins < 60) {
-                if (mins === 1) return 'منذ دقيقة';
-                if (mins === 2) return 'منذ دقيقتين';
-                if (mins <= 10) return `منذ ${mins} دقائق`;
-                return `منذ ${mins} دقيقة`;
-            }
-            const hours = Math.floor(mins / 60);
-            if (hours < 24) {
-                if (hours === 1) return 'منذ ساعة';
-                if (hours === 2) return 'منذ ساعتين';
-                if (hours <= 10) return `منذ ${hours} ساعات`;
-                return `منذ ${hours} ساعة`;
-            }
-            const days = Math.floor(hours / 24);
-            if (days < 30) {
-                if (days === 1) return 'منذ يوم';
-                if (days === 2) return 'منذ يومين';
-                if (days <= 10) return `منذ ${days} أيام`;
-                return `منذ ${days} يوماً`;
-            }
-            const months = Math.floor(days / 30);
-            if (months < 12) {
-                if (months === 1) return 'منذ شهر';
-                if (months === 2) return 'منذ شهرين';
-                if (months <= 10) return `منذ ${months} أشهر`;
-                return `منذ ${months} شهراً`;
-            }
-            const years = Math.floor(days / 365);
-            if (years === 1) return 'منذ سنة';
-            if (years === 2) return 'منذ سنتين';
-            if (years <= 10) return `منذ ${years} سنوات`;
-            return `منذ ${years} سنة`;
-        }
-
-        function renderAdminOtpList(records) {
-            const list = document.getElementById('adminOtpList');
-            const empty = document.getElementById('adminOtpEmpty');
-            if (!list) return;
-
-            if (!records || records.length === 0) {
-                list.style.display = 'none';
-                if (empty) empty.style.display = 'block';
-                return;
-            }
-
-            if (empty) empty.style.display = 'none';
-            list.style.display = 'flex';
-
-            list.innerHTML = records.map(item => {
-                const timeText = formatAdminOtpTime(item.minutes_ago || 0);
-
-                let statusHtml = '';
-                if (item.is_verified === 1) {
-                    statusHtml = '<span style="display:inline-flex; align-items:center; gap:5px; color:#16a34a; font-weight:600;"><span style="width:6px; height:6px; border-radius:50%; background:#16a34a; display:inline-block;"></span>تم التحقق</span>';
-                } else if (item.is_expired) {
-                    statusHtml = '<span style="display:inline-flex; align-items:center; gap:5px; color:var(--text-3);"><span style="width:6px; height:6px; border-radius:50%; background:#94a3b8; display:inline-block;"></span>منتهي</span>';
-                } else if (item.is_sent === 1) {
-                    statusHtml = '<span style="display:inline-flex; align-items:center; gap:5px; color:#0284c7; font-weight:600;"><span style="width:6px; height:6px; border-radius:50%; background:#0284c7; display:inline-block;"></span>أُرسل للبوت</span>';
-                } else {
-                    statusHtml = '<span style="display:inline-flex; align-items:center; gap:5px; color:#d97706; font-weight:600;"><span style="width:6px; height:6px; border-radius:50%; background:#d97706; display:inline-block;"></span>في الانتظار</span>';
-                }
-
-                const codeBoxStyle = item.is_expired
-                    ? 'font-size:0.98rem; font-weight:700; letter-spacing:2px; color:var(--text-3); padding:2px 8px; background:var(--surface-3); border:1px solid var(--border-solid); border-radius:var(--r-sm); direction:ltr;'
-                    : 'font-size:1.02rem; font-weight:700; letter-spacing:2px; color:#15803d; padding:2px 10px; background:rgba(37,211,102,0.08); border:1px solid rgba(37,211,102,0.25); border-radius:var(--r-sm); direction:ltr;';
-
-                return `
-                    <div class="card" style="background:var(--surface); border:1px solid var(--border-solid); border-radius:var(--r-lg); padding:7px 12px; display:flex; align-items:center; justify-content:space-between; gap:8px; flex-wrap:wrap; font-family:'Cairo',sans-serif; box-shadow:none; margin-bottom:0;">
-                        <!-- User & Phone Details -->
-                        <div style="display:flex; flex-direction:column; gap:2px; min-width:130px;">
-                            <div style="display:flex; align-items:center; gap:6px; flex-wrap:wrap;">
-                                <span style="font-weight:700; font-size:0.84rem; color:var(--text-1); direction:ltr; text-align:left;">
-                                    ${item.phone}
-                                </span>
-                                ${item.owner_name ? `<span style="font-size:0.68rem; font-weight:600; color:var(--text-2); background:var(--surface-2); padding:2px 8px; border-radius:var(--r-full); border:1px solid var(--border-solid); line-height:1.2;">${item.owner_name}</span>` : ''}
-                                ${item.church_name ? `<span style="font-size:0.65rem; font-weight:600; color:#b45309; background:rgba(245,158,11,0.1); padding:1px 6px; border-radius:var(--r-full); border:1px solid rgba(245,158,11,0.25); line-height:1.2; display:inline-flex; align-items:center; gap:3px;"><i class="fas fa-church" style="font-size:0.6rem;"></i>${item.church_name}</span>` : ''}
-                            </div>
-                            <div style="display:flex; align-items:center; gap:5px; font-size:0.68rem; color:var(--text-3);">
-                                <span>${statusHtml}</span>
-                                <span>•</span>
-                                <span>${timeText}</span>
-                            </div>
-                        </div>
-
-                        <!-- 6-digit OTP Code (Focal Point) -->
-                        <div style="${codeBoxStyle}">
-                            ${item.otp_code}
-                        </div>
-
-                        <!-- Compact Sleek Action Buttons -->
-                        <div style="display:flex; align-items:center; gap:4px;">
-                            <button type="button" class="btn btn-ghost" onclick="copyAdminOtpCode('${item.otp_code}', this)" title="نسخ الكود" style="height:26px; padding:0 8px; font-size:0.68rem; border-radius:var(--r-full); display:inline-flex; align-items:center; gap:3px; border:1px solid var(--border-solid);">
-                                <i class="far fa-copy" style="font-size:0.7rem; color:var(--text-2);"></i>
-                                <span>نسخ</span>
-                            </button>
-                            <a href="${item.manual_whatsapp_url}" target="_blank" rel="noopener" class="btn btn-ghost" title="إرسال عبر واتساب" style="height:26px; padding:0 8px; font-size:0.68rem; border-radius:var(--r-full); display:inline-flex; align-items:center; gap:3px; background:rgba(37,211,102,0.08); border:1px solid rgba(37,211,102,0.25);">
-                                <i class="fab fa-whatsapp" style="color:#25d366; font-size:0.8rem;"></i>
-                                <span style="color:#15803d; font-weight:600;">واتساب</span>
-                            </a>
-                            <button type="button" class="btn btn-ghost" id="botResendBtn_${item.id}" onclick="resendAdminOtpViaBot(${item.id})" title="إعادة إرسال عبر البوت" style="height:26px; padding:0 8px; font-size:0.68rem; border-radius:var(--r-full); display:inline-flex; align-items:center; gap:3px; border:1px solid var(--border-solid);">
-                                <i class="fas fa-redo-alt" style="color:var(--brand); font-size:0.66rem;"></i>
-                                <span>إرسال</span>
-                            </button>
-                        </div>
-                    </div>
-                `;
-            }).join('');
-        }
-
-        function copyAdminOtpCode(code, btn) {
-            navigator.clipboard.writeText(code).then(() => {
-                showToast(`تم نسخ الكود: ${code}`, 'success');
-                if (btn) {
-                    const origHtml = btn.innerHTML;
-                    btn.innerHTML = '<i class="fas fa-check" style="font-size:0.7rem; color:#16a34a;"></i> <span>تم</span>';
-                    setTimeout(() => { btn.innerHTML = origHtml; }, 1800);
-                }
-            }).catch(() => {
-                showToast('تعذر نسخ الكود، يرجى نسخه يدوياً', 'warning');
-            });
-        }
-
-        async function resendAdminOtpViaBot(otpId) {
-            const btn = document.getElementById(`botResendBtn_${otpId}`);
-            if (btn) {
-                btn.disabled = true;
-                btn.innerHTML = '<i class="fas fa-spinner fa-spin" style="font-size:0.66rem;"></i> <span>جاري...</span>';
-            }
-
-            try {
-                const endpoint = (typeof API_URL !== 'undefined' ? API_URL : '/api.php');
-                const formData = new FormData();
-                formData.append('action', 'adminResendUserOTP');
-                formData.append('id', otpId);
-                appendAdminOtpAuthFormData(formData);
-
-                const res = await fetch(endpoint, {
-                    method: 'POST',
-                    body: formData,
-                    credentials: 'include'
-                });
-                const data = await res.json();
-
-                if (data.success) {
-                    showToast('تمت إعادة إدراج الكود وتنبيه البوت', 'success');
-                    loadAdminOTPs();
-                } else {
-                    showToast(data.message || 'فشلت إعادة الإرسال', 'error');
-                }
-            } catch (e) {
-                console.error('[AdminOTP] Resend error:', e);
-                showToast('حدث خطأ في الاتصال بالخادم', 'error');
-            } finally {
-                if (btn) {
-                    btn.disabled = false;
-                    btn.innerHTML = '<i class="fas fa-redo-alt" style="color:var(--brand); font-size:0.66rem;"></i> <span>إرسال</span>';
-                }
-            }
-        }
-
-        function toggleNewOTPGenerator(show) {
-            const panel = document.getElementById('adminOtpGenPanel');
-            if (!panel) return;
-            const isCurrentlyOpen = panel.style.display !== 'none';
-            const shouldOpen = show !== undefined ? show : !isCurrentlyOpen;
-            panel.style.display = shouldOpen ? 'block' : 'none';
-            if (shouldOpen) {
-                const input = document.getElementById('adminGenPhoneInput');
-                if (input) input.focus();
-            }
-        }
-
-        async function submitAdminGenerateOTP() {
-            const phoneInput = document.getElementById('adminGenPhoneInput');
-            const submitBtn = document.getElementById('adminGenSubmitBtn');
-            const resultBox = document.getElementById('adminGenResultBox');
-            const phone = (phoneInput ? phoneInput.value : '').trim();
-
-            if (!phone) {
-                showToast('يرجى كتابة رقم الهاتف أولاً', 'warning');
-                if (phoneInput) phoneInput.focus();
-                return;
-            }
-
-            if (submitBtn) {
-                submitBtn.disabled = true;
-                submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
-            }
-
-            try {
-                const endpoint = (typeof API_URL !== 'undefined' ? API_URL : '/api.php');
-                const formData = new FormData();
-                formData.append('action', 'adminResendUserOTP');
-                formData.append('phone', phone);
-                appendAdminOtpAuthFormData(formData);
-
-                const res = await fetch(endpoint, {
-                    method: 'POST',
-                    body: formData,
-                    credentials: 'include'
-                });
-                const data = await res.json();
-
-                if (data.success) {
-                    showToast(`تم إنشاء الكود: ${data.otp_code}`, 'success');
-                    if (resultBox) {
-                        resultBox.style.display = 'block';
-                        resultBox.innerHTML = `
-                            <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
-                                <div>
-                                    <div style="font-weight:700; font-size:0.82rem; color:var(--text-1);">
-                                        تم توليد الكود لرقم: <span dir="ltr">${data.phone}</span>
-                                    </div>
-                                    <div style="font-size:1.18rem; font-weight:800; letter-spacing:2.5px; color:var(--success); background:var(--success-bg); border:1px solid rgba(16,185,129,0.3); border-radius:var(--r-md); padding:3px 10px; display:inline-block; margin-top:4px; direction:ltr;">
-                                        ${data.otp_code}
-                                    </div>
-                                </div>
-                                <div style="display:flex; gap:6px;">
-                                    <button type="button" class="btn btn-ghost btn-xs" onclick="copyAdminOtpCode('${data.otp_code}', this)" style="border-radius:var(--r-full); padding:5px 12px;">
-                                        <i class="far fa-copy" style="color:var(--text-2);"></i> نسخ
-                                    </button>
-                                    <a href="${data.manual_whatsapp_url}" target="_blank" rel="noopener" class="btn btn-ghost btn-xs" style="border-radius:var(--r-full); padding:5px 12px;">
-                                        <i class="fab fa-whatsapp" style="color:#25d366;"></i> واتساب
-                                    </a>
-                                </div>
-                            </div>
-                        `;
-                    }
-                    if (phoneInput) phoneInput.value = '';
-                    loadAdminOTPs();
-                } else {
-                    showToast(data.message || 'فشل توليد الكود', 'error');
-                }
-            } catch (e) {
-                console.error('[AdminOTP] Generate error:', e);
-                showToast('حدث خطأ أثناء توليد الكود', 'error');
-            } finally {
-                if (submitBtn) {
-                    submitBtn.disabled = false;
-                    submitBtn.textContent = 'توليد';
-                }
-            }
         }
         </script>
 

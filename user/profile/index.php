@@ -7888,7 +7888,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'logou
     function checkStudentEmailSecurity(s = student) {
       if (!s) return;
       const banner = document.getElementById('pinnedEmailSecurityBanner');
-      const hasVerifiedEmail = Boolean(s.email && s.is_email_verified);
+      const isVerified = Boolean(s.is_email_verified === 1 || s.is_email_verified === '1' || s.is_email_verified === true);
+      const hasVerifiedEmail = Boolean(s.email && typeof s.email === 'string' && s.email.trim() !== '' && isVerified);
 
       if (hasVerifiedEmail) {
         if (banner) banner.style.display = 'none';
