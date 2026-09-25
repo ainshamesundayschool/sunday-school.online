@@ -26469,9 +26469,17 @@ $showSettings = $hasChurchId || $isDevOrAdmin;
                 return;
             }
             if (cropper) { cropper.destroy(); cropper = null; }
-            const img = document.getElementById('cropImage'); img.src = src;
+            const img = document.getElementById('cropImage');
             document.getElementById('cropModal').classList.add('active');
-            img.onload = () => { cropper = new Cropper(img, { aspectRatio: 1, viewMode: 1, autoCropArea: .8 }); };
+            const initCropper = () => {
+                if (cropper) { cropper.destroy(); cropper = null; }
+                cropper = new Cropper(img, { aspectRatio: 1, viewMode: 1, autoCropArea: 1, responsive: true, checkOrientation: true });
+            };
+            img.onload = initCropper;
+            img.src = src;
+            if (img.complete && img.naturalWidth > 0) {
+                initCropper();
+            }
         }
         function closeCropModal() { document.getElementById('cropModal').classList.remove('active'); if (cropper) { cropper.destroy(); cropper = null; } document.getElementById('photoInput').value = ''; document.getElementById('newStudentPhotoInput').value = ''; }
         function confirmCrop() {

@@ -178,6 +178,63 @@ function saveEnhancedImage($image, $outputPath, $quality = 85) {
     return imagejpeg($image, $outputPath, $quality);
 }
 
+// ── Image Sanitization Function (Preserves Exact Aspect Ratio) ─
+function sanitizeAndSaveImage($filePath, $outputPath = null, $quality = 90) {
+    if (!$outputPath) $outputPath = $filePath;
+    if (!extension_loaded('gd')) return true;
+    
+    $info = @getimagesize($filePath);
+    if (!$info) return false;
+    $mime = $info['mime'];
+    $source = null;
+    if ($mime === 'image/jpeg' || $mime === 'image/pjpeg' || $mime === 'image/jpg') {
+        $source = @imagecreatefromjpeg($filePath);
+    } elseif ($mime === 'image/png' || $mime === 'image/x-png') {
+        $source = @imagecreatefrompng($filePath);
+    } elseif ($mime === 'image/gif') {
+        $source = @imagecreatefromgif($filePath);
+    } elseif ($mime === 'image/webp' || $mime === 'image/x-webp') {
+        $source = @imagecreatefromwebp($filePath);
+    }
+    if (!$source) return false;
+    
+    $w = imagesx($source);
+    $h = imagesy($source);
+    
+    // Scale down if unnecessarily huge (> 1400px) while maintaining exact aspect ratio
+    $maxDim = 1400;
+    if ($w > $maxDim || $h > $maxDim) {
+        if ($w >= $h) {
+            $newW = $maxDim;
+            $newH = (int)round($h * ($maxDim / $w));
+        } else {
+            $newH = $maxDim;
+            $newW = (int)round($w * ($maxDim / $h));
+        }
+    } else {
+        $newW = $w;
+        $newH = $h;
+    }
+    
+    $dest = imagecreatetruecolor($newW, $newH);
+    if ($mime === 'image/png' || $mime === 'image/x-png' || $mime === 'image/webp' || $mime === 'image/x-webp') {
+        imagealphablending($dest, false);
+        imagesavealpha($dest, true);
+        $transparent = imagecolorallocatealpha($dest, 255, 255, 255, 127);
+        imagefilledrectangle($dest, 0, 0, $newW, $newH, $transparent);
+    } else {
+        $white = imagecolorallocate($dest, 255, 255, 255);
+        imagefilledrectangle($dest, 0, 0, $newW, $newH, $white);
+    }
+    
+    imagecopyresampled($dest, $source, 0, 0, 0, 0, $newW, $newH, $w, $h);
+    imagedestroy($source);
+    
+    saveEnhancedImage($dest, $outputPath, $quality);
+    imagedestroy($dest);
+    return true;
+}
+
 try {
     if (!isset($_FILES['photo']) || $_FILES['photo']['error'] !== UPLOAD_ERR_OK) {
         sendJson(['success' => false, 'message' => 'لم يتم رفع أي ملف أو حدث خطأ أثناء الرفع']);
@@ -191,35 +248,52 @@ try {
     
     $applyEnhancement = !$isQuestion && isset($_POST['enhanceImage']) && $_POST['enhanceImage'] === 'true';
     
-    $maxSize = 5 * 1024 * 1024; // 5MB
+    $maxSize = 10 * 1024 * 1024; // 10MB
     if ($file['size'] > $maxSize) {
-        sendJson(['success' => false, 'message' => 'حجم الملف كبير جداً (الحد الأقصى 5 ميجابايت)']);
+        sendJson(['success' => false, 'message' => 'حجم الملف كبير جداً (الحد الأقصى 10 ميجابايت)']);
     }
 
-    // STRICT MIME & INTEGRITY CHECK using getimagesize & finfo
+    // Comprehensive allowed image MIME mapping
     $allowedMimes = [
-        'image/jpeg' => 'jpg',
-        'image/png'  => 'png',
-        'image/gif'  => 'gif',
-        'image/webp' => 'webp'
+        'image/jpeg'   => 'jpg',
+        'image/jpg'    => 'jpg',
+        'image/pjpeg'  => 'jpg',
+        'image/png'    => 'png',
+        'image/x-png'  => 'png',
+        'image/gif'    => 'gif',
+        'image/webp'   => 'webp',
+        'image/x-webp' => 'webp'
     ];
 
     $imageInfo = @getimagesize($file['tmp_name']);
     if (!$imageInfo || !isset($allowedMimes[$imageInfo['mime']])) {
-        sendJson(['success' => false, 'message' => 'نوع الملف غير مسموح به (الملف ليس صورة صالحة)']);
+        // Fallback for WebP binary signature if GD/fileinfo missing WebP mime
+        $isWebp = false;
+        $fh = @fopen($file['tmp_name'], 'rb');
+        if ($fh) {
+            $hdr = fread($fh, 12);
+            fclose($fh);
+            if (substr($hdr, 0, 4) === 'RIFF' && substr($hdr, 8, 4) === 'WEBP') {
+                $isWebp = true;
+            }
+        }
+        if (!$isWebp) {
+            sendJson(['success' => false, 'message' => 'نوع الملف غير مسموح به (الملف ليس صورة صالحة)']);
+        }
+        $extension = 'webp';
+    } else {
+        $extension = $allowedMimes[$imageInfo['mime']];
     }
 
     if (function_exists('finfo_open')) {
         $finfo = finfo_open(FILEINFO_MIME_TYPE);
         $realMime = finfo_file($finfo, $file['tmp_name']);
         finfo_close($finfo);
-        if (!isset($allowedMimes[$realMime])) {
-            sendJson(['success' => false, 'message' => 'تم رفض الملف: محتوى الملف لا يطابق نوع الصورة المسموح بها']);
+        // Only reject if finfo reports an explicit executable / script
+        if (!empty($realMime) && preg_match('/(php|html|javascript|executable|x-sh|shell)/i', $realMime)) {
+            sendJson(['success' => false, 'message' => 'تم رفض الملف: محتوى الملف غير آمن']);
         }
     }
-
-    // Extension strictly mapped from server-verified MIME, never from user input
-    $extension = $allowedMimes[$imageInfo['mime']];
 
     // Generate unique random filename
     $timestamp = time();
@@ -236,7 +310,8 @@ try {
 
     $uploadDir = __DIR__ . $uploadSubdir;
     if (!is_dir($uploadDir)) {
-        mkdir($uploadDir, 0755, true);
+        @mkdir($uploadDir, 0777, true);
+        @chmod($uploadDir, 0777);
     }
     
     $filePath = $uploadDir . $filename;
@@ -245,12 +320,17 @@ try {
         sendJson(['success' => false, 'message' => 'فشل في حفظ الملف على السيرفر']);
     }
     
-    // Always re-encode / enhance profile images to sanitize any polyglot / EXIF payloads
+    // Sanitize image re-encoding without distorting aspect ratio
     if (extension_loaded('gd')) {
-        $enhanced = @enhanceImage($filePath, 400, 500);
-        if ($enhanced) {
-            @saveEnhancedImage($enhanced, $filePath, 85);
-            imagedestroy($enhanced);
+        if ($applyEnhancement) {
+            $enhanced = @enhanceImage($filePath, 400, 500);
+            if ($enhanced) {
+                @saveEnhancedImage($enhanced, $filePath, 85);
+                imagedestroy($enhanced);
+            }
+        } else {
+            // Keep exact aspect ratio so photo is NEVER cut off
+            @sanitizeAndSaveImage($filePath, $filePath, 90);
         }
     }
     
@@ -260,10 +340,11 @@ try {
         'success' => true,
         'message' => 'تم رفع الصورة بنجاح',
         'imageUrl' => $imageUrl,
+        'url' => $imageUrl,
         'fileName' => $filename,
         'studentName' => $studentName,
         'studentPhone' => $studentPhone,
-        'enhanced' => extension_loaded('gd')
+        'enhanced' => $applyEnhancement && extension_loaded('gd')
     ]);
     
 } catch (Exception $e) {
