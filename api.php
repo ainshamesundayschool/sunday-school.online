@@ -5266,6 +5266,10 @@ try {
             linkUncleGoogleAccount();
             break;
 
+        case 'unlinkUncleGoogleAccount':
+            unlinkUncleGoogleAccount();
+            break;
+
 
 
         case 'getCurrentUncle':
@@ -17384,9 +17388,34 @@ function linkUncleGoogleAccount(): void
 
         sendJSON([
             'success' => true,
+            'google_id' => $googleId,
             'google_email' => $email,
             'message' => 'تم ربط حساب Google بحساب الخادم بنجاح'
         ]);
+    } catch (Throwable $e) {
+        sendJSON(['success' => false, 'message' => 'خطأ: ' . $e->getMessage()]);
+    }
+}
+
+function unlinkUncleGoogleAccount(): void
+{
+    try {
+        checkUncleAuth();
+        $uncleId = intval($_SESSION['uncle_id'] ?? 0);
+        if ($uncleId <= 0) {
+            sendJSON(['success' => false, 'message' => 'غير مصرح أو الجلسة غير صالحة']);
+            return;
+        }
+
+        $conn = getDBConnection();
+        ensureUncleGoogleColumns($conn);
+
+        $stmt = $conn->prepare("UPDATE uncles SET google_id = NULL, google_email = NULL, updated_at = NOW() WHERE id = ?");
+        $stmt->bind_param("i", $uncleId);
+        $stmt->execute();
+        $stmt->close();
+
+        sendJSON(['success' => true, 'message' => 'تم إلغاء ربط حساب Google بنجاح']);
     } catch (Throwable $e) {
         sendJSON(['success' => false, 'message' => 'خطأ: ' . $e->getMessage()]);
     }
