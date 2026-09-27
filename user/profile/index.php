@@ -5440,35 +5440,28 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'logou
     }
 
     .notif-sheet-footer {
-      padding: 14px 20px;
-      border-top: 1px solid var(--border-solid);
-      display: flex;
-      justify-content: stretch;
-      background: var(--surface);
+      display: none;
     }
 
     .btn-notif-close {
-      width: 100%;
-      padding: 10px 16px;
+      display: block;
+      width: calc(100% - 32px);
+      margin: 14px 16px 16px;
+      padding: 13px;
       border-radius: var(--r-md);
-      background: var(--surface-3);
-      border: 1px solid var(--border-solid);
-      color: var(--text-2);
-      font-weight: 700;
-      font-size: 0.88rem;
+      background: var(--s2);
+      border: 1.5px solid var(--bdr);
       font-family: 'Cairo', sans-serif;
+      font-size: .9rem;
+      font-weight: 700;
+      color: var(--t2);
       cursor: pointer;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      gap: 6px;
+      text-align: center;
       transition: all var(--fast);
     }
 
     .btn-notif-close:hover {
-      background: var(--brand-bg);
-      color: var(--brand);
-      border-color: var(--border);
+      background: var(--bdr);
     }
 
     .btn-secondary-pill {
@@ -5491,11 +5484,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'logou
 
     .notif-card {
       position: relative;
-      background: var(--surface-2);
-      border: 1px solid var(--border-solid);
-      border-radius: var(--r-xl);
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--r-lg);
       padding: 16px;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, .04);
+      box-shadow: var(--shadow-sm);
       transition: all var(--fast);
       display: flex;
       flex-direction: column;
@@ -5504,10 +5497,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'logou
     }
 
     .notif-card:hover {
-      border-color: var(--brand-light);
-      background: var(--surface);
-      box-shadow: 0 6px 20px rgba(91, 108, 245, .12);
-      transform: translateY(-2px);
+      border-color: rgba(91, 108, 245, .32);
+      box-shadow: var(--shadow-md);
+      transform: translateY(-1px);
     }
 
     .notif-card-header {
@@ -5528,9 +5520,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'logou
       display: inline-flex;
       align-items: center;
       gap: 5px;
-      padding: 5px 12px;
+      padding: 4px 11px;
       border-radius: var(--r-full);
-      font-size: 0.74rem;
+      font-size: 0.72rem;
       font-weight: 800;
     }
 
@@ -5550,7 +5542,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'logou
     }
 
     .notif-time {
-      font-size: 0.7rem;
+      font-size: 0.72rem;
       color: var(--text-3);
       font-weight: 600;
       display: inline-flex;
@@ -5562,8 +5554,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'logou
       width: 28px;
       height: 28px;
       border-radius: 50% !important;
-      background: var(--surface-3);
-      border: none;
+      background: var(--surface-2);
+      border: 1px solid var(--border);
       color: var(--text-3);
       cursor: pointer;
       display: flex;
@@ -5577,7 +5569,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'logou
     .notif-dismiss-btn:hover {
       background: var(--danger-bg);
       color: var(--danger);
-      transform: scale(1.1);
+      border-color: rgba(239, 68, 68, 0.3);
+      transform: scale(1.08);
     }
 
     .notif-card-title {
@@ -5588,18 +5581,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'logou
     }
 
     .notif-card-desc {
-      font-size: 0.85rem;
+      font-size: 0.86rem;
       color: var(--text-2);
       line-height: 1.65;
       white-space: pre-wrap;
-      background: var(--surface);
-      border: 1px solid var(--border-solid);
-      border-radius: var(--r-md);
-      padding: 10px 14px;
-    }
-
-    .notif-card:hover .notif-card-desc {
-      background: var(--surface-2);
+      word-break: break-word;
+      margin: 2px 0 4px;
+      background: none;
+      border: none;
+      padding: 0;
     }
 
     .notif-card-footer {
@@ -5609,43 +5599,56 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'logou
       gap: 10px;
       margin-top: 4px;
       padding-top: 10px;
-      border-top: 1px solid var(--border-solid);
+      border-top: 1px solid var(--border);
     }
 
     .notif-source {
-      font-size: 0.72rem;
+      font-size: 0.74rem;
       color: var(--text-3);
       font-weight: 700;
       display: inline-flex;
       align-items: center;
-      gap: 5px;
+      gap: 6px;
     }
 
-    .notif-action-btn {
-      font-size: .74rem;
+    .notif-source i {
       color: var(--brand);
-      font-weight: 700;
-      background: var(--brand-bg);
-      padding: 5px 12px;
-      border-radius: var(--r-full);
+      font-size: 0.8rem;
+    }
+
+    .notif-action-btn,
+    .ann-link-btn {
       display: inline-flex;
       align-items: center;
-      gap: 5px;
+      gap: 6px;
+      padding: 7px 16px;
+      border-radius: var(--r-full);
+      background: linear-gradient(135deg, var(--brand), var(--brand-dark));
+      color: #fff !important;
+      font-size: .78rem;
+      font-weight: 800;
+      font-family: 'Cairo', sans-serif;
       text-decoration: none;
-      border: 1px solid rgba(91, 108, 245, 0.15);
+      border: none;
+      cursor: pointer;
       transition: all var(--fast);
+      box-shadow:
+        0 1px 0 rgba(255, 255, 255, .22) inset,
+        0 4px 14px var(--brand-glow);
     }
 
-    .notif-action-btn:hover {
-      background: var(--brand);
-      color: #fff;
-      border-color: var(--brand);
+    .notif-action-btn:hover,
+    .ann-link-btn:hover {
       transform: translateY(-1px);
+      box-shadow:
+        0 1px 0 rgba(255, 255, 255, .26) inset,
+        0 8px 20px var(--brand-glow);
+      color: #fff !important;
     }
 
     .notif-empty-state {
       text-align: center;
-      padding: 40px 20px;
+      padding: 48px 20px;
       color: var(--text-3);
     }
 
@@ -6808,9 +6811,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'logou
       </div>
       <div id="notifListModal" class="notif-sheet-body">
       </div>
-      <div class="notif-sheet-footer">
-        <button type="button" class="btn-notif-close" onclick="closeOv('notifOv')">إغلاق</button>
-      </div>
+      <button class="ss-close-btn" onclick="closeOv('notifOv')" style="margin: 12px 16px 16px; width: calc(100% - 32px);">إغلاق</button>
     </div>
   </div>
 
@@ -10473,15 +10474,35 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'logou
         const notifListModal = document.getElementById('notifListModal');
         if (notifListModal) {
           if (activeAnns.length > 0) {
+            const studentChurch = (
+              student?.church_name ||
+              (document.getElementById('churchName') && document.getElementById('churchName').textContent) ||
+              localStorage.getItem('churchName') ||
+              ''
+            ).trim();
+
             notifListModal.innerHTML = `
               <div style="display:flex; flex-direction:column; gap:12px;">
                 ${activeAnns.map(a => {
-              const imgHtml = a.image_url ? `<div style="margin: 6px 0;"><img src="${esc(a.image_url)}" style="max-width:100%; border-radius:var(--r-md); border:1px solid var(--border-solid); max-height:200px; object-fit:cover; display:block;"/></div>` : '';
+              const imgHtml = a.image_url ? `<div style="margin: 6px 0;"><img src="${esc(a.image_url)}" style="max-width:100%; border-radius:var(--r-md); border:1px solid var(--border); max-height:220px; object-fit:cover; display:block;"/></div>` : '';
               const descHtml = a.description ? `<div class="notif-card-desc">${esc(a.description)}</div>` : '';
               const linkHtml = a.link ? `<a href="${esc(a.link)}" target="_blank" rel="noopener noreferrer" class="notif-action-btn"><i class="fas fa-external-link-alt"></i> <span>${esc(a.button_text || 'فتح الرابط')}</span></a>` : '';
               const badgeType = a.type === 'button' ? 'link' : (a.type === 'developer' ? 'dev' : 'announcement');
               const badgeLabel = a.type === 'button' ? 'رابط سريع' : (a.type === 'developer' ? 'رسالة المطور' : 'إعلان عام');
               const badgeIcon = a.type === 'button' ? 'link' : (a.type === 'developer' ? 'code' : 'bullhorn');
+
+              let sourceHtml = '';
+              if (a.type === 'developer') {
+                sourceHtml = `<span class="notif-source"><i class="fas fa-code"></i> <span>إدارة النظام</span></span>`;
+              } else if (studentChurch) {
+                sourceHtml = `<span class="notif-source"><i class="fas fa-church"></i> <span>${esc(studentChurch)}</span></span>`;
+              }
+
+              const footerHtml = (sourceHtml || linkHtml) ? `
+                <div class="notif-card-footer">
+                  ${sourceHtml || '<span></span>'}
+                  ${linkHtml}
+                </div>` : '';
 
               return `
                 <div class="notif-card">
@@ -10500,10 +10521,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'logou
                   <div class="notif-card-title">${esc(a.text)}</div>
                   ${imgHtml}
                   ${descHtml}
-                  <div class="notif-card-footer">
-                    <span class="notif-source"><i class="fas fa-church"></i> من كنيسة مارمرقس أو خدام الفصل</span>
-                    ${linkHtml}
-                  </div>
+                  ${footerHtml}
                 </div>`;
             }).join('')}
               </div>`;
