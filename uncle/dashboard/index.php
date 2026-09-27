@@ -13365,9 +13365,9 @@ $showSettings = $hasChurchId || $isDevOrAdmin;
                                 <div
                                     style="display: flex; align-items: center; justify-content: space-between; gap: 12px; width: 100%;">
                                     <div style="display: flex; align-items: center; gap: 10px; min-width: 0;">
-                                        <div
-                                            style="width: 34px; height: 34px; border-radius: 8px; background: rgba(234, 67, 53, 0.1); color: #ea4335; display: flex; align-items: center; justify-content: center; font-size: 0.95rem; flex-shrink: 0;">
-                                            <i class="fab fa-google"></i>
+                                        <div id="aiGoogleIconBox"
+                                            style="width: 34px; height: 34px; border-radius: 8px; background: rgba(66, 133, 244, 0.1); color: #4285F4; display: flex; align-items: center; justify-content: center; font-size: 0.95rem; flex-shrink: 0;">
+                                            <i class="fab fa-google" style="color: #4285F4;"></i>
                                         </div>
                                         <div style="min-width: 0;">
                                             <div style="font-size: 0.82rem; font-weight: 800; color: var(--text-2);">حساب Google</div>
@@ -13375,8 +13375,8 @@ $showSettings = $hasChurchId || $isDevOrAdmin;
                                         </div>
                                     </div>
                                     <div id="aiGoogleActionArea" style="flex-shrink: 0;">
-                                        <button type="button" class="btn btn-secondary btn-sm" id="uncleLinkGoogleBtn" onclick="initiateUncleGoogleLink()" style="font-size: 0.75rem; padding: 5px 10px; border-radius: var(--r-sm); display: flex; align-items: center; gap: 5px;">
-                                            <i class="fab fa-google" style="color:#ea4335;"></i> ربط
+                                        <button type="button" class="btn btn-secondary btn-sm" id="uncleLinkGoogleBtn" onclick="initiateUncleGoogleLink()" style="font-size: 0.75rem; padding: 5px 12px; border-radius: var(--r-sm); display: flex; align-items: center; gap: 5px; color:#4285F4; border-color:rgba(66,133,244,0.35); background:rgba(66,133,244,0.06);">
+                                            <i class="fab fa-google" style="color:#4285F4;"></i> ربط
                                         </button>
                                     </div>
                                 </div>
@@ -13429,14 +13429,14 @@ $showSettings = $hasChurchId || $isDevOrAdmin;
                                 </a>
                                 <div class="settings-hub-card" id="uncleHubGoogleCard" onclick="handleUncleGoogleHubClick()"
                                     style="max-width: 100%; aspect-ratio: auto; min-height: 80px; display: flex; flex-direction: row; align-items: center; justify-content: flex-start; padding: 12px; gap: 12px; border-radius: 12px; cursor: pointer;">
-                                    <div class="settings-hub-icon"
-                                        style="background:rgba(234, 67, 53, 0.1);color:#ea4335; width: 40px; height: 40px; font-size: 1.1rem; border-radius: 10px; display: flex; align-items: center; justify-content: center;">
-                                        <i class="fab fa-google"></i>
+                                    <div class="settings-hub-icon" id="uncleHubGoogleIconBox"
+                                        style="background:rgba(66, 133, 244, 0.1);color:#4285F4; width: 40px; height: 40px; font-size: 1.1rem; border-radius: 10px; display: flex; align-items: center; justify-content: center;">
+                                        <i class="fab fa-google" style="color:#4285F4;"></i>
                                     </div>
                                     <div style="text-align: right; flex: 1; min-width: 0;">
                                         <div class="settings-hub-title" id="uncleHubGoogleTitle"
-                                            style="font-size: 0.8rem; font-weight: 800; color: var(--text);">ربط Google</div>
-                                        <div style="font-size: 0.68rem; color: var(--text-3); margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" id="uncleHubGoogleSubtitle">تسجيل دخول أسرع</div>
+                                            style="font-size: 0.8rem; font-weight: 800; color: var(--text);">حساب Google</div>
+                                        <div style="font-size: 0.68rem; color: var(--text-3); margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" id="uncleHubGoogleSubtitle">غير مرتبط</div>
                                     </div>
                                 </div>
                             </div>
@@ -13548,13 +13548,15 @@ $showSettings = $hasChurchId || $isDevOrAdmin;
                                     <div class="form-group">
                                         <label class="form-label">حساب Google المرتبط</label>
                                         <div style="display: flex; align-items: center; justify-content: space-between; gap: 10px; background: var(--surface-3); border: 1.5px solid var(--border-solid); border-radius: var(--r-md); padding: 10px 14px;">
-                                            <div style="display: flex; align-items: center; gap: 8px; min-width: 0;">
-                                                <i class="fab fa-google" style="color:#ea4335; font-size:1.1rem; flex-shrink:0;"></i>
+                                            <div style="display: flex; align-items: center; gap: 10px; min-width: 0;">
+                                                <div style="width:28px; height:28px; border-radius:6px; background:rgba(66,133,244,0.1); display:flex; align-items:center; justify-content:center; flex-shrink:0;">
+                                                    <i class="fab fa-google" style="color:#4285F4; font-size:0.95rem;"></i>
+                                                </div>
                                                 <span id="uncleEditGoogleStatusText" style="font-size:0.82rem; font-weight:700; color:var(--text); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">غير مربوط</span>
                                             </div>
                                             <div id="uncleEditGoogleActionArea" style="flex-shrink: 0;">
-                                                <button type="button" class="btn btn-secondary btn-sm" onclick="initiateUncleGoogleLink()" style="font-size:0.75rem; padding:6px 12px; border-radius:var(--r-sm);">
-                                                    <i class="fab fa-google"></i> ربط الآن
+                                                <button type="button" class="btn btn-secondary btn-sm" onclick="initiateUncleGoogleLink()" style="font-size:0.75rem; padding:6px 14px; border-radius:var(--r-sm); color:#4285F4; border-color:rgba(66,133,244,0.35); background:rgba(66,133,244,0.06);">
+                                                    <i class="fab fa-google" style="color:#4285F4;"></i> ربط الآن
                                                 </button>
                                             </div>
                                         </div>
@@ -16750,33 +16752,41 @@ $showSettings = $hasChurchId || $isDevOrAdmin;
         const GOOGLE_CLIENT_ID_UNCLE = '384251465276-lu14sul99cfm36p94a3bbg5aq9jp5fm4.apps.googleusercontent.com';
 
         function syncUncleGoogleUI(googleId, googleEmail) {
-            const hasGoogle = !!(googleId && googleId !== '' && googleId !== '0');
-            const gEmail = googleEmail || '';
+            const currentU = window.currentUncle || {};
+            const gId = googleId !== undefined ? googleId : (currentU.google_id || localStorage.getItem('uncleGoogleId') || '');
+            const gEmail = googleEmail !== undefined ? googleEmail : (currentU.google_email || localStorage.getItem('uncleGoogleEmail') || '');
+            const hasGoogle = !!(gId && String(gId).trim() !== '' && String(gId).trim() !== '0');
             
-            // In Profile View (read-only info card)
-            const statusEl = document.getElementById('aiGoogleStatus');
-            const actionBtnEl = document.getElementById('aiGoogleActionBtn');
-            if (statusEl) {
+            // 1. Profile View (read-only info card)
+            const emailEl = document.getElementById('aiGoogleEmail') || document.getElementById('aiGoogleStatus');
+            const actionBtnEl = document.getElementById('aiGoogleActionArea') || document.getElementById('aiGoogleActionBtn');
+            const iconBoxEl = document.getElementById('aiGoogleIconBox');
+            if (emailEl) {
                 if (hasGoogle) {
-                    statusEl.innerHTML = `<span style="color:#10b981; font-weight:700; display:inline-flex; align-items:center; gap:5px;"><i class="fas fa-check-circle" style="color:#10b981;"></i>مربوط (${escHtml(gEmail || 'حساب مفعل')})</span>`;
+                    const displayMail = gEmail || 'حساب مفعل ومربوط';
+                    emailEl.innerHTML = `<span style="color:#10b981; font-weight:700; display:inline-flex; align-items:center; gap:4px;"><i class="fas fa-check-circle" style="color:#10b981; font-size:0.75rem;"></i> ${escHtml(displayMail)}</span>`;
                 } else {
-                    statusEl.innerHTML = `<span style="color:var(--text-3); font-weight:600;">غير مرتبط</span>`;
+                    emailEl.innerHTML = `<span style="color:var(--text-3); font-weight:600;">غير مربوط</span>`;
                 }
             }
             if (actionBtnEl) {
                 if (hasGoogle) {
-                    actionBtnEl.innerHTML = `<button type="button" class="btn btn-sm" onclick="unlinkUncleGoogle()" style="font-size:0.75rem; padding:4px 12px; border-radius:var(--r-sm); background:var(--danger-bg); color:var(--danger); border:1px solid rgba(239,68,68,0.25); cursor:pointer;"><i class="fas fa-unlink" style="margin-left:4px;"></i> إلغاء الربط</button>`;
+                    actionBtnEl.innerHTML = `<button type="button" class="btn btn-sm" onclick="unlinkUncleGoogle()" style="font-size:0.75rem; padding:4px 10px; border-radius:var(--r-sm); background:var(--danger-bg); color:var(--danger); border:1px solid rgba(239,68,68,0.25); cursor:pointer;"><i class="fas fa-unlink" style="margin-left:4px;"></i> إلغاء الربط</button>`;
                 } else {
-                    actionBtnEl.innerHTML = `<button type="button" class="btn btn-primary btn-sm" onclick="initiateUncleGoogleLink()" style="font-size:0.75rem; padding:5px 14px; border-radius:var(--r-sm); cursor:pointer;"><i class="fab fa-google" style="margin-left:4px;"></i> ربط بحساب Google</button>`;
+                    actionBtnEl.innerHTML = `<button type="button" class="btn btn-secondary btn-sm" id="uncleLinkGoogleBtn" onclick="initiateUncleGoogleLink()" style="font-size:0.75rem; padding:5px 12px; border-radius:var(--r-sm); cursor:pointer; color:#4285F4; border-color:rgba(66,133,244,0.35); background:rgba(66,133,244,0.06);"><i class="fab fa-google" style="color:#4285F4; margin-left:4px;"></i> ربط</button>`;
                 }
             }
+            if (iconBoxEl) {
+                iconBoxEl.style.background = 'rgba(66, 133, 244, 0.1)';
+                iconBoxEl.style.color = '#4285F4';
+            }
 
-            // In Edit Profile Form
+            // 2. In Edit Profile Form
             const editStatusEl = document.getElementById('uncleEditGoogleStatusText');
             const editActionEl = document.getElementById('uncleEditGoogleActionArea');
             if (editStatusEl) {
                 if (hasGoogle) {
-                    editStatusEl.innerHTML = `<span style="color:#10b981; font-weight:700; display:inline-flex; align-items:center; gap:5px;"><i class="fas fa-check-circle" style="color:#10b981;"></i>مربوط (${escHtml(gEmail || 'مفعل')})</span>`;
+                    editStatusEl.innerHTML = `<span style="color:#10b981; font-weight:700; display:inline-flex; align-items:center; gap:4px;"><i class="fas fa-check-circle" style="color:#10b981; font-size:0.8rem;"></i> ${escHtml(gEmail || 'مربوط')}</span>`;
                 } else {
                     editStatusEl.innerHTML = `<span style="color:var(--text-3); font-weight:600;">غير مرتبط</span>`;
                 }
@@ -16785,8 +16795,25 @@ $showSettings = $hasChurchId || $isDevOrAdmin;
                 if (hasGoogle) {
                     editActionEl.innerHTML = `<button type="button" class="btn btn-sm" onclick="unlinkUncleGoogle()" style="font-size:0.75rem; padding:6px 12px; border-radius:var(--r-sm); background:var(--danger-bg); color:var(--danger); border:1px solid rgba(239,68,68,0.25); cursor:pointer;"><i class="fas fa-unlink" style="margin-left:4px;"></i> إلغاء الربط</button>`;
                 } else {
-                    editActionEl.innerHTML = `<button type="button" class="btn btn-secondary btn-sm" onclick="initiateUncleGoogleLink()" style="font-size:0.75rem; padding:6px 14px; border-radius:var(--r-sm); cursor:pointer;"><i class="fab fa-google" style="margin-left:4px;"></i> ربط الآن</button>`;
+                    editActionEl.innerHTML = `<button type="button" class="btn btn-secondary btn-sm" onclick="initiateUncleGoogleLink()" style="font-size:0.75rem; padding:6px 14px; border-radius:var(--r-sm); cursor:pointer; color:#4285F4; border-color:rgba(66,133,244,0.35); background:rgba(66,133,244,0.06);"><i class="fab fa-google" style="color:#4285F4; margin-left:4px;"></i> ربط الآن</button>`;
                 }
+            }
+
+            // 3. Settings Hub Card
+            const hubSub = document.getElementById('uncleHubGoogleSubtitle');
+            if (hubSub) {
+                hubSub.textContent = hasGoogle ? (gEmail || 'مرتبط بنجاح') : 'تسجيل دخول أسرع';
+                hubSub.style.color = hasGoogle ? '#10b981' : 'var(--text-3)';
+            }
+        }
+
+        function handleUncleGoogleHubClick() {
+            const hasGoogle = !!(window.currentUncle?.google_id || localStorage.getItem('uncleGoogleId'));
+            if (hasGoogle) {
+                const mail = window.currentUncle?.google_email || localStorage.getItem('uncleGoogleEmail') || '';
+                showToast('حساب Google مربوط بالفعل: ' + (mail || ''), 'info');
+            } else {
+                initiateUncleGoogleLink();
             }
         }
 
@@ -16912,6 +16939,18 @@ $showSettings = $hasChurchId || $isDevOrAdmin;
         function showAccountModal() {
             updateHash('account');
             showAccountModalInternal();
+            if (navigator.onLine && typeof makeApiCall === 'function') {
+                makeApiCall({ action: 'getCurrentUncle' }, r => {
+                    if (r && r.uncle) {
+                        window.currentUncle = Object.assign(window.currentUncle || {}, r.uncle);
+                        try { localStorage.setItem('currentUncleData', JSON.stringify(window.currentUncle)); } catch (e) { }
+                        if (r.uncle.google_id !== undefined) localStorage.setItem('uncleGoogleId', r.uncle.google_id || '');
+                        if (r.uncle.google_email !== undefined) localStorage.setItem('uncleGoogleEmail', r.uncle.google_email || '');
+                        if (r.uncle.email) localStorage.setItem('uncleEmail', r.uncle.email);
+                        showAccountModalInternal();
+                    }
+                });
+            }
         }
 
         function showAccountModalInternal() {

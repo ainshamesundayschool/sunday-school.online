@@ -16930,6 +16930,8 @@ function handleUncleLogin()
                 $requiresSecuritySetup = ($isDefaultPassword || $isMissingEmail);
 
                 $_SESSION['uncle_email'] = $row['email'] ?? '';
+                $_SESSION['uncle_google_id'] = $row['google_id'] ?? '';
+                $_SESSION['uncle_google_email'] = $row['google_email'] ?? '';
                 $_SESSION['requires_security_setup'] = $requiresSecuritySetup;
                 $_SESSION['must_change_password'] = $isDefaultPassword;
                 $_SESSION['must_add_email'] = $isMissingEmail;
@@ -16965,7 +16967,9 @@ function handleUncleLogin()
                         'username' => $row['username'],
                         'image_url' => $row['image_url'],
                         'role' => $row['role'],
-                        'email' => $row['email'] ?? ''
+                        'email' => $row['email'] ?? '',
+                        'google_id' => $row['google_id'] ?? '',
+                        'google_email' => $row['google_email'] ?? ''
                     ],
                     'church_name' => $row['church_name'],
                     'church_type' => $row['church_type'],
@@ -17446,6 +17450,8 @@ function handleUncleGoogleSignIn(): void
         $requiresSecuritySetup = ($isDefaultPassword || $isMissingEmail);
 
         $_SESSION['uncle_email'] = $uncle['email'] ?? '';
+        $_SESSION['uncle_google_id'] = $uncle['google_id'] ?? $googleId;
+        $_SESSION['uncle_google_email'] = $uncle['google_email'] ?? $email;
         $_SESSION['requires_security_setup'] = $requiresSecuritySetup;
         $_SESSION['must_change_password'] = $isDefaultPassword;
         $_SESSION['must_add_email'] = $isMissingEmail;
@@ -17462,7 +17468,9 @@ function handleUncleGoogleSignIn(): void
                 'username' => $uncle['username'],
                 'image_url' => $uncle['image_url'],
                 'role' => $uncle['role'],
-                'email' => $uncle['email'] ?? ''
+                'email' => $uncle['email'] ?? '',
+                'google_id' => $uncle['google_id'] ?? $googleId,
+                'google_email' => $uncle['google_email'] ?? $email
             ],
             'church_name' => $uncle['church_name'],
             'church_type' => $uncle['church_type']
