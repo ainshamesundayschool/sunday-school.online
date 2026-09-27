@@ -729,76 +729,87 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'logou
       flex-shrink: 0;
     }
 
-    /* ── COLLAPSED MOBILE HERO STATE (§5) ──────────────── */
+    /* ── CONTINUOUS SCROLL-RESPONSIVE MOBILE HERO ──────────────── */
     @media (max-width: 899px) {
-      body.hero-collapsed .hero {
+      .hero {
         position: sticky;
         top: 0;
-        z-index: 900;
-        min-height: 58px;
-        height: 58px;
-        flex-direction: row;
+        z-index: 500;
+        overflow: hidden;
+        /* Dynamic height: smoothly transitions from 240px to 62px */
+        height: calc(240px - (var(--hero-p, 0) * 178px));
+        min-height: 62px;
+        padding: calc(10px - (var(--hero-p, 0) * 4px)) 14px calc(14px - (var(--hero-p, 0) * 10px));
+        box-shadow: 0 4px calc(6px + var(--hero-p, 0) * 16px) rgba(0, 0, 0, calc(0.08 + var(--hero-p, 0) * 0.16));
+        will-change: height, padding, box-shadow;
+      }
+
+      .hero-top {
+        padding: 0;
+        display: flex;
         align-items: center;
         justify-content: space-between;
-        padding: 0 14px;
-        box-shadow: 0 4px 18px rgba(0, 0, 0, .18);
       }
 
-      body.hero-collapsed .hero-top {
-        order: 2;
+      .hero-church-chip {
+        opacity: calc(1 - (var(--hero-p, 0) * 2.5));
+        transform: translateY(calc(var(--hero-p, 0) * -12px));
+        pointer-events: calc(1 - var(--hero-p, 0) < 0.25 ? 'none' : 'auto');
+      }
+
+      .hero-body {
         padding: 0;
-        width: auto;
-      }
-
-      body.hero-collapsed .hero-church-chip {
-        display: none !important;
-      }
-
-      body.hero-collapsed .hero-body {
-        order: 1;
-        flex-direction: row;
+        position: relative;
+        display: flex;
+        flex-direction: column;
         align-items: center;
-        justify-content: flex-start;
-        gap: 10px;
-        padding: 0;
-        flex: 1;
-        min-width: 0;
+        justify-content: center;
+        transform: translateY(calc(var(--hero-p, 0) * -18px));
+        will-change: transform;
       }
 
-      body.hero-collapsed .avatar-ring {
-        width: 36px;
-        height: 36px;
-        border-width: 2px;
-        box-shadow: 0 2px 6px rgba(0, 0, 0, .2);
-        flex-shrink: 0;
+      .avatar-ring {
+        width: calc(88px - (var(--hero-p, 0) * 48px));
+        height: calc(88px - (var(--hero-p, 0) * 48px));
+        border-width: calc(3px - (var(--hero-p, 0) * 1px));
+        box-shadow: 0 2px calc(8px - (var(--hero-p, 0) * 4px)) rgba(0, 0, 0, .2);
+        will-change: width, height;
       }
 
-      body.hero-collapsed .avatar-inner {
-        font-size: .95rem;
+      .avatar-inner {
+        font-size: calc(2.2rem - (var(--hero-p, 0) * 1.25rem));
       }
 
-      body.hero-collapsed .avatar-edit-fab,
-      body.hero-collapsed #deleteStudentPhotoBtn {
-        display: none !important;
+      .avatar-edit-fab,
+      #deleteStudentPhotoBtn {
+        opacity: calc(1 - (var(--hero-p, 0) * 3));
+        transform: scale(calc(1 - var(--hero-p, 0)));
+        pointer-events: calc(1 - var(--hero-p, 0) < 0.25 ? 'none' : 'auto');
       }
 
-      body.hero-collapsed .hero-name {
-        margin: 0;
-        font-size: .95rem;
-        font-weight: 700;
+      .hero-name {
+        margin-top: calc(8px - (var(--hero-p, 0) * 6px));
+        font-size: calc(1.35rem - (var(--hero-p, 0) * 0.42rem));
+        font-weight: 800;
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
-        text-align: right;
+        max-width: 90vw;
+        transform: translateY(calc(var(--hero-p, 0) * -2px));
       }
 
-      body.hero-collapsed .hero-subtitle,
-      body.hero-collapsed .hero-tags,
-      body.hero-collapsed #birthdayGreetingBtn,
-      body.hero-collapsed #scInfo,
-      body.hero-collapsed .coupon-hero,
-      body.hero-collapsed .hero-wave {
-        display: none !important;
+      .hero-subtitle,
+      .hero-tags,
+      #birthdayGreetingBtn,
+      .coupon-hero,
+      .hero-wave {
+        opacity: calc(1 - (var(--hero-p, 0) * 2.2));
+        transform: translateY(calc(var(--hero-p, 0) * -12px));
+        max-height: calc(120px * (1 - var(--hero-p, 0)));
+        margin-top: calc(6px * (1 - var(--hero-p, 0)));
+        pointer-events: calc(1 - var(--hero-p, 0) < 0.2 ? 'none' : 'auto');
+        overflow: hidden;
+        will-change: opacity, transform, max-height;
       }
     }
 
@@ -1020,7 +1031,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'logou
 
     .as.ok {
       background: var(--ok-bg);
-      border-color: #6ee7b7;
+      border-color: rgba(16, 185, 129, 0.2);
     }
 
     .as.ok .as-val {
@@ -1029,7 +1040,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'logou
 
     .as.err {
       background: var(--err-bg);
-      border-color: #fca5a5;
+      border-color: rgba(239, 68, 68, 0.2);
     }
 
     .as.err .as-val {
@@ -1042,37 +1053,39 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'logou
 
     .cal-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(82px, 1fr));
-      gap: 8px;
+      grid-template-columns: repeat(auto-fill, minmax(62px, 1fr));
+      gap: 6px;
     }
 
     .cal-day {
-      padding: 10px 7px;
-      border-radius: var(--r-md);
+      padding: 6px 4px;
+      border-radius: var(--r-sm);
       text-align: center;
-      border: 2px solid var(--bdr);
-      background: var(--s2);
+      border: 1px solid var(--border-solid);
+      background: var(--surface-2);
       transition: var(--fast);
     }
 
     .cal-day:hover {
-      box-shadow: var(--sh-sm);
+      box-shadow: var(--shadow-sm);
+      transform: translateY(-1px);
     }
 
     .cal-day.present {
       background: var(--ok-bg);
-      border-color: #6ee7b7;
+      border-color: rgba(16, 185, 129, 0.25);
     }
 
     .cal-day.absent {
       background: var(--err-bg);
-      border-color: #fca5a5;
+      border-color: rgba(239, 68, 68, 0.25);
     }
 
     .cd-num {
-      font-size: 1.1rem;
+      font-size: 0.95rem;
       font-weight: 800;
       color: var(--t1);
+      line-height: 1;
     }
 
     .cal-day.present .cd-num {
@@ -1084,15 +1097,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'logou
     }
 
     .cd-mo {
-      font-size: .6rem;
+      font-size: .56rem;
       color: var(--t4);
       font-weight: 600;
+      margin-top: 1px;
     }
 
     .cd-st {
-      font-size: .62rem;
+      font-size: .58rem;
       font-weight: 700;
-      margin-top: 3px;
+      margin-top: 2px;
       color: var(--t5);
     }
 
@@ -1105,10 +1119,145 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'logou
     }
 
     .cd-days {
-      font-size: .58rem;
+      font-size: .52rem;
       color: var(--t4);
       margin-top: 1px;
       font-weight: 500;
+    }
+
+    /* ── Inline Attendance History in Page ──────────────── */
+    .att-search-input {
+      flex: 1;
+      min-width: 140px;
+      padding: 8px 12px;
+      border: 1px solid var(--border-solid);
+      border-radius: var(--r-md);
+      font-family: var(--font-main);
+      font-size: .86rem;
+      background: var(--surface-2);
+      color: var(--t1);
+      outline: none;
+      transition: border-color var(--fast);
+    }
+
+    .att-search-input:focus {
+      border-color: var(--brand);
+      background: var(--surf);
+    }
+
+    .att-sort-select {
+      padding: 8px 12px;
+      border: 1px solid var(--border-solid);
+      border-radius: var(--r-md);
+      font-family: var(--font-main);
+      font-size: .82rem;
+      background: var(--surface-2);
+      color: var(--t2);
+      outline: none;
+    }
+
+    .att-hist-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 10px 14px;
+      border-radius: var(--r-md);
+      border: 1px solid var(--border-solid);
+      background: var(--surface-2);
+      transition: all var(--fast);
+    }
+
+    .att-hist-row:hover {
+      transform: translateY(-1px);
+      box-shadow: var(--shadow-sm);
+    }
+
+    .att-hist-row.present {
+      background: var(--ok-bg);
+      border-color: rgba(16, 185, 129, 0.22);
+    }
+
+    .att-hist-row.absent {
+      background: var(--err-bg);
+      border-color: rgba(239, 68, 68, 0.22);
+    }
+
+    .att-row-dot {
+      width: 9px;
+      height: 9px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+
+    .att-hist-row.present .att-row-dot {
+      background: var(--ok);
+    }
+
+    .att-hist-row.absent .att-row-dot {
+      background: var(--err);
+    }
+
+    .att-hist-row.unrecorded .att-row-dot {
+      background: var(--t4);
+    }
+
+    .att-row-title {
+      font-size: 0.9rem;
+      font-weight: 800;
+      color: var(--t1);
+    }
+
+    .att-row-meta {
+      font-size: 0.68rem;
+      color: var(--t4);
+      font-weight: 600;
+      margin-top: 1px;
+    }
+
+    .att-row-badge {
+      padding: 4px 10px;
+      border-radius: var(--r-full);
+      font-size: 0.7rem;
+      font-weight: 700;
+      flex-shrink: 0;
+      white-space: nowrap;
+    }
+
+    .att-hist-row.present .att-row-badge {
+      background: rgba(16, 185, 129, 0.15);
+      color: var(--ok);
+    }
+
+    .att-hist-row.absent .att-row-badge {
+      background: rgba(239, 68, 68, 0.15);
+      color: var(--err);
+    }
+
+    .att-hist-row.unrecorded .att-row-badge {
+      background: var(--surface-3);
+      color: var(--t4);
+      border: 1px solid var(--border-solid);
+    }
+
+    .att-report-btn {
+      width: 32px;
+      height: 32px;
+      border-radius: 50% !important;
+      border: none;
+      background: #fef3c7;
+      color: #d97706;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.75rem;
+      flex-shrink: 0;
+      transition: all var(--fast);
+    }
+
+    .att-report-btn:hover {
+      background: #fde68a;
+      transform: scale(1.08);
     }
 
     /* ══ ATTENDANCE HISTORY MODAL ════════════════════════ */
@@ -4785,20 +4934,29 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'logou
     /* ══ BOTTOM NAVIGATION ══════════════════════════════════════ */
     .bottom-nav {
       position: fixed;
-      bottom: 0;
-      left: 0;
-      right: 0;
-      height: 64px;
-      background: rgba(255, 255, 255, 0.96);
+      bottom: 12px;
+      left: 14px;
+      right: 14px;
+      height: 60px;
+      background: rgba(255, 255, 255, 0.94);
       backdrop-filter: blur(20px);
       -webkit-backdrop-filter: blur(20px);
-      border-top: 1.5px solid var(--bdr2);
+      border: 1px solid var(--border-solid);
+      border-radius: var(--r-xl);
       display: flex;
       justify-content: space-around;
       align-items: center;
       z-index: 490;
-      padding-bottom: env(safe-area-inset-bottom);
-      box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.04);
+      padding: 6px 8px;
+      box-shadow: 0 8px 30px rgba(0, 0, 0, 0.08);
+      max-width: 500px;
+      margin: 0 auto;
+    }
+
+    [data-theme="dark"] .bottom-nav {
+      background: rgba(24, 27, 38, 0.94);
+      border-color: rgba(91, 108, 245, 0.18);
+      box-shadow: 0 8px 30px rgba(0, 0, 0, 0.4);
     }
 
     .bottom-nav-item {
@@ -4806,63 +4964,39 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'logou
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      color: var(--t3);
-      font-size: 0.68rem;
-      font-weight: 800;
+      color: var(--text-3);
+      font-size: 0.72rem;
+      font-weight: 700;
       text-decoration: none;
       cursor: pointer;
-      transition: all var(--fast);
+      transition: all 0.22s var(--ease);
       flex: 1;
-      height: 100%;
+      height: 48px;
+      border-radius: var(--r-md);
       gap: 3px;
+      position: relative;
     }
 
-    .bottom-nav-item i {
-      font-size: 1.2rem;
-      transition: transform var(--fast);
+    .bottom-nav-item:hover:not(.active) {
+      color: var(--brand);
+      background: var(--brand-bg);
     }
 
     .bottom-nav-item.active {
       color: var(--brand);
+      background: var(--brand-bg);
+      font-weight: 800;
     }
 
     .bottom-nav-item.active i {
-      transform: translateY(-2px);
+      transform: scale(1.12);
+      animation: tabBounce 0.3s var(--spring);
     }
 
-    .bottom-nav-item.center-fab {
-      position: relative;
-      height: fit-content;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: flex-end;
-      padding-bottom: 24px;
-    }
-
-    .fab-btn {
-      width: 63px;
-      height: 58px;
-      border-radius: var(--r-full);
-      background: linear-gradient(135deg, var(--brand) 0%, var(--cou) 100%);
-      color: #fff;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      box-shadow: 0 6px 16px rgba(79, 70, 229, 0.3);
-      transform: translateY(-3px);
-      transition: all var(--fast);
-      border: none;
-    }
-
-    .fab-btn i {
-      font-size: 1.55rem;
-      color: #fff;
-    }
-
-    .bottom-nav-item.center-fab:hover .fab-btn {
-      transform: translateY(-12px) scale(1.05);
-      box-shadow: 0 8px 20px rgba(79, 70, 229, 0.4);
+    @keyframes tabBounce {
+      0% { transform: scale(0.9); }
+      60% { transform: scale(1.18); }
+      100% { transform: scale(1.12); }
     }
 
     /* ══ SIBLINGS & TABS CUSTOM STYLES ══════════════════════════ */
@@ -5206,132 +5340,377 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'logou
       }
     }
 
-    /* Glassmorphic styling for info inside hero (mobile & desktop) */
-    .hero #scInfo {
-      background: rgba(255, 255, 255, 0.1) !important;
-      backdrop-filter: blur(14px) !important;
-      border: 1px solid rgba(255, 255, 255, 0.22) !important;
-      border-radius: var(--r-xl) !important;
-      box-shadow: none !important;
-      margin: 20px auto 0 !important;
-      width: calc(100% - 32px) !important;
-      box-sizing: border-box !important;
-      padding: 16px 20px !important;
-    }
-    
-    .hero #scInfo .sc-head {
-      margin-bottom: 12px !important;
-      border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important;
-      padding-bottom: 8px !important;
-      display: flex !important;
-      align-items: center !important;
-      gap: 10px !important;
-    }
-    
-    .hero #scInfo .sc-ico {
-      background: rgba(255, 255, 255, 0.15) !important;
-      color: #fff !important;
-      width: 30px !important;
-      height: 30px !important;
-      border-radius: var(--r-xs) !important;
-      display: flex !important;
+    /* ══ CIRCULAR CLOSE BUTTONS & BORDERLESS STANDARD ══════════════ */
+    .mclose,
+    .close-btn,
+    .btn-close-circle,
+    button[aria-label="إغلاق"] {
+      width: 32px !important;
+      height: 32px !important;
+      border-radius: 50% !important;
+      display: inline-flex !important;
       align-items: center !important;
       justify-content: center !important;
-      font-size: .85rem !important;
-    }
-    
-    .hero #scInfo .sc-title {
-      color: #fff !important;
-      font-weight: 800 !important;
-      font-size: 0.88rem !important;
-    }
-    
-    .hero #scInfo .ip {
-      background: rgba(255, 255, 255, 0.08) !important;
-      border: 1px solid rgba(255, 255, 255, 0.12) !important;
+      background: var(--surface-3) !important;
+      color: var(--text-2) !important;
+      border: none !important;
+      cursor: pointer !important;
       transition: all var(--fast) !important;
-    }
-    
-    .hero #scInfo .ip:hover {
-      background: rgba(255, 255, 255, 0.16) !important;
-      border-color: rgba(255, 255, 255, 0.25) !important;
-    }
-    
-    .hero #scInfo .ip-ico {
-      background: rgba(255, 255, 255, 0.15) !important;
-      color: #fff !important;
-    }
-    
-    .hero #scInfo .ip-lbl {
-      color: rgba(255, 255, 255, 0.75) !important;
-    }
-    
-    .hero #scInfo .ip-val {
-      color: #fff !important;
+      flex-shrink: 0 !important;
     }
 
+    .mclose:hover,
+    .close-btn:hover,
+    button[aria-label="إغلاق"]:hover {
+      background: var(--brand-bg) !important;
+      color: var(--brand) !important;
+      transform: scale(1.1) !important;
+    }
+
+    /* ══ MODAL & PAGE TRANSITION ANIMATIONS ══════════════════════ */
+    @keyframes overlayIn {
+      from { opacity: 0; }
+      to   { opacity: 1; }
+    }
+
+    @keyframes sheetUp {
+      from { transform: translateY(100%); }
+      to   { transform: translateY(0); }
+    }
+
+    @keyframes fadeScaleIn {
+      from { opacity: 0; transform: scale(.96) translateY(14px); }
+      to   { opacity: 1; transform: scale(1) translateY(0); }
+    }
+
+    @keyframes tabContentFadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(14px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .overlay.open {
+      animation: overlayIn 0.2s var(--ease);
+    }
+
+    .overlay.open .settings-sheet,
+    .overlay.open .modal {
+      animation: sheetUp 0.32s var(--spring);
+    }
+
+    @media (min-width: 769px) {
+      .overlay.open .settings-sheet,
+      .overlay.open .modal {
+        animation: fadeScaleIn 0.25s var(--spring);
+      }
+    }
+
+    .page > .sc,
+    .page > #scAttHistory {
+      animation: tabContentFadeIn 0.28s var(--spring) both;
+    }
+
+    /* ══ NOTIFICATIONS & ANNOUNCEMENTS REDESIGN ══════════════════ */
+    .notif-sheet-header {
+      padding: 16px 20px 14px;
+      border-bottom: 1px solid var(--border-solid);
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-shrink: 0;
+      direction: rtl;
+    }
+
+    .notif-sheet-icon {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background: var(--warning-bg);
+      color: var(--warning);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.15rem;
+      flex-shrink: 0;
+    }
+
+    .notif-sheet-title-col {
+      flex: 1;
+      min-width: 0;
+      text-align: right;
+    }
+
+    .notif-sheet-title {
+      font-size: 1.05rem;
+      font-weight: 800;
+      color: var(--text);
+      line-height: 1.2;
+    }
+
+    .notif-sheet-sub {
+      font-size: 0.72rem;
+      color: var(--text-3);
+      font-weight: 600;
+      margin-top: 2px;
+    }
+
+    .notif-sheet-body {
+      padding: 16px 18px;
+      overflow-y: auto;
+      flex: 1;
+      max-height: calc(92vh - 140px);
+      text-align: right;
+      direction: rtl;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .notif-sheet-footer {
+      padding: 12px 18px;
+      border-top: 1px solid var(--border-solid);
+      display: flex;
+      justify-content: flex-end;
+    }
+
+    .btn-secondary-pill {
+      width: 100%;
+      padding: 10px;
+      border-radius: var(--r-md);
+      background: var(--surface-2);
+      border: 1px solid var(--border-solid);
+      color: var(--text-2);
+      font-weight: 700;
+      font-family: var(--font-main);
+      cursor: pointer;
+      transition: all var(--fast);
+    }
+
+    .btn-secondary-pill:hover {
+      background: var(--surface-3);
+      color: var(--brand);
+    }
+
+    .notif-card {
+      position: relative;
+      background: var(--surface);
+      border: 1px solid var(--border-solid);
+      border-radius: var(--r-lg);
+      padding: 14px 16px;
+      box-shadow: var(--shadow-sm);
+      transition: all var(--fast);
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      text-align: right;
+    }
+
+    .notif-card:hover {
+      border-color: var(--brand-light);
+      box-shadow: var(--shadow-md);
+    }
+
+    .notif-card-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+    }
+
+    .notif-badge-group {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .notif-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 4px 10px;
+      border-radius: var(--r-full);
+      font-size: 0.72rem;
+      font-weight: 700;
+    }
+
+    .notif-badge.announcement {
+      background: var(--warning-bg);
+      color: var(--warning-dark);
+    }
+
+    .notif-badge.link {
+      background: var(--coupon-bg);
+      color: var(--coupon-dark);
+    }
+
+    .notif-badge.dev {
+      background: var(--brand-bg);
+      color: var(--brand-dark);
+    }
+
+    .notif-time {
+      font-size: 0.68rem;
+      color: var(--text-3);
+      font-weight: 500;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .notif-dismiss-btn {
+      width: 26px;
+      height: 26px;
+      border-radius: 50% !important;
+      background: var(--surface-2);
+      border: none;
+      color: var(--text-3);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.72rem;
+      transition: all var(--fast);
+    }
+
+    .notif-dismiss-btn:hover {
+      background: var(--danger-bg);
+      color: var(--danger);
+    }
+
+    .notif-card-title {
+      font-size: 0.94rem;
+      font-weight: 800;
+      color: var(--text);
+      line-height: 1.5;
+    }
+
+    .notif-card-desc {
+      font-size: 0.82rem;
+      color: var(--text-2);
+      line-height: 1.6;
+      white-space: pre-wrap;
+    }
+
+    .notif-card-footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      margin-top: 4px;
+      padding-top: 8px;
+      border-top: 1px solid var(--border-solid);
+    }
+
+    .notif-source {
+      font-size: 0.7rem;
+      color: var(--text-3);
+      font-weight: 600;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .notif-action-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 14px;
+      border-radius: var(--r-full);
+      background: linear-gradient(135deg, var(--brand), var(--brand-dark));
+      color: #fff;
+      font-size: 0.78rem;
+      font-weight: 700;
+      text-decoration: none;
+      box-shadow: 0 4px 10px rgba(91, 108, 245, 0.25);
+      transition: all var(--fast);
+    }
+
+    .notif-action-btn:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 6px 14px rgba(91, 108, 245, 0.35);
+    }
+
+    .notif-empty-state {
+      text-align: center;
+      padding: 40px 20px;
+      color: var(--text-3);
+    }
+
+    .notif-empty-icon {
+      width: 56px;
+      height: 56px;
+      border-radius: 50%;
+      background: var(--surface-2);
+      color: var(--text-3);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.6rem;
+      margin: 0 auto 14px auto;
+    }
+
+    .notif-empty-title {
+      font-size: 1.05rem;
+      font-weight: 800;
+      color: var(--text);
+      margin-bottom: 4px;
+    }
+
+    .notif-empty-desc {
+      font-size: 0.78rem;
+      color: var(--text-3);
+      line-height: 1.5;
+    }
+
+    /* ══ DESKTOP HORIZONTAL LAYOUT (NOT SIDE THING) ══════════════ */
     .sidebar-desktop,
     .main-content-desktop {
       display: contents;
     }
 
     @media (min-width: 900px) {
-      .sidebar-desktop {
-        grid-column: 1;
-        grid-row: 1 / 3;
+      body {
         display: flex !important;
         flex-direction: column !important;
         align-items: center !important;
-        background: linear-gradient(145deg, #312e81 0%, #4f46e5 35%, #7c3aed 70%, #5b21b6 100%) !important;
-        border: 1px solid rgba(255, 255, 255, 0.15) !important;
+        min-height: 100vh !important;
+        background: var(--bg) !important;
+        direction: rtl !important;
+        margin: 0 !important;
+        width: 100% !important;
+      }
+
+      /* Desktop Hero as a Grand Top Header Banner */
+      .sidebar-desktop {
+        width: 100% !important;
+        max-width: 1000px !important;
+        margin: 24px auto 0 auto !important;
         border-radius: var(--r-xl) !important;
-        position: sticky !important;
-        top: 24px !important;
-        height: fit-content !important;
-        margin: 24px 24px 24px 12px !important;
-        overflow-y: auto;
-        z-index: 500;
+        position: relative !important;
+        top: 0 !important;
+        height: auto !important;
+        box-shadow: 0 12px 32px rgba(49, 46, 129, 0.18) !important;
+        background: linear-gradient(145deg, #312e81 0%, #4f46e5 35%, #7c3aed 70%, #5b21b6 100%) !important;
+        overflow: hidden !important;
         box-sizing: border-box !important;
-        box-shadow: 0 12px 32px rgba(49, 46, 129, 0.25) !important;
-        animation: sidebarSlideIn 0.32s var(--ease) both;
+        display: block !important;
+        animation: fadeIn 0.32s var(--ease) both;
       }
 
-      /* ── Desktop entrance animations (smoothed per §8) ── */
-      @keyframes sidebarSlideIn {
-        from { transform: translateX(16px); opacity: 0; }
-        to   { transform: translateX(0);   opacity: 1; }
-      }
-      @keyframes fadeUp {
-        from { transform: translateY(8px); opacity: 0; }
-        to   { transform: translateY(0);    opacity: 1; }
-      }
-      @keyframes fadeIn {
-        from { opacity: 0; }
-        to   { opacity: 1; }
-      }
-
-      /* Main side-by-side grid layout with fluid sidebar per §7 */
-      body {
-        display: grid;
-        grid-template-columns: clamp(280px, 26vw, 380px) minmax(auto, 1000px);
-        grid-template-rows: auto 1fr;
-        justify-content: center;
-        min-height: 100vh;
-        background: var(--bg);
-        direction: rtl;
-        margin: 0;
-      }
-
-      /* Hero panel inside sticky desktop sidebar */
       .hero {
         display: flex !important;
         flex-direction: column !important;
         align-items: center !important;
-        justify-content: center !important;
-        text-align: center !important;
+        justify-content: flex-start !important;
         background: transparent !important;
         border: none !important;
-        padding: 32px 20px 24px !important;
+        padding: 24px 32px !important;
         height: auto !important;
         min-height: auto !important;
         box-shadow: none !important;
@@ -5339,49 +5718,119 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'logou
         position: relative !important;
         width: 100% !important;
         box-sizing: border-box !important;
-        animation: fadeIn 0.32s var(--ease) 0.05s both;
       }
 
-      /* Stagger sidebar children for smooth polish per §8 */
-      .avatar-ring    { animation: fadeUp 0.32s var(--ease) 0.05s both !important; }
-      .hero-name      { animation: fadeUp 0.32s var(--ease) 0.08s both !important; }
-      .hero-subtitle,
-      .hero-tags      { animation: fadeUp 0.32s var(--ease) 0.12s both !important; }
-      #scInfo         { animation: fadeUp 0.32s var(--ease) 0.16s both !important; }
-      .coupon-hero    { animation: fadeUp 0.32s var(--ease) 0.2s both !important; }
-
-      /* Always show personal info in sidebar on desktop view */
-      .hero #scInfo {
-        display: block !important;
+      .hero-top {
+        display: flex !important;
+        flex-direction: row !important;
+        align-items: center !important;
+        justify-content: space-between !important;
+        width: 100% !important;
+        padding: 0 0 16px 0 !important;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.12);
       }
 
-      /* Adjust text colors in sidebar profile */
+      .hero-church-chip {
+        background: rgba(255, 255, 255, 0.16) !important;
+        color: rgba(255, 255, 255, 0.95) !important;
+        border: 1px solid rgba(255, 255, 255, 0.2) !important;
+        max-width: none !important;
+      }
+
+      .hero-body {
+        display: flex !important;
+        flex-direction: row !important;
+        align-items: center !important;
+        justify-content: flex-start !important;
+        gap: 24px !important;
+        width: 100% !important;
+        padding: 18px 0 0 0 !important;
+        text-align: right !important;
+      }
+
+      .avatar-ring {
+        width: 90px !important;
+        height: 90px !important;
+        flex-shrink: 0 !important;
+      }
+
       .hero-name {
+        margin-top: 0 !important;
+        text-align: right !important;
+        font-size: 1.45rem !important;
         color: #fff !important;
-        font-size: 1.22rem !important;
-        margin-top: 10px !important;
-        text-shadow: 0 2px 10px rgba(0, 0, 0, .2) !important;
       }
 
-      /* Converted Bottom Navigation Sidebar inside desktop main-content-desktop wrapper */
+      .hero-subtitle {
+        text-align: right !important;
+        font-size: 0.92rem !important;
+      }
+
+      .hero-tags {
+        justify-content: flex-start !important;
+        margin-top: 8px !important;
+      }
+
+      .coupon-hero {
+        width: 100% !important;
+        margin: 18px 0 0 0 !important;
+        background: rgba(255, 255, 255, 0.12) !important;
+        border: 1px solid rgba(255, 255, 255, 0.18) !important;
+        border-radius: var(--r-lg) !important;
+        display: grid !important;
+        grid-template-columns: 1fr auto !important;
+        align-items: center !important;
+        padding: 14px 20px !important;
+      }
+
+      .hero-wave {
+        display: none !important;
+      }
+
+      /* Desktop Main Content Container */
+      .main-content-desktop {
+        display: flex !important;
+        flex-direction: column !important;
+        align-items: center !important;
+        width: 100% !important;
+        max-width: 1000px !important;
+        margin: 0 auto !important;
+        padding: 20px 0 60px 0 !important;
+        box-sizing: border-box !important;
+        min-height: auto !important;
+      }
+
+      .page {
+        width: 100% !important;
+        max-width: 1000px !important;
+        padding: 0 !important;
+        margin: 0 !important;
+        box-sizing: border-box !important;
+        display: flex !important;
+        flex-direction: column !important;
+      }
+
+      /* Desktop Bottom Navigation Bar as Top Centered Pill Dock */
       .bottom-nav {
         position: relative !important;
+        bottom: auto !important;
+        left: auto !important;
+        right: auto !important;
         height: auto !important;
-        width: auto !important;
-        box-sizing: border-box !important;
-        background: var(--surf) !important;
-        border: 1px solid var(--bdr2) !important;
-        box-shadow: var(--sh-sm) !important;
+        width: fit-content !important;
+        max-width: 100% !important;
+        margin: 0 auto 20px auto !important;
+        background: var(--surface) !important;
+        border: 1px solid var(--border-solid) !important;
+        box-shadow: var(--shadow-sm) !important;
         display: flex !important;
         flex-direction: row !important;
         justify-content: center !important;
         align-items: center !important;
-        padding: 6px !important;
+        padding: 6px 10px !important;
         border-radius: var(--r-full) !important;
-        margin: 0 auto 24px auto !important;
-        gap: 6px !important;
+        gap: 8px !important;
         z-index: 10 !important;
-        animation: fadeUp 0.32s var(--ease) 0.05s both;
       }
 
       .bottom-nav-item {
@@ -5389,237 +5838,40 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'logou
         justify-content: center !important;
         align-items: center !important;
         gap: 8px !important;
-        padding: 9px 18px !important;
-        border-radius: var(--r-full) !important;
-        height: auto !important;
+        padding: 8px 22px !important;
+        border-radius: var(--r-md) !important;
+        height: 42px !important;
         flex: 0 0 auto !important;
-        margin-bottom: 0 !important;
         font-size: 0.92rem !important;
-        color: var(--t3) !important;
+        color: var(--text-2) !important;
         transition: all var(--fast) !important;
         background: transparent !important;
         cursor: pointer !important;
       }
 
-      .bottom-nav-item i {
-        font-size: 1.1rem !important;
-        transform: none !important;
-      }
-
       .bottom-nav-item:hover:not(.active) {
-        background: var(--s2) !important;
+        background: var(--surface-2) !important;
         color: var(--brand) !important;
       }
 
       .bottom-nav-item.active {
         background: var(--brand) !important;
         color: #fff !important;
-        box-shadow: 0 4px 12px rgba(79, 70, 229, .24) !important;
+        box-shadow: 0 4px 14px rgba(91, 108, 245, 0.3) !important;
       }
 
       .bottom-nav-item.active i {
-        transform: none !important;
         color: #fff !important;
       }
 
-      /* Send tab: hide the fab-btn wrapper on desktop — use normal pill styling */
-      .bottom-nav-item.center-fab {
-        padding: 9px 18px !important;
-        order: 0 !important;
-        flex-direction: row !important;
-        align-items: center !important;
-        justify-content: center !important;
-        gap: 8px !important;
-        position: static !important;
-      }
-
-      /* Hide the circular fab-btn wrapper, show its icon inline */
-      .fab-btn {
-        display: contents !important;
-        width: auto !important;
-        height: auto !important;
-        background: none !important;
-        box-shadow: none !important;
-        border-radius: 0 !important;
-        transform: none !important;
-        color: inherit !important;
-      }
-
-      .fab-btn i {
-        font-size: 1.1rem !important;
-        color: inherit !important;
-      }
-
-      /* Show the إرسال label next to the icon */
-      .bottom-nav-item.center-fab > span {
-        display: inline !important;
-        font-size: 0.92rem !important;
-        font-weight: 700 !important;
-      }
-
-      .bottom-nav-item.center-fab:hover .fab-btn {
-        transform: none !important;
-      }
-
-      /* Main Content Desktop Wrapper */
-      .main-content-desktop {
-        grid-column: 2;
-        grid-row: 1 / 3;
-        display: flex !important;
-        flex-direction: column !important;
-        align-items: center !important;
-        width: 100% !important;
-        box-sizing: border-box !important;
-        padding: 32px 12px 60px 24px !important;
-        max-width: 1000px !important;
-        margin: 0 !important;
-        min-height: 100vh !important;
-        animation: fadeIn 0.32s var(--ease) 0.05s both;
-      }
-
-      /* Main Page Content Container */
-      .page {
-        width: 100% !important;
-        max-width: 960px !important;
-        padding: 0 !important;
-        margin: 0 !important;
-        box-sizing: border-box !important;
-        flex: 1 !important;
-        display: flex !important;
-        flex-direction: column !important;
-      }
-
-      /* Stats bar placed horizontally at the top of page content */
       .stats-bar {
         width: 100% !important;
-        max-width: 960px !important;
+        max-width: 1000px !important;
         margin: 0 0 20px 0 !important;
-        box-shadow: var(--sh-sm) !important;
+        box-shadow: var(--shadow-sm) !important;
         border-radius: var(--r-md) !important;
-        background: var(--surf) !important;
-        border: 1px solid var(--bdr) !important;
-        align-self: stretch !important;
-        grid-template-columns: repeat(4, 1fr) !important;
-        position: relative !important;
-      }
-
-      /* Desktop hero-top elements stacked vertically to prevent clipping */
-      .hero-top {
-        display: flex !important;
-        flex-direction: column !important;
-        align-items: center !important;
-        gap: 10px !important;
-        width: 100% !important;
-        box-sizing: border-box !important;
-        padding: 0 16px !important;
-      }
-
-      .hero-church-chip {
-        background: var(--brand-bg) !important;
-        color: var(--brand) !important;
-        border: 1px solid rgba(79, 70, 229, 0.15) !important;
-        max-width: none !important;
-        width: fit-content !important;
-      }
-
-      /* Hide app download floating / top buttons and place in profile */
-      .hero-actions-top {
-        margin-top: 0 !important;
-        gap: 10px !important;
-      }
-      .hero-ico-btn {
-        background: rgba(255, 255, 255, .18) !important;
-        color: #fff !important;
-        border: 1px solid rgba(255, 255, 255, .12) !important;
-      }
-      .hero-ico-btn:hover {
-        background: rgba(255, 255, 255, .28) !important;
-        color: #fff !important;
-      }
-
-      /* Desktop coupon-hero: flat solid surface, no blur per §3 */
-      .coupon-hero {
-        background: rgba(255, 255, 255, .12) !important;
-        backdrop-filter: none !important;
-        -webkit-backdrop-filter: none !important;
-        border: 1px solid rgba(255, 255, 255, .18) !important;
-        box-shadow: none !important;
-        width: calc(100% - 32px) !important;
-        margin: 16px auto 0 !important;
-        border-radius: var(--r-lg) !important;
-        display: grid !important;
-        grid-template-columns: 1fr auto !important;
-        align-items: center !important;
-        text-align: right !important;
-        gap: 14px !important;
-        padding: 14px 18px !important;
-      }
-      .ch-breakdown {
-        display: flex !important;
-        flex-direction: column !important;
-        gap: 4px !important;
-        align-items: flex-start !important;
-      }
-      .ch-total-label {
-        color: rgba(255, 255, 255, 0.85) !important;
-      }
-      .ch-total-val {
-        color: #fff !important;
-      }
-      .ch-total-unit {
-        color: rgba(255, 255, 255, 0.9) !important;
-      }
-      .ch-row {
-        background: rgba(255, 255, 255, 0.15) !important;
-        color: #fff !important;
-      }
-    }
-
-    /* ── Mid-size laptop step (900px - 1100px) per §7 ── */
-    @media (min-width: 900px) and (max-width: 1100px) {
-      .sidebar-desktop {
-        margin: 16px 16px 16px 8px !important;
-      }
-      .hero {
-        padding: 24px 14px 18px !important;
-      }
-      .avatar-ring {
-        width: 80px !important;
-        height: 80px !important;
-      }
-      .avatar-inner {
-        font-size: 1.8rem !important;
-      }
-      .hero-name {
-        font-size: 1.15rem !important;
-        margin-top: 8px !important;
-      }
-      .coupon-hero {
-        padding: 12px 14px !important;
-        gap: 10px !important;
-      }
-      .ch-total-val {
-        font-size: 2.1rem !important;
-      }
-    }
-
-    /* ── Wide Desktop (>= 1200px): 2-column card flow per §7 ── */
-    @media (min-width: 1200px) {
-      .page {
-        display: grid !important;
-        grid-template-columns: repeat(2, 1fr) !important;
-        gap: 12px !important;
-        align-items: start !important;
-      }
-      .page > .pinned-email-security-banner,
-      .page > #guestLoginPrompt,
-      .page > #profilePicSuggestionBanner,
-      .page > #scAnnBanner,
-      .page > #homeSearchBar,
-      .page > #scSendCoupons,
-      .page > #scAtt,
-      .page > #scAccountSwitcher {
-        grid-column: 1 / -1 !important;
+        background: var(--surface) !important;
+        border: 1px solid var(--border-solid) !important;
       }
     }
   </style>
@@ -5680,13 +5932,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'logou
           <span>صورة عيد الميلاد</span>
         </button>
       </div>
-      <!-- Info -->
-      <div class="sc" id="scInfo">
-        <div class="sc-body">
-          <div class="info-grid" id="infoGrid"></div>
-        </div>
-      </div>
-
       <!-- Coupon hero card (private only) -->
       <div class="coupon-hero" id="couponHero" style="display:none">
         <div>
@@ -5725,12 +5970,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'logou
       <div class="bottom-nav-item" data-tab="attendance" onclick="switchTab('attendance')">
         <i class="fas fa-calendar-check"></i>
         <span>الحضور</span>
-      </div>
-      <div class="bottom-nav-item center-fab" data-tab="send" onclick="switchTab('send')">
-        <div class="fab-btn">
-          <i class="fas fa-star"></i>
-        </div>
-        <span>إرسال</span>
       </div>
       <div class="bottom-nav-item" data-tab="tasks" onclick="switchTab('tasks')" style="position: relative;">
         <i class="fas fa-tasks"></i>
@@ -5827,38 +6066,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'logou
       </div>
     </div>
 
-    <!-- ══ ACCOUNT SWITCHER (MAIN PAGE) ══ -->
-    <div class="sc account-switcher-box" id="scAccountSwitcher" style="display:none;">
-
-
-      <div class="sc-head as-head-bar">
-        <div class="as-head-info-wrap">
-          <div class="as-head-icon">
-            <i class="fas fa-users"></i>
-          </div>
-          <div class="as-head-text-col">
-            <div class="as-head-title-row">
-              <span class="as-head-title-text as-title-full">الحسابات المرتبطة بهذا الرقم</span>
-              <span class="as-head-title-text as-title-mobile">الحسابات المرتبطة</span>
-              <span class="as-count-badge" id="asCountBadge">2</span>
-            </div>
-            <div class="as-head-sub-text">اضغط على أي حساب للتبديل السريع إليه</div>
-          </div>
-        </div>
-        <div style="display:flex; align-items:center; gap:6px;">
-          <button type="button" class="as-open-all-btn" style="background:var(--s2); color:var(--brand); border:1px solid var(--bdr);" onclick="openSeparateAccountsModal()" title="فصل الحسابات">
-            <i class="fas fa-user-slash"></i>
-            <span>فصل الحسابات</span>
-          </button>
-          <button type="button" class="as-open-all-btn" onclick="openOv('switchOv')">
-            <span>عرض الكل</span>
-            <i class="fas fa-chevron-left" style="font-size:.7rem;"></i>
-          </button>
+    <!-- Personal Information Card (Outside Hero) -->
+    <div class="sc" id="scInfo" style="display:none;">
+      <div class="sc-head">
+        <div class="sc-ico" style="background:var(--brand-bg);color:var(--brand);"><i class="fas fa-id-card"></i></div>
+        <div class="sc-label">
+          <div class="sc-title">البيانات الشخصية</div>
+          <div class="sc-sub">بيانات الطالب وتفاصيل الحساب</div>
         </div>
       </div>
-
-      <div class="acc-cards-grid" id="accCardsGrid">
-        <!-- Rendered via JS -->
+      <div class="sc-body">
+        <div class="info-grid" id="infoGrid"></div>
       </div>
     </div>
 
@@ -5877,145 +6095,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'logou
       <div id="homeSearchResults" class="inline-search-dropdown"></div>
     </div>
 
-    <!-- ══ FULL PAGE SEND COUPONS WIZARD ══ -->
-    <div class="sc send-coupons-page" id="scSendCoupons" style="display:none">
-      <!-- Tab Header -->
-      <div style="display:flex; align-items:center; gap:12px; margin-bottom:20px;">
-        <div
-          style="width:50px; height:50px; border-radius:50%; background:var(--brand-bg); color:var(--brand); display:flex; align-items:center; justify-content:center; font-size:1.35rem; flex-shrink:0; box-shadow: var(--sh-sm);">
-          <i class="fas fa-star"></i>
-        </div>
-        <div>
-          <div style="font-size:1.15rem; font-weight:800; color:var(--t1);">إرسال كوبونات</div>
-          <div style="font-size:.78rem; color:var(--t3);">شارك كوبوناتك مع إخوتك وصديقك المقرب</div>
-        </div>
-      </div>
+    <!-- Send coupons wizard removed -->
+    <div id="scSendCoupons" style="display:none !important;">
 
-      <!-- Step Progress Dots -->
-      <div class="wizard-dots">
-        <div class="wizard-dot active" id="dot1"></div>
-        <div class="wizard-dot" id="dot2"></div>
-        <div class="wizard-dot" id="dot3"></div>
-      </div>
 
-      <!-- STEP 1: Select Recipient -->
-      <div class="wizard-step-container" id="sendStep1">
-        <div class="wizard-step-title"><i class="fas fa-user-plus"></i> اختر المستلم</div>
 
-        <div id="siblingChipsContainer" style="display:none; margin-bottom:12px;">
-          <div style="font-size:.72rem; color:var(--t3); margin-bottom:6px; font-weight:700;">إخوتك:</div>
-          <div id="sendSiblingChips"
-            style="display:flex; gap:8px; overflow-x:auto; padding-bottom:6px; scrollbar-width:none; -webkit-overflow-scrolling:touch;">
-          </div>
-        </div>
-
-        <div style="font-size:.72rem; color:var(--t3); margin-bottom:6px; font-weight:700;">ابحث عن صديق بالاسم:</div>
-        <div style="position:relative;">
-          <i class="fas fa-search"
-            style="position:absolute; right:12px; top:50%; transform:translateY(-50%); font-size:.82rem; color:var(--t4); pointer-events:none;"></i>
-          <input type="text" id="sendFriendSearch" placeholder="اكتب اسم صديقك..." class="send-wizard-input"
-            style="padding-right:36px; text-align:right;" oninput="onSendFriendSearch(this.value)" autocomplete="off">
-        </div>
-        <div id="sendFriendSearchResults"
-          style="max-height:160px; overflow-y:auto; background:var(--surf); border:1px solid var(--bdr); border-radius:var(--r-sm); margin-top:6px; display:none; color:var(--t1); z-index: 10; position: relative;">
-        </div>
-
-        <!-- Selected Tag -->
-        <div id="selectedRecipientTag"
-          style="display:none; align-items:center; gap:8px; background:var(--brand-bg); color:var(--brand); padding:10px 14px; border-radius:var(--r-sm); margin-top:14px; font-size:.85rem; font-weight:800; border:1px solid var(--brand-l); box-shadow:var(--sh-md);">
-          <i class="fas fa-user-check"></i>
-          <span id="selectedRecipientName">صديق محدد</span>
-          <button onclick="clearSelectedRecipient()"
-            style="margin-right:auto; background:none; border:none; color:var(--err); cursor:pointer; font-size:1.1rem; display:flex; align-items:center; padding:0;"><i
-              class="fas fa-times-circle"></i></button>
-        </div>
-
-        <div class="wizard-btn-row">
-          <button class="btn btn-p" id="toStep2Btn"
-            style="width:100%; padding:12px; font-weight:800;"
-            onclick="goToStep(2)" disabled>متابعة <i class="fas fa-chevron-left"
-              style="margin-right:4px; font-size:.75rem;"></i></button>
-        </div>
-      </div>
-
-      <!-- STEP 2: Amount & Category -->
-      <div class="wizard-step-container" id="sendStep2" style="display:none;">
-        <div class="wizard-step-title"><i class="fas fa-star"></i> رصيد الإرسال والقيمة</div>
-
-        <!-- Available breakdown -->
-        <div
-          style="background:var(--s2); border:1px solid var(--bdr); border-radius:var(--r-md); padding:12px; margin-bottom:14px;">
-          <div
-            style="font-size:.74rem; color:var(--t3); margin-bottom:8px; text-align:center; font-weight:700;">
-            <i class="fas fa-wallet"></i> رصيدك المتاح
-          </div>
-          <div style="display:grid; grid-template-columns:repeat(3,1fr); gap:6px; text-align:center; color:var(--t1);">
-            <div style="background:var(--surf); padding:6px; border-radius:var(--r-sm); border:1px solid var(--bdr);">
-              <div style="font-size:.62rem; color:var(--t4);">حضور</div>
-              <div style="font-size:.9rem; font-weight:900;" id="sendAvailAtt">0</div>
-            </div>
-            <div style="background:var(--surf); padding:6px; border-radius:var(--r-sm); border:1px solid var(--bdr);">
-              <div style="font-size:.62rem; color:var(--t4);">التزام</div>
-              <div style="font-size:.9rem; font-weight:900;" id="sendAvailCom">0</div>
-            </div>
-            <div style="background:var(--surf); padding:6px; border-radius:var(--r-sm); border:1px solid var(--bdr);">
-              <div style="font-size:.62rem; color:var(--t4);">تاسكات</div>
-              <div style="font-size:.9rem; font-weight:900;" id="sendAvailTsk">0</div>
-            </div>
-          </div>
-          <div style="text-align:center; font-size:.78rem; font-weight:800; margin-top:8px; color:var(--t1);">إجمالي رصيدك الكلي: <span
-              id="sendAvailTotal" style="font-weight:900;">0</span></div>
-        </div>
-
-        <!-- Choose Category -->
-        <div style="margin-bottom:14px;">
-          <div style="font-size:.72rem; color:var(--t3); margin-bottom:6px; font-weight:700;">أرسل من تصنيف:</div>
-          <div style="display:grid; grid-template-columns:repeat(4,1fr); gap:6px;">
-            <button class="send-cat-btn active" data-cat="all" onclick="selectSendCat(this)">الكل</button>
-            <button class="send-cat-btn" data-cat="att" onclick="selectSendCat(this)">حضور</button>
-            <button class="send-cat-btn" data-cat="com" onclick="selectSendCat(this)">التزام</button>
-            <button class="send-cat-btn" data-cat="task" onclick="selectSendCat(this)">تاسكات</button>
-          </div>
-        </div>
-
-        <!-- Enter Amount -->
-        <div style="margin-bottom:14px;">
-          <div style="font-size:.72rem; color:var(--t3); margin-bottom:6px; font-weight:700;">عدد الكوبونات:</div>
-          <input type="number" id="sendAmount" placeholder="أدخل العدد..." class="send-wizard-input" min="1"
-            oninput="checkStep2Valid()">
-        </div>
-
-        <div class="wizard-btn-row">
-          <button class="btn btn-g" style="flex:1; padding:12px;" onclick="goToStep(1)"><i class="fas fa-chevron-right"></i> رجوع</button>
-          <button class="btn btn-p" id="toStep3Btn" style="flex:2; padding:12px; font-weight:800;" onclick="goToStep(3)" disabled>التالي <i class="fas fa-chevron-left"></i></button>
-        </div>
-      </div>
-
-      <!-- STEP 3: Password & Confirm -->
-      <div class="wizard-step-container" id="sendStep3" style="display:none;">
-        <div class="wizard-step-title"><i class="fas fa-shield-alt"></i> تأكيد الهوية والإرسال</div>
-
-        <div
-          style="background:var(--brand-bg); border:1px solid var(--brand-l); color:var(--brand); border-radius:var(--r-md); padding:14px; text-align:center; font-size:.85rem; line-height:1.5; margin-bottom:14px; font-weight:800;"
-          id="sendSummaryMsg">
-          سوف تقوم بإرسال 0 كوبون إلى صديقك.
-        </div>
-
-        <div style="margin-bottom:14px;">
-          <div style="font-size:.72rem; color:var(--t3); margin-bottom:6px; font-weight:700;">اكتب كلمة مرور حسابك لتأكيد العملية:</div>
-          <input type="password" id="sendPassword" placeholder="كلمة المرور الخاصة بك..." class="send-wizard-input"
-            oninput="checkStep3Valid()">
-        </div>
-
-        <div class="wizard-btn-row" style="align-items: center; justify-content: center; gap: 16px;">
-          <button class="btn btn-g"
-            style="padding: 12px 20px; height: 48px; display: flex; align-items: center; justify-content: center; font-weight: 800;"
-            onclick="goToStep(2)"><i class="fas fa-chevron-right" style="margin-left: 6px;"></i> رجوع</button>
-          <button class="btn btn-p" id="sendWizardSubmitBtn"
-            style="width: 50px; height: 50px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.3rem; flex-shrink: 0; padding: 0; margin: 0 auto;"
-            onclick="trySendCoupons()" disabled><i class="fas fa-star"></i></button>
-        </div>
-      </div>
     </div>
 
 
@@ -6080,10 +6164,51 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'logou
           </div>
         </div>
         <div class="cal-grid" id="calGrid"></div>
-        <div style="text-align:center;margin-top:4px;">
-          <span class="att-view-all" id="attViewAllBtn" onclick="openAttHistory()">
-            <i class="fas fa-list-ul"></i> <span>عرض السجل بالكامل</span>
-          </span>
+      </div>
+    </div>
+
+    <!-- Attendance History Menu in Page (Under scAtt) -->
+    <div class="sc" id="scAttHistory" style="display:none">
+      <div class="sc-head">
+        <div class="sc-ico" style="background:var(--brand-bg);color:var(--brand);"><i class="fas fa-history"></i></div>
+        <div class="sc-label">
+          <div class="sc-title">تفاصيل الأسابيع والتاريخ</div>
+          <div class="sc-sub" id="attHistSubtitle">سجل الحضور والغياب الكامل</div>
+        </div>
+      </div>
+      <div class="sc-body" style="padding-top:4px;">
+        <!-- Filters & Search Toolbar -->
+        <div class="att-hist-toolbar" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:12px;">
+          <input id="attHistSearch" type="text" placeholder="ابحث بالتاريخ…"
+            class="att-search-input"
+            oninput="renderAttHist()" />
+          <select id="attHistSort" onchange="renderAttHist()" class="att-sort-select">
+            <option value="newest">الأحدث أولاً</option>
+            <option value="oldest">الأقدم أولاً</option>
+          </select>
+          <div style="display:flex;gap:6px;flex-wrap:wrap;width:100%;margin-top:2px;">
+            <span class="fchip active" data-filter="all" onclick="setAttFilter(this,'all')">الكل</span>
+            <span class="fchip ok" data-filter="present" onclick="setAttFilter(this,'present')">✓ حضر</span>
+            <span class="fchip err" data-filter="absent" onclick="setAttFilter(this,'absent')">✗ غاب</span>
+            <span class="fchip" data-filter="unrecorded" onclick="setAttFilter(this,'unrecorded')">— غير مسجّل</span>
+          </div>
+        </div>
+
+        <div id="attHistCount" style="font-size:.72rem;color:var(--t4);font-weight:700;margin-bottom:8px;"></div>
+
+        <!-- History items list in page -->
+        <div id="attHistList" style="display:flex;flex-direction:column;gap:8px;">
+          <div style="text-align:center;padding:24px;color:var(--t4);font-size:.88rem;">
+            <i class="fas fa-spinner fa-spin" style="display:block;font-size:1.5rem;margin-bottom:8px;opacity:.4;"></i>جارٍ التحميل…
+          </div>
+        </div>
+
+        <!-- View more dates button at the end -->
+        <div id="attHistViewMoreWrap" style="text-align:center;margin-top:14px;display:none;">
+          <button type="button" class="btn" id="attHistViewMoreBtn" onclick="toggleAttHistViewMore()" style="width:100%;padding:10px;background:var(--s2);color:var(--brand);border:1px solid var(--bdr);font-weight:700;border-radius:var(--r-md);display:inline-flex;align-items:center;justify-content:center;gap:8px;font-family:inherit;">
+            <i class="fas fa-chevron-down"></i>
+            <span>عرض المزيد من التواريخ</span>
+          </button>
         </div>
       </div>
     </div>
@@ -6214,8 +6339,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'logou
           <div style="font-size:1rem;font-weight:800;color:var(--t1);">سجل الحضور الكامل</div>
           <div style="font-size:.72rem;color:var(--t4);font-weight:600;" id="attHistSubtitle">جارٍ التحميل…</div>
         </div>
-        <button onclick="closeOv('attHistOv')"
-          style="width:30px;height:30px;border-radius:var(--r-sm);border:1.5px solid var(--bdr);background:var(--s2);color:var(--t3);font-size:.82rem;cursor:pointer;display:flex;align-items:center;justify-content:center;">
+        <button type="button" class="close-btn" onclick="closeOv('attHistOv')" aria-label="إغلاق">
           <i class="fas fa-times"></i>
         </button>
       </div>
@@ -6287,8 +6411,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'logou
           <div style="font-size:.96rem;font-weight:800;color:var(--t1);">بلّغ عن خطأ</div>
           <div style="font-size:.72rem;color:var(--t4);font-weight:600;" id="reportDateLabel"></div>
         </div>
-        <button onclick="closeOv('attReportOv')"
-          style="width:28px;height:28px;border-radius:var(--r-sm);border:1.5px solid var(--bdr);background:var(--s2);color:var(--t3);font-size:.8rem;cursor:pointer;display:flex;align-items:center;justify-content:center;">
+        <button type="button" class="close-btn" onclick="closeOv('attReportOv')" aria-label="إغلاق">
           <i class="fas fa-times"></i>
         </button>
       </div>
@@ -6612,8 +6735,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'logou
           <div style="font-size:1.05rem;font-weight:800;color:var(--t1);">صورة عيد الميلاد</div>
           <div style="font-size:.72rem;color:var(--t4);font-weight:600;">احفظها أو شاركها مع أصحابك</div>
         </div>
-        <button onclick="closeOv('bdayGreetingOv')"
-          style="width:30px;height:30px;border-radius:var(--r-sm);border:1.5px solid var(--bdr);background:var(--s2);color:var(--t3);font-size:.82rem;cursor:pointer;display:flex;align-items:center;justify-content:center;">
+        <button type="button" class="close-btn" onclick="closeOv('bdayGreetingOv')" aria-label="إغلاق">
           <i class="fas fa-times"></i>
         </button>
       </div>
@@ -6665,21 +6787,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'logou
   <div class="overlay settings-overlay" id="notifOv">
     <div class="settings-sheet" style="max-height: 92vh; display:flex; flex-direction:column;">
       <div class="ss-handle"></div>
-      <div
-        style="padding:14px 22px 10px;border-bottom:1px solid var(--bdr2);display:flex;align-items:center;gap:10px;flex-shrink:0;">
-        <div
-          style="width:36px;height:36px;border-radius:var(--r-sm);background:var(--warn-bg);color:var(--warn-l);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+      <div class="notif-sheet-header">
+        <div class="notif-sheet-icon">
           <i class="fas fa-bell"></i>
         </div>
-        <div style="flex:1;min-width:0;text-align:right;direction:rtl;">
-          <div style="font-size:1rem;font-weight:800;color:var(--t1);">الإشعارات والإعلانات</div>
-          <div style="font-size:.72rem;color:var(--t4);margin-top:1px;">كل جديد يخصك هيظهر هنا أولاً</div>
+        <div class="notif-sheet-title-col">
+          <div class="notif-sheet-title">الإشعارات والإعلانات</div>
+          <div class="notif-sheet-sub">كل جديد وتنبيهات هامة تخصك أولاً بأول</div>
         </div>
+        <button type="button" class="close-btn" onclick="closeOv('notifOv')" aria-label="إغلاق">
+          <i class="fas fa-times"></i>
+        </button>
       </div>
-      <div id="notifListModal"
-        style="padding:16px 18px; overflow-y:auto; flex:1; max-height:calc(92vh - 120px); text-align:right; direction:rtl;">
+      <div id="notifListModal" class="notif-sheet-body">
       </div>
-      <button class="ss-close-btn" onclick="closeOv('notifOv')" style="flex-shrink:0;">إغلاق</button>
+      <div class="notif-sheet-footer">
+        <button class="btn-secondary-pill" onclick="closeOv('notifOv')">إغلاق</button>
+      </div>
     </div>
   </div>
 
@@ -6957,23 +7081,27 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'logou
     let birthdayGreetingStudent = null;
     let maxFetchedTaskAnnId = 0;
 
-    // ── Mobile Collapsing Header Scroll Listener (§5) ─────────────────
+    // ── Mobile Continuous Responsive Hero Scroll Listener ───────────────
     function initHeroScrollCollapse() {
       let ticking = false;
-      const threshold = 110;
+      const maxScroll = 140; // Full collapse reached at 140px scroll
       function onScroll() {
         if (window.innerWidth >= 900) {
+          document.documentElement.style.setProperty('--hero-p', '0');
           if (document.body.classList.contains('hero-collapsed')) {
             document.body.classList.remove('hero-collapsed');
           }
           return;
         }
-        const scrollY = window.pageYOffset || document.documentElement.scrollTop;
-        if (scrollY > threshold) {
+        const scrollY = window.pageYOffset || document.documentElement.scrollTop || 0;
+        const progress = Math.min(1, Math.max(0, scrollY / maxScroll));
+        document.documentElement.style.setProperty('--hero-p', progress.toFixed(3));
+        
+        if (progress > 0.85) {
           if (!document.body.classList.contains('hero-collapsed')) {
             document.body.classList.add('hero-collapsed');
           }
-        } else if (scrollY < threshold - 40) {
+        } else {
           if (document.body.classList.contains('hero-collapsed')) {
             document.body.classList.remove('hero-collapsed');
           }
@@ -6989,10 +7117,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'logou
         }
       }, { passive: true });
       window.addEventListener('resize', function () {
-        if (window.innerWidth >= 900 && document.body.classList.contains('hero-collapsed')) {
-          document.body.classList.remove('hero-collapsed');
+        if (window.innerWidth >= 900) {
+          document.documentElement.style.setProperty('--hero-p', '0');
+          if (document.body.classList.contains('hero-collapsed')) {
+            document.body.classList.remove('hero-collapsed');
+          }
+        } else {
+          onScroll();
         }
       }, { passive: true });
+      // Initial trigger
+      onScroll();
     }
 
     function onDOMReady(fn) {
@@ -9037,31 +9172,30 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'logou
       return y === 1 ? 'منذ سنة' : `منذ ${y} سنوات`;
     }
 
-    async function openAttHistory() {
-      openOv('attHistOv');
-      _attFilter = 'all';
-      document.querySelectorAll('#attHistOv .fchip').forEach(c => c.classList.remove('active'));
-      document.querySelector('#attHistOv .fchip[data-filter="all"]').classList.add('active');
-      document.getElementById('attHistSearch').value = '';
-      document.getElementById('attHistSort').value = 'newest';
-      document.getElementById('attHistList').innerHTML =
-        '<div style="text-align:center;padding:28px;color:var(--t4);font-size:.88rem;"><i class="fas fa-spinner fa-spin" style="display:block;font-size:1.6rem;margin-bottom:8px;opacity:.4;"></i>جارٍ التحميل…</div>';
+    let _attHistExpanded = false;
+    const _attHistDefaultLimit = 6;
+
+    async function loadAttHistoryInline() {
+      const list = document.getElementById('attHistList');
+      if (!list) return;
+      if (_attAllRecords && _attAllRecords.length) {
+        renderAttHist();
+        return;
+      }
+      list.innerHTML =
+        '<div style="text-align:center;padding:24px;color:var(--t4);font-size:.88rem;"><i class="fas fa-spinner fa-spin" style="display:block;font-size:1.5rem;margin-bottom:8px;opacity:.4;"></i>جارٍ التحميل…</div>';
 
       try {
         const d = await api({ action: 'getStudentAttendance', studentId: student.id });
         const dbRecords = (d.attendance || []);
 
-        // Build ALL church-day slots for the past 24 weeks
-        // Use LOCAL date arithmetic to avoid UTC timezone shift bugs
         const jsDay = DB_TO_JSDAY[churchDay] ?? 5;
         const todayLocal = new Date();
-        todayLocal.setHours(12, 0, 0, 0); // noon — safe against DST/UTC shifts
+        todayLocal.setHours(12, 0, 0, 0);
         const allSlots = [];
         let cur = new Date(todayLocal);
-        // Walk back to most recent church day (inclusive of today)
         while (cur.getDay() !== jsDay) cur.setDate(cur.getDate() - 1);
         for (let i = 0; i < 24; i++) {
-          // Format as YYYY-MM-DD using local parts — never toISOString (UTC)
           const y = cur.getFullYear();
           const m = String(cur.getMonth() + 1).padStart(2, '0');
           const dd = String(cur.getDate()).padStart(2, '0');
@@ -9076,30 +9210,50 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'logou
         const ab = allSlots.filter(r => r.status === 'absent').length;
         const ur = allSlots.filter(r => r.status === 'unrecorded').length;
         const total = pr + ab;
-        document.getElementById('ahsPresent').textContent = pr;
-        document.getElementById('ahsAbsent').textContent = ab;
-        document.getElementById('ahsRate').textContent = total > 0 ? Math.round(pr / total * 100) + '%' : '—';
-        document.getElementById('attHistSubtitle').textContent =
-          `${allSlots.length} أسبوع · ${pr} حضور · ${ab} غياب · ${ur} غير مسجّل`;
-
+        const sub = document.getElementById('attHistSubtitle');
+        if (sub) {
+          sub.textContent = `${allSlots.length} أسبوع · ${pr} حضور · ${ab} غياب · ${ur} غير مسجّل`;
+        }
         renderAttHist();
       } catch (e) {
-        document.getElementById('attHistList').innerHTML =
-          '<div style="text-align:center;padding:28px;color:var(--err);font-size:.88rem;"><i class="fas fa-exclamation-circle" style="display:block;font-size:1.6rem;margin-bottom:8px;"></i>فشل التحميل</div>';
+        list.innerHTML =
+          '<div style="text-align:center;padding:24px;color:var(--err);font-size:.88rem;"><i class="fas fa-exclamation-circle" style="display:block;font-size:1.5rem;margin-bottom:8px;"></i>تعذر تحميل السجل الكامل</div>';
       }
+    }
+
+    async function openAttHistory() {
+      switchTab('attendance');
+      const scAttHist = document.getElementById('scAttHistory');
+      if (scAttHist) {
+        scAttHist.scrollIntoView({ behavior: 'smooth' });
+      }
+    }
+
+    function toggleAttHistViewMore() {
+      _attHistExpanded = !_attHistExpanded;
+      const btn = document.getElementById('attHistViewMoreBtn');
+      if (btn) {
+        btn.innerHTML = _attHistExpanded
+          ? '<i class="fas fa-chevron-up"></i><span>عرض أقل</span>'
+          : '<i class="fas fa-chevron-down"></i><span>عرض المزيد من التواريخ</span>';
+      }
+      renderAttHist();
     }
 
     function setAttFilter(el, filter) {
       _attFilter = filter;
-      document.querySelectorAll('#attHistOv .fchip').forEach(c => c.classList.remove('active'));
+      document.querySelectorAll('#scAttHistory .fchip').forEach(c => c.classList.remove('active'));
       el.classList.add('active');
       renderAttHist();
     }
 
     function renderAttHist() {
-      const search = (document.getElementById('attHistSearch').value || '').trim().toLowerCase();
-      const sort = document.getElementById('attHistSort').value;
+      const searchEl = document.getElementById('attHistSearch');
+      const sortEl = document.getElementById('attHistSort');
+      const search = (searchEl ? searchEl.value : '').trim().toLowerCase();
+      const sort = sortEl ? sortEl.value : 'newest';
       const list = document.getElementById('attHistList');
+      if (!list) return;
       const WDAYS = ['الأحد', 'الاثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت'];
 
       let items = _attAllRecords.slice();
@@ -9112,16 +9266,27 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'logou
         });
       }
 
-      document.getElementById('attHistCount').textContent = items.length ? `${items.length} نتيجة` : '';
+      const totalMatches = items.length;
+      const countEl = document.getElementById('attHistCount');
+      if (countEl) {
+        countEl.textContent = totalMatches ? `${totalMatches} أسبوع` : '';
+      }
+
+      const viewMoreWrap = document.getElementById('attHistViewMoreWrap');
+      if (viewMoreWrap) {
+        viewMoreWrap.style.display = (totalMatches > _attHistDefaultLimit && !search) ? 'block' : 'none';
+      }
 
       if (!items.length) {
         list.innerHTML = '<div style="text-align:center;padding:28px;color:var(--t4);font-size:.88rem;font-weight:600;"><i class="fas fa-search" style="display:block;font-size:1.5rem;margin-bottom:8px;opacity:.35;"></i>لا توجد نتائج</div>';
         return;
       }
 
-      list.innerHTML = items.map(r => {
+      // Slice if not expanded and no search query active
+      const visibleItems = (!_attHistExpanded && !search) ? items.slice(0, _attHistDefaultLimit) : items;
+
+      list.innerHTML = visibleItems.map(r => {
         const dateStr = r.str || r.attendance_date;
-        // Parse as local noon to avoid UTC-shift day-off-by-one
         const [yr, mo, dy] = dateStr.split('-').map(Number);
         const d = new Date(yr, mo - 1, dy, 12);
         const dateAr = d.toLocaleDateString('ar-EG', { day: 'numeric', month: 'long', year: 'numeric' });
@@ -9129,31 +9294,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'logou
         const ago = timeAgoAr(dateStr);
         const isP = r.status === 'present';
         const isA = r.status === 'absent';
-        const isU = r.status === 'unrecorded';
 
-        const rowBg = isP ? 'background:var(--ok-bg);border-color:#6ee7b7;'
-          : isA ? 'background:var(--err-bg);border-color:#fca5a5;'
-            : 'background:var(--s2);border-color:var(--bdr2);opacity:.82;';
-        const dotClr = isP ? 'var(--ok)' : isA ? 'var(--err)' : 'var(--t5)';
-        const badgeBg = isP ? 'background:rgba(5,150,105,.12);color:var(--ok);'
-          : isA ? 'background:rgba(220,38,38,.12);color:var(--err);'
-            : 'background:var(--s2);color:var(--t4);border:1px solid var(--bdr);';
-        const label = isP ? 'حضر ✓' : isA ? 'غاب ✗' : '— غير مسجّل';
+        const rowCls = isP ? 'present' : (isA ? 'absent' : 'unrecorded');
+        const badgeCls = isP ? 'ok' : (isA ? 'err' : 'neu');
+        const label = isP ? 'حضر ✓' : (isA ? 'غاب ✗' : '— غير مسجّل');
 
-        return `<div style="display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:var(--r-md);border:1.5px solid;${rowBg}transition:var(--fast);">
-      <div style="width:8px;height:8px;border-radius:50%;flex-shrink:0;background:${dotClr};margin-top:1px;"></div>
-      <div style="flex:1;min-width:0;">
-        <div style="font-size:.88rem;font-weight:800;color:var(--t1);">${dateAr}</div>
-        <div style="font-size:.64rem;color:var(--t4);font-weight:500;margin-top:1px;">${wday} · ${ago}</div>
-      </div>
-      <span style="padding:3px 9px;border-radius:var(--r-full);font-size:.68rem;font-weight:700;flex-shrink:0;white-space:nowrap;${badgeBg}">${label}</span>
-      <button onclick="openRowReport('${dateStr}','${r.status}')"
-        title="بلّغ عن خطأ"
-        style="width:28px;height:28px;border-radius:var(--r-sm);border:1.5px solid #fde68a;background:#fef3c7;color:#d97706;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:.72rem;flex-shrink:0;transition:var(--fast);"
-        onmouseover="this.style.background='#fde68a'" onmouseout="this.style.background='#fef3c7'">
-        <i class="fas fa-flag"></i>
-      </button>
-    </div>`;
+        return `<div class="att-hist-row ${rowCls}">
+          <div class="att-row-dot"></div>
+          <div style="flex:1;min-width:0;">
+            <div class="att-row-title">${dateAr}</div>
+            <div class="att-row-sub">${wday} · ${ago}</div>
+          </div>
+          <span class="att-row-badge ${badgeCls}">${label}</span>
+          <button type="button" class="att-report-btn" onclick="openRowReport('${dateStr}','${r.status}')" title="بلّغ عن خطأ">
+            <i class="fas fa-flag"></i>
+          </button>
+        </div>`;
       }).join('');
     }
 
@@ -10350,45 +10506,50 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'logou
           }
         }
 
-        // 4. Render to the Overlay modal list
+        // 4. Render to the Overlay modal list with redesigned Uncle Dashboard cards
         const notifListModal = document.getElementById('notifListModal');
         if (notifListModal) {
           if (activeAnns.length > 0) {
             notifListModal.innerHTML = `
-              <div class="ann-list" style="display:flex; flex-direction:column; gap:12px;">
+              <div style="display:flex; flex-direction:column; gap:12px;">
                 ${activeAnns.map(a => {
-              const imgHtml = a.image_url ? `<div style="margin: 8px 0;"><img src="${esc(a.image_url)}" style="max-width:100%; border-radius:12px; border:1px solid var(--bdr); max-height:180px; object-fit:cover; display:block;"/></div>` : '';
-              const descHtml = a.description ? `<div style="font-size:0.8rem; color:var(--t2); line-height:1.5; margin-bottom:8px; white-space:pre-wrap;">${esc(a.description)}</div>` : '';
-              const linkHtml = a.link ? `<a href="${esc(a.link)}" target="_blank" class="ann-link-btn"><i class="fas fa-external-link-alt"></i> ${esc(a.button_text || 'فتح الرابط')}</a>` : '';
+              const imgHtml = a.image_url ? `<div style="margin: 6px 0;"><img src="${esc(a.image_url)}" style="max-width:100%; border-radius:var(--r-md); border:1px solid var(--border-solid); max-height:200px; object-fit:cover; display:block;"/></div>` : '';
+              const descHtml = a.description ? `<div class="notif-card-desc">${esc(a.description)}</div>` : '';
+              const linkHtml = a.link ? `<a href="${esc(a.link)}" target="_blank" rel="noopener noreferrer" class="notif-action-btn"><i class="fas fa-external-link-alt"></i> <span>${esc(a.button_text || 'فتح الرابط')}</span></a>` : '';
+              const badgeType = a.type === 'button' ? 'link' : (a.type === 'developer' ? 'dev' : 'announcement');
+              const badgeLabel = a.type === 'button' ? 'رابط سريع' : (a.type === 'developer' ? 'رسالة المطور' : 'إعلان عام');
+              const badgeIcon = a.type === 'button' ? 'link' : (a.type === 'developer' ? 'code' : 'bullhorn');
 
               return `
-                  <div class="ann-item" style="padding-left: 20px;">
-                    <div class="ann-top">
-                      <span class="ann-type ${a.type === 'button' ? 'link' : (a.type === 'developer' ? 'dev' : '')}">
-                        <i class="fas fa-${a.type === 'button' ? 'link' : (a.type === 'developer' ? 'code' : 'comment-dots')}"></i>
-                        ${a.type === 'button' ? 'رابط سريع' : (a.type === 'developer' ? 'رسالة المطور' : 'إعلان')}
+                <div class="notif-card">
+                  <div class="notif-card-header">
+                    <div class="notif-badge-group">
+                      <span class="notif-badge ${badgeType}">
+                        <i class="fas fa-${badgeIcon}"></i>
+                        <span>${badgeLabel}</span>
                       </span>
-                      <span class="ann-date">${fmtDate(a.created_at)}</span>
+                      <span class="notif-time"><i class="far fa-clock"></i> ${fmtDate(a.created_at)}</span>
                     </div>
-                    <div class="ann-text" style="font-weight:700;">${esc(a.text)}</div>
-                    ${imgHtml}
-                    ${descHtml}
-                    <div class="ann-footer">
-                      <span class="ann-meta-pill"><i class="fas fa-bullhorn"></i> من الكنيسة أو خدام الفصل</span>
-                      <div style="display:flex; gap:8px; align-items:center; margin-right:auto;">
-                        ${linkHtml}
-                        <button onclick="dismissSingleAnn('${a.id}')" style="background:none; border:none; color:var(--danger, #ef4444); cursor:pointer; font-size:.78rem; font-weight:800; display:flex; align-items:center; gap:4px; padding:4px 8px; border-radius:4px;"><i class="fas fa-eye-slash"></i> إخفاء</button>
-                      </div>
-                    </div>
-                  </div>`;
+                    <button type="button" class="notif-dismiss-btn" onclick="dismissSingleAnn('${a.id}')" title="إخفاء الإشعار" aria-label="إخفاء">
+                      <i class="fas fa-times"></i>
+                    </button>
+                  </div>
+                  <div class="notif-card-title">${esc(a.text)}</div>
+                  ${imgHtml}
+                  ${descHtml}
+                  <div class="notif-card-footer">
+                    <span class="notif-source"><i class="fas fa-church"></i> من كنيسة مارمرقس أو خدام الفصل</span>
+                    ${linkHtml}
+                  </div>
+                </div>`;
             }).join('')}
               </div>`;
           } else {
             notifListModal.innerHTML = `
-              <div style="text-align:center; padding:40px 20px; color:var(--t4);">
-                <i class="fas fa-bell-slash" style="font-size:2.5rem; margin-bottom:12px; color:var(--bdr); display:block; margin-inline:auto;"></i>
-                <div style="font-weight:800; font-size:1rem; color:var(--t2); margin-bottom:4px;">لا توجد إشعارات جديدة</div>
-                <div style="font-size:.76rem;">أول ما ينزل إعلان جديد هتلاقيه هنا.</div>
+              <div class="notif-empty-state">
+                <div class="notif-empty-icon"><i class="fas fa-bell-slash"></i></div>
+                <div class="notif-empty-title">لا توجد إشعارات جديدة</div>
+                <div class="notif-empty-desc">أول ما ينزل إعلان أو تنبيه جديد من الكنيسة أو خدامك هيظهر هنا أولاً.</div>
               </div>`;
           }
         }
@@ -11424,7 +11585,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'logou
     });
 
     function switchTab(tabName) {
-      const allowedTabs = IS_PUBLIC ? ['home', 'attendance'] : ['home', 'attendance', 'send', 'tasks', 'family'];
+      const allowedTabs = ['home', 'attendance', 'tasks', 'family'];
       if (!allowedTabs.includes(tabName)) {
         tabName = 'home';
       }
@@ -11451,6 +11612,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'logou
       const scAnn = document.getElementById('scAnn');
       const homeSearchBar = document.getElementById('homeSearchBar');
       const scAtt = document.getElementById('scAtt');
+      const scAttHistory = document.getElementById('scAttHistory');
       const scTasks = document.getElementById('scTasks');
       const scTrips = document.getElementById('scTrips');
       const scUncles = document.getElementById('scUncles');
@@ -11459,17 +11621,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'logou
       const scPaperExams = document.getElementById('scPaperExams');
       const mainPage = document.getElementById('mainPage');
 
-      // Adjust mainPage padding/width for fullscreen tabs (send coupons)
       if (mainPage) {
-        if (tabName === 'send') {
-          mainPage.style.padding = '0';
-          mainPage.style.maxWidth = 'none';
-        } else {
-          mainPage.style.padding = '0 12px 90px';
-          mainPage.style.maxWidth = '860px';
-        }
+        mainPage.style.padding = '';
+        mainPage.style.maxWidth = '';
       }
 
+      // Hide all dynamic sections first
       if (hero) hero.style.display = 'none';
       if (statsBar) {
         statsBar.style.setProperty('display', 'none', 'important');
@@ -11480,6 +11637,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'logou
       if (scAnn) scAnn.style.display = 'none';
       if (homeSearchBar) homeSearchBar.style.display = 'none';
       if (scAtt) scAtt.style.display = 'none';
+      if (scAttHistory) scAttHistory.style.display = 'none';
       if (scTasks) scTasks.style.display = 'none';
       if (scTrips) scTrips.style.display = 'none';
       if (scUncles) scUncles.style.display = 'none';
@@ -11488,46 +11646,52 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'logou
       if (scClassFriends) scClassFriends.style.display = 'none';
       if (scSendCoupons) scSendCoupons.style.display = 'none';
       if (scPaperExams) scPaperExams.style.display = 'none';
-      const scAccSwitcher = document.getElementById('scAccountSwitcher');
-      if (scAccSwitcher) scAccSwitcher.style.display = 'none';
 
       const pPicBanner = document.getElementById('profilePicSuggestionBanner');
       if (pPicBanner) pPicBanner.style.display = 'none';
 
+      function showWithAnimation(el) {
+        if (!el) return;
+        el.style.display = 'block';
+        el.style.animation = 'none';
+        // force reflow
+        void el.offsetWidth;
+        el.style.animation = 'tabContentFadeIn 0.28s var(--spring) both';
+      }
+
       // Load correct tab contents
       if (tabName === 'home') {
-        if (hero) hero.style.display = 'flex';
-        if (scInfo) scInfo.style.display = 'block';
-        if (allTrips && allTrips.length && scTrips) scTrips.style.display = 'block';
-        if (scAccSwitcher && allAccounts && allAccounts.length > 1 && !isViewingOther() && !IS_PUBLIC) {
-          scAccSwitcher.style.display = 'block';
+        if (hero) {
+          hero.style.display = 'flex';
+          hero.style.animation = 'tabContentFadeIn 0.25s var(--spring) both';
         }
+        if (scInfo) showWithAnimation(scInfo);
+        if (allTrips && allTrips.length && scTrips) showWithAnimation(scTrips);
 
         if (!IS_PUBLIC) {
-          if (statsBar) statsBar.style.setProperty('display', 'grid', 'important');
+          if (statsBar) {
+            statsBar.style.setProperty('display', 'grid', 'important');
+            statsBar.style.animation = 'tabContentFadeIn 0.28s var(--spring) both';
+          }
         }
         const activeStudent = student || _myStudent;
         if (pPicBanner && activeStudent && !activeStudent.image_url && !isViewingOther() && localStorage.getItem('dismissProfilePicSuggestion') !== 'true') {
           pPicBanner.style.display = 'flex';
         }
       } else if (tabName === 'attendance') {
-        if (scAtt) scAtt.style.display = 'block';
+        if (scAtt) showWithAnimation(scAtt);
+        if (scAttHistory) showWithAnimation(scAttHistory);
         if (statsBar) {
           statsBar.style.setProperty('display', 'grid', 'important');
           statsBar.style.marginTop = '18px';
+          statsBar.style.animation = 'tabContentFadeIn 0.28s var(--spring) both';
         }
-      } else if (tabName === 'send') {
-        if (scSendCoupons) {
-          scSendCoupons.style.display = 'block';
-          initSendWizard();
-        }
+        loadAttHistoryInline();
       } else if (tabName === 'tasks') {
-        if (scTasks) {
-          scTasks.style.display = 'block';
-        }
+        if (scTasks) showWithAnimation(scTasks);
         const activeStudent = student || _myStudent;
         if (activeStudent && activeStudent.paper_exams && activeStudent.paper_exams.length && scPaperExams) {
-          scPaperExams.style.display = 'block';
+          showWithAnimation(scPaperExams);
         }
         const badge = document.getElementById('tasksBadge');
         if (badge) badge.style.display = 'none';
@@ -11535,16 +11699,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'logou
           localStorage.setItem('tasksLastViewedAnnId_' + student.id, String(maxFetchedTaskAnnId));
         }
       } else if (tabName === 'family') {
-        // Display siblings only if they have siblings
         if (hasSiblingsLoaded && scSiblings) {
-          scSiblings.style.display = 'block';
+          showWithAnimation(scSiblings);
         }
         if (classUncles && classUncles.length && scUncles) {
-          scUncles.style.display = 'block';
+          showWithAnimation(scUncles);
         }
         loadClassFriends();
         if (!IS_PUBLIC && homeSearchBar) {
-          homeSearchBar.style.display = 'block';
+          showWithAnimation(homeSearchBar);
         }
       }
     }
