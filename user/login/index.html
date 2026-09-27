@@ -1062,6 +1062,13 @@
                     <button type="button" id="resendEmailOtpBtn" onclick="resendEmailOTP()" style="background:none; border:none; color:var(--primary); font-size:0.86rem; font-weight:700; cursor:pointer;" disabled>
                         إعادة إرسال الكود (<span id="emailOtpCountdown">60</span> ثانية)
                     </button>
+                    <!-- SECONDARY OPTION FOR EMAIL ISSUES -->
+                    <div style="margin:4px 0;">
+                        <a href="#" id="emailProblemLink" onclick="event.preventDefault(); showDevRecoveryFallback();" style="display:inline-flex; align-items:center; justify-content:center; gap:6px; color:var(--secondary); font-size:0.82rem; font-weight:700; text-decoration:none; padding:7px 14px; border-radius:8px; background:rgba(91,108,245,0.06); border:1px solid rgba(91,108,245,0.12);">
+                            <i class="fas fa-question-circle" style="color:var(--primary); font-size:0.88rem;"></i>
+                            <span>واجهتك مشكلة في البريد؟ الاستعادة عبر رقم الهاتف</span>
+                        </a>
+                    </div>
                     <button type="button" onclick="cancelEmailOTPVerification()" style="background:none; border:none; color:var(--secondary); font-size:0.83rem; cursor:pointer; text-decoration:underline;">
                         العودة لتسجيل الدخول
                     </button>
@@ -1069,112 +1076,72 @@
             </form>
         </div>
 
-        <!-- Password Recovery Choice & Request Container -->
+        <!-- Password Recovery Container -->
         <div class="password-setup-container" id="passwordRecoveryContainer">
-            <div style="text-align:center; margin-bottom:18px;">
+            <!-- PANEL 1: Initial Phone Prompt -->
+            <div id="recoveryPromptPanel" style="display:none; text-align:center;">
                 <div style="width:62px; height:62px; border-radius:50%; background:var(--primary-light); color:var(--primary); display:flex; align-items:center; justify-content:center; margin:0 auto 12px; font-size:1.5rem; border:2px solid rgba(91, 108, 245, 0.2);">
                     <i class="fas fa-key"></i>
                 </div>
                 <h3 style="font-size:1.2rem; font-weight:800; color:var(--dark); margin-bottom:6px;">استعادة كلمة المرور</h3>
-                <p style="font-size:0.86rem; color:var(--secondary); font-weight:600; line-height:1.5;">
-                    اختر الطريقة الأنسب لك لاستعادة حسابك وتعيين كلمة مرور جديدة:
-                </p>
-            </div>
-
-            <!-- Two Recovery Choices -->
-            <div class="recovery-tabs" id="recoveryTabsRow">
-                <button type="button" class="recovery-tab-btn active" id="tabEmailRecovery" onclick="switchRecoveryTab('email')">
-                    <i class="fas fa-envelope"></i>
-                    <span>بالبريد الإلكتروني</span>
-                </button>
-                <button type="button" class="recovery-tab-btn" id="tabDevRecovery" onclick="switchRecoveryTab('dev')">
-                    <i class="fas fa-headset"></i>
-                    <span>طلب رابط الاستعادة</span>
-                </button>
-            </div>
-
-            <!-- TAB 1: EMAIL RECOVERY -->
-            <div id="recoveryEmailPanel">
-                <form id="recoveryEmailForm" onsubmit="event.preventDefault(); submitEmailRecoveryRequest();">
-                    <div class="form-group" style="margin-bottom:16px;">
-                        <label for="recoveryEmailIdentifierInput" class="form-label">البريد الإلكتروني أو رقم الهاتف</label>
-                        <div class="input-container">
-                            <i class="fas fa-at input-icon"></i>
-                            <input type="text" id="recoveryEmailIdentifierInput" class="form-input" placeholder="أدخل البريد المسجل أو الهاتف" dir="ltr" style="font-weight:600;">
-                        </div>
-                        <small style="color:var(--secondary); font-size:0.78rem; display:block; margin-top:5px;">
-                            سنرسل كود التحقق (OTP) إلى بريدك الإلكتروني المسجل في حسابك فوراً.
-                        </small>
-                    </div>
-
-                    <div class="error-message" id="recoveryEmailError" style="display:none; margin-bottom:14px;"></div>
-
-                    <button type="submit" class="login-btn" id="recoveryEmailSubmitBtn" style="margin-bottom:12px;">
-                        <i class="fas fa-paper-plane"></i>
-                        <span>إرسال كود التحقق</span>
-                    </button>
-                </form>
-            </div>
-
-            <!-- TAB 2: SUPPORT TEAM / DIRECT LINK RECOVERY (WITHOUT EMAIL OR NO EMAIL LINKED) -->
-            <div id="recoveryDevPanel" style="display:none;">
-                <p style="font-size:0.83rem; color:var(--secondary); margin-bottom:14px; background:var(--primary-light); padding:10px 12px; border-radius:var(--radius-sm); border:1px solid rgba(91, 108, 245, 0.15); line-height:1.5;">
-                    <i class="fas fa-info-circle" style="color:var(--primary); margin-left:4px;"></i>
-                    إذا لم يكن لديك بريد إلكتروني مسجل أو نسيت بياناته، يمكنك إرسال بياناتك وسيقوم فريق العمل بمراجعة الطلب وإرسال رابط تعيين كلمة المرور إليك عبر واتساب أو رسالة نصية.
+                <p style="font-size:0.86rem; color:var(--secondary); font-weight:600; line-height:1.5; margin-bottom:18px;">
+                    أدخل رقم هاتفك المسجل للبدء في استعادة الحساب:
                 </p>
 
-                <form id="recoveryDevForm" onsubmit="event.preventDefault(); submitDevPasswordRequest();">
-                    <div class="form-group" style="margin-bottom:12px;">
-                        <label for="devReqStudentName" class="form-label">اسم الطفل بالكامل <span style="color:var(--danger)">*</span></label>
-                        <div class="input-container">
-                            <i class="fas fa-user input-icon"></i>
-                            <input type="text" id="devReqStudentName" class="form-input" placeholder="اسم الطفل ثلاثي أو رباعي..." required>
-                        </div>
-                    </div>
-
-                    <div class="form-group" style="margin-bottom:12px;">
-                        <label for="devReqChurchSelect" class="form-label">الكنيسة <span style="color:var(--danger)">*</span></label>
-                        <div class="input-container">
-                            <i class="fas fa-church input-icon"></i>
-                            <select id="devReqChurchSelect" class="form-input" required style="padding-right:48px;">
-                                <option value="">اختر كنيستك...</option>
-                            </select>
-                        </div>
-                    </div>
-
-                    <div class="form-group" style="margin-bottom:12px;">
-                        <label for="devReqPhone" class="form-label">رقم الهاتف للتواصل (واتساب / هاتف) <span style="color:var(--danger)">*</span></label>
+                <form onsubmit="event.preventDefault(); submitPhoneForRecovery();">
+                    <div class="form-group" style="margin-bottom:16px; text-align:right;">
+                        <label for="recoveryPromptPhone" class="form-label" style="font-weight:700;">رقم الهاتف</label>
                         <div class="input-container">
                             <i class="fas fa-phone input-icon"></i>
-                            <input type="tel" id="devReqPhone" class="form-input" placeholder="01xxxxxxxxx" dir="ltr" required style="font-weight:700;">
+                            <input type="tel" id="recoveryPromptPhone" class="form-input" placeholder="01xxxxxxxxx" dir="ltr" style="font-weight:800; font-size:1.05rem; letter-spacing:1px; text-align:center;" autocomplete="tel">
                         </div>
                     </div>
 
-                    <div class="form-group" style="margin-bottom:16px;">
-                        <label for="devReqEmail" class="form-label">البريد الإلكتروني (اختياري)</label>
-                        <div class="input-container">
-                            <i class="fas fa-envelope input-icon"></i>
-                            <input type="email" id="devReqEmail" class="form-input" placeholder="example@email.com (اختياري)" dir="ltr">
-                        </div>
-                    </div>
+                    <div class="error-message" id="recoveryPromptError" style="display:none; margin-bottom:14px; text-align:right;"></div>
 
-                    <div class="error-message" id="recoveryDevError" style="display:none; margin-bottom:14px;"></div>
-
-                    <button type="submit" class="login-btn" id="recoveryDevSubmitBtn" style="margin-bottom:12px; background:linear-gradient(135deg, var(--primary), var(--primary-dark));">
-                        <i class="fas fa-paper-plane"></i>
-                        <span>إرسال طلب رابط الاستعادة</span>
+                    <button type="submit" class="login-btn" id="recoveryPromptSubmitBtn" style="margin-bottom:12px;">
+                        <span>متابعة</span>
+                        <i class="fas fa-arrow-left"></i>
                     </button>
                 </form>
             </div>
 
-            <!-- SUCCESS CONFIRMATION PANEL -->
+            <!-- PANEL 2: DEVELOPER LINK RECOVERY (Main for students with NO email, and secondary for email issues) -->
+            <div id="recoveryDevPanel" style="display:none; text-align:center;">
+                <div style="width:62px; height:62px; border-radius:50%; background:var(--primary-light); color:var(--primary); display:flex; align-items:center; justify-content:center; margin:0 auto 12px; font-size:1.5rem; border:2px solid rgba(91, 108, 245, 0.2);">
+                    <i class="fas fa-paper-plane"></i>
+                </div>
+                <h3 style="font-size:1.2rem; font-weight:800; color:var(--dark); margin-bottom:6px;">استعادة كلمة المرور</h3>
+                <p style="font-size:0.86rem; color:var(--secondary); margin-bottom:16px; background:var(--primary-light); padding:12px 14px; border-radius:var(--radius-sm); border:1px solid rgba(91, 108, 245, 0.15); line-height:1.6; text-align:right;">
+                    <i class="fas fa-shield-alt" style="color:var(--primary); margin-left:4px;"></i>
+                    سيتم إرسال طلب للمطور لإنشاء رابط آمن وخاص بك لإعادة تعيين كلمة المرور، وسيصلك الرابط فوراً عبر واتساب أو رسالة نصية على رقم هاتفك:
+                </p>
+
+                <div class="form-group" style="margin-bottom:16px; text-align:right;">
+                    <label for="devReqPhone" class="form-label" style="font-weight:700;">رقم الهاتف لاستلام الرابط</label>
+                    <div class="input-container">
+                        <i class="fas fa-phone input-icon"></i>
+                        <input type="tel" id="devReqPhone" class="form-input" placeholder="01xxxxxxxxx" dir="ltr" style="font-weight:800; font-size:1.05rem; letter-spacing:1px; text-align:center;">
+                    </div>
+                </div>
+
+                <div class="error-message" id="recoveryDevError" style="display:none; margin-bottom:14px; text-align:right;"></div>
+
+                <!-- MAIN FOCAL BUTTON -->
+                <button type="button" class="login-btn" id="recoveryDevSubmitBtn" onclick="submitDevPasswordRequest()" style="margin-bottom:14px; padding:14px 20px; font-size:1.05rem; font-weight:800; background:linear-gradient(135deg, var(--primary), var(--primary-dark)); box-shadow:0 8px 24px -4px rgba(91, 108, 245, 0.4); display:flex; align-items:center; justify-content:center; gap:10px;">
+                    <i class="fas fa-paper-plane" style="font-size:1.15rem;"></i>
+                    <span>إرسال طلب رابط الاستعادة للمطور</span>
+                </button>
+            </div>
+
+            <!-- PANEL 3: SUCCESS CONFIRMATION PANEL -->
             <div id="recoverySuccessPanel" style="display:none; text-align:center; padding:10px 0;">
                 <div style="width:64px; height:64px; border-radius:50%; background:var(--success-bg); color:var(--success); display:flex; align-items:center; justify-content:center; font-size:2rem; margin:0 auto 14px; border:2px solid #bbf7d0;">
                     <i class="fas fa-check-circle"></i>
                 </div>
                 <h3 style="font-size:1.18rem; font-weight:800; color:var(--dark); margin-bottom:8px;">تم إرسال طلبك بنجاح! ✝️</h3>
                 <p id="recoverySuccessMsg" style="font-size:0.87rem; color:var(--secondary); font-weight:600; line-height:1.6; margin-bottom:20px;">
-                    تم استلام طلبك بنجاح. سيقوم فريق العمل بمراجعة الطلب وإرسال رابط تعيين كلمة المرور الجديدة إليك عبر واتساب أو رسالة نصية قريباً.
+                    تم استلام طلبك بنجاح. سيقوم المطور بمراجعة الطلب وإرسال رابط تعيين كلمة المرور الجديدة إليك عبر واتساب أو رسالة نصية قريباً.
                 </p>
                 <button type="button" class="login-btn" onclick="cancelPasswordRecovery()">
                     <i class="fas fa-arrow-right"></i>
@@ -1922,7 +1889,13 @@
             clearErrors();
             const phoneInputVal = (elements.phoneInput?.value || '').trim();
 
-            // Hide other containers
+            // If phone number is already typed and is valid (>= 10 digits), start recovery directly
+            if (phoneInputVal.length >= 10) {
+                startPasswordRecoveryForPhone(phoneInputVal);
+                return;
+            }
+
+            // Otherwise show the prompt to enter phone number
             elements.phoneLoginForm.classList.remove('active');
             elements.usernameLoginForm.classList.remove('active');
             elements.passwordSetupContainer.classList.remove('active');
@@ -1931,113 +1904,58 @@
             const uncleBox = document.getElementById('uncleContactContainer');
             if (uncleBox) uncleBox.classList.remove('active');
 
-            // Show recovery container
             const recoveryContainer = document.getElementById('passwordRecoveryContainer');
             if (recoveryContainer) {
                 recoveryContainer.classList.add('active');
 
-                // Reset views
+                // Show only prompt panel initially
+                const promptPanel = document.getElementById('recoveryPromptPanel');
+                if (promptPanel) promptPanel.style.display = 'block';
+                const devPanel = document.getElementById('recoveryDevPanel');
+                if (devPanel) devPanel.style.display = 'none';
                 const succPanel = document.getElementById('recoverySuccessPanel');
                 if (succPanel) succPanel.style.display = 'none';
-                const tabsRow = document.getElementById('recoveryTabsRow');
-                if (tabsRow) tabsRow.style.display = 'flex';
-                const backRow = document.getElementById('recoveryBackRow');
-                if (backRow) backRow.style.display = 'block';
 
-                // Pre-fill inputs if phone was already typed
-                if (phoneInputVal) {
-                    const emailIdInput = document.getElementById('recoveryEmailIdentifierInput');
-                    if (emailIdInput) emailIdInput.value = phoneInputVal;
-                    const devPhoneInput = document.getElementById('devReqPhone');
-                    if (devPhoneInput) devPhoneInput.value = phoneInputVal;
+                const promptErr = document.getElementById('recoveryPromptError');
+                if (promptErr) promptErr.style.display = 'none';
+
+                const promptPhone = document.getElementById('recoveryPromptPhone');
+                if (promptPhone) {
+                    promptPhone.value = phoneInputVal;
+                    setTimeout(() => promptPhone.focus(), 150);
                 }
-
-                // Default tab
-                switchRecoveryTab('email');
-                populateRecoveryChurchSelect();
             }
         }
 
-        function switchRecoveryTab(tab) {
-            const btnEmail = document.getElementById('tabEmailRecovery');
-            const btnDev = document.getElementById('tabDevRecovery');
-            const panelEmail = document.getElementById('recoveryEmailPanel');
-            const panelDev = document.getElementById('recoveryDevPanel');
-
-            if (tab === 'dev') {
-                btnEmail?.classList.remove('active');
-                btnDev?.classList.add('active');
-                if (panelEmail) panelEmail.style.display = 'none';
-                if (panelDev) panelDev.style.display = 'block';
-                populateRecoveryChurchSelect();
-                setTimeout(() => document.getElementById('devReqStudentName')?.focus(), 100);
-            } else {
-                btnDev?.classList.remove('active');
-                btnEmail?.classList.add('active');
-                if (panelDev) panelDev.style.display = 'none';
-                if (panelEmail) panelEmail.style.display = 'block';
-                setTimeout(() => document.getElementById('recoveryEmailIdentifierInput')?.focus(), 100);
-            }
-        }
-
-        function switchToDevPasswordRequest() {
-            showPasswordRecovery();
-            switchRecoveryTab('dev');
-        }
-
-        function cancelPasswordRecovery() {
-            const recoveryContainer = document.getElementById('passwordRecoveryContainer');
-            if (recoveryContainer) recoveryContainer.classList.remove('active');
-            elements.phoneLoginForm.classList.add('active');
-        }
-
-        async function populateRecoveryChurchSelect() {
-            const select = document.getElementById('devReqChurchSelect');
-            if (!select || select.options.length > 1) return;
-
-            try {
-                if (churchesCache && churchesCache.length > 0) {
-                    renderChurchesIntoSelect(churchesCache, select);
-                    return;
-                }
-                const fd = new FormData();
-                fd.append('action', 'getAllChurches');
-                const res = await fetch(API_URL, { method: 'POST', body: fd, credentials: 'include' }).then(r => r.json());
-                if (res && res.success && Array.isArray(res.churches)) {
-                    churchesCache = res.churches;
-                    renderChurchesIntoSelect(churchesCache, select);
-                }
-            } catch (e) {}
-        }
-
-        function renderChurchesIntoSelect(churches, select) {
-            select.innerHTML = '<option value="">اختر كنيستك...</option>' + churches.map(c => {
-                const id = c.id || c.church_id;
-                const name = c.name || c.church_name || 'كنيسة';
-                return `<option value="${id}">${escHtml(name)}</option>`;
-            }).join('');
-        }
-
-        function submitEmailRecoveryRequest() {
-            const errEl = document.getElementById('recoveryEmailError');
+        function submitPhoneForRecovery() {
+            const errEl = document.getElementById('recoveryPromptError');
             if (errEl) errEl.style.display = 'none';
 
-            const rawVal = (document.getElementById('recoveryEmailIdentifierInput')?.value || '').trim();
-            if (!rawVal) {
+            const phone = (document.getElementById('recoveryPromptPhone')?.value || '').trim();
+            if (!phone) {
                 if (errEl) {
-                    errEl.textContent = 'الرجاء إدخال البريد الإلكتروني أو رقم الهاتف المسجل';
+                    errEl.textContent = 'الرجاء إدخال رقم الهاتف المسجل';
                     errEl.style.display = 'block';
                 }
                 return;
             }
 
-            const identifier = formatIdentifier(rawVal);
-            showLoading('جاري التحقق وإرسال الكود...');
+            startPasswordRecoveryForPhone(phone);
+        }
+
+        function startPasswordRecoveryForPhone(phone) {
+            const cleanPhone = formatIdentifier(phone);
+            if (!cleanPhone) {
+                showPasswordRecovery();
+                return;
+            }
+
+            showLoading('جاري التحقق من الحساب...');
 
             const formData = new FormData();
             formData.append('action', 'requestStudentPasswordRecovery');
-            formData.append('identifier', identifier);
-            formData.append('phone', identifier);
+            formData.append('identifier', cleanPhone);
+            formData.append('phone', cleanPhone);
 
             fetch(API_URL, {
                 method: 'POST',
@@ -2052,55 +1970,71 @@
                     return;
                 }
 
-                if (data.success) {
-                    if (data.has_email) {
-                        // Email OTP screen
-                        pendingEmailVerification = {
-                            studentId: data.student_id,
-                            identifier: identifier,
-                            maskedEmail: data.masked_email
-                        };
+                if (!data.success) {
+                    // Show error in recovery prompt
+                    elements.phoneLoginForm.classList.remove('active');
+                    elements.usernameLoginForm.classList.remove('active');
+                    const recoveryContainer = document.getElementById('passwordRecoveryContainer');
+                    if (recoveryContainer) recoveryContainer.classList.add('active');
 
-                        document.getElementById('passwordRecoveryContainer')?.classList.remove('active');
-                        const emailContainer = document.getElementById('emailOtpContainer');
-                        if (emailContainer) emailContainer.classList.add('active');
+                    const promptPanel = document.getElementById('recoveryPromptPanel');
+                    if (promptPanel) promptPanel.style.display = 'block';
+                    const devPanel = document.getElementById('recoveryDevPanel');
+                    if (devPanel) devPanel.style.display = 'none';
+                    const succPanel = document.getElementById('recoverySuccessPanel');
+                    if (succPanel) succPanel.style.display = 'none';
 
-                        const displayEl = document.getElementById('emailOtpDisplay');
-                        if (displayEl) displayEl.textContent = data.masked_email || identifier;
-
-                        const codeInput = document.getElementById('emailOtpCodeInput');
-                        if (codeInput) {
-                            codeInput.value = '';
-                            setTimeout(() => codeInput.focus(), 150);
-                        }
-
-                        startEmailOtpCountdown(60);
-                    } else {
-                        // Student has NO email linked -> Switch smoothly to Developer Request tab with prefilled phone!
-                        switchRecoveryTab('dev');
-                        const devPhoneInput = document.getElementById('devReqPhone');
-                        if (devPhoneInput) devPhoneInput.value = data.student_phone || identifier;
-                        const devNameInput = document.getElementById('devReqStudentName');
-                        if (devNameInput && data.student_name) devNameInput.value = data.student_name;
-
-                        const devErr = document.getElementById('recoveryDevError');
-                        if (devErr) {
-                            devErr.innerHTML = '<i class="fas fa-info-circle"></i> لم يتم العثور على بريد إلكتروني مرتبط بحسابك. يمكنك إرسال بياناتك وسيقوم فريق العمل بالتواصل معك وإرسال رابط آمن:';
-                            devErr.style.display = 'block';
-                            devErr.style.background = 'var(--primary-light)';
-                            devErr.style.color = 'var(--primary-dark)';
-                            devErr.style.border = '1px solid rgba(91,108,245,0.2)';
-                        }
-                    }
-                } else {
+                    const errEl = document.getElementById('recoveryPromptError');
                     if (errEl) {
-                        errEl.textContent = data.message || 'تعذر استعادة كلمة المرور';
+                        errEl.textContent = data.message || 'لم يتم العثور على حساب بهذا الرقم';
                         errEl.style.display = 'block';
                     }
+                    const promptPhone = document.getElementById('recoveryPromptPhone');
+                    if (promptPhone) promptPhone.value = cleanPhone;
+                    return;
+                }
+
+                // If student HAS an email -> Code was auto-sent by backend!
+                if (data.has_email) {
+                    pendingEmailVerification = {
+                        studentId: data.student_id,
+                        identifier: cleanPhone,
+                        phone: cleanPhone,
+                        maskedEmail: data.masked_email
+                    };
+
+                    elements.phoneLoginForm.classList.remove('active');
+                    elements.usernameLoginForm.classList.remove('active');
+                    document.getElementById('passwordRecoveryContainer')?.classList.remove('active');
+
+                    const emailContainer = document.getElementById('emailOtpContainer');
+                    if (emailContainer) emailContainer.classList.add('active');
+
+                    const displayEl = document.getElementById('emailOtpDisplay');
+                    if (displayEl) displayEl.textContent = data.masked_email;
+
+                    const codeInput = document.getElementById('emailOtpCodeInput');
+                    if (codeInput) {
+                        codeInput.value = '';
+                        setTimeout(() => codeInput.focus(), 150);
+                    }
+
+                    startEmailOtpCountdown(60);
+                } else {
+                    // Student has NO email -> Main recovery is dev link! No email related inputs or mentions.
+                    showDevRecoveryView(data.student_phone || cleanPhone);
                 }
             })
             .catch(err => {
                 hideLoading();
+                elements.phoneLoginForm.classList.remove('active');
+                const recoveryContainer = document.getElementById('passwordRecoveryContainer');
+                if (recoveryContainer) recoveryContainer.classList.add('active');
+
+                const promptPanel = document.getElementById('recoveryPromptPanel');
+                if (promptPanel) promptPanel.style.display = 'block';
+
+                const errEl = document.getElementById('recoveryPromptError');
                 if (errEl) {
                     errEl.textContent = 'خطأ في الاتصال بالخادم. يرجى المحاولة مرة أخرى.';
                     errEl.style.display = 'block';
@@ -2108,46 +2042,64 @@
             });
         }
 
+        function showDevRecoveryView(phone) {
+            elements.phoneLoginForm.classList.remove('active');
+            elements.usernameLoginForm.classList.remove('active');
+            document.getElementById('emailOtpContainer')?.classList.remove('active');
+
+            const recoveryContainer = document.getElementById('passwordRecoveryContainer');
+            if (recoveryContainer) {
+                recoveryContainer.classList.add('active');
+
+                const promptPanel = document.getElementById('recoveryPromptPanel');
+                if (promptPanel) promptPanel.style.display = 'none';
+
+                const succPanel = document.getElementById('recoverySuccessPanel');
+                if (succPanel) succPanel.style.display = 'none';
+
+                const devPanel = document.getElementById('recoveryDevPanel');
+                if (devPanel) devPanel.style.display = 'block';
+
+                const devPhoneInput = document.getElementById('devReqPhone');
+                if (devPhoneInput) devPhoneInput.value = phone || '';
+
+                const devErr = document.getElementById('recoveryDevError');
+                if (devErr) devErr.style.display = 'none';
+            }
+        }
+
+        function showDevRecoveryFallback() {
+            // Secondary option when user has email but encounters email issues
+            const phone = pendingEmailVerification?.phone || (elements.phoneInput?.value || '').trim();
+            showDevRecoveryView(phone);
+        }
+
+        function cancelPasswordRecovery() {
+            const recoveryContainer = document.getElementById('passwordRecoveryContainer');
+            if (recoveryContainer) recoveryContainer.classList.remove('active');
+            elements.phoneLoginForm.classList.add('active');
+        }
+
         async function submitDevPasswordRequest() {
             const errEl = document.getElementById('recoveryDevError');
             if (errEl) errEl.style.display = 'none';
 
-            const name = (document.getElementById('devReqStudentName')?.value || '').trim();
-            const churchSelect = document.getElementById('devReqChurchSelect');
-            const churchId = churchSelect ? churchSelect.value : '';
-            const churchName = churchSelect && churchSelect.selectedIndex >= 0 ? churchSelect.options[churchSelect.selectedIndex].text : '';
-            const phone = (document.getElementById('devReqPhone')?.value || '').trim();
-            const email = (document.getElementById('devReqEmail')?.value || '').trim();
-
-            if (!name) {
-                if (errEl) { errEl.textContent = 'الرجاء إدخال اسم الطفل بالكامل'; errEl.style.display = 'block'; }
-                return;
-            }
-            if (!churchId) {
-                if (errEl) { errEl.textContent = 'الرجاء اختيار الكنيسة'; errEl.style.display = 'block'; }
-                return;
-            }
+            let phone = (document.getElementById('devReqPhone')?.value || '').trim();
             if (!phone) {
-                if (errEl) { errEl.textContent = 'الرجاء إدخال رقم الهاتف للتواصل'; errEl.style.display = 'block'; }
+                phone = (document.getElementById('phoneInput')?.value || '').trim();
+            }
+
+            if (!phone) {
+                if (errEl) { errEl.textContent = 'الرجاء إدخال رقم الهاتف لاستلام الرابط'; errEl.style.display = 'block'; }
                 return;
             }
 
-            if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-                if (errEl) { errEl.textContent = 'صيغة البريد الإلكتروني غير صحيحة (يمكنك تركه فارغاً فهو اختياري)'; errEl.style.display = 'block'; }
-                return;
-            }
-
-            showLoading('جاري إرسال طلب استعادة الحساب...');
+            showLoading('جاري إرسال طلب رابط الاستعادة للمطور...');
 
             const fd = new FormData();
             fd.append('action', 'submitStudentPasswordRequest');
             fd.append('identifier', phone);
             fd.append('phone', phone);
-            fd.append('name', name);
-            fd.append('student_name', name);
-            fd.append('church_id', churchId);
-            fd.append('church_name', churchName);
-            fd.append('email', email);
             fd.append('request_type', 'reset_password');
 
             try {
@@ -2155,21 +2107,18 @@
                 hideLoading();
 
                 if (res && res.success) {
-                    // Show success confirmation
-                    const panelEmail = document.getElementById('recoveryEmailPanel');
-                    const panelDev = document.getElementById('recoveryDevPanel');
-                    const tabsRow = document.getElementById('recoveryTabsRow');
-                    const backRow = document.getElementById('recoveryBackRow');
-                    if (panelEmail) panelEmail.style.display = 'none';
-                    if (panelDev) panelDev.style.display = 'none';
-                    if (tabsRow) tabsRow.style.display = 'none';
-                    if (backRow) backRow.style.display = 'none';
+                    const promptPanel = document.getElementById('recoveryPromptPanel');
+                    const devPanel = document.getElementById('recoveryDevPanel');
+                    if (promptPanel) promptPanel.style.display = 'none';
+                    if (devPanel) devPanel.style.display = 'none';
 
                     const succPanel = document.getElementById('recoverySuccessPanel');
                     if (succPanel) succPanel.style.display = 'block';
 
                     const succMsg = document.getElementById('recoverySuccessMsg');
-                    if (succMsg && res.message) succMsg.textContent = res.message;
+                    if (succMsg) {
+                        succMsg.textContent = res.message || `تم إرسال طلبك بنجاح للمطور. سيصلك الرابط الآمن عبر واتساب أو رسالة نصية على رقم هاتفك (${phone}) فور مراجعته.`;
+                    }
                 } else {
                     if (errEl) {
                         errEl.textContent = (res && res.message) ? res.message : 'فشل إرسال الطلب. يرجى المحاولة مرة أخرى.';

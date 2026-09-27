@@ -24859,7 +24859,7 @@ $showSettings = $hasChurchId || $isDevOrAdmin;
                 smsPhone = (phone || '').startsWith('+') ? ('+' + rawDigits) : rawDigits;
             }
 
-            const formattedMessage = `سلام ونعمة ✝️\nرابط إعادة تعيين كلمة المرور لحساب: ${sName}\n${resetUrl}\n\n⚠️ ملاحظة هامة: هذا الرابط صالح للاستخدام لمدة ساعتين فقط (ينتهي بعد ساعتين).`;
+            const formattedMessage = `رابط إعادة تعيين كلمة المرور لحساب: ${sName}\n${resetUrl}\n\n⚠️ ملاحظة هامة: هذا الرابط صالح للاستخدام لمدة ساعتين فقط (ينتهي بعد ساعتين).`;
 
             // WhatsApp link
             const waBtn = document.getElementById('devPwdWaBtn');
