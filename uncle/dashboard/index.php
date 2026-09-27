@@ -14757,57 +14757,80 @@ $showSettings = $hasChurchId || $isDevOrAdmin;
                 </div>
 
                 <!-- VIEW 2: DEDICATED STUDENT DETAIL & RESET ACTION -->
-                <div id="devPwdDetailView" style="display:none;">
-                    <!-- Compact Student Identity Card with Side Email Option -->
-                    <div style="background:var(--surface-2); border:1px solid var(--border-solid); border-radius:var(--r-lg); padding:12px 14px; margin-bottom:12px;">
-                        <div style="display:flex; align-items:center; justify-content:space-between; gap:10px;">
-                            <div id="devPwdStudentCard" style="flex:1; min-width:0;">
-                                <!-- Dynamic Student info injected here -->
-                            </div>
-                            <!-- Side Email Button -->
-                            <div style="flex-shrink:0;">
-                                <button type="button" class="btn btn-sm btn-secondary" id="devPwdToggleEmailBtn" onclick="toggleDevPwdEmailDrawer()" style="padding:6px 10px; font-size:0.75rem; border-radius:var(--r-md); display:flex; align-items:center; gap:5px; white-space:nowrap; background:var(--surface-3); border:1px solid var(--border-solid);">
-                                    <i class="fas fa-envelope" style="color:var(--brand);"></i>
-                                    <span id="devPwdToggleEmailBtnText">إضافة إيميل له</span>
-                                </button>
-                            </div>
-                        </div>
-
-                        <!-- Expandable Email Drawer (Hidden by default) -->
-                        <div id="devPwdEmailDrawer" style="display:none; margin-top:10px; padding-top:10px; border-top:1px dashed var(--border-solid);">
-                            <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:6px;">
-                                <span style="font-size:0.78rem; font-weight:700; color:var(--text-2);">البريد الإلكتروني:</span>
-                                <span id="devPwdEmailStatusBadge" style="font-size:0.7rem; padding:1px 6px; border-radius:4px; font-weight:600;"></span>
-                            </div>
-                            <div style="display:flex; gap:6px;">
-                                <input type="email" id="devPwdDetailEmail" class="form-input" placeholder="student@example.com" dir="ltr" style="font-family:monospace; font-size:0.8rem; padding:6px 10px; flex:1;">
-                                <button type="button" class="btn btn-sm" onclick="saveDevPwdStudentEmailOnly()" style="padding:6px 12px; font-size:0.78rem; font-weight:700; background:linear-gradient(135deg, var(--brand), var(--brand-dark)); color:#fff; border:none; border-radius:var(--r-md);">
-                                    حفظ
-                                </button>
-                            </div>
+                <!-- VIEW 2: DEDICATED STUDENT DETAIL & RESET ACTION SUITE -->
+                <div id="devPwdDetailView" style="display:none; flex-direction:column; gap:12px;">
+                    <!-- Student Identity Verification Card -->
+                    <div style="background:var(--surface-2); border:1px solid var(--border-solid); border-radius:var(--r-lg); padding:14px;">
+                        <div id="devPwdStudentCard" style="display:flex; align-items:center; gap:14px;">
+                            <!-- Injected dynamically: Avatar, Name, Church, Class, ID, Phones with direct dial -->
                         </div>
                     </div>
 
-                    <!-- Single Main WhatsApp Action -->
-                    <div style="display:flex; flex-direction:column; gap:10px;">
-                        <button type="button" class="btn" id="devPwdWhatsAppActionBtn" onclick="sendDevPwdLinkToWhatsApp()" style="width:100%; padding:12px 16px; background:#25d366; color:#fff; border:none; border-radius:var(--r-lg); font-weight:700; font-size:0.95rem; cursor:pointer; display:inline-flex; align-items:center; justify-content:center; gap:8px; box-shadow:0 4px 14px rgba(37,211,102,0.3); transition:transform .15s, box-shadow .15s;" onmouseenter="this.style.transform='translateY(-1px)'" onmouseleave="this.style.transform='translateY(0)'">
-                            <i class="fab fa-whatsapp" style="font-size:1.3rem;"></i>
-                            <span id="devPwdWhatsAppBtnText">إرسال رابط الاستعادة إلى واتساب</span>
-                        </button>
+                    <!-- Email Suite Card (Save Only & Generate + Send to Email) -->
+                    <div style="background:var(--surface-2); border:1px solid var(--border-solid); border-radius:var(--r-lg); padding:14px;">
+                        <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:8px;">
+                            <label class="form-label" style="margin:0; font-size:0.82rem; font-weight:700; color:var(--text); display:flex; align-items:center; gap:6px;">
+                                <i class="fas fa-envelope" style="color:var(--brand);"></i> البريد الإلكتروني للطالب
+                            </label>
+                            <span id="devPwdEmailStatusBadge" style="font-size:0.72rem; padding:2px 8px; border-radius:4px; font-weight:700;"></span>
+                        </div>
+                        <div class="input-icon-wrap" style="margin-bottom:10px;">
+                            <i class="fas fa-at input-icon"></i>
+                            <input type="email" id="devPwdDetailEmail" class="form-input" placeholder="student@example.com" dir="ltr" style="font-family:monospace; font-size:0.84rem; padding:8px 10px 8px 34px;">
+                        </div>
+                        <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px;">
+                            <button type="button" class="btn btn-sm btn-secondary" onclick="saveDevPwdStudentEmailOnly()" id="devPwdSaveEmailBtn" style="padding:9px 12px; font-size:0.8rem; font-weight:700; justify-content:center; background:var(--surface-3); border:1px solid var(--border-solid); border-radius:var(--r-md); cursor:pointer;">
+                                <i class="fas fa-save" style="margin-left:4px;"></i> حفظ الإيميل فقط
+                            </button>
+                            <button type="button" class="btn btn-sm" onclick="generateAndSendDevPwdLinkToEmail()" id="devPwdSendEmailBtn" style="padding:9px 12px; font-size:0.8rem; font-weight:700; justify-content:center; background:linear-gradient(135deg, var(--coupon), var(--coupon-dark)); color:#fff; border:none; border-radius:var(--r-md); cursor:pointer; box-shadow:0 3px 10px rgba(139,92,246,0.25);">
+                                <i class="fas fa-paper-plane" style="margin-left:4px;"></i> إنشاء الرابط وإرساله للإيميل
+                            </button>
+                        </div>
+                    </div>
 
-                        <div style="background:var(--surface-2); border-radius:var(--r-md); padding:8px 12px; font-size:0.76rem; color:var(--text-3); display:flex; align-items:center; gap:6px;">
-                            <i class="fas fa-info-circle" style="color:var(--brand);"></i>
-                            <span>الرابط يتم توليده بصلاحية ساعتين، ويفتح محادثة واتساب مع ولي الأمر والرسالة مجهزة وجاهزة للإرسال مباشرة.</span>
+                    <!-- Direct Instant Dispatch (WhatsApp / SMS / Link) -->
+                    <div style="background:var(--surface-2); border:1px solid var(--border-solid); border-radius:var(--r-lg); padding:14px;">
+                        <div style="font-size:0.82rem; font-weight:700; color:var(--text); margin-bottom:10px; display:flex; align-items:center; gap:6px;">
+                            <i class="fas fa-share-alt" style="color:var(--brand);"></i> إرسال رابط الاستعادة المباشر
+                        </div>
+                        
+                        <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:10px;">
+                            <button type="button" class="btn" id="devPwdWhatsAppActionBtn" onclick="sendDevPwdLinkToWhatsApp()" style="padding:10px 14px; background:#25d366; color:#fff; border:none; border-radius:var(--r-md); font-weight:700; font-size:0.85rem; cursor:pointer; display:inline-flex; align-items:center; justify-content:center; gap:6px; box-shadow:0 3px 10px rgba(37,211,102,0.25);">
+                                <i class="fab fa-whatsapp" style="font-size:1.15rem;"></i>
+                                <span id="devPwdWhatsAppBtnText">فتح واتساب</span>
+                            </button>
+                            <button type="button" class="btn btn-secondary" id="devPwdSmsActionBtn" onclick="sendDevPwdLinkToSms()" style="padding:10px 14px; background:var(--surface-3); color:var(--text); border:1px solid var(--border-solid); border-radius:var(--r-md); font-weight:700; font-size:0.85rem; cursor:pointer; display:inline-flex; align-items:center; justify-content:center; gap:6px;">
+                                <i class="fas fa-sms" style="color:var(--brand); font-size:1.1rem;"></i>
+                                <span id="devPwdSmsBtnText">إرسال SMS</span>
+                            </button>
                         </div>
 
-                        <!-- Compact Link & Copy Box (Shows if link generated) -->
-                        <div id="devPwdCompactLinkBox" style="display:none; background:var(--surface-3); border:1px solid var(--border-solid); border-radius:var(--r-md); padding:8px 10px;">
-                            <div style="display:flex; align-items:center; gap:6px;">
-                                <input type="text" id="devPwdGeneratedLinkInput" readonly class="form-input" dir="ltr" style="font-family:monospace; font-size:0.75rem; padding:4px 8px; flex:1; background:var(--surface); border:1px solid var(--border-solid); border-radius:var(--r-sm);">
-                                <button type="button" class="btn btn-sm btn-secondary" onclick="copyDevPwdLinkOnly()" style="padding:4px 10px; font-size:0.75rem; white-space:nowrap; border-radius:var(--r-sm);">
-                                    <i class="fas fa-copy"></i> نسخ
+                        <!-- 2-Hour Expiration Warning Banner -->
+                        <div style="background:var(--warning-bg); border:1px solid rgba(245,158,11,0.25); border-radius:var(--r-md); padding:8px 12px; font-size:0.75rem; color:var(--warning-dark); display:flex; align-items:flex-start; gap:8px; margin-bottom:10px;">
+                            <i class="fas fa-clock" style="margin-top:2px; font-size:0.85rem;"></i>
+                            <div style="line-height:1.4;">
+                                <strong>تنبيه هام (صلاحية الرابط ساعتان فقط):</strong> هذا الرابط الآمن صالح للاستخدام لمدة ساعتين فقط (ينتهي بعد ساعتين) لحماية وتأمين الحساب.
+                            </div>
+                        </div>
+
+                        <!-- Generated Link & Copy Suite -->
+                        <div id="devPwdCompactLinkBox" style="display:none; background:var(--surface-3); border:1px solid var(--border-solid); border-radius:var(--r-md); padding:10px;">
+                            <label style="display:block; font-size:0.72rem; color:var(--text-3); font-weight:600; margin-bottom:4px;">الرابط المشفر المنشأ:</label>
+                            <div style="display:flex; align-items:center; gap:6px; margin-bottom:8px;">
+                                <input type="text" id="devPwdGeneratedLinkInput" readonly class="form-input" dir="ltr" style="font-family:monospace; font-size:0.75rem; padding:6px 8px; flex:1; background:var(--surface); border:1px solid var(--border-solid); border-radius:var(--r-sm);">
+                                <button type="button" class="btn btn-sm btn-secondary" onclick="copyDevPwdLinkOnly()" style="padding:6px 10px; font-size:0.75rem; white-space:nowrap; border-radius:var(--r-sm);">
+                                    <i class="fas fa-link"></i> نسخ الرابط
                                 </button>
                             </div>
+                            <button type="button" class="btn btn-sm btn-secondary" onclick="copyDevPwdFullMsg()" style="width:100%; padding:6px 10px; font-size:0.75rem; border-radius:var(--r-sm); background:var(--surface); border:1px solid var(--border-solid); color:var(--text-2); justify-content:center; display:flex; align-items:center; gap:6px;">
+                                <i class="fas fa-copy"></i> نسخ الرسالة كاملة (مع تنبيه الساعتين)
+                            </button>
+                        </div>
+
+                        <div id="devPwdGenerateOnlyBtnWrap" style="text-align:center; margin-top:8px;">
+                            <button type="button" onclick="generateDevPwdLinkOnly()" style="background:none; border:none; color:var(--text-3); font-size:0.76rem; cursor:pointer; text-decoration:underline;">
+                                <i class="fas fa-magic" style="margin-left:3px;"></i> إنشاء الرابط فقط وعرضه هنا
+                            </button>
                         </div>
                     </div>
                 </div>
@@ -24610,7 +24633,7 @@ $showSettings = $hasChurchId || $isDevOrAdmin;
             const backBtn = document.getElementById('devPwdBackBtn');
             const titleEl = document.getElementById('devPwdModalTitleText');
             if (listView) listView.style.display = 'none';
-            if (detailView) detailView.style.display = 'block';
+            if (detailView) detailView.style.display = 'flex';
             if (backBtn) backBtn.style.display = 'inline-flex';
             if (titleEl) titleEl.innerHTML = `<i class="fas fa-user-shield" style="color:var(--brand);margin-left:8px;"></i>إدارة كلمة مرور: ${escHtml(student.name || '')}`;
 
@@ -24829,6 +24852,190 @@ $showSettings = $hasChurchId || $isDevOrAdmin;
                 if (btnText) btnText.textContent = origText;
                 showToast('خطأ في الاتصال بالخادم', 'error');
             }
+        }
+
+        async function generateAndSendDevPwdLinkToEmail() {
+            if (!_devPwdSelectedStudent) return;
+            const btn = document.getElementById('devPwdSendEmailBtn');
+            const origHtml = btn ? btn.innerHTML : '';
+            const email = (document.getElementById('devPwdDetailEmail')?.value || '').trim();
+
+            if (!email) {
+                showToast('يرجى كتابة البريد الإلكتروني أولاً لإرسال الرابط إليه', 'warning');
+                document.getElementById('devPwdDetailEmail')?.focus();
+                return;
+            }
+            if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+                showToast('صيغة البريد الإلكتروني غير صحيحة', 'warning');
+                return;
+            }
+
+            if (btn) { btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري الإرسال...'; }
+
+            const sId = getStudentDbId(_devPwdSelectedStudent);
+            const reqId = _devPwdCurrentReqData?.id || 0;
+
+            try {
+                const fd = new FormData();
+                fd.append('action', 'generateResetLinkForStudent');
+                fd.append('student_id', sId);
+                if (reqId) fd.append('request_id', reqId);
+                fd.append('send_email', '1');
+                fd.append('email', email);
+                if (typeof _appendDevOverride === 'function') _appendDevOverride(fd);
+
+                const d = await fetch(API_URL, { method: 'POST', body: fd, credentials: 'include' }).then(r => r.json());
+                if (btn) { btn.disabled = false; btn.innerHTML = origHtml; }
+
+                if (d.success) {
+                    _devPwdLastGeneratedData = d;
+                    _devPwdSelectedStudent.email = email;
+                    const badge = document.getElementById('devPwdEmailStatusBadge');
+                    if (badge) {
+                        badge.textContent = 'مسجل ومحفوظ';
+                        badge.style.background = 'var(--success-bg)';
+                        badge.style.color = 'var(--success-dark)';
+                    }
+                    if (d.reset_url) {
+                        const compactBox = document.getElementById('devPwdCompactLinkBox');
+                        const linkInput = document.getElementById('devPwdGeneratedLinkInput');
+                        if (compactBox && linkInput) {
+                            linkInput.value = d.reset_url;
+                            compactBox.style.display = 'block';
+                        }
+                    }
+                    showToast('تم حفظ الإيميل وإنشاء الرابط وإرساله بنجاح ✓', 'success');
+                    loadDevPasswordRequests();
+                } else {
+                    showToast('فشل إرسال الرابط: ' + (d.message || 'خطأ'), 'error');
+                }
+            } catch (e) {
+                if (btn) { btn.disabled = false; btn.innerHTML = origHtml; }
+                showToast('خطأ في الاتصال بالخادم', 'error');
+            }
+        }
+
+        async function sendDevPwdLinkToSms() {
+            if (!_devPwdSelectedStudent) return;
+            const btn = document.getElementById('devPwdSmsActionBtn');
+            const btnText = document.getElementById('devPwdSmsBtnText');
+            const origText = btnText ? btnText.textContent : 'إرسال SMS';
+
+            if (btn) btn.disabled = true;
+            if (btnText) btnText.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري الإنشاء...';
+
+            const sId = getStudentDbId(_devPwdSelectedStudent);
+            const reqId = _devPwdCurrentReqData?.id || 0;
+            const email = (document.getElementById('devPwdDetailEmail')?.value || '').trim();
+
+            try {
+                const fd = new FormData();
+                fd.append('action', 'generateResetLinkForStudent');
+                fd.append('student_id', sId);
+                if (reqId) fd.append('request_id', reqId);
+                fd.append('send_email', '0');
+                if (email) fd.append('email', email);
+                if (typeof _appendDevOverride === 'function') _appendDevOverride(fd);
+
+                const d = await fetch(API_URL, { method: 'POST', body: fd, credentials: 'include' }).then(r => r.json());
+                if (btn) btn.disabled = false;
+                if (btnText) btnText.textContent = origText;
+
+                if (d.success && d.reset_url) {
+                    _devPwdLastGeneratedData = d;
+                    const student = _devPwdSelectedStudent;
+                    const sName = student.name || 'الطفل';
+                    const phone = student.emergency_phone || student['تليفون الطوارئ'] || _devPwdCurrentReqData?.emergency_phone || student.phone || student['رقم التليفون'] || '';
+
+                    let rawDigits = (phone || '').replace(/[^\d]/g, '');
+                    let smsPhone = rawDigits;
+
+                    const formattedMessage = `سلام ونعمة ✝️\nرابط استعادة كلمة المرور لحساب: ${sName}\n${d.reset_url}\n\n⚠️ ملاحظة هامة: هذا الرابط صالح للاستخدام لمدة ساعتين فقط (ينتهي بعد ساعتين).`;
+
+                    const compactBox = document.getElementById('devPwdCompactLinkBox');
+                    const linkInput = document.getElementById('devPwdGeneratedLinkInput');
+                    if (compactBox && linkInput) {
+                        linkInput.value = d.reset_url;
+                        compactBox.style.display = 'block';
+                    }
+
+                    const isIos = /iPad|iPhone|iPod/.test(navigator.userAgent);
+                    const delim = isIos ? '&' : '?';
+                    const smsUrl = smsPhone
+                        ? `sms:${smsPhone}${delim}body=${encodeURIComponent(formattedMessage)}`
+                        : `sms:${delim}body=${encodeURIComponent(formattedMessage)}`;
+
+                    window.location.href = smsUrl;
+                    showToast('تم فتح تطبيق الرسائل SMS ✓', 'success');
+                    loadDevPasswordRequests();
+                } else {
+                    showToast('فشل إنشاء الرابط: ' + (d.message || 'خطأ'), 'error');
+                }
+            } catch (e) {
+                if (btn) btn.disabled = false;
+                if (btnText) btnText.textContent = origText;
+                showToast('خطأ في الاتصال بالخادم', 'error');
+            }
+        }
+
+        async function generateDevPwdLinkOnly() {
+            if (!_devPwdSelectedStudent) return;
+            const sId = getStudentDbId(_devPwdSelectedStudent);
+            const reqId = _devPwdCurrentReqData?.id || 0;
+            const email = (document.getElementById('devPwdDetailEmail')?.value || '').trim();
+
+            showLoading('جاري إنشاء الرابط المشفر...');
+            try {
+                const fd = new FormData();
+                fd.append('action', 'generateResetLinkForStudent');
+                fd.append('student_id', sId);
+                if (reqId) fd.append('request_id', reqId);
+                fd.append('send_email', '0');
+                if (email) fd.append('email', email);
+                if (typeof _appendDevOverride === 'function') _appendDevOverride(fd);
+
+                const d = await fetch(API_URL, { method: 'POST', body: fd, credentials: 'include' }).then(r => r.json());
+                hideLoading();
+
+                if (d.success && d.reset_url) {
+                    _devPwdLastGeneratedData = d;
+                    const compactBox = document.getElementById('devPwdCompactLinkBox');
+                    const linkInput = document.getElementById('devPwdGeneratedLinkInput');
+                    if (compactBox && linkInput) {
+                        linkInput.value = d.reset_url;
+                        compactBox.style.display = 'block';
+                    }
+                    showToast('تم إنشاء الرابط بنجاح ✓', 'success');
+                    loadDevPasswordRequests();
+                } else {
+                    showToast('فشل إنشاء الرابط: ' + (d.message || 'خطأ'), 'error');
+                }
+            } catch (e) {
+                hideLoading();
+                showToast('خطأ في الاتصال', 'error');
+            }
+        }
+
+        function copyDevPwdFullMsg() {
+            const link = document.getElementById('devPwdGeneratedLinkInput')?.value || '';
+            if (!link) {
+                showToast('يرجى إنشاء الرابط أولاً لنسخ الرسالة', 'warning');
+                return;
+            }
+            const sName = _devPwdSelectedStudent?.name || 'الطفل';
+            const formattedMessage = `سلام ونعمة ✝️\nرابط إعادة تعيين كلمة المرور لحساب: ${sName}\n${link}\n\n⚠️ ملاحظة هامة: هذا الرابط صالح للاستخدام لمدة ساعتين فقط (ينتهي بعد ساعتين).`;
+
+            navigator.clipboard.writeText(formattedMessage).then(() => {
+                showToast('تم نسخ نص الرسالة بالكامل مع التنبيه ✓', 'success');
+            }).catch(() => {
+                const ta = document.createElement('textarea');
+                ta.value = formattedMessage;
+                document.body.appendChild(ta);
+                ta.select();
+                document.execCommand('copy');
+                document.body.removeChild(ta);
+                showToast('تم نسخ نص الرسالة بالكامل ✓', 'success');
+            });
         }
 
         function copyDevPwdLinkOnly() {

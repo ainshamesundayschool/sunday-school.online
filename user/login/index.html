@@ -1083,18 +1083,28 @@
 
         <!-- Password Recovery Container -->
         <div class="password-setup-container" id="passwordRecoveryContainer">
-            <!-- PANEL 1: Initial Phone Prompt -->
-            <div id="recoveryPromptPanel" style="display:none; text-align:center;">
-                <div style="width:62px; height:62px; border-radius:50%; background:var(--primary-light); color:var(--primary); display:flex; align-items:center; justify-content:center; margin:0 auto 12px; font-size:1.5rem; border:2px solid rgba(91, 108, 245, 0.2);">
+            <!-- Recovery Tabs (Quick vs Dev Direct) -->
+            <div id="recoveryTabBar" style="display:flex; background:var(--surface-3, #f1f5f9); padding:4px; border-radius:12px; margin-bottom:18px; gap:4px;">
+                <button type="button" id="tabRecoveryQuickBtn" onclick="switchRecoveryTab('quick')" style="flex:1; padding:9px 12px; border:none; border-radius:10px; font-weight:700; font-size:0.85rem; font-family:'Cairo', sans-serif; cursor:pointer; transition:all 0.2s; background:#fff; color:var(--primary); box-shadow:0 2px 6px rgba(0,0,0,0.06);">
+                    <i class="fas fa-bolt" style="margin-left:4px;"></i> بالهاتف / الإيميل
+                </button>
+                <button type="button" id="tabRecoveryDevBtn" onclick="switchRecoveryTab('dev')" style="flex:1; padding:9px 12px; border:none; border-radius:10px; font-weight:700; font-size:0.85rem; font-family:'Cairo', sans-serif; cursor:pointer; transition:all 0.2s; background:transparent; color:var(--secondary);">
+                    <i class="fas fa-user-shield" style="margin-left:4px;"></i> طلب من المطور
+                </button>
+            </div>
+
+            <!-- PANEL 1: Initial Phone / Email Prompt (Quick) -->
+            <div id="recoveryPromptPanel" style="display:block; text-align:center;">
+                <div style="width:58px; height:58px; border-radius:50%; background:var(--primary-light); color:var(--primary); display:flex; align-items:center; justify-content:center; margin:0 auto 12px; font-size:1.4rem; border:2px solid rgba(91, 108, 245, 0.2);">
                     <i class="fas fa-key"></i>
                 </div>
-                <h3 style="font-size:1.2rem; font-weight:800; color:var(--dark); margin-bottom:6px;">استعادة كلمة المرور</h3>
-                <p style="font-size:0.86rem; color:var(--secondary); font-weight:600; line-height:1.5; margin-bottom:18px;">
+                <h3 style="font-size:1.15rem; font-weight:800; color:var(--dark); margin-bottom:6px;">استعادة كلمة المرور</h3>
+                <p style="font-size:0.85rem; color:var(--secondary); font-weight:600; line-height:1.5; margin-bottom:16px;">
                     أدخل رقم هاتفك المسجل للبدء في استعادة الحساب:
                 </p>
 
                 <form onsubmit="event.preventDefault(); submitPhoneForRecovery();">
-                    <div class="form-group" style="margin-bottom:16px; text-align:right;">
+                    <div class="form-group" style="margin-bottom:14px; text-align:right;">
                         <label for="recoveryPromptPhone" class="form-label" style="font-weight:700;">رقم الهاتف</label>
                         <div class="input-container">
                             <i class="fas fa-phone input-icon"></i>
@@ -1102,31 +1112,93 @@
                         </div>
                     </div>
 
-                    <div class="error-message" id="recoveryPromptError" style="display:none; margin-bottom:14px; text-align:right;"></div>
+                    <div class="error-message" id="recoveryPromptError" style="display:none; margin-bottom:12px; text-align:right;"></div>
 
                     <button type="submit" class="login-btn" id="recoveryPromptSubmitBtn" style="margin-bottom:12px;">
                         <span>متابعة</span>
                         <i class="fas fa-arrow-left"></i>
                     </button>
                 </form>
+
+                <div style="margin-top:10px; padding:10px 12px; background:rgba(91,108,245,0.06); border:1px dashed rgba(91,108,245,0.2); border-radius:10px; font-size:0.82rem; color:var(--secondary); text-align:center;">
+                    <span>ليس لديك بريد إلكتروني أو نسيت رقمك؟ </span>
+                    <a href="#" onclick="event.preventDefault(); switchRecoveryTab('dev');" style="color:var(--primary); font-weight:800; text-decoration:none;">
+                        طلب رابط بالاسم والكنيسة <i class="fas fa-arrow-left" style="font-size:0.75rem;"></i>
+                    </a>
+                </div>
             </div>
 
-            <!-- PANEL 2: SECURE LINK RECOVERY (Main for students with NO email, and secondary for email issues) -->
+            <!-- PANEL 1.5: DIRECT DEVELOPER REQUEST FORM (Name + Church + Phone + Optional Email) -->
+            <div id="recoveryDevDirectPanel" style="display:none; text-align:center;">
+                <div style="width:58px; height:58px; border-radius:50%; background:var(--primary-light); color:var(--primary); display:flex; align-items:center; justify-content:center; margin:0 auto 12px; font-size:1.4rem; border:2px solid rgba(91, 108, 245, 0.2);">
+                    <i class="fas fa-user-shield"></i>
+                </div>
+                <h3 style="font-size:1.15rem; font-weight:800; color:var(--dark); margin-bottom:6px;">طلب رابط من المطور</h3>
+                <p style="font-size:0.83rem; color:var(--secondary); margin-bottom:14px; background:var(--primary-light); padding:10px 12px; border-radius:var(--radius-sm); border:1px solid rgba(91, 108, 245, 0.15); line-height:1.5; text-align:right;">
+                    <i class="fas fa-shield-alt" style="color:var(--primary); margin-left:4px;"></i>
+                    في حال عدم وجود إيميل أو نسيان الرقم، اكتب بياناتك وسيقوم المطور بإنشاء رابط آمن وإرساله لك عبر واتساب.
+                </p>
+
+                <form onsubmit="event.preventDefault(); submitDirectDevRequest();">
+                    <div class="form-group" style="margin-bottom:12px; text-align:right;">
+                        <label for="devDirectName" class="form-label" style="font-weight:700;">الاسم بالكامل (ثلاثي أو رباعي) <span style="color:#ef4444;">*</span></label>
+                        <div class="input-container">
+                            <i class="fas fa-user input-icon"></i>
+                            <input type="text" id="devDirectName" class="form-input" placeholder="اسم المخدوم كاملاً..." required>
+                        </div>
+                    </div>
+
+                    <div class="form-group" style="margin-bottom:12px; text-align:right;">
+                        <label for="devDirectChurch" class="form-label" style="font-weight:700;">الكنيسة التابع لها <span style="color:#ef4444;">*</span></label>
+                        <div class="input-container">
+                            <i class="fas fa-church input-icon"></i>
+                            <select id="devDirectChurch" class="form-input" required style="padding-right:38px;">
+                                <option value="">جاري تحميل الكنائس...</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-group" style="margin-bottom:12px; text-align:right;">
+                        <label for="devDirectPhone" class="form-label" style="font-weight:700;">رقم هاتف للتواصل (واتساب) <span style="color:#ef4444;">*</span></label>
+                        <div class="input-container">
+                            <i class="fas fa-phone input-icon"></i>
+                            <input type="tel" id="devDirectPhone" class="form-input" placeholder="01xxxxxxxxx" dir="ltr" required style="font-weight:700; letter-spacing:1px; text-align:center;">
+                        </div>
+                    </div>
+
+                    <div class="form-group" style="margin-bottom:14px; text-align:right;">
+                        <label for="devDirectEmail" class="form-label" style="font-weight:700;">البريد الإلكتروني <span style="font-size:0.75rem; color:var(--secondary);">(اختياري)</span></label>
+                        <div class="input-container">
+                            <i class="fas fa-envelope input-icon"></i>
+                            <input type="email" id="devDirectEmail" class="form-input" placeholder="name@example.com (اختياري)" dir="ltr">
+                        </div>
+                    </div>
+
+                    <div class="error-message" id="devDirectError" style="display:none; margin-bottom:12px; text-align:right;"></div>
+
+                    <button type="submit" class="login-btn" id="devDirectSubmitBtn" style="margin-bottom:12px; padding:12px; font-weight:800; font-size:0.95rem;">
+                        <i class="fas fa-paper-plane"></i>
+                        <span>إرسال الطلب للمطور الآن</span>
+                    </button>
+                </form>
+            </div>
+
+            <!-- PANEL 2: SECURE LINK RECOVERY FOR IDENTIFIED PHONE (No email linked in DB) -->
             <div id="recoveryDevPanel" style="display:none; text-align:center;">
-                <div style="width:62px; height:62px; border-radius:50%; background:var(--primary-light); color:var(--primary); display:flex; align-items:center; justify-content:center; margin:0 auto 12px; font-size:1.5rem; border:2px solid rgba(91, 108, 245, 0.2);">
+                <div style="width:58px; height:58px; border-radius:50%; background:var(--primary-light); color:var(--primary); display:flex; align-items:center; justify-content:center; margin:0 auto 12px; font-size:1.4rem; border:2px solid rgba(91, 108, 245, 0.2);">
                     <i class="fas fa-paper-plane"></i>
                 </div>
-                <h3 style="font-size:1.2rem; font-weight:800; color:var(--dark); margin-bottom:6px;">استعادة كلمة المرور</h3>
-                <p style="font-size:0.86rem; color:var(--secondary); margin-bottom:16px; background:var(--primary-light); padding:12px 14px; border-radius:var(--radius-sm); border:1px solid rgba(91, 108, 245, 0.15); line-height:1.6; text-align:right;">
+                <h3 style="font-size:1.15rem; font-weight:800; color:var(--dark); margin-bottom:6px;">طلب رابط استعادة الحساب</h3>
+                <p style="font-size:0.84rem; color:var(--secondary); margin-bottom:14px; background:var(--primary-light); padding:10px 12px; border-radius:var(--radius-sm); border:1px solid rgba(91, 108, 245, 0.15); line-height:1.5; text-align:right;">
                     <i class="fas fa-shield-alt" style="color:var(--primary); margin-left:4px;"></i>
-                    سيتم إرسال طلب لإنشاء رابط آمن وخاص بك لإعادة تعيين كلمة المرور، وسيصلك الرابط فوراً عبر واتساب أو رسالة نصية على رقم هاتفك المعتمد:
+                    سيتم إرسال طلب للمطور لإنشاء رابط آمن وخاص بك لإعادة تعيين كلمة المرور، وسيصلك الرابط فوراً عبر واتساب أو رسالة نصية على رقم هاتفك:
                 </p>
 
                 <!-- Phone display and edit section -->
-                <div class="form-group" style="margin-bottom:16px; text-align:right;">
-                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                <div class="form-group" style="margin-bottom:14px; text-align:right;">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
                         <label class="form-label" style="font-weight:700; margin-bottom:0;">رقم الهاتف المعتمد لاستلام الرابط</label>
-                        <button type="button" id="editRecoveryPhoneBtn" onclick="toggleEditRecoveryPhone(true)" style="background:none; border:none; color:var(--primary); font-size:0.82rem; font-weight:700; cursor:pointer; display:inline-flex; align-items:center; gap:5px; padding:3px 8px; border-radius:6px; transition:all 0.2s;" onmouseover="this.style.background='rgba(91,108,245,0.08)'" onmouseout="this.style.background='none'">
+                        <button type="button" id="editRecoveryPhoneBtn" onclick="toggleEditRecoveryPhone(true)" style="background:none; border:none; color:var(--primary); font-size:0.82rem; font-weight:700; cursor:pointer; display:inline-flex; align-items:center; gap:5px; padding:3px 8px; border-radius:6px; transition:all 0.2s;">
                             <i class="fas fa-pencil-alt" style="font-size:0.75rem;"></i>
                             <span>تعديل الرقم</span>
                         </button>
@@ -1136,9 +1208,9 @@
                     <div id="recoveryPhoneLockedWrap" class="input-container" style="background:var(--light, #f8fafc); border:1.5px solid var(--border, #e2e8f0); border-radius:var(--radius-sm, 12px); padding:4px 12px; display:flex; align-items:center; justify-content:space-between; gap:8px;">
                         <div style="display:flex; align-items:center; gap:8px; flex:1;">
                             <i class="fas fa-lock" style="color:var(--secondary); opacity:0.7; font-size:0.95rem;"></i>
-                            <input type="tel" id="recoveryLockedPhone" class="form-input" readonly disabled dir="ltr" style="background:transparent; border:none; box-shadow:none; font-weight:800; font-size:1.1rem; letter-spacing:1.5px; text-align:center; color:var(--dark); cursor:not-allowed; padding:6px 0;" value="">
+                            <input type="tel" id="recoveryLockedPhone" class="form-input" readonly disabled dir="ltr" style="background:transparent; border:none; box-shadow:none; font-weight:800; font-size:1.05rem; letter-spacing:1.5px; text-align:center; color:var(--dark); cursor:not-allowed; padding:6px 0;" value="">
                         </div>
-                        <span style="font-size:0.78rem; font-weight:700; color:var(--success); display:inline-flex; align-items:center; gap:4px; white-space:nowrap; background:#ecfdf5; padding:3px 8px; border-radius:6px;">
+                        <span style="font-size:0.75rem; font-weight:700; color:var(--success); display:inline-flex; align-items:center; gap:4px; white-space:nowrap; background:#ecfdf5; padding:3px 8px; border-radius:6px;">
                             <i class="fas fa-check-circle"></i> مؤكد
                         </span>
                     </div>
@@ -1164,19 +1236,19 @@
                 <div class="error-message" id="recoveryDevError" style="display:none; margin-bottom:14px; text-align:right;"></div>
 
                 <!-- MAIN FOCAL BUTTON -->
-                <button type="button" class="login-btn" id="recoveryDevSubmitBtn" onclick="submitDevPasswordRequest()" style="margin-bottom:14px; padding:14px 20px; font-size:1.05rem; font-weight:800; background:linear-gradient(135deg, var(--primary), var(--primary-dark)); box-shadow:0 8px 24px -4px rgba(91, 108, 245, 0.4); display:flex; align-items:center; justify-content:center; gap:10px;">
-                    <i class="fas fa-paper-plane" style="font-size:1.15rem;"></i>
+                <button type="button" class="login-btn" id="recoveryDevSubmitBtn" onclick="submitDevPasswordRequest()" style="margin-bottom:14px; padding:13px 18px; font-size:1rem; font-weight:800; background:linear-gradient(135deg, var(--primary), var(--primary-dark)); box-shadow:0 8px 24px -4px rgba(91, 108, 245, 0.4); display:flex; align-items:center; justify-content:center; gap:8px;">
+                    <i class="fas fa-paper-plane" style="font-size:1.05rem;"></i>
                     <span>إرسال طلب رابط الاستعادة</span>
                 </button>
             </div>
 
             <!-- PANEL 3: SUCCESS CONFIRMATION PANEL -->
             <div id="recoverySuccessPanel" style="display:none; text-align:center; padding:10px 0;">
-                <div style="width:64px; height:64px; border-radius:50%; background:var(--success-bg); color:var(--success); display:flex; align-items:center; justify-content:center; font-size:2rem; margin:0 auto 14px; border:2px solid #bbf7d0;">
+                <div style="width:60px; height:60px; border-radius:50%; background:var(--success-bg); color:var(--success); display:flex; align-items:center; justify-content:center; font-size:1.8rem; margin:0 auto 12px; border:2px solid #bbf7d0;">
                     <i class="fas fa-check-circle"></i>
                 </div>
-                <h3 style="font-size:1.18rem; font-weight:800; color:var(--dark); margin-bottom:8px;">تم إرسال طلبك بنجاح!</h3>
-                <p id="recoverySuccessMsg" style="font-size:0.87rem; color:var(--secondary); font-weight:600; line-height:1.6; margin-bottom:20px;">
+                <h3 style="font-size:1.15rem; font-weight:800; color:var(--dark); margin-bottom:8px;">تم إرسال طلبك بنجاح!</h3>
+                <p id="recoverySuccessMsg" style="font-size:0.86rem; color:var(--secondary); font-weight:600; line-height:1.6; margin-bottom:18px;">
                     تم استلام طلبك بنجاح. سيتم مراجعة الطلب وإرسال رابط تعيين كلمة المرور الجديدة إليك عبر واتساب أو رسالة نصية قريباً.
                 </p>
                 <button type="button" class="login-btn" onclick="cancelPasswordRecovery()">
@@ -1310,6 +1382,16 @@
         const isTestingDomain = window.location.hostname.indexOf('testing.') !== -1;
         const isTestingEnv = isTestingSubdir || isTestingDomain;
         const API_URL = isTestingSubdir ? '/testing/api.php' : '/api.php';
+
+        function escHtml(str) {
+            if (str == null) return '';
+            return String(str)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#039;');
+        }
 
         let currentLoginType = 'phone';
         let phoneLoginHasPassword = false;
@@ -1921,6 +2003,187 @@
         let pendingEmailVerification = null;
         let emailOtpCountdownInterval = null;
 
+        let recoveryChurchesLoaded = false;
+        async function loadRecoveryChurches() {
+            if (recoveryChurchesLoaded) return;
+            const select = document.getElementById('devDirectChurch');
+            if (!select) return;
+            try {
+                select.innerHTML = '<option value="">جاري تحميل قائمة الكنائس...</option>';
+                const res = await fetch(API_URL + '?action=getAllChurches');
+                const data = await res.json();
+                if (data && data.success && Array.isArray(data.churches)) {
+                    let html = '<option value="">اختر كنيستك التابع لها...</option>';
+                    data.churches.forEach(c => {
+                        html += `<option value="${c.id}" data-name="${escHtml(c.name || '')}">${escHtml(c.name || '')}</option>`;
+                    });
+                    select.innerHTML = html;
+                    recoveryChurchesLoaded = true;
+                } else {
+                    select.innerHTML = '<option value="">تعذر تحميل الكنائس، يرجى إعادة المحاولة</option>';
+                }
+            } catch (e) {
+                console.error('Failed to load churches for recovery:', e);
+                select.innerHTML = '<option value="">تعذر تحميل الكنائس</option>';
+            }
+        }
+
+        function switchRecoveryTab(tab) {
+            const quickBtn = document.getElementById('tabRecoveryQuickBtn');
+            const devBtn = document.getElementById('tabRecoveryDevBtn');
+            const tabBar = document.getElementById('recoveryTabBar');
+            const promptPanel = document.getElementById('recoveryPromptPanel');
+            const devDirectPanel = document.getElementById('recoveryDevDirectPanel');
+            const devPanel = document.getElementById('recoveryDevPanel');
+            const succPanel = document.getElementById('recoverySuccessPanel');
+
+            if (tabBar) tabBar.style.display = 'flex';
+            if (devPanel) devPanel.style.display = 'none';
+            if (succPanel) succPanel.style.display = 'none';
+
+            if (tab === 'quick') {
+                if (quickBtn) {
+                    quickBtn.style.background = '#fff';
+                    quickBtn.style.color = 'var(--primary)';
+                    quickBtn.style.boxShadow = '0 2px 6px rgba(0,0,0,0.06)';
+                }
+                if (devBtn) {
+                    devBtn.style.background = 'transparent';
+                    devBtn.style.color = 'var(--secondary)';
+                    devBtn.style.boxShadow = 'none';
+                }
+                if (promptPanel) promptPanel.style.display = 'block';
+                if (devDirectPanel) devDirectPanel.style.display = 'none';
+                setTimeout(() => document.getElementById('recoveryPromptPhone')?.focus(), 150);
+            } else {
+                if (devBtn) {
+                    devBtn.style.background = '#fff';
+                    devBtn.style.color = 'var(--primary)';
+                    devBtn.style.boxShadow = '0 2px 6px rgba(0,0,0,0.06)';
+                }
+                if (quickBtn) {
+                    quickBtn.style.background = 'transparent';
+                    quickBtn.style.color = 'var(--secondary)';
+                    quickBtn.style.boxShadow = 'none';
+                }
+                if (promptPanel) promptPanel.style.display = 'none';
+                if (devDirectPanel) devDirectPanel.style.display = 'block';
+                loadRecoveryChurches();
+                setTimeout(() => document.getElementById('devDirectName')?.focus(), 150);
+            }
+        }
+
+        function switchToDevPasswordRequest(prefill) {
+            elements.phoneLoginForm.classList.remove('active');
+            elements.usernameLoginForm.classList.remove('active');
+            elements.passwordSetupContainer.classList.remove('active');
+            document.getElementById('emailOtpContainer')?.classList.remove('active');
+            document.getElementById('uncleContactContainer')?.classList.remove('active');
+
+            const recoveryContainer = document.getElementById('passwordRecoveryContainer');
+            if (recoveryContainer) recoveryContainer.classList.add('active');
+
+            switchRecoveryTab('dev');
+
+            if (prefill) {
+                if (prefill.name && document.getElementById('devDirectName')) {
+                    document.getElementById('devDirectName').value = prefill.name;
+                }
+                if (prefill.phone && document.getElementById('devDirectPhone')) {
+                    document.getElementById('devDirectPhone').value = prefill.phone;
+                }
+            } else {
+                const phoneInputVal = (elements.phoneInput?.value || '').trim();
+                const phoneField = document.getElementById('devDirectPhone');
+                if (phoneField && !phoneField.value && phoneInputVal) {
+                    phoneField.value = phoneInputVal;
+                }
+            }
+        }
+
+        async function submitDirectDevRequest() {
+            const errEl = document.getElementById('devDirectError');
+            if (errEl) errEl.style.display = 'none';
+
+            const name = (document.getElementById('devDirectName')?.value || '').trim();
+            const churchSelect = document.getElementById('devDirectChurch');
+            const churchId = churchSelect ? churchSelect.value : '';
+            const churchOption = churchSelect && churchSelect.selectedIndex >= 0 ? churchSelect.options[churchSelect.selectedIndex] : null;
+            const churchName = churchOption ? (churchOption.getAttribute('data-name') || churchOption.textContent || '') : '';
+            const phone = (document.getElementById('devDirectPhone')?.value || '').trim();
+            const email = (document.getElementById('devDirectEmail')?.value || '').trim();
+
+            if (!name) {
+                if (errEl) { errEl.textContent = 'يرجى كتابة اسم المخدوم كاملاً'; errEl.style.display = 'block'; }
+                return;
+            }
+            if (!churchId) {
+                if (errEl) { errEl.textContent = 'يرجى اختيار الكنيسة التابع لها'; errEl.style.display = 'block'; }
+                return;
+            }
+            if (!phone || phone.length < 10) {
+                if (errEl) { errEl.textContent = 'يرجى إدخال رقم هاتف صحيح للتواصل (واتساب)'; errEl.style.display = 'block'; }
+                return;
+            }
+            if (email && (!email.includes('@') || !email.includes('.'))) {
+                if (errEl) { errEl.textContent = 'صيغة البريد الإلكتروني غير صحيحة'; errEl.style.display = 'block'; }
+                return;
+            }
+
+            const btn = document.getElementById('devDirectSubmitBtn');
+            if (btn) {
+                btn.disabled = true;
+                btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري إرسال الطلب...';
+            }
+
+            try {
+                const fd = new FormData();
+                fd.append('action', 'submitStudentPasswordRequest');
+                fd.append('name', name);
+                fd.append('student_name', name);
+                fd.append('church_id', churchId);
+                fd.append('church_name', churchName);
+                fd.append('phone', phone);
+                fd.append('identifier', phone);
+                if (email) fd.append('email', email);
+                fd.append('request_type', 'reset_password');
+
+                const res = await fetch(API_URL, { method: 'POST', body: fd, credentials: 'include' }).then(r => r.json());
+
+                if (btn) {
+                    btn.disabled = false;
+                    btn.innerHTML = '<i class="fas fa-paper-plane"></i> <span>إرسال الطلب للمطور الآن</span>';
+                }
+
+                if (res && res.success) {
+                    const tabBar = document.getElementById('recoveryTabBar');
+                    if (tabBar) tabBar.style.display = 'none';
+                    const devDirectPanel = document.getElementById('recoveryDevDirectPanel');
+                    if (devDirectPanel) devDirectPanel.style.display = 'none';
+                    const succPanel = document.getElementById('recoverySuccessPanel');
+                    if (succPanel) succPanel.style.display = 'block';
+                    const succMsg = document.getElementById('recoverySuccessMsg');
+                    if (succMsg) {
+                        succMsg.textContent = res.message || `تم إرسال طلبك بنجاح للمطور يا ${name}. سيتم مراجعة الطلب وإرسال رابط التعيين الآمن لك عبر واتساب أو رسالة نصية على رقم هاتفك (${phone}).`;
+                    }
+                } else {
+                    if (errEl) {
+                        errEl.textContent = (res && res.message) ? res.message : 'تعذر إرسال الطلب، يرجى المحاولة لاحقاً';
+                        errEl.style.display = 'block';
+                    }
+                }
+            } catch (e) {
+                if (btn) {
+                    btn.disabled = false;
+                    btn.innerHTML = '<i class="fas fa-paper-plane"></i> <span>إرسال الطلب للمطور الآن</span>';
+                }
+                if (errEl) {
+                    errEl.textContent = 'خطأ في الاتصال بالخادم، يرجى المحاولة مرة أخرى.';
+                    errEl.style.display = 'block';
+                }
+            }
+        }
+
         function showPasswordRecovery() {
             clearErrors();
             const phoneInputVal = (elements.phoneInput?.value || '').trim();
@@ -1943,14 +2206,7 @@
             const recoveryContainer = document.getElementById('passwordRecoveryContainer');
             if (recoveryContainer) {
                 recoveryContainer.classList.add('active');
-
-                // Show only prompt panel initially
-                const promptPanel = document.getElementById('recoveryPromptPanel');
-                if (promptPanel) promptPanel.style.display = 'block';
-                const devPanel = document.getElementById('recoveryDevPanel');
-                if (devPanel) devPanel.style.display = 'none';
-                const succPanel = document.getElementById('recoverySuccessPanel');
-                if (succPanel) succPanel.style.display = 'none';
+                switchRecoveryTab('quick');
 
                 const promptErr = document.getElementById('recoveryPromptError');
                 if (promptErr) promptErr.style.display = 'none';
@@ -2013,16 +2269,16 @@
                     const recoveryContainer = document.getElementById('passwordRecoveryContainer');
                     if (recoveryContainer) recoveryContainer.classList.add('active');
 
-                    const promptPanel = document.getElementById('recoveryPromptPanel');
-                    if (promptPanel) promptPanel.style.display = 'block';
-                    const devPanel = document.getElementById('recoveryDevPanel');
-                    if (devPanel) devPanel.style.display = 'none';
-                    const succPanel = document.getElementById('recoverySuccessPanel');
-                    if (succPanel) succPanel.style.display = 'none';
+                    switchRecoveryTab('quick');
 
                     const errEl = document.getElementById('recoveryPromptError');
                     if (errEl) {
-                        errEl.textContent = data.message || 'لم يتم العثور على حساب بهذا الرقم';
+                        errEl.innerHTML = `<div>${data.message || 'لم يتم العثور على حساب بهذا الرقم'}</div>
+                            <div style="margin-top:8px;">
+                                <a href="#" onclick="event.preventDefault(); switchRecoveryTab('dev');" style="color:var(--primary); font-weight:800; text-decoration:underline;">
+                                    اطلب رابطاً من المطور باسمك وكنيستك مباشرة <i class="fas fa-arrow-left"></i>
+                                </a>
+                            </div>`;
                         errEl.style.display = 'block';
                     }
                     const promptPhone = document.getElementById('recoveryPromptPhone');
@@ -2219,8 +2475,13 @@
             if (recoveryContainer) {
                 recoveryContainer.classList.add('active');
 
+                const tabBar = document.getElementById('recoveryTabBar');
+                if (tabBar) tabBar.style.display = 'none';
+
                 const promptPanel = document.getElementById('recoveryPromptPanel');
                 if (promptPanel) promptPanel.style.display = 'none';
+                const devDirectPanel = document.getElementById('recoveryDevDirectPanel');
+                if (devDirectPanel) devDirectPanel.style.display = 'none';
 
                 const succPanel = document.getElementById('recoverySuccessPanel');
                 if (succPanel) succPanel.style.display = 'none';
@@ -2248,7 +2509,11 @@
         function cancelPasswordRecovery() {
             const recoveryContainer = document.getElementById('passwordRecoveryContainer');
             if (recoveryContainer) recoveryContainer.classList.remove('active');
+            const tabBar = document.getElementById('recoveryTabBar');
+            if (tabBar) tabBar.style.display = 'flex';
+            switchRecoveryTab('quick');
             elements.phoneLoginForm.classList.add('active');
+            clearErrors();
         }
 
         async function submitDevPasswordRequest() {
@@ -2462,7 +2727,7 @@
             clearErrors();
         }
 
-        function showPasswordResetWithToken(studentId, token) {
+        async function showPasswordResetWithToken(studentId, token) {
             const container = elements.passwordSetupContainer;
             elements.phoneLoginForm.classList.remove('active');
             elements.usernameLoginForm.classList.remove('active');
@@ -2477,88 +2742,188 @@
             clearErrors();
             window._resetLinkedGoogleCredential = null;
 
+            // Show initial verifying loading state
             container.innerHTML = `
-                <h3 style="color: var(--dark); font-size: 1.15rem; margin-bottom: 14px; text-align: center; font-weight: 800;">
-                    <i class="fas fa-key" style="color: var(--primary);"></i>
-                    تعيين كلمة المرور الجديدة
-                </h3>
-                
-                <div style="background: #f0fdf4; color: #166534; padding: 12px 14px; border-radius: var(--radius-sm); margin-bottom: 16px; border: 1px solid #bbf7d0; text-align: center; font-size: 0.85rem; font-weight: 600;">
-                    <i class="fas fa-check-circle" style="color: #16a34a; margin-left: 4px;"></i>
-                    تم التحقق بنجاح من الرابط الآمن. يمكنك الآن تعيين كلمة المرور الجديدة لحسابك (صلاحية الرابط ساعتان).
+                <div style="text-align: center; padding: 30px 10px;">
+                    <i class="fas fa-spinner fa-spin" style="font-size: 2rem; color: var(--primary);"></i>
+                    <p style="margin-top: 12px; font-weight: 600; color: var(--dark); font-size: 0.9rem;">جاري التحقق من الرابط الآمن...</p>
                 </div>
-                
-                <form id="passwordResetForm">
-                    <div class="form-group" style="margin-bottom: 14px;">
-                        <label for="newPassword" class="form-label" style="font-size: 0.85rem;">كلمة المرور الجديدة (6 أحرف أو أرقام على الأقل)</label>
-                        <div class="input-container">
-                            <i class="fas fa-lock input-icon"></i>
-                            <input type="password" 
-                                   id="newPassword" 
-                                   class="form-input" 
-                                   required 
-                                   placeholder="كلمة المرور الجديدة"
-                                   autocomplete="new-password">
-                            <button type="button" class="password-toggle" data-target="newPassword">
-                                <i class="fas fa-eye"></i>
-                            </button>
-                        </div>
-                    </div>
-                    
-                    <div class="form-group" style="margin-bottom: 16px;">
-                        <label for="confirmPassword" class="form-label" style="font-size: 0.85rem;">تأكيد كلمة المرور الجديدة</label>
-                        <div class="input-container">
-                            <i class="fas fa-lock input-icon"></i>
-                            <input type="password" 
-                                   id="confirmPassword" 
-                                   class="form-input" 
-                                   required 
-                                   placeholder="تأكيد كلمة المرور"
-                                   autocomplete="new-password">
-                            <button type="button" class="password-toggle" data-target="confirmPassword">
-                                <i class="fas fa-eye"></i>
-                            </button>
-                        </div>
-                    </div>
-
-                    <!-- Optional Google Account Link -->
-                    <div style="background: var(--surface-2, #f8f9ff); border: 1.5px dashed var(--border-solid, #e4e6f0); border-radius: 12px; padding: 12px 14px; margin-bottom: 16px;">
-                        <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 6px;">
-                            <span style="font-size: 0.85rem; font-weight: 700; color: var(--dark, #1a1d2e);">
-                                <i class="fab fa-google" style="color: #ea4335; margin-left: 6px;"></i>
-                                ربط حساب Google (اختياري)
-                            </span>
-                            <span id="resetGoogleStatusBadge" style="font-size: 0.72rem; padding: 3px 8px; background: #f1f5f9; color: #64748b; border-radius: 20px; font-weight: 700;">غير مرتبط</span>
-                        </div>
-                        <p style="font-size: 0.76rem; color: #64748b; margin: 0 0 10px; line-height: 1.4;">
-                            يمكنك ربط هذا الحساب بـ Google لتسجيل الدخول بضغطة زر لاحقاً وحفظ بريدك الإلكتروني لإشعارات مدارس الأحد.
-                        </p>
-                        <div id="resetGoogleBtnContainer" style="display: flex; justify-content: center;">
-                            <button type="button" class="btn" id="btnLinkGoogleReset" onclick="triggerGoogleResetLink()" style="background: #ffffff; color: #374151; border: 1px solid #d1d5db; box-shadow: 0 1px 3px rgba(0,0,0,0.08); font-size: 0.82rem; font-weight: 700; padding: 7px 14px; border-radius: 20px; display: inline-flex; align-items: center; gap: 8px; cursor: pointer;">
-                                <svg width="18" height="18" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/></svg>
-                                <span>ربط حساب Google الآن</span>
-                            </button>
-                        </div>
-                    </div>
-                    
-                    <button type="submit" class="login-btn" id="savePasswordBtn" style="padding: 11px 14px; font-size: 0.9rem; margin-bottom: 10px;">
-                        <i class="fas fa-save"></i>
-                        <span>حفظ كلمة المرور والدخول</span>
-                    </button>
-
-                    <div style="text-align: center;">
-                        <button type="button" onclick="cancelPasswordSetup()" style="background: none; border: none; color: var(--secondary); font-size: 0.82rem; cursor: pointer; text-decoration: underline;">
-                            إلغاء والعودة
-                        </button>
-                    </div>
-                </form>
             `;
 
-            setTimeout(() => {
+            try {
+                const fdVerify = new FormData();
+                fdVerify.append('action', 'verifyResetToken');
+                fdVerify.append('token', token);
+                if (studentId) fdVerify.append('studentId', studentId);
+
+                const vRes = await fetch(API_URL, { method: 'POST', body: fdVerify, credentials: 'include' });
+                const vData = await vRes.json();
+
+                if (!vData.success) {
+                    container.innerHTML = `
+                        <div style="text-align: center; padding: 20px 10px;">
+                            <div style="width: 56px; height: 56px; border-radius: 50%; background: #fee2e2; color: #dc2626; display: flex; align-items: center; justify-content: center; font-size: 1.6rem; margin: 0 auto 14px;">
+                                <i class="fas fa-exclamation-triangle"></i>
+                            </div>
+                            <h3 style="color: #991b1b; font-size: 1.1rem; font-weight: 800; margin-bottom: 8px;">
+                                ${vData.is_expired ? 'انتهت صلاحية الرابط' : 'رابط غير صالح'}
+                            </h3>
+                            <p style="font-size: 0.86rem; color: #4b5563; line-height: 1.5; margin-bottom: 18px;">
+                                ${vData.message || 'رابط تعيين كلمة المرور غير صالح أو تم استخدامه من قبل. صلاحية الروابط ساعتان فقط.'}
+                            </p>
+                            <div style="display: flex; flex-direction: column; gap: 8px;">
+                                <button type="button" class="login-btn" onclick="switchToDevPasswordRequest()" style="font-size: 0.88rem; padding: 10px 16px;">
+                                    <i class="fas fa-paper-plane"></i>
+                                    <span>طلب رابط جديد من المطور</span>
+                                </button>
+                                <button type="button" onclick="cancelPasswordSetup()" style="background: none; border: none; color: var(--secondary); font-size: 0.82rem; cursor: pointer; text-decoration: underline; margin-top: 4px;">
+                                    العودة لتسجيل الدخول
+                                </button>
+                            </div>
+                        </div>
+                    `;
+                    return;
+                }
+
+                const sInfo = vData;
+                const isFirstTime = !!sInfo.is_first_time;
+                const hasEmail = !!sInfo.has_email;
+                const studentName = sInfo.student_name || 'يا بطل';
+
+                const titleText = isFirstTime ? 'إنشاء كلمة مرور لحسابك' : 'تعيين كلمة المرور الجديدة';
+                const subtitleText = isFirstTime
+                    ? `أهلاً بك يا <strong>${studentName}</strong>، يمكنك الآن إنشاء كلمة مرور لحسابك لأول مرة لتسجيل الدخول بسهولة.`
+                    : `أهلاً بك يا <strong>${studentName}</strong>، يمكنك الآن كتابة كلمة المرور الجديدة لحسابك.`;
+
+                let emailHtml = '';
+                if (!hasEmail) {
+                    emailHtml = `
+                        <div class="form-group" style="margin-bottom: 14px;">
+                            <label for="resetAssignedEmail" class="form-label" style="font-size: 0.85rem; font-weight: 700; color: var(--dark);">
+                                البريد الإلكتروني لحسابك <span style="color: var(--danger); font-size: 0.72rem;">(مطلوب لتأمين الحساب)</span>
+                            </label>
+                            <div class="input-container">
+                                <i class="fas fa-envelope input-icon"></i>
+                                <input type="email" 
+                                       id="resetAssignedEmail" 
+                                       class="form-input" 
+                                       required 
+                                       placeholder="example@gmail.com" 
+                                       dir="ltr" 
+                                       style="font-family: monospace; font-size: 0.88rem;"
+                                       autocomplete="email">
+                            </div>
+                            <small style="display:block; color: #64748b; font-size: 0.73rem; margin-top: 4px; line-height: 1.35;">
+                                سيتم ربط هذا البريد بحسابك لتلقي إشعارات الحضور واستعادة الحساب لاحقاً بضغطة زر.
+                            </small>
+                        </div>
+                    `;
+                } else {
+                    emailHtml = `
+                        <div style="background: #f1f5f9; border-radius: 10px; padding: 8px 12px; margin-bottom: 14px; display: flex; align-items: center; justify-content: space-between; font-size: 0.78rem;">
+                            <span style="color: #475569; font-weight: 600;">البريد المرتبط بحسابك:</span>
+                            <span dir="ltr" style="font-family: monospace; color: #1e293b; font-weight: 700;">${sInfo.email}</span>
+                        </div>
+                    `;
+                }
+
+                container.innerHTML = `
+                    <h3 style="color: var(--dark); font-size: 1.15rem; margin-bottom: 8px; text-align: center; font-weight: 800;">
+                        <i class="fas fa-key" style="color: var(--primary);"></i>
+                        ${titleText}
+                    </h3>
+                    
+                    <div style="background: #eff6ff; color: #1e40af; padding: 10px 14px; border-radius: var(--radius-sm); margin-bottom: 14px; border: 1px solid #bfdbfe; font-size: 0.83rem; line-height: 1.45;">
+                        ${subtitleText}
+                        <div style="font-size: 0.75rem; color: #3b82f6; margin-top: 4px; font-weight: 600;">
+                            <i class="fas fa-clock"></i> تنبيه: الرابط صالح للاستخدام لمدة ساعتين فقط.
+                        </div>
+                    </div>
+                    
+                    <form id="passwordResetForm">
+                        ${emailHtml}
+
+                        <div class="form-group" style="margin-bottom: 14px;">
+                            <label for="newPassword" class="form-label" style="font-size: 0.85rem;">كلمة المرور الجديدة (6 أحرف أو أرقام على الأقل)</label>
+                            <div class="input-container">
+                                <i class="fas fa-lock input-icon"></i>
+                                <input type="password" 
+                                       id="newPassword" 
+                                       class="form-input" 
+                                       required 
+                                       placeholder="كلمة المرور الجديدة"
+                                       autocomplete="new-password">
+                                <button type="button" class="password-toggle" data-target="newPassword">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div class="form-group" style="margin-bottom: 16px;">
+                            <label for="confirmPassword" class="form-label" style="font-size: 0.85rem;">تأكيد كلمة المرور</label>
+                            <div class="input-container">
+                                <i class="fas fa-lock input-icon"></i>
+                                <input type="password" 
+                                       id="confirmPassword" 
+                                       class="form-input" 
+                                       required 
+                                       placeholder="تأكيد كلمة المرور"
+                                       autocomplete="new-password">
+                                <button type="button" class="password-toggle" data-target="confirmPassword">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Optional Google Account Link -->
+                        <div style="background: var(--surface-2, #f8f9ff); border: 1.5px dashed var(--border-solid, #e4e6f0); border-radius: 12px; padding: 12px 14px; margin-bottom: 16px;">
+                            <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 6px;">
+                                <span style="font-size: 0.85rem; font-weight: 700; color: var(--dark, #1a1d2e);">
+                                    <i class="fab fa-google" style="color: #ea4335; margin-left: 6px;"></i>
+                                    ربط حساب Google (اختياري)
+                                </span>
+                                <span id="resetGoogleStatusBadge" style="font-size: 0.72rem; padding: 3px 8px; background: ${sInfo.google_linked ? '#dcfce7' : '#f1f5f9'}; color: ${sInfo.google_linked ? '#15803d' : '#64748b'}; border-radius: 20px; font-weight: 700;">
+                                    ${sInfo.google_linked ? '✓ مرتبط بحساب Google' : 'غير مرتبط'}
+                                </span>
+                            </div>
+                            <p style="font-size: 0.76rem; color: #64748b; margin: 0 0 10px; line-height: 1.4;">
+                                يمكنك ربط هذا الحساب بـ Google لتسجيل الدخول بضغطة زر لاحقاً وحفظ بريدك الإلكتروني.
+                            </p>
+                            <div id="resetGoogleBtnContainer" style="display: flex; justify-content: center;">
+                                <button type="button" class="btn" id="btnLinkGoogleReset" onclick="triggerGoogleResetLink()" style="background: #ffffff; color: #374151; border: 1px solid #d1d5db; box-shadow: 0 1px 3px rgba(0,0,0,0.08); font-size: 0.82rem; font-weight: 700; padding: 7px 14px; border-radius: 20px; display: inline-flex; align-items: center; gap: 8px; cursor: pointer;">
+                                    <svg width="18" height="18" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/></svg>
+                                    <span>${sInfo.google_linked ? 'تحديث ربط Google' : 'ربط حساب Google الآن'}</span>
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <button type="submit" class="login-btn" id="savePasswordBtn" style="padding: 11px 14px; font-size: 0.9rem; margin-bottom: 10px;">
+                            <i class="fas fa-save"></i>
+                            <span>حفظ كلمة المرور والدخول</span>
+                        </button>
+
+                        <div style="text-align: center;">
+                            <button type="button" onclick="cancelPasswordSetup()" style="background: none; border: none; color: var(--secondary); font-size: 0.82rem; cursor: pointer; text-decoration: underline;">
+                                إلغاء والعودة
+                            </button>
+                        </div>
+                    </form>
+                `;
+
                 document.getElementById('passwordResetForm').addEventListener('submit', function(e) {
                     e.preventDefault();
                     const p1 = document.getElementById('newPassword').value.trim();
                     const p2 = document.getElementById('confirmPassword').value.trim();
+                    const emailInput = document.getElementById('resetAssignedEmail');
+
+                    if (emailInput) {
+                        const emailVal = emailInput.value.trim();
+                        if (!emailVal || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailVal)) {
+                            showSetupError('يرجى إدخال بريد إلكتروني صحيح لحسابك');
+                            emailInput.focus();
+                            return;
+                        }
+                    }
 
                     if (!p1 || !p2) {
                         showSetupError('الرجاء إدخال كلمة المرور وتأكيدها');
@@ -2576,9 +2941,12 @@
                     showLoading('جاري حفظ كلمة المرور...');
                     const fd = new FormData();
                     fd.append('action', 'resetStudentPasswordWithToken');
-                    fd.append('studentId', studentId);
+                    fd.append('studentId', sInfo.student_id || studentId);
                     fd.append('token', token);
                     fd.append('password', p1);
+                    if (emailInput && emailInput.value.trim()) {
+                        fd.append('email', emailInput.value.trim());
+                    }
                     if (window._resetLinkedGoogleCredential) {
                         fd.append('google_credential', window._resetLinkedGoogleCredential);
                     }
@@ -2623,7 +2991,18 @@
                         }
                     });
                 });
-            }, 100);
+
+            } catch (err) {
+                container.innerHTML = `
+                    <div style="text-align: center; padding: 20px 10px;">
+                        <i class="fas fa-exclamation-circle" style="font-size: 2rem; color: var(--danger); margin-bottom: 10px;"></i>
+                        <p style="font-size: 0.88rem; color: var(--dark); font-weight: 700;">تعذر التحقق من الرابط في الوقت الحالي.</p>
+                        <button type="button" class="login-btn" onclick="cancelPasswordSetup()" style="margin-top: 14px; font-size: 0.85rem;">
+                            العودة لتسجيل الدخول
+                        </button>
+                    </div>
+                `;
+            }
         }
 
         // ===== HELPER FUNCTIONS =====
@@ -2848,7 +3227,7 @@
         // ═══════════════════════════════════════════════════════════════════
         // GOOGLE SIGN-IN & ACCOUNT LINKING (NO-AUTO-REGISTRATION)
         // ═══════════════════════════════════════════════════════════════════
-        const GOOGLE_CLIENT_ID = '868065099307-b2tmgprm07j4nfn8a9n6ebg0kcv0gqf7.apps.googleusercontent.com';
+        const GOOGLE_CLIENT_ID = '384251465276-lu14sul99cfm36p94a3bbg5aq9jp5fm4.apps.googleusercontent.com';
         let pendingGoogleCredential = null;
         let pendingGoogleEmail = null;
         let pendingGoogleId = null;
@@ -3037,43 +3416,51 @@
         }
 
         function triggerGoogleResetLink() {
-            if (typeof google === 'undefined' || !google.accounts || !google.accounts.id) {
+            if (typeof google === 'undefined' || !google.accounts) {
                 alert('جاري تحميل خدمات Google...');
                 return;
             }
 
             try {
-                google.accounts.id.initialize({
-                    client_id: GOOGLE_CLIENT_ID,
-                    callback: handleGoogleResetLinkResponse,
-                    auto_select: false,
-                    cancel_on_tap_outside: true
-                });
-                google.accounts.id.prompt((notification) => {
-                    if (notification.isNotDisplayed() || notification.isSkippedMoment()) {
-                        if (google.accounts.oauth2) {
-                            const tc = google.accounts.oauth2.initTokenClient({
-                                client_id: GOOGLE_CLIENT_ID,
-                                scope: 'openid email profile',
-                                callback: (resp) => {
-                                    if (resp && resp.access_token) {
-                                        fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
-                                            headers: { Authorization: `Bearer ${resp.access_token}` }
-                                        })
-                                        .then(r => r.json())
-                                        .then(u => {
-                                            if (u && u.email) {
-                                                window._resetLinkedGoogleCredential = resp.access_token;
-                                                updateResetGoogleBadge(u.email);
-                                            }
-                                        });
+                if (google.accounts.oauth2) {
+                    const tc = google.accounts.oauth2.initTokenClient({
+                        client_id: GOOGLE_CLIENT_ID,
+                        scope: 'openid email profile',
+                        callback: (resp) => {
+                            if (resp && resp.access_token) {
+                                window._resetLinkedGoogleCredential = resp.access_token;
+                                fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
+                                    headers: { Authorization: `Bearer ${resp.access_token}` }
+                                })
+                                .then(r => r.json())
+                                .then(u => {
+                                    if (u && u.email) {
+                                        updateResetGoogleBadge(u.email);
+                                        const emailInput = document.getElementById('resetAssignedEmail');
+                                        if (emailInput && !emailInput.value) {
+                                            emailInput.value = u.email;
+                                        }
                                     }
-                                }
-                            });
-                            tc.requestAccessToken({ prompt: 'select_account' });
+                                })
+                                .catch(() => {
+                                    updateResetGoogleBadge('تم الاختيار بنجاح');
+                                });
+                            }
                         }
-                    }
-                });
+                    });
+                    tc.requestAccessToken({ prompt: 'select_account' });
+                    return;
+                }
+
+                if (google.accounts.id) {
+                    google.accounts.id.initialize({
+                        client_id: GOOGLE_CLIENT_ID,
+                        callback: handleGoogleResetLinkResponse,
+                        auto_select: false,
+                        cancel_on_tap_outside: true
+                    });
+                    google.accounts.id.prompt();
+                }
             } catch(e) {
                 console.warn('Reset google trigger error:', e);
             }
@@ -3086,7 +3473,12 @@
                 const parts = response.credential.split('.');
                 if (parts.length === 3) {
                     const payload = JSON.parse(atob(parts[1].replace(/-/g, '+').replace(/_/g, '/')));
-                    updateResetGoogleBadge(payload.email || 'حساب Google');
+                    const gEmail = payload.email || '';
+                    updateResetGoogleBadge(gEmail || 'حساب Google');
+                    const emailInput = document.getElementById('resetAssignedEmail');
+                    if (emailInput && gEmail && !emailInput.value) {
+                        emailInput.value = gEmail;
+                    }
                 } else {
                     updateResetGoogleBadge('تم اختيار الحساب');
                 }

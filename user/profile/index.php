@@ -8198,7 +8198,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'logou
       openOv('googleSettingsOv');
     }
 
-    const GOOGLE_CLIENT_ID_PROFILE = '868065099307-b2tmgprm07j4nfn8a9n6ebg0kcv0gqf7.apps.googleusercontent.com';
+    const GOOGLE_CLIENT_ID_PROFILE = '384251465276-lu14sul99cfm36p94a3bbg5aq9jp5fm4.apps.googleusercontent.com';
 
     function triggerProfileGoogleLink() {
       if (typeof google === 'undefined' || !google.accounts || !google.accounts.id) {

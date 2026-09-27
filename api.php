@@ -5712,6 +5712,10 @@ try {
             requestStudentPasswordRecovery();
             break;
 
+        case 'verifyResetToken':
+            verifyResetToken();
+            break;
+
         case 'resetStudentPasswordWithToken':
             resetStudentPasswordWithToken();
             break;
@@ -21621,12 +21625,91 @@ function requestStudentPasswordRecovery()
     }
 }
 
+function verifyResetToken(): void
+{
+    try {
+        $token = trim($_POST['token'] ?? $_POST['reset_token'] ?? $_GET['token'] ?? $_GET['reset_token'] ?? '');
+        $studentId = intval($_POST['studentId'] ?? $_POST['student_id'] ?? 0);
+
+        if (empty($token)) {
+            sendJSON(['success' => false, 'message' => 'رمز التحقق غير موجود']);
+            return;
+        }
+
+        $conn = getDBConnection();
+        ensureStudentEmailColumns($conn);
+        ensureStudentPasswordRequestsTable($conn);
+
+        if ($studentId > 0) {
+            $stmt = $conn->prepare("
+                SELECT id, name, phone, email, google_id, google_email, password_hash,
+                       (CASE WHEN password_hash IS NOT NULL AND password_hash != '' THEN 1 ELSE 0 END) AS has_password,
+                       (CASE WHEN email_reset_token_expires >= NOW() THEN 1 ELSE 0 END) AS is_valid
+                FROM students 
+                WHERE id = ? AND email_reset_token = ? 
+                LIMIT 1
+            ");
+            $stmt->bind_param("is", $studentId, $token);
+        } else {
+            $stmt = $conn->prepare("
+                SELECT id, name, phone, email, google_id, google_email, password_hash,
+                       (CASE WHEN password_hash IS NOT NULL AND password_hash != '' THEN 1 ELSE 0 END) AS has_password,
+                       (CASE WHEN email_reset_token_expires >= NOW() THEN 1 ELSE 0 END) AS is_valid
+                FROM students 
+                WHERE email_reset_token = ? 
+                LIMIT 1
+            ");
+            $stmt->bind_param("s", $token);
+        }
+        $stmt->execute();
+        $student = $stmt->get_result()->fetch_assoc();
+        $stmt->close();
+
+        if (!$student) {
+            sendJSON(['success' => false, 'message' => 'رابط إعادة التعيين غير صالح أو تم استخدامه بالفعل.']);
+            return;
+        }
+
+        if (empty($student['is_valid'])) {
+            sendJSON(['success' => false, 'is_expired' => true, 'message' => 'انتهت صلاحية هذا الرابط (صلاحية الرابط ساعتان فقط). يرجى طلب رابط جديد.']);
+            return;
+        }
+
+        $tokenHash = hash('sha256', $token);
+        $reqType = 'reset_password';
+        $reqQuery = $conn->query("SELECT request_type FROM student_password_requests WHERE (token_hash = '$tokenHash' OR token_hash = '" . $conn->real_escape_string($token) . "') ORDER BY id DESC LIMIT 1");
+        if ($reqQuery && $r = $reqQuery->fetch_assoc()) {
+            $reqType = $r['request_type'];
+        }
+
+        $hasEmail = !empty(trim($student['email'] ?? ''));
+        $hasPassword = !empty($student['has_password']);
+        $isFirstTime = ($reqType === 'setup_password' || !$hasPassword);
+
+        sendJSON([
+            'success' => true,
+            'student_id' => (int)$student['id'],
+            'student_name' => $student['name'],
+            'has_password' => $hasPassword,
+            'is_first_time' => $isFirstTime,
+            'request_type' => $reqType,
+            'has_email' => $hasEmail,
+            'email' => $student['email'] ?? '',
+            'google_linked' => !empty($student['google_id']),
+            'google_email' => $student['google_email'] ?? ''
+        ]);
+    } catch (Throwable $e) {
+        sendJSON(['success' => false, 'message' => 'خطأ في التحقق من الرابط: ' . $e->getMessage()]);
+    }
+}
+
 function resetStudentPasswordWithToken()
 {
     try {
         $studentId = intval($_POST['studentId'] ?? $_POST['student_id'] ?? 0);
         $token = trim($_POST['token'] ?? $_POST['reset_token'] ?? '');
         $newPassword = $_POST['password'] ?? '';
+        $assignedEmail = strtolower(trim(sanitize($_POST['email'] ?? '')));
 
         if (empty($token) || empty($newPassword)) {
             sendJSON(['success' => false, 'message' => 'بيانات غير مكتملة']);
@@ -21643,14 +21726,14 @@ function resetStudentPasswordWithToken()
 
         if ($studentId > 0) {
             $stmt = $conn->prepare("
-                SELECT id, phone FROM students 
+                SELECT id, phone, email FROM students 
                 WHERE id = ? AND email_reset_token = ? AND email_reset_token_expires >= NOW() 
                 LIMIT 1
             ");
             $stmt->bind_param("is", $studentId, $token);
         } else {
             $stmt = $conn->prepare("
-                SELECT id, phone FROM students 
+                SELECT id, phone, email FROM students 
                 WHERE email_reset_token = ? AND email_reset_token_expires >= NOW() 
                 LIMIT 1
             ");
@@ -21676,6 +21759,14 @@ function resetStudentPasswordWithToken()
         $up->bind_param("si", $newHash, $studentId);
         $up->execute();
         $up->close();
+
+        // Assign email to student account if provided
+        if (!empty($assignedEmail) && filter_var($assignedEmail, FILTER_VALIDATE_EMAIL)) {
+            $emUp = $conn->prepare("UPDATE students SET email = ? WHERE id = ?");
+            $emUp->bind_param("si", $assignedEmail, $studentId);
+            $emUp->execute();
+            $emUp->close();
+        }
 
         // Mark associated request as used
         $tokenHash = hash('sha256', $token);
@@ -21717,7 +21808,7 @@ function resetStudentPasswordWithToken()
 
         sendJSON([
             'success' => true,
-            'message' => 'تم تغيير كلمة المرور بنجاح! يمكنك الآن تسجيل الدخول.'
+            'message' => 'تم حفظ كلمة المرور بنجاح! يمكنك الآن تسجيل الدخول.'
         ]);
     } catch (Throwable $e) {
         sendJSON(['success' => false, 'message' => 'خطأ: ' . $e->getMessage()]);
@@ -21731,7 +21822,34 @@ function resetStudentPasswordWithToken()
 function verifyGoogleToken(string $idToken): ?array
 {
     $idToken = trim($idToken);
-    if (empty($idToken) || substr_count($idToken, '.') !== 2) {
+    if (empty($idToken)) {
+        return null;
+    }
+
+    // Support OAuth2 Access Tokens directly from GIS Token Client
+    if (substr_count($idToken, '.') !== 2) {
+        if (function_exists('curl_init')) {
+            $ch = curl_init('https://www.googleapis.com/oauth2/v3/userinfo');
+            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+            curl_setopt($ch, CURLOPT_TIMEOUT, 6);
+            curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true);
+            curl_setopt($ch, CURLOPT_HTTPHEADER, ['Authorization: Bearer ' . $idToken]);
+            $response = curl_exec($ch);
+            $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+            curl_close($ch);
+            if ($httpCode === 200 && $response) {
+                $data = json_decode($response, true);
+                if (!empty($data['sub']) && !empty($data['email'])) {
+                    return [
+                        'sub' => (string)$data['sub'],
+                        'email' => strtolower(trim($data['email'])),
+                        'name' => $data['name'] ?? '',
+                        'picture' => $data['picture'] ?? '',
+                        'email_verified' => true
+                    ];
+                }
+            }
+        }
         return null;
     }
 
@@ -22211,22 +22329,43 @@ function submitStudentPasswordRequest(): void
         }
 
         // Anti-spam rate limit: check if a pending request was submitted in the last 60 seconds
-        $chkRate = $conn->prepare("
-            SELECT id FROM student_password_requests 
-            WHERE student_id = ? AND status = 'pending' AND created_at >= DATE_SUB(NOW(), INTERVAL 60 SECOND) 
-            LIMIT 1
-        ");
-        if ($chkRate) {
-            $chkRate->bind_param("i", $studentId);
-            $chkRate->execute();
-            $recent = $chkRate->get_result()->fetch_assoc();
-            $chkRate->close();
-            if ($recent) {
-                sendJSON([
-                    'success' => true,
-                    'message' => 'طلبك قيد المراجعة بالفعل! سيصلك الرابط الآمن عبر واتساب أو رسالة نصية فور مراجعته من فريق العمل.'
-                ]);
-                return;
+        if ($studentId > 0) {
+            $chkRate = $conn->prepare("
+                SELECT id FROM student_password_requests 
+                WHERE student_id = ? AND status = 'pending' AND created_at >= DATE_SUB(NOW(), INTERVAL 60 SECOND) 
+                LIMIT 1
+            ");
+            if ($chkRate) {
+                $chkRate->bind_param("i", $studentId);
+                $chkRate->execute();
+                $recent = $chkRate->get_result()->fetch_assoc();
+                $chkRate->close();
+                if ($recent) {
+                    sendJSON([
+                        'success' => true,
+                        'message' => 'طلبك قيد المراجعة بالفعل! سيصلك الرابط الآمن عبر واتساب أو رسالة نصية فور مراجعته من فريق العمل.'
+                    ]);
+                    return;
+                }
+            }
+        } elseif (!empty($studentPhone)) {
+            $chkRate = $conn->prepare("
+                SELECT id FROM student_password_requests 
+                WHERE phone = ? AND status = 'pending' AND created_at >= DATE_SUB(NOW(), INTERVAL 60 SECOND) 
+                LIMIT 1
+            ");
+            if ($chkRate) {
+                $chkRate->bind_param("s", $studentPhone);
+                $chkRate->execute();
+                $recent = $chkRate->get_result()->fetch_assoc();
+                $chkRate->close();
+                if ($recent) {
+                    sendJSON([
+                        'success' => true,
+                        'message' => 'طلبك قيد المراجعة بالفعل! سيصلك الرابط الآمن عبر واتساب أو رسالة نصية فور مراجعته من فريق العمل.'
+                    ]);
+                    return;
+                }
             }
         }
 
