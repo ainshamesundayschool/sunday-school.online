@@ -12325,6 +12325,13 @@ $showSettings = $hasChurchId || $isDevOrAdmin;
                 <div class="inline-search-dropdown" id="topbarSearchDropdown"></div>
             </div>
             <div class="topbar-actions">
+                <!-- Developer Password Requests Button -->
+                <button class="topbar-btn" id="devPwdRequestsBtn" onclick="openDevPasswordRequestsModal()" title="طلبات إعادة تعيين كلمة المرور"
+                    style="display:none; position:relative; overflow:visible; color:var(--brand);">
+                    <i class="fas fa-key"></i>
+                    <span id="devPwdRequestsBadge"
+                        style="display:none;position:absolute;top:-3px;right:-3px;min-width:17px;height:17px;background:var(--amber,#f59e0b);border-radius:9px;border:2px solid white;font-size:.58rem;font-weight:800;color:#fff;align-items:center;justify-content:center;padding:0 3px;"></span>
+                </button>
                 <!-- Unified notification bell (unread count + push permission) -->
                 <button class="topbar-btn" id="notifBellBtn" onclick="toggleNotifPanel()" title="الإشعارات"
                     style="position:relative; overflow:visible;">
@@ -13731,6 +13738,11 @@ $showSettings = $hasChurchId || $isDevOrAdmin;
                     <div class="input-icon-wrap"><i class="fas fa-map-marker-alt input-icon"></i><input type="text"
                             id="editStudentAddress" class="form-input"></div>
                 </div>
+                <div class="form-group">
+                    <label class="form-label">البريد الإلكتروني</label>
+                    <div class="input-icon-wrap"><i class="fas fa-envelope input-icon"></i><input type="email"
+                            id="editStudentEmail" class="form-input" placeholder="example@mail.com" dir="ltr"></div>
+                </div>
                 <div class="form-group" style="grid-column:1/-1;">
                     <label class="form-label">رقم التليفون الأساسي</label>
                     <div style="display:flex; gap:8px; flex-wrap:wrap;">
@@ -14028,6 +14040,11 @@ $showSettings = $hasChurchId || $isDevOrAdmin;
                     <label class="form-label">العنوان</label>
                     <div class="input-icon-wrap"><i class="fas fa-map-marker-alt input-icon"></i><input type="text"
                             id="studentAddress" class="form-input"></div>
+                </div>
+                <div class="form-group" id="studentEmailGroup">
+                    <label class="form-label">البريد الإلكتروني</label>
+                    <div class="input-icon-wrap"><i class="fas fa-envelope input-icon"></i><input type="email"
+                            id="studentEmail" class="form-input" placeholder="example@mail.com" dir="ltr"></div>
                 </div>
                 <div class="form-group" id="studentPhoneGroup" style="grid-column:1/-1;">
                     <label class="form-label">رقم التليفون الأساسي</label>
@@ -14694,6 +14711,115 @@ $showSettings = $hasChurchId || $isDevOrAdmin;
             <div style="display:flex;gap:10px;margin-top:14px">
                 <button class="btn btn-warning" id="confirmResetStudentPasswordBtn" style="flex:1;background:var(--amber, #f59e0b);color:#fff;border:none"><i class="fas fa-check"></i> تأكيد التعيين</button>
                 <button class="btn btn-secondary" id="cancelResetStudentPasswordBtn" style="flex:1"><i class="fas fa-times"></i> إلغاء</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Developer Password Requests & Reset Modal -->
+    <div class="modal-overlay" id="devPasswordRequestsModal" style="z-index:1000008; display:none;">
+        <div class="modal" style="max-width:680px; width:95%; max-height:90vh; display:flex; flex-direction:column; overflow:hidden;">
+            <div class="modal-header" style="display:flex; align-items:center; justify-content:space-between; padding:16px 20px; border-bottom:1px solid var(--border-solid); position:relative;">
+                <h3 style="display:flex; align-items:center; gap:10px; margin:0; font-size:1.1rem; font-weight:700;">
+                    <button class="back-btn" id="devPwdBackBtn" onclick="devPwdShowListView()" style="display:none; background:var(--surface-3); border:none; width:32px; height:32px; border-radius:var(--r-md); cursor:pointer; color:var(--text); align-items:center; justify-content:center;">
+                        <i class="fas fa-arrow-right"></i>
+                    </button>
+                    <span id="devPwdModalTitleText"><i class="fas fa-key" style="color:var(--brand);"></i> طلبات إعادة تعيين كلمة المرور</span>
+                </h3>
+                <div style="display:flex; align-items:center; gap:8px;">
+                    <button type="button" class="btn btn-sm" id="devPwdRefreshBtn" onclick="loadDevPasswordRequests(true)" title="تحديث" style="padding:6px 12px; background:var(--surface-2); color:var(--text); border:1px solid var(--border-solid); border-radius:var(--r-md); cursor:pointer;">
+                        <i class="fas fa-sync-alt"></i>
+                    </button>
+                    <button class="close-btn" onclick="closeDevPasswordRequestsModal()">&times;</button>
+                </div>
+            </div>
+            
+            <div class="modal-body" style="flex:1; overflow-y:auto; padding:16px 20px;">
+                <!-- VIEW 1: REQUESTS LIST & SEARCH -->
+                <div id="devPwdListView">
+                    <!-- Filter and Search -->
+                    <div style="display:flex; gap:10px; margin-bottom:14px; flex-wrap:wrap;">
+                        <div class="input-icon-wrap" style="flex:1; min-width:200px;">
+                            <i class="fas fa-search input-icon"></i>
+                            <input type="text" id="devPwdSearchInput" class="form-input" placeholder="ابحث باسم الطالب، الكنيسة، الفصل، أو الهاتف..." oninput="filterDevPasswordRequests()">
+                        </div>
+                        <div style="display:flex; gap:6px;">
+                            <button type="button" class="btn btn-sm dev-pwd-tab active" data-tab="all" onclick="setDevPwdTab('all')" style="padding:8px 14px; border-radius:var(--r-md); font-weight:700;">الكل</button>
+                            <button type="button" class="btn btn-sm dev-pwd-tab btn-secondary" data-tab="pending" onclick="setDevPwdTab('pending')" style="padding:8px 14px; border-radius:var(--r-md); font-weight:700;">المعلقة <span id="devPwdTabPendingBadge" style="background:var(--danger); color:#fff; border-radius:10px; padding:1px 6px; font-size:0.7rem; margin-right:4px; display:none;">0</span></button>
+                            <button type="button" class="btn btn-sm dev-pwd-tab btn-secondary" data-tab="completed" onclick="setDevPwdTab('completed')" style="padding:8px 14px; border-radius:var(--r-md); font-weight:700;">المكتملة</button>
+                        </div>
+                    </div>
+
+                    <!-- Requests Container -->
+                    <div id="devPwdListContainer" style="display:flex; flex-direction:column; gap:10px;">
+                        <!-- Dynamic rows injected here -->
+                    </div>
+                </div>
+
+                <!-- VIEW 2: DEDICATED STUDENT DETAIL & RESET ACTION -->
+                <div id="devPwdDetailView" style="display:none;">
+                    <!-- Student Identity Card -->
+                    <div id="devPwdStudentCard" style="background:var(--surface-2); border:1px solid var(--border-solid); border-radius:var(--r-lg); padding:16px; margin-bottom:16px; display:flex; align-items:center; gap:16px;">
+                        <!-- Dynamic Student info injected here -->
+                    </div>
+
+                    <!-- Email Management Card -->
+                    <div style="background:var(--surface-2); border:1px solid var(--border-solid); border-radius:var(--r-lg); padding:16px; margin-bottom:16px;">
+                        <div style="font-weight:700; font-size:0.95rem; margin-bottom:8px; display:flex; align-items:center; justify-content:space-between;">
+                            <span><i class="fas fa-envelope" style="color:var(--brand); margin-left:6px;"></i>البريد الإلكتروني للطفل / ولي الأمر</span>
+                            <span id="devPwdEmailStatusBadge" style="font-size:0.75rem; padding:2px 8px; border-radius:6px; font-weight:600;"></span>
+                        </div>
+                        <p style="font-size:0.8rem; color:var(--text-3); margin-bottom:10px;">يمكنك حفظ الإيميل للطالب الآن، أو إنشاء الرابط الآمن وإرساله مباشرة إلى هذا الإيميل.</p>
+                        
+                        <div class="input-icon-wrap" style="margin-bottom:12px;">
+                            <i class="fas fa-at input-icon"></i>
+                            <input type="email" id="devPwdDetailEmail" class="form-input" placeholder="student@example.com" dir="ltr" style="font-family:monospace;">
+                        </div>
+
+                        <!-- 2 Email Actions -->
+                        <div style="display:flex; gap:10px; flex-wrap:wrap;">
+                            <button type="button" class="btn btn-secondary" id="devPwdSaveEmailBtn" onclick="saveDevPwdStudentEmailOnly()" style="flex:1; min-width:140px;">
+                                <i class="fas fa-save"></i> حفظ الإيميل فقط
+                            </button>
+                            <button type="button" class="btn" id="devPwdSendEmailBtn" onclick="generateDevPwdLinkAndSendEmail()" style="flex:1.5; min-width:200px; background:linear-gradient(135deg, var(--brand), var(--brand-dark)); color:#fff; border:none; box-shadow:0 4px 12px var(--brand-glow);">
+                                <i class="fas fa-paper-plane"></i> إنشاء الرابط وإرساله للإيميل
+                            </button>
+                            <button type="button" class="btn btn-outline" id="devPwdGenOnlyBtn" onclick="generateDevPwdLinkOnly()" style="flex:1; min-width:140px;">
+                                <i class="fas fa-link"></i> إنشاء الرابط فقط
+                            </button>
+                        </div>
+                        <div id="devPwdGoogleRow" style="display:none;"></div>
+                    </div>
+
+                    <!-- Generated Link & Share Box (Visible after link creation) -->
+                    <div id="devPwdShareSection" style="display:none; background:var(--surface); border:1.5px solid var(--border-solid); border-radius:var(--r-lg); padding:16px;">
+                        <div style="background:var(--warning-bg); color:var(--warning-dark); padding:10px 14px; border-radius:var(--r-md); font-size:0.85rem; font-weight:700; display:flex; align-items:center; gap:8px; margin-bottom:14px; border:1px solid rgba(245, 158, 11, 0.3);">
+                            <i class="fas fa-clock" style="font-size:1.1rem;"></i>
+                            <span>تنبيه هام: هذا الرابط صالح للاستخدام لمدة <strong>ساعتين فقط</strong> (ينتهي بعد ساعتين).</span>
+                        </div>
+
+                        <label class="form-label" style="font-weight:700; font-size:0.85rem; margin-bottom:6px;">رابط إعادة التعيين المباشر:</label>
+                        <div style="display:flex; gap:8px; margin-bottom:16px;">
+                            <input type="text" id="devPwdGeneratedLinkInput" readonly class="form-input" dir="ltr" style="font-family:monospace; font-size:0.85rem; background:var(--surface-3); font-weight:600;">
+                            <button type="button" class="btn btn-secondary" onclick="copyDevPwdLinkOnly()" style="padding:0 16px; white-space:nowrap;">
+                                <i class="fas fa-copy"></i> نسخ
+                            </button>
+                        </div>
+
+                        <!-- Direct Share Buttons: WhatsApp and SMS -->
+                        <div style="font-weight:700; font-size:0.85rem; margin-bottom:8px; color:var(--text-2);"><i class="fas fa-share-alt" style="margin-left:6px;"></i>إرسال مباشر لولي الأمر / الطفل:</div>
+                        <div style="display:flex; gap:10px; flex-wrap:wrap; margin-bottom:10px;">
+                            <a id="devPwdWaBtn" href="#" target="_blank" class="btn" style="flex:1; min-width:160px; background:#25d366; color:#fff; border:none; text-decoration:none; display:inline-flex; align-items:center; justify-content:center; gap:8px; font-weight:700; box-shadow:0 4px 12px rgba(37,211,102,0.25);">
+                                <i class="fab fa-whatsapp" style="font-size:1.15rem;"></i> إرسال عبر واتساب
+                            </a>
+                            <a id="devPwdSmsBtn" href="#" class="btn" style="flex:1; min-width:160px; background:#3b82f6; color:#fff; border:none; text-decoration:none; display:inline-flex; align-items:center; justify-content:center; gap:8px; font-weight:700; box-shadow:0 4px 12px rgba(59,130,246,0.25);">
+                                <i class="fas fa-comment-dots" style="font-size:1.1rem;"></i> إرسال رسالة SMS
+                            </a>
+                            <button type="button" class="btn btn-secondary" onclick="copyDevPwdFullMessage()" style="flex:1; min-width:160px;">
+                                <i class="fas fa-clipboard-check"></i> نسخ الرسالة كاملة
+                            </button>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -22842,6 +22968,10 @@ $showSettings = $hasChurchId || $isDevOrAdmin;
                 ['الفصل', s['الفصل'] || '---', 'purple', 'fa-chalkboard-teacher', s['الفصل'] || '---'],
                 ['العنوان', s['العنوان'] || '---', 'orange', 'fa-map-marker-alt', s['العنوان'] || '---'],
             ];
+            const cachedEmail = s.email || s['البريد الإلكتروني'] || s._email || '';
+            if (cachedEmail) {
+                rowsList.push(['البريد الإلكتروني', cachedEmail, 'blue', 'fa-envelope', cachedEmail]);
+            }
 
             let rows = rowsList.map(([l, v, color, icon, copyVal]) => `
         <div class="detail-row">
@@ -22977,6 +23107,9 @@ $showSettings = $hasChurchId || $isDevOrAdmin;
                 ['الفصل', full.class || '---', 'purple', 'fa-chalkboard-teacher', full.class || '---'],
                 ['العنوان', full.address || '---', 'orange', 'fa-map-marker-alt', full.address || '---'],
             ];
+            if (full.email) {
+                rowsList.push(['البريد الإلكتروني', full.email, 'blue', 'fa-envelope', full.email]);
+            }
 
             let rows = rowsList.map(([l, v, color, icon, copyVal]) => `
         <div class="detail-row">
@@ -23841,6 +23974,8 @@ $showSettings = $hasChurchId || $isDevOrAdmin;
             }
             const sAddrEl = document.getElementById('editStudentAddress');
             if (sAddrEl) sAddrEl.value = s.address || s['العنوان'] || '';
+            const sEmailEl = document.getElementById('editStudentEmail');
+            if (sEmailEl) sEmailEl.value = s.email || s['البريد الإلكتروني'] || s._email || '';
             const sPhoneEl = document.getElementById('editStudentPhone');
             if (sPhoneEl) sPhoneEl.value = s.phone || s['رقم التليفون'] || '';
             const pPhones = s._parentPhones || s.parent_phones || [];
@@ -23977,6 +24112,7 @@ $showSettings = $hasChurchId || $isDevOrAdmin;
                 action: 'updateStudent', studentId: id, name, classId: cls,
                 gender: document.getElementById('editStudentGender').value,
                 address: document.getElementById('editStudentAddress').value.trim(),
+                email: (document.getElementById('editStudentEmail')?.value || '').trim(),
                 phone: document.getElementById('editStudentPhone').value.trim(),
                 emergency_phone: fallbackEmerg,
                 parent_phones: JSON.stringify(parentPhonesList),
@@ -24089,6 +24225,7 @@ $showSettings = $hasChurchId || $isDevOrAdmin;
                 fd.append('action', 'addStudent'); fd.append('name', name); fd.append('classId', cls);
                 fd.append('gender', document.getElementById('studentGender').value);
                 fd.append('address', document.getElementById('studentAddress').value.trim() || '');
+                fd.append('email', (document.getElementById('studentEmail')?.value || '').trim());
                 fd.append('phone', document.getElementById('studentPhone').value.trim() || '');
                 fd.append('emergency_phone', fallbackEmerg);
                 fd.append('parent_phones', JSON.stringify(parentPhonesList));
@@ -24155,6 +24292,11 @@ $showSettings = $hasChurchId || $isDevOrAdmin;
         let studentToResetPassword = null;
         function showResetStudentPasswordModal(s) {
             if (!s) return;
+            if (isUserDeveloper()) {
+                const sId = getStudentDbId(s);
+                openDevPasswordRequestsModal(sId, s.email || s['البريد الإلكتروني'] || '');
+                return;
+            }
             studentToResetPassword = s;
             const name = s.name || s['الاسم'] || '';
             const nameEl = document.getElementById('resetStudentPasswordName');
@@ -24189,6 +24331,582 @@ $showSettings = $hasChurchId || $isDevOrAdmin;
                 hideResetStudentPasswordModal();
             });
         }
+
+        // ── DEVELOPER PASSWORD REQUESTS & RESET SUITE ───────────────
+        let _devPasswordRequests = [];
+        let _devPwdSelectedStudent = null;
+        let _devPwdActiveTab = 'all';
+        let _devPwdCurrentReqData = null;
+        let _devPwdLastGeneratedData = null;
+
+        function isUserDeveloper() {
+            return (typeof isDeveloper !== 'undefined' && isDeveloper) ||
+                localStorage.getItem('role') === 'developer' ||
+                localStorage.getItem('uncleRole') === 'developer';
+        }
+
+        async function openDevPasswordRequestsModal(studentId = null, reqEmail = '') {
+            const modal = document.getElementById('devPasswordRequestsModal');
+            if (!modal) return;
+            modal.style.display = 'flex';
+            document.body.style.overflow = 'hidden';
+
+            // Show dev topbar button if not already
+            const devBtn = document.getElementById('devPwdRequestsBtn');
+            if (devBtn && isUserDeveloper()) devBtn.style.display = 'inline-flex';
+
+            if (studentId) {
+                // Open directly to student detail view
+                await selectDevPwdStudent(studentId, { email: reqEmail });
+            } else {
+                devPwdShowListView();
+            }
+
+            // Always refresh requests in the background
+            loadDevPasswordRequests();
+        }
+
+        function closeDevPasswordRequestsModal() {
+            const modal = document.getElementById('devPasswordRequestsModal');
+            if (!modal) return;
+            modal.style.display = 'none';
+            document.body.style.overflow = '';
+            _devPwdSelectedStudent = null;
+            _devPwdCurrentReqData = null;
+            _devPwdLastGeneratedData = null;
+        }
+
+        function devPwdShowListView() {
+            const listView = document.getElementById('devPwdListView');
+            const detailView = document.getElementById('devPwdDetailView');
+            const backBtn = document.getElementById('devPwdBackBtn');
+            const titleEl = document.getElementById('devPwdModalTitleText');
+            if (listView) listView.style.display = 'block';
+            if (detailView) detailView.style.display = 'none';
+            if (backBtn) backBtn.style.display = 'none';
+            if (titleEl) titleEl.innerHTML = '<i class="fas fa-key" style="color:var(--brand);margin-left:8px;"></i>طلبات إعادة تعيين كلمة المرور';
+            renderDevPasswordRequestsList();
+        }
+
+        async function loadDevPasswordRequests(forceRefresh = false) {
+            const refreshBtn = document.getElementById('devPwdRefreshBtn');
+            if (refreshBtn && forceRefresh) refreshBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+
+            try {
+                const fd = new FormData();
+                fd.append('action', 'getDeveloperPasswordRequests');
+                if (typeof _appendDevOverride === 'function') {
+                    _appendDevOverride(fd);
+                } else if (typeof devViewChurchId !== 'undefined' && devViewChurchId > 0) {
+                    fd.append('dev_override_church_id', devViewChurchId);
+                }
+
+                const d = await fetch(API_URL, { method: 'POST', body: fd, credentials: 'include' }).then(r => r.json()).catch(() => ({ success: false }));
+                if (refreshBtn) refreshBtn.innerHTML = '<i class="fas fa-sync-alt"></i>';
+
+                if (d.success) {
+                    _devPasswordRequests = d.requests || [];
+                    const pendingCount = _devPasswordRequests.filter(r => r.status === 'pending').length;
+
+                    // Update badges
+                    const tabBadge = document.getElementById('devPwdTabPendingBadge');
+                    if (tabBadge) {
+                        tabBadge.textContent = pendingCount;
+                        tabBadge.style.display = pendingCount > 0 ? 'inline-block' : 'none';
+                    }
+
+                    const topBadge = document.getElementById('devPwdRequestsBadge');
+                    if (topBadge) {
+                        topBadge.textContent = pendingCount > 99 ? '99+' : pendingCount;
+                        topBadge.style.display = pendingCount > 0 ? 'flex' : 'none';
+                    }
+
+                    const topBtn = document.getElementById('devPwdRequestsBtn');
+                    if (topBtn && isUserDeveloper()) {
+                        topBtn.style.display = 'inline-flex';
+                    }
+
+                    if (document.getElementById('devPwdListView')?.style.display !== 'none') {
+                        renderDevPasswordRequestsList();
+                    }
+                }
+            } catch (e) {
+                if (refreshBtn) refreshBtn.innerHTML = '<i class="fas fa-sync-alt"></i>';
+            }
+        }
+
+        function setDevPwdTab(tab) {
+            _devPwdActiveTab = tab;
+            document.querySelectorAll('.dev-pwd-tab').forEach(b => {
+                if (b.getAttribute('data-tab') === tab) {
+                    b.classList.add('active');
+                    b.classList.remove('btn-secondary');
+                } else {
+                    b.classList.remove('active');
+                    b.classList.add('btn-secondary');
+                }
+            });
+            renderDevPasswordRequestsList();
+        }
+
+        function filterDevPasswordRequests() {
+            renderDevPasswordRequestsList();
+        }
+
+        function renderDevPasswordRequestsList() {
+            const container = document.getElementById('devPwdListContainer');
+            if (!container) return;
+
+            const q = (document.getElementById('devPwdSearchInput')?.value || '').trim().toLowerCase();
+            let list = [..._devPasswordRequests];
+
+            // Tab filtering
+            if (_devPwdActiveTab === 'pending') {
+                list = list.filter(r => r.status === 'pending');
+            } else if (_devPwdActiveTab === 'completed') {
+                list = list.filter(r => r.status === 'completed' || r.status === 'generated');
+            }
+
+            // Search filtering
+            if (q) {
+                list = list.filter(r => {
+                    const name = (r.student_name || '').toLowerCase();
+                    const church = (r.church_name || '').toLowerCase();
+                    const cls = (r.class_name || '').toLowerCase();
+                    const phone = (r.phone || r.emergency_phone || '').toLowerCase();
+                    const email = (r.email || r.student_email || '').toLowerCase();
+                    return name.includes(q) || church.includes(q) || cls.includes(q) || phone.includes(q) || email.includes(q);
+                });
+            }
+
+            if (!list.length) {
+                container.innerHTML = `
+                    <div style="text-align:center; padding:40px 20px; color:var(--text-3);">
+                        <div style="width:56px; height:56px; border-radius:50%; background:var(--surface-3); display:flex; align-items:center; justify-content:center; margin:0 auto 12px auto; font-size:1.4rem; color:var(--text-2);">
+                            <i class="fas fa-check-circle"></i>
+                        </div>
+                        <div style="font-weight:700; font-size:1rem; color:var(--text-2); margin-bottom:4px;">لا توجد طلبات في هذا القسم</div>
+                        <div style="font-size:0.82rem;">يمكنك البحث عن أي طالب بالاسم أو الهاتف في شريط البحث أعلاه</div>
+                    </div>`;
+                return;
+            }
+
+            container.innerHTML = list.map(req => {
+                const sName = escHtml(req.student_name || 'بدون اسم');
+                const church = escHtml(req.church_name || 'الكنيسة العامة');
+                const cls = escHtml(req.class_name || 'عام');
+                const phone = req.phone || req.student_phone || '';
+                const emergPhone = req.emergency_phone || '';
+                const displayEmail = req.email || req.student_email || '';
+                const isPending = req.status === 'pending';
+                const isGenerated = req.status === 'generated';
+                const statusBadge = isPending
+                    ? `<span style="background:var(--warning-bg); color:var(--warning-dark); padding:3px 8px; border-radius:6px; font-size:0.75rem; font-weight:700;"><i class="fas fa-clock"></i> معلق</span>`
+                    : (isGenerated
+                        ? `<span style="background:var(--success-bg); color:var(--success-dark); padding:3px 8px; border-radius:6px; font-size:0.75rem; font-weight:700;"><i class="fas fa-link"></i> تم إنشاء الرابط</span>`
+                        : `<span style="background:var(--brand-bg); color:var(--brand); padding:3px 8px; border-radius:6px; font-size:0.75rem; font-weight:700;"><i class="fas fa-check-double"></i> مكتمل</span>`);
+
+                const reqDate = req.created_at ? new Date(req.created_at).toLocaleString('ar-EG', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : '';
+                const reqTypeLabel = req.request_type === 'new_registration' ? 'تسجيل جديد' : 'نسيان كلمة المرور';
+
+                const avatarSrc = req.image_url || '';
+                const avatarHtml = avatarSrc
+                    ? `<img src="${avatarSrc}" style="width:46px; height:46px; border-radius:50%; object-fit:cover; border:2px solid var(--border-solid);" onerror="this.outerHTML='<div style=\'width:46px;height:46px;border-radius:50%;background:var(--brand-bg);color:var(--brand);display:flex;align-items:center;justify-content:center;font-size:1.1rem;\'><i class=\'fas fa-user\'></i></div>'">`
+                    : `<div style="width:46px; height:46px; border-radius:50%; background:var(--brand-bg); color:var(--brand); display:flex; align-items:center; justify-content:center; font-size:1.1rem;"><i class="fas fa-user"></i></div>`;
+
+                const safeJson = escAttr(JSON.stringify(req));
+
+                return `
+                <div style="background:var(--surface); border:1px solid var(--border-solid); border-radius:var(--r-lg); padding:14px 16px; box-shadow:var(--shadow-sm); display:flex; flex-direction:column; gap:10px; transition:border-color .2s;" onmouseenter="this.style.borderColor='var(--brand)'" onmouseleave="this.style.borderColor='var(--border-solid)'">
+                    <div style="display:flex; align-items:flex-start; justify-content:space-between; gap:12px;">
+                        <div style="display:flex; align-items:center; gap:12px;">
+                            ${avatarHtml}
+                            <div>
+                                <div style="font-weight:700; font-size:0.95rem; color:var(--text);">${sName}</div>
+                                <div style="font-size:0.78rem; color:var(--text-3); display:flex; align-items:center; gap:8px; margin-top:2px;">
+                                    <span><i class="fas fa-church" style="margin-left:3px; color:var(--brand);"></i>${church}</span>
+                                    <span>•</span>
+                                    <span><i class="fas fa-chalkboard" style="margin-left:3px;"></i>${cls}</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div style="text-align:left;">
+                            ${statusBadge}
+                            <div style="font-size:0.7rem; color:var(--text-3); margin-top:4px;">${reqDate}</div>
+                        </div>
+                    </div>
+
+                    <!-- Details Row -->
+                    <div style="background:var(--surface-2); border-radius:var(--r-md); padding:8px 12px; font-size:0.8rem; display:grid; grid-template-columns:repeat(auto-fit, minmax(180px, 1fr)); gap:8px;">
+                        <div style="display:flex; align-items:center; gap:6px;">
+                            <i class="fas fa-phone" style="color:var(--success);"></i>
+                            <span style="color:var(--text-3);">الهاتف:</span>
+                            <span dir="ltr" style="font-family:monospace; font-weight:700;">${phone || 'غير مسجل'}</span>
+                        </div>
+                        ${emergPhone ? `
+                        <div style="display:flex; align-items:center; gap:6px;">
+                            <i class="fas fa-user-friends" style="color:var(--primary);"></i>
+                            <span style="color:var(--text-3);">ولي الأمر:</span>
+                            <span dir="ltr" style="font-family:monospace; font-weight:700;">${emergPhone}</span>
+                        </div>` : ''}
+                        <div style="display:flex; align-items:center; gap:6px; grid-column:1/-1;">
+                            <i class="fas fa-envelope" style="color:var(--brand);"></i>
+                            <span style="color:var(--text-3);">البريد:</span>
+                            <span dir="ltr" style="font-family:monospace; font-weight:600; color:${displayEmail ? 'var(--text)' : 'var(--danger)'};">${displayEmail || 'لا يوجد بريد مسجل'}</span>
+                            ${req.request_type ? `<span style="margin-right:auto; font-size:0.72rem; color:var(--text-3); background:var(--surface-3); padding:2px 6px; border-radius:4px;">${reqTypeLabel}</span>` : ''}
+                        </div>
+                    </div>
+
+                    <!-- Actions -->
+                    <div style="display:flex; justify-content:flex-end; gap:8px;">
+                        <button type="button" class="btn btn-sm" onclick='selectDevPwdStudent(${req.student_id}, ${safeJson})' style="padding:6px 14px; background:linear-gradient(135deg, var(--brand), var(--brand-dark)); color:#fff; border:none; border-radius:var(--r-md); font-weight:700; cursor:pointer; display:inline-flex; align-items:center; gap:6px; box-shadow:0 2px 8px var(--brand-glow);">
+                            <i class="fas fa-key"></i> إدارة الرابط والإيميل
+                        </button>
+                    </div>
+                </div>`;
+            }).join('');
+        }
+
+        async function selectDevPwdStudent(studentId, reqData = null) {
+            _devPwdCurrentReqData = reqData || {};
+            _devPwdLastGeneratedData = null;
+
+            // Find student in memory or fetch profile
+            let student = null;
+            if (window.students && Array.isArray(window.students)) {
+                student = window.students.find(s => getStudentDbId(s) == studentId);
+            }
+            if (!student && window.combinedStudents && Array.isArray(window.combinedStudents)) {
+                student = window.combinedStudents.find(s => getStudentDbId(s) == studentId);
+            }
+
+            if (!student) {
+                showLoading('جاري تحميل بيانات الطالب...');
+                try {
+                    const fd = new FormData();
+                    fd.append('action', 'getStudentProfile');
+                    fd.append('studentId', studentId);
+                    if (typeof _appendDevOverride === 'function') _appendDevOverride(fd);
+                    const d = await fetch(API_URL, { method: 'POST', body: fd, credentials: 'include' }).then(r => r.json());
+                    hideLoading();
+                    if (d.success && d.student) {
+                        student = d.student;
+                    }
+                } catch (e) {
+                    hideLoading();
+                }
+            }
+
+            if (!student) {
+                // Synthesize from reqData
+                student = {
+                    id: studentId,
+                    name: reqData?.student_name || 'طالب #' + studentId,
+                    class: reqData?.class_name || 'عام',
+                    _churchName: reqData?.church_name || '',
+                    phone: reqData?.phone || reqData?.student_phone || '',
+                    emergency_phone: reqData?.emergency_phone || '',
+                    email: reqData?.email || reqData?.student_email || '',
+                    gender: reqData?.gender || 'male'
+                };
+            }
+
+            _devPwdSelectedStudent = student;
+
+            // Switch to detail view
+            const listView = document.getElementById('devPwdListView');
+            const detailView = document.getElementById('devPwdDetailView');
+            const backBtn = document.getElementById('devPwdBackBtn');
+            const titleEl = document.getElementById('devPwdModalTitleText');
+            if (listView) listView.style.display = 'none';
+            if (detailView) detailView.style.display = 'block';
+            if (backBtn) backBtn.style.display = 'inline-flex';
+            if (titleEl) titleEl.innerHTML = `<i class="fas fa-user-shield" style="color:var(--brand);margin-left:8px;"></i>إدارة كلمة مرور: ${escHtml(student.name || '')}`;
+
+            // Render student identity card
+            const sName = escHtml(student.name || '---');
+            const churchName = escHtml(student._churchName || student['الكنيسة'] || reqData?.church_name || 'الكنيسة العامة');
+            const cls = escHtml(student.class || student['الفصل'] || reqData?.class_name || '---');
+            const mainPhone = student.phone || student['رقم التليفون'] || reqData?.phone || '';
+            const emergPhone = student.emergency_phone || student['تليفون الطوارئ'] || reqData?.emergency_phone || '';
+            const photoVal = student.image_url || student['صورة'] || student.photo || '';
+            const photoSrc = photoVal ? ((typeof window.photoUrl === 'function' && !photoVal.startsWith('http') && !photoVal.startsWith('/')) ? window.photoUrl(photoVal) : photoVal) : '';
+            const avatarHtml = photoSrc
+                ? `<img src="${photoSrc}" style="width:62px; height:62px; border-radius:50%; object-fit:cover; border:2.5px solid var(--border-solid);" onerror="this.outerHTML='<div style=\'width:62px;height:62px;border-radius:50%;background:var(--brand-bg);color:var(--brand);display:flex;align-items:center;justify-content:center;font-size:1.6rem;\'><i class=\'fas fa-user\'></i></div>'">`
+                : `<div style="width:62px; height:62px; border-radius:50%; background:var(--brand-bg); color:var(--brand); display:flex; align-items:center; justify-content:center; font-size:1.6rem;"><i class="fas fa-user"></i></div>`;
+
+            const sCard = document.getElementById('devPwdStudentCard');
+            if (sCard) {
+                sCard.innerHTML = `
+                    ${avatarHtml}
+                    <div style="flex:1; min-width:0;">
+                        <div style="font-weight:800; font-size:1.1rem; color:var(--text); margin-bottom:4px;">${sName}</div>
+                        <div style="display:flex; flex-wrap:wrap; gap:8px; font-size:0.8rem; color:var(--text-3); margin-bottom:8px;">
+                            <span style="background:var(--brand-bg); color:var(--brand); padding:2px 8px; border-radius:6px; font-weight:700;"><i class="fas fa-church"></i> ${churchName}</span>
+                            <span style="background:var(--surface-3); color:var(--text-2); padding:2px 8px; border-radius:6px;"><i class="fas fa-chalkboard"></i> ${cls}</span>
+                            <span style="background:var(--surface-3); color:var(--text-2); padding:2px 8px; border-radius:6px;"><i class="fas fa-fingerprint"></i> ID: ${getStudentDbId(student)}</span>
+                        </div>
+                        <div style="display:flex; gap:14px; flex-wrap:wrap; font-size:0.82rem;">
+                            <div style="display:flex; align-items:center; gap:6px;">
+                                <i class="fas fa-phone" style="color:var(--success);"></i>
+                                <span dir="ltr" style="font-family:monospace; font-weight:700;">${mainPhone || 'بدون هاتف'}</span>
+                                ${mainPhone ? `<a href="tel:${mainPhone}" style="color:var(--success); font-size:0.8rem;"><i class="fas fa-phone-volume"></i></a>` : ''}
+                            </div>
+                            ${emergPhone ? `
+                            <div style="display:flex; align-items:center; gap:6px;">
+                                <i class="fas fa-user-friends" style="color:var(--primary);"></i>
+                                <span style="color:var(--text-3);">ولي الأمر:</span>
+                                <span dir="ltr" style="font-family:monospace; font-weight:700;">${emergPhone}</span>
+                                <a href="tel:${emergPhone}" style="color:var(--primary); font-size:0.8rem;"><i class="fas fa-phone-volume"></i></a>
+                            </div>` : ''}
+                        </div>
+                    </div>
+                `;
+            }
+
+            // Pre-fill email
+            const activeEmail = student.email || student['البريد الإلكتروني'] || reqData?.email || reqData?.student_email || '';
+            const emailInput = document.getElementById('devPwdDetailEmail');
+            if (emailInput) emailInput.value = activeEmail;
+
+            // Email badge
+            const badge = document.getElementById('devPwdEmailStatusBadge');
+            if (badge) {
+                if (student.email) {
+                    badge.textContent = 'مسجل ومحفوظ';
+                    badge.style.background = 'var(--success-bg)';
+                    badge.style.color = 'var(--success-dark)';
+                } else if (reqData?.email) {
+                    badge.textContent = 'مطلوب في الطلب (غير محفوظ)';
+                    badge.style.background = 'var(--warning-bg)';
+                    badge.style.color = 'var(--warning-dark)';
+                } else {
+                    badge.textContent = 'غير مسجل';
+                    badge.style.background = 'var(--danger-bg)';
+                    badge.style.color = 'var(--danger-dark)';
+                }
+            }
+
+            // Google linking status
+            const googleEmail = student.google_email || student.google_id || '';
+            const gRow = document.getElementById('devPwdGoogleRow');
+            if (gRow) {
+                if (googleEmail) {
+                    gRow.innerHTML = `
+                        <div style="margin-top:10px; padding:8px 12px; background:rgba(66, 133, 244, 0.08); border:1px solid rgba(66, 133, 244, 0.2); border-radius:var(--r-sm); display:flex; align-items:center; justify-content:space-between; font-size:0.8rem;">
+                            <div style="display:flex; align-items:center; gap:8px;">
+                                <i class="fab fa-google" style="color:#4285F4; font-size:1rem;"></i>
+                                <span style="color:var(--text-2);">حساب Google:</span>
+                                <strong dir="ltr" style="color:var(--text); font-family:monospace;">${student.google_email || 'مرتبط'}</strong>
+                            </div>
+                            <span class="badge" style="background:var(--success-bg); color:var(--success-dark); font-size:0.75rem; padding:2px 8px; border-radius:4px; font-weight:700;">مرتبط ومفعل</span>
+                        </div>
+                    `;
+                    gRow.style.display = 'block';
+                } else {
+                    gRow.innerHTML = `
+                        <div style="margin-top:10px; padding:8px 12px; background:var(--surface-3); border:1px dashed var(--border-solid); border-radius:var(--r-sm); display:flex; align-items:center; justify-content:space-between; font-size:0.8rem; color:var(--text-3);">
+                            <div style="display:flex; align-items:center; gap:8px;">
+                                <i class="fab fa-google" style="opacity:0.5;"></i>
+                                <span>حساب Google:</span>
+                                <span>غير مرتبط</span>
+                            </div>
+                            <span style="font-size:0.75rem;">(يستطيع الطالب ربطه عند فتح رابط إعادة التعيين)</span>
+                        </div>
+                    `;
+                    gRow.style.display = 'block';
+                }
+            }
+
+            // Hide or restore share section
+            const shareSec = document.getElementById('devPwdShareSection');
+            if (reqData && reqData.reset_token) {
+                // Construct existing link
+                const rootUrl = window.location.origin;
+                const link = `${rootUrl}/user/login/?reset_token=${encodeURIComponent(reqData.reset_token)}`;
+                renderDevPwdShareSection(link);
+            } else {
+                if (shareSec) shareSec.style.display = 'none';
+            }
+        }
+
+        async function saveDevPwdStudentEmailOnly() {
+            if (!_devPwdSelectedStudent) return;
+            const sId = getStudentDbId(_devPwdSelectedStudent);
+            const email = (document.getElementById('devPwdDetailEmail')?.value || '').trim();
+
+            if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+                showToast('صيغة البريد الإلكتروني غير صحيحة', 'warning');
+                return;
+            }
+
+            showLoading('جاري حفظ البريد الإلكتروني...');
+            try {
+                const fd = new FormData();
+                fd.append('action', 'updateStudentEmailOnly');
+                fd.append('student_id', sId);
+                fd.append('email', email);
+                if (typeof _appendDevOverride === 'function') _appendDevOverride(fd);
+
+                const d = await fetch(API_URL, { method: 'POST', body: fd, credentials: 'include' }).then(r => r.json());
+                hideLoading();
+
+                if (d.success) {
+                    _devPwdSelectedStudent.email = email;
+                    showToast('تم حفظ البريد الإلكتروني بنجاح ✓', 'success');
+
+                    const badge = document.getElementById('devPwdEmailStatusBadge');
+                    if (badge) {
+                        badge.textContent = email ? 'مسجل ومحفوظ' : 'غير مسجل';
+                        badge.style.background = email ? 'var(--success-bg)' : 'var(--danger-bg)';
+                        badge.style.color = email ? 'var(--success-dark)' : 'var(--danger-dark)';
+                    }
+                } else {
+                    showToast('فشل حفظ البريد: ' + (d.message || 'خطأ'), 'error');
+                }
+            } catch (e) {
+                hideLoading();
+                showToast('خطأ في الاتصال', 'error');
+            }
+        }
+
+        async function generateDevPwdLinkAndSendEmail() {
+            const email = (document.getElementById('devPwdDetailEmail')?.value || '').trim();
+            if (!email) {
+                showToast('يرجى كتابة البريد الإلكتروني أولاً لإرسال الرابط إليه', 'warning');
+                document.getElementById('devPwdDetailEmail')?.focus();
+                return;
+            }
+            if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+                showToast('صيغة البريد الإلكتروني غير صحيحة', 'warning');
+                return;
+            }
+
+            await executeDevPwdLinkGeneration(true, email);
+        }
+
+        async function generateDevPwdLinkOnly() {
+            const email = (document.getElementById('devPwdDetailEmail')?.value || '').trim();
+            await executeDevPwdLinkGeneration(false, email);
+        }
+
+        async function executeDevPwdLinkGeneration(sendEmail, email) {
+            if (!_devPwdSelectedStudent) return;
+            const sId = getStudentDbId(_devPwdSelectedStudent);
+            const reqId = _devPwdCurrentReqData?.id || 0;
+
+            showLoading(sendEmail ? 'جاري إنشاء الرابط وإرساله للإيميل...' : 'جاري إنشاء الرابط الآمن...');
+            try {
+                const fd = new FormData();
+                fd.append('action', 'generateResetLinkForStudent');
+                fd.append('student_id', sId);
+                if (reqId) fd.append('request_id', reqId);
+                fd.append('send_email', sendEmail ? '1' : '0');
+                if (email) fd.append('email', email);
+                if (typeof _appendDevOverride === 'function') _appendDevOverride(fd);
+
+                const d = await fetch(API_URL, { method: 'POST', body: fd, credentials: 'include' }).then(r => r.json());
+                hideLoading();
+
+                if (d.success && d.reset_url) {
+                    _devPwdLastGeneratedData = d;
+                    if (email) _devPwdSelectedStudent.email = email;
+
+                    if (sendEmail) {
+                        showToast(d.email_sent ? 'تم إنشاء الرابط وإرساله للإيميل بنجاح ✓' : 'تم إنشاء الرابط (تعذر إرسال الإيميل، يمكنك إرساله عبر واتساب أو SMS)', d.email_sent ? 'success' : 'warning');
+                    } else {
+                        showToast('تم إنشاء رابط إعادة التعيين الآمن بنجاح ✓', 'success');
+                    }
+
+                    renderDevPwdShareSection(d.reset_url);
+
+                    // Refresh requests list in background
+                    loadDevPasswordRequests();
+                } else {
+                    showToast('فشل إنشاء الرابط: ' + (d.message || 'خطأ'), 'error');
+                }
+            } catch (e) {
+                hideLoading();
+                showToast('خطأ في الاتصال', 'error');
+            }
+        }
+
+        function renderDevPwdShareSection(resetUrl) {
+            const shareSec = document.getElementById('devPwdShareSection');
+            if (!shareSec) return;
+            shareSec.style.display = 'block';
+
+            const input = document.getElementById('devPwdGeneratedLinkInput');
+            if (input) input.value = resetUrl;
+
+            const student = _devPwdSelectedStudent || {};
+            const sName = student.name || 'الطفل';
+            const phone = student.phone || student['رقم التليفون'] || _devPwdCurrentReqData?.phone || _devPwdCurrentReqData?.emergency_phone || student.emergency_phone || '';
+
+            // Clean phone for whatsapp & SMS
+            let rawDigits = (phone || '').replace(/[^\d]/g, '');
+            let waPhone = '';
+            let smsPhone = '';
+
+            if (rawDigits.startsWith('01') && rawDigits.length === 11) {
+                waPhone = '20' + rawDigits.substring(1);
+                smsPhone = '+20' + rawDigits.substring(1);
+            } else if (rawDigits.startsWith('201') && rawDigits.length === 12) {
+                waPhone = rawDigits;
+                smsPhone = '+' + rawDigits;
+            } else if (rawDigits.length > 5) {
+                waPhone = rawDigits;
+                smsPhone = (phone || '').startsWith('+') ? ('+' + rawDigits) : rawDigits;
+            }
+
+            const formattedMessage = `سلام ونعمة ✝️\nرابط إعادة تعيين كلمة المرور لحساب: ${sName}\n${resetUrl}\n\n⚠️ ملاحظة هامة: هذا الرابط صالح للاستخدام لمدة ساعتين فقط (ينتهي بعد ساعتين).`;
+
+            // WhatsApp link
+            const waBtn = document.getElementById('devPwdWaBtn');
+            if (waBtn) {
+                const waUrl = waPhone
+                    ? `https://api.whatsapp.com/send?phone=${waPhone}&text=${encodeURIComponent(formattedMessage)}`
+                    : `https://api.whatsapp.com/send?text=${encodeURIComponent(formattedMessage)}`;
+                waBtn.href = waUrl;
+            }
+
+            // SMS link
+            const smsBtn = document.getElementById('devPwdSmsBtn');
+            if (smsBtn) {
+                const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+                const smsSep = isIOS ? '&' : '?';
+                const smsUrl = smsPhone
+                    ? `sms:${smsPhone}${smsSep}body=${encodeURIComponent(formattedMessage)}`
+                    : `sms:${smsSep}body=${encodeURIComponent(formattedMessage)}`;
+                smsBtn.href = smsUrl;
+            }
+
+            // Store message for copy
+            window._currentDevPwdFormattedMsg = formattedMessage;
+        }
+
+        function copyDevPwdLinkOnly() {
+            const input = document.getElementById('devPwdGeneratedLinkInput');
+            if (!input || !input.value) return;
+            navigator.clipboard.writeText(input.value).then(() => {
+                showToast('تم نسخ الرابط إلى الحافظة ✓', 'success');
+            }).catch(() => {
+                input.select();
+                document.execCommand('copy');
+                showToast('تم نسخ الرابط ✓', 'success');
+            });
+        }
+
+        function copyDevPwdFullMessage() {
+            const msg = window._currentDevPwdFormattedMsg;
+            if (!msg) return;
+            navigator.clipboard.writeText(msg).then(() => {
+                showToast('تم نسخ الرسالة كاملة مع التنبيه بنجاح ✓', 'success');
+            }).catch(() => {
+                showToast('فشل النسخ التلقائي', 'error');
+            });
+        }
+
         function showDeleteStudentModal(s) { studentToDelete = s; document.getElementById('deleteStudentName').textContent = `هل تريد حذف: ${s.name || s['الاسم']}؟`; document.getElementById('deleteStudentModal').classList.add('active'); }
         function hideDeleteStudentModal() { studentToDelete = null; document.getElementById('deleteStudentModal').classList.remove('active'); }
         function deleteStudent() {
@@ -30097,6 +30815,10 @@ $showSettings = $hasChurchId || $isDevOrAdmin;
                 if (!d.success) return;
                 _notifData = d.notifications || [];
                 const unread = d.unread_count || 0;
+                // Update Developer Password Requests badge
+                if (typeof isUserDeveloper === 'function' && isUserDeveloper()) {
+                    loadDevPasswordRequests();
+                }
                 // Update bell badge
                 const badge = document.getElementById('notifBellBadge');
                 if (badge) {
@@ -30133,6 +30855,7 @@ $showSettings = $hasChurchId || $isDevOrAdmin;
                 registration: 'fa-user-plus',
                 task_submission: 'fa-paper-plane',
                 developer_message: 'fa-envelope',
+                dev_password_request: 'fa-key',
                 system: 'fa-circle-check',
                 announcement: 'fa-bullhorn',
                 naughty_status: 'fa-exclamation-triangle',
@@ -30142,6 +30865,7 @@ $showSettings = $hasChurchId || $isDevOrAdmin;
                 registration: 'تسجيل جديد',
                 task_submission: 'تاسك',
                 developer_message: 'رسالة',
+                dev_password_request: 'طلب كلمة مرور',
                 system: 'نظام',
                 announcement: 'إعلان',
                 naughty_status: 'سلوك',
@@ -30151,6 +30875,7 @@ $showSettings = $hasChurchId || $isDevOrAdmin;
                 registration: 'عرض الطلبات',
                 task_submission: 'فتح التاسكات',
                 developer_message: 'فتح الرسالة',
+                dev_password_request: 'إدارة الطلب',
                 announcement: 'عرض الإعلان',
                 naughty_status: 'عرض التفاصيل',
                 leaderboard_upgrade: 'عرض لوحة الصدارة',
@@ -30204,6 +30929,20 @@ $showSettings = $hasChurchId || $isDevOrAdmin;
             loadUnifiedNotifications();
             // Navigate
             toggleNotifPanel();
+
+            if (type === 'dev_password_request') {
+                let studentId = null;
+                let reqEmail = '';
+                if (notif && notif.payload) {
+                    try {
+                        const p = typeof notif.payload === 'string' ? JSON.parse(notif.payload) : notif.payload;
+                        studentId = p.student_id || null;
+                        reqEmail = p.email || '';
+                    } catch(e) {}
+                }
+                openDevPasswordRequestsModal(studentId, reqEmail);
+                return;
+            }
 
             if (type === 'registration') {
                 const body = document.getElementById('pendingBody');
@@ -30736,9 +31475,29 @@ $showSettings = $hasChurchId || $isDevOrAdmin;
 
         // Load on boot and every 60s
         loadUnifiedNotifications();
+        function checkDevPwdUrlParams() {
+            try {
+                const urlParams = new URLSearchParams(window.location.search);
+                if (urlParams.get('open_dev_pwd_requests') === '1' || urlParams.get('reset_student_id')) {
+                    const sId = urlParams.get('reset_student_id');
+                    setTimeout(() => {
+                        if (typeof openDevPasswordRequestsModal === 'function') {
+                            openDevPasswordRequestsModal(sId ? parseInt(sId) : null);
+                        }
+                    }, 500);
+                }
+            } catch(e) {}
+        }
+        checkDevPwdUrlParams();
         if (document.readyState === 'loading') {
-            window.addEventListener('DOMContentLoaded', loadUnifiedNotifications);
-            window.addEventListener('load', loadUnifiedNotifications);
+            window.addEventListener('DOMContentLoaded', () => {
+                loadUnifiedNotifications();
+                checkDevPwdUrlParams();
+            });
+            window.addEventListener('load', () => {
+                loadUnifiedNotifications();
+                checkDevPwdUrlParams();
+            });
         }
         setInterval(loadUnifiedNotifications, 60000);
 

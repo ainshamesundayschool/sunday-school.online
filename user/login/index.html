@@ -34,6 +34,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800;900&display=swap">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
     <script src="/js/search_intelligent.js"></script>
 
     <style>
@@ -455,6 +456,41 @@
 
         .password-setup-container.active {
             display: block;
+        }
+
+        .recovery-tabs {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 18px;
+        }
+
+        .recovery-tab-btn {
+            flex: 1;
+            padding: 10px 12px;
+            border-radius: var(--radius-md);
+            border: 1.5px solid var(--border);
+            background: #ffffff;
+            color: var(--secondary);
+            font-weight: 700;
+            font-size: 0.88rem;
+            cursor: pointer;
+            transition: var(--transition);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+        }
+
+        .recovery-tab-btn:hover {
+            border-color: var(--primary);
+            color: var(--primary);
+        }
+
+        .recovery-tab-btn.active {
+            background: var(--primary-light);
+            border-color: var(--primary);
+            color: var(--primary-dark);
+            box-shadow: 0 2px 8px var(--primary-glow);
         }
 
         /* Footer */
@@ -904,10 +940,6 @@
                             <i class="fas fa-eye"></i>
                         </button>
                     </div>
-                    <a href="#" class="forgot-password" id="forgotPasswordLink" style="display: none;" onclick="event.preventDefault(); showPasswordRecovery();">
-                        <i class="fas fa-key" style="color:var(--primary); font-size:0.95rem;"></i>
-                        <span>نسيت كلمة المرور؟ استعادة الحساب</span>
-                    </a>
                 </div>
 
                 <!-- Submit Button -->
@@ -917,10 +949,25 @@
                 </button>
 
                 <div style="text-align:center; margin-top:14px;">
-                    <a href="#" onclick="event.preventDefault(); showPasswordRecovery();" style="color:var(--primary); font-size:0.87rem; font-weight:700; text-decoration:none; display:inline-flex; align-items:center; gap:6px;">
-                        <i class="fas fa-shield-alt" style="font-size:0.95rem; color:var(--primary);"></i>
+                    <a href="#" class="forgot-password" id="forgotPasswordLink" onclick="event.preventDefault(); showPasswordRecovery();" style="color:var(--primary); font-size:0.87rem; font-weight:700; text-decoration:none; display:inline-flex; align-items:center; gap:6px;">
+                        <i class="fas fa-key" style="font-size:0.92rem; color:var(--primary);"></i>
                         <span>نسيت كلمة المرور؟ استعادة الحساب</span>
                     </a>
+                </div>
+
+                <!-- Google Sign-In Divider & Button -->
+                <div class="login-divider" style="display:flex; align-items:center; margin:16px 0 12px; gap:10px;">
+                    <div style="flex:1; height:1px; background:var(--border-solid, #e4e6f0);"></div>
+                    <span style="font-size:0.78rem; color:#8b90a8; font-weight:600;">أو من خلال</span>
+                    <div style="flex:1; height:1px; background:var(--border-solid, #e4e6f0);"></div>
+                </div>
+
+                <div class="google-login-wrap" style="display:flex; flex-direction:column; align-items:center; width:100%; gap:8px;">
+                    <div id="googleSignInButtonDiv" style="display:flex; justify-content:center; width:100%;"></div>
+                    <button type="button" class="btn" id="customGoogleSignInBtn" onclick="triggerGoogleSignIn()" style="display:none; width:100%; background:#ffffff; color:#374151; border:1.5px solid #d1d5db; box-shadow:0 2px 8px rgba(0,0,0,0.06); padding:10px 16px; border-radius:var(--radius-sm, 12px); font-size:0.9rem; font-weight:700; align-items:center; justify-content:center; gap:10px; cursor:pointer;">
+                        <svg width="20" height="20" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/></svg>
+                        <span>الدخول السريع بحساب Google</span>
+                    </button>
                 </div>
             </form>
         </div>
@@ -1022,40 +1069,121 @@
             </form>
         </div>
 
-        <!-- Uncle Contact Container (When student has no email linked) -->
-        <div class="password-setup-container" id="uncleContactContainer">
+        <!-- Password Recovery Choice & Request Container -->
+        <div class="password-setup-container" id="passwordRecoveryContainer">
             <div style="text-align:center; margin-bottom:18px;">
-                <div style="width:62px; height:62px; border-radius:50%; background:#fff7ed; color:#ea580c; display:flex; align-items:center; justify-content:center; margin:0 auto 12px; font-size:1.5rem; border:2px solid #fed7aa;">
-                    <i class="fas fa-church"></i>
+                <div style="width:62px; height:62px; border-radius:50%; background:var(--primary-light); color:var(--primary); display:flex; align-items:center; justify-content:center; margin:0 auto 12px; font-size:1.5rem; border:2px solid rgba(91, 108, 245, 0.2);">
+                    <i class="fas fa-key"></i>
                 </div>
-                <h3 style="font-size:1.15rem; font-weight:800; color:var(--dark); margin-bottom:6px;">استعادة الحساب عبر خادم الكنيسة</h3>
-                <p style="font-size:0.85rem; color:var(--secondary); font-weight:600; line-height:1.6;">
-                    لم يتم ربط بريد إلكتروني بحسابك بعد. يمكنك التواصل مباشرة مع خادم كنيستك لمساعدتك في استعادة الحساب وتعيين كلمة المرور:
+                <h3 style="font-size:1.2rem; font-weight:800; color:var(--dark); margin-bottom:6px;">استعادة كلمة المرور</h3>
+                <p style="font-size:0.86rem; color:var(--secondary); font-weight:600; line-height:1.5;">
+                    اختر الطريقة الأنسب لك لاستعادة حسابك وتعيين كلمة مرور جديدة:
                 </p>
             </div>
 
-            <!-- Uncle Contact Card -->
-            <div style="background:#f8fafc; border:1.5px solid #e2e8f0; border-radius:var(--radius-md); padding:16px; margin-bottom:18px; text-align:center;">
-                <div style="display:flex; align-items:center; justify-content:center; gap:10px; margin-bottom:6px;">
-                    <i class="fas fa-user-tie" style="color:var(--primary); font-size:1.2rem;"></i>
-                    <span id="recoveryUncleName" style="font-size:1.05rem; font-weight:800; color:var(--dark);"></span>
-                </div>
-                <div style="font-size:0.83rem; color:var(--secondary); font-weight:600; margin-bottom:4px;">
-                    <span id="recoveryUncleRole">خادم الكنيسة</span> — <span id="recoveryChurchName">مدارس الأحد</span>
-                </div>
-                <div id="recoveryStudentSnippet" style="font-size:0.8rem; color:#64748b; background:#edf2f7; padding:4px 10px; border-radius:6px; display:inline-block; margin-top:4px;"></div>
+            <!-- Two Recovery Choices -->
+            <div class="recovery-tabs" id="recoveryTabsRow">
+                <button type="button" class="recovery-tab-btn active" id="tabEmailRecovery" onclick="switchRecoveryTab('email')">
+                    <i class="fas fa-envelope"></i>
+                    <span>بالبريد الإلكتروني</span>
+                </button>
+                <button type="button" class="recovery-tab-btn" id="tabDevRecovery" onclick="switchRecoveryTab('dev')">
+                    <i class="fas fa-headset"></i>
+                    <span>طلب رابط الاستعادة</span>
+                </button>
             </div>
 
-            <div style="display:flex; flex-direction:column; gap:10px;">
-                <a id="recoveryWhatsAppLink" href="#" target="_blank" class="login-btn" style="background:linear-gradient(135deg, #10b981, #059669); text-decoration:none; display:flex; align-items:center; justify-content:center; gap:8px;">
-                    <i class="fab fa-whatsapp" style="font-size:1.2rem;"></i>
-                    <span>مراسلة الخادم عبر واتساب</span>
-                </a>
-                <a id="recoveryCallLink" href="#" class="login-btn" style="background:#f1f5f9; color:var(--dark); border:1.5px solid #cbd5e1; text-decoration:none; display:flex; align-items:center; justify-content:center; gap:8px;">
-                    <i class="fas fa-phone-alt" style="color:var(--primary);"></i>
-                    <span>اتصال هاتفي بالخادم</span>
-                </a>
-                <button type="button" onclick="cancelUncleContact()" style="background:none; border:none; color:var(--secondary); font-size:0.85rem; cursor:pointer; text-decoration:underline; margin-top:8px;">
+            <!-- TAB 1: EMAIL RECOVERY -->
+            <div id="recoveryEmailPanel">
+                <form id="recoveryEmailForm" onsubmit="event.preventDefault(); submitEmailRecoveryRequest();">
+                    <div class="form-group" style="margin-bottom:16px;">
+                        <label for="recoveryEmailIdentifierInput" class="form-label">البريد الإلكتروني أو رقم الهاتف</label>
+                        <div class="input-container">
+                            <i class="fas fa-at input-icon"></i>
+                            <input type="text" id="recoveryEmailIdentifierInput" class="form-input" placeholder="أدخل البريد المسجل أو الهاتف" dir="ltr" style="font-weight:600;">
+                        </div>
+                        <small style="color:var(--secondary); font-size:0.78rem; display:block; margin-top:5px;">
+                            سنرسل كود التحقق (OTP) إلى بريدك الإلكتروني المسجل في حسابك فوراً.
+                        </small>
+                    </div>
+
+                    <div class="error-message" id="recoveryEmailError" style="display:none; margin-bottom:14px;"></div>
+
+                    <button type="submit" class="login-btn" id="recoveryEmailSubmitBtn" style="margin-bottom:12px;">
+                        <i class="fas fa-paper-plane"></i>
+                        <span>إرسال كود التحقق</span>
+                    </button>
+                </form>
+            </div>
+
+            <!-- TAB 2: SUPPORT TEAM / DIRECT LINK RECOVERY (WITHOUT EMAIL OR NO EMAIL LINKED) -->
+            <div id="recoveryDevPanel" style="display:none;">
+                <p style="font-size:0.83rem; color:var(--secondary); margin-bottom:14px; background:var(--primary-light); padding:10px 12px; border-radius:var(--radius-sm); border:1px solid rgba(91, 108, 245, 0.15); line-height:1.5;">
+                    <i class="fas fa-info-circle" style="color:var(--primary); margin-left:4px;"></i>
+                    إذا لم يكن لديك بريد إلكتروني مسجل أو نسيت بياناته، يمكنك إرسال بياناتك وسيقوم فريق العمل بمراجعة الطلب وإرسال رابط تعيين كلمة المرور إليك عبر واتساب أو رسالة نصية.
+                </p>
+
+                <form id="recoveryDevForm" onsubmit="event.preventDefault(); submitDevPasswordRequest();">
+                    <div class="form-group" style="margin-bottom:12px;">
+                        <label for="devReqStudentName" class="form-label">اسم الطفل بالكامل <span style="color:var(--danger)">*</span></label>
+                        <div class="input-container">
+                            <i class="fas fa-user input-icon"></i>
+                            <input type="text" id="devReqStudentName" class="form-input" placeholder="اسم الطفل ثلاثي أو رباعي..." required>
+                        </div>
+                    </div>
+
+                    <div class="form-group" style="margin-bottom:12px;">
+                        <label for="devReqChurchSelect" class="form-label">الكنيسة <span style="color:var(--danger)">*</span></label>
+                        <div class="input-container">
+                            <i class="fas fa-church input-icon"></i>
+                            <select id="devReqChurchSelect" class="form-input" required style="padding-right:48px;">
+                                <option value="">اختر كنيستك...</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-group" style="margin-bottom:12px;">
+                        <label for="devReqPhone" class="form-label">رقم الهاتف للتواصل (واتساب / هاتف) <span style="color:var(--danger)">*</span></label>
+                        <div class="input-container">
+                            <i class="fas fa-phone input-icon"></i>
+                            <input type="tel" id="devReqPhone" class="form-input" placeholder="01xxxxxxxxx" dir="ltr" required style="font-weight:700;">
+                        </div>
+                    </div>
+
+                    <div class="form-group" style="margin-bottom:16px;">
+                        <label for="devReqEmail" class="form-label">البريد الإلكتروني (اختياري)</label>
+                        <div class="input-container">
+                            <i class="fas fa-envelope input-icon"></i>
+                            <input type="email" id="devReqEmail" class="form-input" placeholder="example@email.com (اختياري)" dir="ltr">
+                        </div>
+                    </div>
+
+                    <div class="error-message" id="recoveryDevError" style="display:none; margin-bottom:14px;"></div>
+
+                    <button type="submit" class="login-btn" id="recoveryDevSubmitBtn" style="margin-bottom:12px; background:linear-gradient(135deg, var(--primary), var(--primary-dark));">
+                        <i class="fas fa-paper-plane"></i>
+                        <span>إرسال طلب رابط الاستعادة</span>
+                    </button>
+                </form>
+            </div>
+
+            <!-- SUCCESS CONFIRMATION PANEL -->
+            <div id="recoverySuccessPanel" style="display:none; text-align:center; padding:10px 0;">
+                <div style="width:64px; height:64px; border-radius:50%; background:var(--success-bg); color:var(--success); display:flex; align-items:center; justify-content:center; font-size:2rem; margin:0 auto 14px; border:2px solid #bbf7d0;">
+                    <i class="fas fa-check-circle"></i>
+                </div>
+                <h3 style="font-size:1.18rem; font-weight:800; color:var(--dark); margin-bottom:8px;">تم إرسال طلبك بنجاح! ✝️</h3>
+                <p id="recoverySuccessMsg" style="font-size:0.87rem; color:var(--secondary); font-weight:600; line-height:1.6; margin-bottom:20px;">
+                    تم استلام طلبك بنجاح. سيقوم فريق العمل بمراجعة الطلب وإرسال رابط تعيين كلمة المرور الجديدة إليك عبر واتساب أو رسالة نصية قريباً.
+                </p>
+                <button type="button" class="login-btn" onclick="cancelPasswordRecovery()">
+                    <i class="fas fa-arrow-right"></i>
+                    <span>العودة لتسجيل الدخول</span>
+                </button>
+            </div>
+
+            <div id="recoveryBackRow" style="text-align:center; margin-top:8px;">
+                <button type="button" onclick="cancelPasswordRecovery()" style="background:none; border:none; color:var(--secondary); font-size:0.85rem; cursor:pointer; text-decoration:underline;">
                     العودة لتسجيل الدخول
                 </button>
             </div>
@@ -1119,6 +1247,60 @@
         </div>
     </div>
 
+    <!-- Google Not Linked Modal -->
+    <div class="church-modal-overlay" id="googleNotLinkedModal" style="display:none;" onclick="if(event.target===this) closeGoogleNotLinkedModal();">
+        <div class="church-modal-dialog" style="max-width:440px;">
+            <div class="church-modal-header" style="border-bottom:none; padding-bottom:0;">
+                <div class="church-modal-title">
+                    <div class="church-modal-icon" style="background:#fee2e2; color:#ef4444;"><i class="fab fa-google"></i></div>
+                    <div>
+                        <h3 style="font-size:1.05rem;">حساب Google غير مرتبط</h3>
+                        <p id="googleNotLinkedEmail" style="direction:ltr; unicode-bidi:embed; font-family:monospace; font-size:0.8rem; font-weight:700; color:var(--primary);"></p>
+                    </div>
+                </div>
+                <button type="button" class="church-modal-close" onclick="closeGoogleNotLinkedModal()" aria-label="إغلاق">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="church-modal-body" style="padding:16px 20px 20px;">
+                <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:10px; padding:10px 12px; margin-bottom:14px; font-size:0.82rem; color:#475569; line-height:1.6;">
+                    <i class="fas fa-shield-alt" style="color:var(--primary); margin-left:4px;"></i>
+                    لحماية وتوثيق بيانات المخدومين في مدارس الأحد، لا يمكن إنشاء حساب جديد مباشرة عبر Google دون استيفاء بيانات التسجيل المعتمدة لكنيستك.
+                </div>
+
+                <!-- Link to existing account -->
+                <div style="border:1.5px solid var(--border-solid, #e4e6f0); border-radius:12px; padding:14px; margin-bottom:14px; background:var(--surface-2, #fafafa);">
+                    <div style="font-weight:800; font-size:0.88rem; color:var(--primary); margin-bottom:8px; display:flex; align-items:center; gap:6px;">
+                        <i class="fas fa-link"></i>
+                        <span>هل لديك حساب بالفعل؟ اربطه بهذا الـ Google الآن:</span>
+                    </div>
+                    <div class="form-group" style="margin-bottom:8px;">
+                        <input type="text" id="linkExistingIdentifier" class="form-input" placeholder="رقم الهاتف أو اسم المستخدم" style="font-size:0.85rem; padding:8px 12px;">
+                    </div>
+                    <div class="form-group" style="margin-bottom:10px;">
+                        <input type="password" id="linkExistingPassword" class="form-input" placeholder="كلمة المرور الحالية" style="font-size:0.85rem; padding:8px 12px;">
+                    </div>
+                    <div id="linkExistingError" style="display:none; color:#ef4444; font-size:0.8rem; font-weight:700; margin-bottom:8px;"></div>
+                    <button type="button" class="login-btn" id="btnSubmitLinkGoogle" onclick="submitLinkGoogleToExisting()" style="width:100%; padding:10px 14px; font-size:0.88rem;">
+                        <i class="fas fa-check-circle"></i>
+                        <span>ربط حساب Google والدخول</span>
+                    </button>
+                </div>
+
+                <!-- Or create new account -->
+                <div style="display:flex; gap:10px; align-items:center;">
+                    <button type="button" onclick="window.location.href='/user/registration/'" class="btn" style="flex:1; background:#f1f5f9; color:#334155; border:1px solid #cbd5e1; border-radius:10px; font-size:0.84rem; font-weight:700; padding:10px; cursor:pointer;">
+                        <i class="fas fa-user-plus"></i>
+                        <span>تسجيل حساب جديد بالبيانات</span>
+                    </button>
+                    <button type="button" onclick="closeGoogleNotLinkedModal()" class="btn" style="background:transparent; color:#94a3b8; border:none; font-size:0.84rem; padding:10px 14px; cursor:pointer;">
+                        <span>إلغاء</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script>
         // Global variables
         const isTestingSubdir = window.location.pathname.indexOf('/testing/') !== -1;
@@ -1168,12 +1350,31 @@
         onDOMReady(function() {
             checkIfLoggedIn();
             setupEventListeners();
+            checkResetTokenInUrl();
             if ('serviceWorker' in navigator) {
                 navigator.serviceWorker.register('/sw.js').catch(err => console.error('SW Registration failed:', err));
             }
         });
 
+        function checkResetTokenInUrl() {
+            try {
+                const urlParams = new URLSearchParams(window.location.search);
+                const token = urlParams.get('reset_token') || urlParams.get('token');
+                if (token) {
+                    const studentId = parseInt(urlParams.get('student_id') || urlParams.get('studentId') || '0', 10);
+                    setTimeout(() => {
+                        showPasswordResetWithToken(studentId, token);
+                    }, 300);
+                }
+            } catch(e) {}
+        }
+
         function checkIfLoggedIn() {
+            const urlParams = new URLSearchParams(window.location.search);
+            if (urlParams.get('reset_token') || urlParams.get('token')) {
+                return;
+            }
+
             const savedUsername = localStorage.getItem('savedUsername');
             const savedPassword = localStorage.getItem('savedPassword');
             const rememberMe = localStorage.getItem('rememberMe') === 'true';
@@ -1718,16 +1919,120 @@
         let emailOtpCountdownInterval = null;
 
         function showPasswordRecovery() {
-            const rawVal = elements.phoneInput.value.trim();
+            clearErrors();
+            const phoneInputVal = (elements.phoneInput?.value || '').trim();
+
+            // Hide other containers
+            elements.phoneLoginForm.classList.remove('active');
+            elements.usernameLoginForm.classList.remove('active');
+            elements.passwordSetupContainer.classList.remove('active');
+            const emailBox = document.getElementById('emailOtpContainer');
+            if (emailBox) emailBox.classList.remove('active');
+            const uncleBox = document.getElementById('uncleContactContainer');
+            if (uncleBox) uncleBox.classList.remove('active');
+
+            // Show recovery container
+            const recoveryContainer = document.getElementById('passwordRecoveryContainer');
+            if (recoveryContainer) {
+                recoveryContainer.classList.add('active');
+
+                // Reset views
+                const succPanel = document.getElementById('recoverySuccessPanel');
+                if (succPanel) succPanel.style.display = 'none';
+                const tabsRow = document.getElementById('recoveryTabsRow');
+                if (tabsRow) tabsRow.style.display = 'flex';
+                const backRow = document.getElementById('recoveryBackRow');
+                if (backRow) backRow.style.display = 'block';
+
+                // Pre-fill inputs if phone was already typed
+                if (phoneInputVal) {
+                    const emailIdInput = document.getElementById('recoveryEmailIdentifierInput');
+                    if (emailIdInput) emailIdInput.value = phoneInputVal;
+                    const devPhoneInput = document.getElementById('devReqPhone');
+                    if (devPhoneInput) devPhoneInput.value = phoneInputVal;
+                }
+
+                // Default tab
+                switchRecoveryTab('email');
+                populateRecoveryChurchSelect();
+            }
+        }
+
+        function switchRecoveryTab(tab) {
+            const btnEmail = document.getElementById('tabEmailRecovery');
+            const btnDev = document.getElementById('tabDevRecovery');
+            const panelEmail = document.getElementById('recoveryEmailPanel');
+            const panelDev = document.getElementById('recoveryDevPanel');
+
+            if (tab === 'dev') {
+                btnEmail?.classList.remove('active');
+                btnDev?.classList.add('active');
+                if (panelEmail) panelEmail.style.display = 'none';
+                if (panelDev) panelDev.style.display = 'block';
+                populateRecoveryChurchSelect();
+                setTimeout(() => document.getElementById('devReqStudentName')?.focus(), 100);
+            } else {
+                btnDev?.classList.remove('active');
+                btnEmail?.classList.add('active');
+                if (panelDev) panelDev.style.display = 'none';
+                if (panelEmail) panelEmail.style.display = 'block';
+                setTimeout(() => document.getElementById('recoveryEmailIdentifierInput')?.focus(), 100);
+            }
+        }
+
+        function switchToDevPasswordRequest() {
+            showPasswordRecovery();
+            switchRecoveryTab('dev');
+        }
+
+        function cancelPasswordRecovery() {
+            const recoveryContainer = document.getElementById('passwordRecoveryContainer');
+            if (recoveryContainer) recoveryContainer.classList.remove('active');
+            elements.phoneLoginForm.classList.add('active');
+        }
+
+        async function populateRecoveryChurchSelect() {
+            const select = document.getElementById('devReqChurchSelect');
+            if (!select || select.options.length > 1) return;
+
+            try {
+                if (churchesCache && churchesCache.length > 0) {
+                    renderChurchesIntoSelect(churchesCache, select);
+                    return;
+                }
+                const fd = new FormData();
+                fd.append('action', 'getAllChurches');
+                const res = await fetch(API_URL, { method: 'POST', body: fd, credentials: 'include' }).then(r => r.json());
+                if (res && res.success && Array.isArray(res.churches)) {
+                    churchesCache = res.churches;
+                    renderChurchesIntoSelect(churchesCache, select);
+                }
+            } catch (e) {}
+        }
+
+        function renderChurchesIntoSelect(churches, select) {
+            select.innerHTML = '<option value="">اختر كنيستك...</option>' + churches.map(c => {
+                const id = c.id || c.church_id;
+                const name = c.name || c.church_name || 'كنيسة';
+                return `<option value="${id}">${escHtml(name)}</option>`;
+            }).join('');
+        }
+
+        function submitEmailRecoveryRequest() {
+            const errEl = document.getElementById('recoveryEmailError');
+            if (errEl) errEl.style.display = 'none';
+
+            const rawVal = (document.getElementById('recoveryEmailIdentifierInput')?.value || '').trim();
             if (!rawVal) {
-                showPhoneError('الرجاء إدخال البريد الإلكتروني أو رقم الهاتف أولاً لإعادة تعيين كلمة المرور');
-                elements.phoneInput.focus();
+                if (errEl) {
+                    errEl.textContent = 'الرجاء إدخال البريد الإلكتروني أو رقم الهاتف المسجل';
+                    errEl.style.display = 'block';
+                }
                 return;
             }
 
             const identifier = formatIdentifier(rawVal);
-            clearErrors();
-            showLoading('جاري التحضير لاستعادة كلمة المرور...');
+            showLoading('جاري التحقق وإرسال الكود...');
 
             const formData = new FormData();
             formData.append('action', 'requestStudentPasswordRecovery');
@@ -1749,19 +2054,14 @@
 
                 if (data.success) {
                     if (data.has_email) {
-                        // CASE 1: Student has email -> Email OTP
+                        // Email OTP screen
                         pendingEmailVerification = {
                             studentId: data.student_id,
                             identifier: identifier,
                             maskedEmail: data.masked_email
                         };
 
-                        elements.phoneLoginForm.classList.remove('active');
-                        elements.usernameLoginForm.classList.remove('active');
-                        elements.passwordSetupContainer.classList.remove('active');
-                        const uncleBox = document.getElementById('uncleContactContainer');
-                        if (uncleBox) uncleBox.classList.remove('active');
-
+                        document.getElementById('passwordRecoveryContainer')?.classList.remove('active');
                         const emailContainer = document.getElementById('emailOtpContainer');
                         if (emailContainer) emailContainer.classList.add('active');
 
@@ -1774,73 +2074,117 @@
                             setTimeout(() => codeInput.focus(), 150);
                         }
 
-                        const errEl = document.getElementById('emailOtpErrorMessage');
-                        if (errEl) errEl.style.display = 'none';
-                        const succEl = document.getElementById('emailOtpSuccessMessage');
-                        if (succEl) succEl.style.display = 'none';
-
                         startEmailOtpCountdown(60);
                     } else {
-                        // CASE 2: Student has NO email linked -> Uncle contact fallback
-                        elements.phoneLoginForm.classList.remove('active');
-                        elements.usernameLoginForm.classList.remove('active');
-                        elements.passwordSetupContainer.classList.remove('active');
-                        const emailBox = document.getElementById('emailOtpContainer');
-                        if (emailBox) emailBox.classList.remove('active');
+                        // Student has NO email linked -> Switch smoothly to Developer Request tab with prefilled phone!
+                        switchRecoveryTab('dev');
+                        const devPhoneInput = document.getElementById('devReqPhone');
+                        if (devPhoneInput) devPhoneInput.value = data.student_phone || identifier;
+                        const devNameInput = document.getElementById('devReqStudentName');
+                        if (devNameInput && data.student_name) devNameInput.value = data.student_name;
 
-                        const uncleContainer = document.getElementById('uncleContactContainer');
-                        if (uncleContainer) uncleContainer.classList.add('active');
-
-                        const uncleNameEl = document.getElementById('recoveryUncleName');
-                        if (uncleNameEl) uncleNameEl.textContent = data.uncle_name || 'أمين الخدمة / الخادم المسؤول';
-
-                        const uncleRoleEl = document.getElementById('recoveryUncleRole');
-                        if (uncleRoleEl) uncleRoleEl.textContent = data.uncle_role || 'خادم الكنيسة';
-
-                        const churchNameEl = document.getElementById('recoveryChurchName');
-                        if (churchNameEl) churchNameEl.textContent = data.church_name || 'مدارس الأحد';
-
-                        const snippetEl = document.getElementById('recoveryStudentSnippet');
-                        if (snippetEl) {
-                            const stName = data.student_name || 'المخدوم';
-                            const stPhone = data.student_phone || identifier;
-                            snippetEl.textContent = `المخدوم: ${stName} (${stPhone})`;
-                        }
-
-                        const unclePhoneDigits = (data.uncle_phone || '').toString().replace(/\D/g, '');
-                        const waLink = document.getElementById('recoveryWhatsAppLink');
-                        const callLink = document.getElementById('recoveryCallLink');
-
-                        if (unclePhoneDigits) {
-                            const studentPhone = data.student_phone || identifier;
-                            const prefilledMsg = `نسيت كلمة المرور الخاصة بحسابي (رقم هاتفي: ${studentPhone}) وليس لدي بريد إلكتروني مسجل. برجاء مساعدتي في استعادة حسابي وتعيين كلمة المرور.`;
-
-                            let waTarget = unclePhoneDigits;
-                            if (waTarget.startsWith('0') && waTarget.length === 11) {
-                                waTarget = '2' + waTarget;
-                            }
-                            if (waLink) {
-                                waLink.href = `https://wa.me/${waTarget}?text=${encodeURIComponent(prefilledMsg)}`;
-                                waLink.style.display = 'flex';
-                            }
-                            if (callLink) {
-                                callLink.href = `tel:${unclePhoneDigits}`;
-                                callLink.style.display = 'flex';
-                            }
-                        } else {
-                            if (waLink) waLink.style.display = 'none';
-                            if (callLink) callLink.style.display = 'none';
+                        const devErr = document.getElementById('recoveryDevError');
+                        if (devErr) {
+                            devErr.innerHTML = '<i class="fas fa-info-circle"></i> لم يتم العثور على بريد إلكتروني مرتبط بحسابك. يمكنك إرسال بياناتك وسيقوم فريق العمل بالتواصل معك وإرسال رابط آمن:';
+                            devErr.style.display = 'block';
+                            devErr.style.background = 'var(--primary-light)';
+                            devErr.style.color = 'var(--primary-dark)';
+                            devErr.style.border = '1px solid rgba(91,108,245,0.2)';
                         }
                     }
                 } else {
-                    showPhoneError(data.message || 'تعذر استعادة كلمة المرور');
+                    if (errEl) {
+                        errEl.textContent = data.message || 'تعذر استعادة كلمة المرور';
+                        errEl.style.display = 'block';
+                    }
                 }
             })
             .catch(err => {
                 hideLoading();
-                showPhoneError('خطأ في الاتصال بالخادم. يرجى المحاولة مرة أخرى.');
+                if (errEl) {
+                    errEl.textContent = 'خطأ في الاتصال بالخادم. يرجى المحاولة مرة أخرى.';
+                    errEl.style.display = 'block';
+                }
             });
         }
+
+        async function submitDevPasswordRequest() {
+            const errEl = document.getElementById('recoveryDevError');
+            if (errEl) errEl.style.display = 'none';
+
+            const name = (document.getElementById('devReqStudentName')?.value || '').trim();
+            const churchSelect = document.getElementById('devReqChurchSelect');
+            const churchId = churchSelect ? churchSelect.value : '';
+            const churchName = churchSelect && churchSelect.selectedIndex >= 0 ? churchSelect.options[churchSelect.selectedIndex].text : '';
+            const phone = (document.getElementById('devReqPhone')?.value || '').trim();
+            const email = (document.getElementById('devReqEmail')?.value || '').trim();
+
+            if (!name) {
+                if (errEl) { errEl.textContent = 'الرجاء إدخال اسم الطفل بالكامل'; errEl.style.display = 'block'; }
+                return;
+            }
+            if (!churchId) {
+                if (errEl) { errEl.textContent = 'الرجاء اختيار الكنيسة'; errEl.style.display = 'block'; }
+                return;
+            }
+            if (!phone) {
+                if (errEl) { errEl.textContent = 'الرجاء إدخال رقم الهاتف للتواصل'; errEl.style.display = 'block'; }
+                return;
+            }
+
+            if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+                if (errEl) { errEl.textContent = 'صيغة البريد الإلكتروني غير صحيحة (يمكنك تركه فارغاً فهو اختياري)'; errEl.style.display = 'block'; }
+                return;
+            }
+
+            showLoading('جاري إرسال طلب استعادة الحساب...');
+
+            const fd = new FormData();
+            fd.append('action', 'submitStudentPasswordRequest');
+            fd.append('identifier', phone);
+            fd.append('phone', phone);
+            fd.append('name', name);
+            fd.append('student_name', name);
+            fd.append('church_id', churchId);
+            fd.append('church_name', churchName);
+            fd.append('email', email);
+            fd.append('request_type', 'reset_password');
+
+            try {
+                const res = await fetch(API_URL, { method: 'POST', body: fd, credentials: 'include' }).then(r => r.json());
+                hideLoading();
+
+                if (res && res.success) {
+                    // Show success confirmation
+                    const panelEmail = document.getElementById('recoveryEmailPanel');
+                    const panelDev = document.getElementById('recoveryDevPanel');
+                    const tabsRow = document.getElementById('recoveryTabsRow');
+                    const backRow = document.getElementById('recoveryBackRow');
+                    if (panelEmail) panelEmail.style.display = 'none';
+                    if (panelDev) panelDev.style.display = 'none';
+                    if (tabsRow) tabsRow.style.display = 'none';
+                    if (backRow) backRow.style.display = 'none';
+
+                    const succPanel = document.getElementById('recoverySuccessPanel');
+                    if (succPanel) succPanel.style.display = 'block';
+
+                    const succMsg = document.getElementById('recoverySuccessMsg');
+                    if (succMsg && res.message) succMsg.textContent = res.message;
+                } else {
+                    if (errEl) {
+                        errEl.textContent = (res && res.message) ? res.message : 'فشل إرسال الطلب. يرجى المحاولة مرة أخرى.';
+                        errEl.style.display = 'block';
+                    }
+                }
+            } catch (e) {
+                hideLoading();
+                if (errEl) {
+                    errEl.textContent = 'خطأ في الاتصال بالخادم. يرجى التحقق من اتصالك بالإنترنت.';
+                    errEl.style.display = 'block';
+                }
+            }
+        }
+
 
         function startEmailOtpCountdown(seconds = 60) {
             if (emailOtpCountdownInterval) clearInterval(emailOtpCountdownInterval);
@@ -2006,9 +2350,12 @@
             if (emailBox) emailBox.classList.remove('active');
             const uncleBox = document.getElementById('uncleContactContainer');
             if (uncleBox) uncleBox.classList.remove('active');
+            const recBox = document.getElementById('passwordRecoveryContainer');
+            if (recBox) recBox.classList.remove('active');
 
             container.classList.add('active');
             clearErrors();
+            window._resetLinkedGoogleCredential = null;
 
             container.innerHTML = `
                 <h3 style="color: var(--dark); font-size: 1.15rem; margin-bottom: 14px; text-align: center; font-weight: 800;">
@@ -2018,7 +2365,7 @@
                 
                 <div style="background: #f0fdf4; color: #166534; padding: 12px 14px; border-radius: var(--radius-sm); margin-bottom: 16px; border: 1px solid #bbf7d0; text-align: center; font-size: 0.85rem; font-weight: 600;">
                     <i class="fas fa-check-circle" style="color: #16a34a; margin-left: 4px;"></i>
-                    تم التحقق من بريدك الإلكتروني بنجاح. يمكنك الآن تعيين كلمة المرور الجديدة لحسابك.
+                    تم التحقق بنجاح من الرابط الآمن. يمكنك الآن تعيين كلمة المرور الجديدة لحسابك (صلاحية الرابط ساعتان).
                 </div>
                 
                 <form id="passwordResetForm">
@@ -2050,6 +2397,26 @@
                                    autocomplete="new-password">
                             <button type="button" class="password-toggle" data-target="confirmPassword">
                                 <i class="fas fa-eye"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Optional Google Account Link -->
+                    <div style="background: var(--surface-2, #f8f9ff); border: 1.5px dashed var(--border-solid, #e4e6f0); border-radius: 12px; padding: 12px 14px; margin-bottom: 16px;">
+                        <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 6px;">
+                            <span style="font-size: 0.85rem; font-weight: 700; color: var(--dark, #1a1d2e);">
+                                <i class="fab fa-google" style="color: #ea4335; margin-left: 6px;"></i>
+                                ربط حساب Google (اختياري)
+                            </span>
+                            <span id="resetGoogleStatusBadge" style="font-size: 0.72rem; padding: 3px 8px; background: #f1f5f9; color: #64748b; border-radius: 20px; font-weight: 700;">غير مرتبط</span>
+                        </div>
+                        <p style="font-size: 0.76rem; color: #64748b; margin: 0 0 10px; line-height: 1.4;">
+                            يمكنك ربط هذا الحساب بـ Google لتسجيل الدخول بضغطة زر لاحقاً وحفظ بريدك الإلكتروني لإشعارات مدارس الأحد.
+                        </p>
+                        <div id="resetGoogleBtnContainer" style="display: flex; justify-content: center;">
+                            <button type="button" class="btn" id="btnLinkGoogleReset" onclick="triggerGoogleResetLink()" style="background: #ffffff; color: #374151; border: 1px solid #d1d5db; box-shadow: 0 1px 3px rgba(0,0,0,0.08); font-size: 0.82rem; font-weight: 700; padding: 7px 14px; border-radius: 20px; display: inline-flex; align-items: center; gap: 8px; cursor: pointer;">
+                                <svg width="18" height="18" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/></svg>
+                                <span>ربط حساب Google الآن</span>
                             </button>
                         </div>
                     </div>
@@ -2092,6 +2459,9 @@
                     fd.append('studentId', studentId);
                     fd.append('token', token);
                     fd.append('password', p1);
+                    if (window._resetLinkedGoogleCredential) {
+                        fd.append('google_credential', window._resetLinkedGoogleCredential);
+                    }
 
                     fetch(API_URL, { method: 'POST', body: fd, credentials: 'include' })
                     .then(res => res.json())
@@ -2100,6 +2470,9 @@
                         if (d.success) {
                             localStorage.setItem('savedPassword', p1);
                             localStorage.setItem('rememberMe', 'true');
+                            if (window._resetLinkedGoogleCredential) {
+                                localStorage.setItem('googleAuthCredential', window._resetLinkedGoogleCredential);
+                            }
                             showSuccess('تم حفظ كلمة المرور بنجاح! جاري التوجيه...');
                             setTimeout(() => {
                                 window.location.href = isTestingEnv ? '/testing/user/profile/' : '/user/profile/';
@@ -2350,6 +2723,275 @@
             document.addEventListener('keydown', function(e) {
                 if (e.key === 'Escape') closeChurchPicker();
             });
+        });
+
+        // ═══════════════════════════════════════════════════════════════════
+        // GOOGLE SIGN-IN & ACCOUNT LINKING (NO-AUTO-REGISTRATION)
+        // ═══════════════════════════════════════════════════════════════════
+        const GOOGLE_CLIENT_ID = '868065099307-b2tmgprm07j4nfn8a9n6ebg0kcv0gqf7.apps.googleusercontent.com';
+        let pendingGoogleCredential = null;
+        let pendingGoogleEmail = null;
+        let pendingGoogleId = null;
+
+        function initGoogleIdentity() {
+            if (typeof google === 'undefined' || !google.accounts || !google.accounts.id) {
+                setTimeout(initGoogleIdentity, 300);
+                return;
+            }
+            try {
+                google.accounts.id.initialize({
+                    client_id: GOOGLE_CLIENT_ID,
+                    callback: handleGoogleSignInResponse,
+                    auto_select: false,
+                    cancel_on_tap_outside: true
+                });
+
+                const btnContainer = document.getElementById('googleSignInButtonDiv');
+                if (btnContainer) {
+                    google.accounts.id.renderButton(btnContainer, {
+                        type: 'standard',
+                        theme: 'outline',
+                        size: 'large',
+                        text: 'signin_with',
+                        shape: 'pill',
+                        width: Math.min(window.innerWidth - 60, 320),
+                        locale: 'ar'
+                    });
+                }
+            } catch (e) {
+                console.warn('Google Identity initialization failed:', e);
+                const customBtn = document.getElementById('customGoogleSignInBtn');
+                if (customBtn) customBtn.style.display = 'flex';
+            }
+        }
+
+        function triggerGoogleSignIn() {
+            if (typeof google !== 'undefined' && google.accounts && google.accounts.id) {
+                google.accounts.id.prompt((notification) => {
+                    if (notification.isNotDisplayed() || notification.isSkippedMoment()) {
+                        const nativeBtn = document.querySelector('#googleSignInButtonDiv div[role="button"]');
+                        if (nativeBtn) nativeBtn.click();
+                    }
+                });
+            } else {
+                alert('جاري تحميل خدمات Google، يرجى المحاولة بعد لحظات...');
+            }
+        }
+
+        async function handleGoogleSignInResponse(response) {
+            if (!response || !response.credential) {
+                showError('لم يتم استلام بيانات التحقق من Google');
+                return;
+            }
+
+            showLoading('جاري التحقق من حساب Google...');
+            try {
+                const fd = new FormData();
+                fd.append('action', 'studentGoogleLogin');
+                fd.append('credential', response.credential);
+
+                const res = await fetch(API_URL, { method: 'POST', body: fd, credentials: 'include' });
+                const d = await res.json();
+                hideLoading();
+
+                if (d.success) {
+                    // Save login session and remember me
+                    localStorage.setItem('googleAuthCredential', response.credential);
+                    if (d.google_id) localStorage.setItem('googleAuthId', d.google_id);
+                    if (d.google_email) localStorage.setItem('googleAuthEmail', d.google_email);
+                    localStorage.setItem('savedUsername', d.user?.phone || d.google_email || '');
+                    localStorage.setItem('rememberMe', 'true');
+
+                    showSuccess('تم تسجيل الدخول بنجاح بحساب Google!');
+                    setTimeout(() => {
+                        window.location.href = isTestingEnv ? '/testing/user/profile/' : '/user/profile/';
+                    }, 1000);
+                } else if (d.code === 'GOOGLE_NOT_LINKED') {
+                    // Show Link to Existing Account or Register dialog
+                    pendingGoogleCredential = response.credential;
+                    pendingGoogleEmail = d.google_email || '';
+                    pendingGoogleId = d.google_id || '';
+                    openGoogleNotLinkedModal(pendingGoogleEmail);
+                } else {
+                    showError(d.message || 'فشل في تسجيل الدخول عبر Google');
+                }
+            } catch (err) {
+                hideLoading();
+                showError('خطأ في الاتصال أثناء التحقق من Google');
+                console.error(err);
+            }
+        }
+
+        function openGoogleNotLinkedModal(email) {
+            const modal = document.getElementById('googleNotLinkedModal');
+            const emailEl = document.getElementById('googleNotLinkedEmail');
+            const errEl = document.getElementById('linkExistingError');
+            if (errEl) errEl.style.display = 'none';
+            if (emailEl) emailEl.textContent = email || 'حساب Google المحدد';
+            if (modal) {
+                modal.style.display = 'flex';
+                document.body.style.overflow = 'hidden';
+            }
+        }
+
+        function closeGoogleNotLinkedModal() {
+            const modal = document.getElementById('googleNotLinkedModal');
+            if (modal) {
+                modal.style.display = 'none';
+                document.body.style.overflow = '';
+            }
+        }
+
+        async function submitLinkGoogleToExisting() {
+            const idInput = document.getElementById('linkExistingIdentifier');
+            const passInput = document.getElementById('linkExistingPassword');
+            const errEl = document.getElementById('linkExistingError');
+            const btn = document.getElementById('btnSubmitLinkGoogle');
+
+            const identifier = idInput ? idInput.value.trim() : '';
+            const password = passInput ? passInput.value.trim() : '';
+
+            if (!identifier || !password) {
+                if (errEl) {
+                    errEl.textContent = 'يرجى إدخال الهاتف أو اسم المستخدم وكلمة المرور';
+                    errEl.style.display = 'block';
+                }
+                return;
+            }
+
+            if (!pendingGoogleCredential) {
+                if (errEl) {
+                    errEl.textContent = 'انتهت صلاحية جلسة Google، يرجى تسجيل الدخول بـ Google مجدداً';
+                    errEl.style.display = 'block';
+                }
+                return;
+            }
+
+            if (errEl) errEl.style.display = 'none';
+            if (btn) {
+                btn.disabled = true;
+                btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري الربط والدخول...';
+            }
+
+            try {
+                const fd = new FormData();
+                fd.append('action', 'linkStudentGoogleAccount');
+                fd.append('credential', pendingGoogleCredential);
+                fd.append('identifier', identifier);
+                fd.append('password', password);
+
+                const res = await fetch(API_URL, { method: 'POST', body: fd, credentials: 'include' });
+                const d = await res.json();
+
+                if (d.success) {
+                    localStorage.setItem('googleAuthCredential', pendingGoogleCredential);
+                    if (d.google_id) localStorage.setItem('googleAuthId', d.google_id);
+                    if (d.google_email) localStorage.setItem('googleAuthEmail', d.google_email);
+                    localStorage.setItem('savedUsername', identifier);
+                    localStorage.setItem('rememberMe', 'true');
+
+                    if (btn) btn.innerHTML = '<i class="fas fa-check"></i> تم الربط بنجاح!';
+                    setTimeout(() => {
+                        window.location.href = isTestingEnv ? '/testing/user/profile/' : '/user/profile/';
+                    }, 1000);
+                } else {
+                    if (btn) {
+                        btn.disabled = false;
+                        btn.innerHTML = '<i class="fas fa-check-circle"></i> ربط حساب Google والدخول';
+                    }
+                    if (errEl) {
+                        errEl.textContent = d.message || 'تعذر ربط الحساب، تحقق من البيانات';
+                        errEl.style.display = 'block';
+                    }
+                }
+            } catch (e) {
+                if (btn) {
+                    btn.disabled = false;
+                    btn.innerHTML = '<i class="fas fa-check-circle"></i> ربط حساب Google والدخول';
+                }
+                if (errEl) {
+                    errEl.textContent = 'خطأ في الاتصال بالخادم';
+                    errEl.style.display = 'block';
+                }
+            }
+        }
+
+        function triggerGoogleResetLink() {
+            if (typeof google === 'undefined' || !google.accounts || !google.accounts.id) {
+                alert('جاري تحميل خدمات Google...');
+                return;
+            }
+
+            try {
+                google.accounts.id.initialize({
+                    client_id: GOOGLE_CLIENT_ID,
+                    callback: handleGoogleResetLinkResponse,
+                    auto_select: false,
+                    cancel_on_tap_outside: true
+                });
+                google.accounts.id.prompt((notification) => {
+                    if (notification.isNotDisplayed() || notification.isSkippedMoment()) {
+                        if (google.accounts.oauth2) {
+                            const tc = google.accounts.oauth2.initTokenClient({
+                                client_id: GOOGLE_CLIENT_ID,
+                                scope: 'openid email profile',
+                                callback: (resp) => {
+                                    if (resp && resp.access_token) {
+                                        fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
+                                            headers: { Authorization: `Bearer ${resp.access_token}` }
+                                        })
+                                        .then(r => r.json())
+                                        .then(u => {
+                                            if (u && u.email) {
+                                                window._resetLinkedGoogleCredential = resp.access_token;
+                                                updateResetGoogleBadge(u.email);
+                                            }
+                                        });
+                                    }
+                                }
+                            });
+                            tc.requestAccessToken({ prompt: 'select_account' });
+                        }
+                    }
+                });
+            } catch(e) {
+                console.warn('Reset google trigger error:', e);
+            }
+        }
+
+        function handleGoogleResetLinkResponse(response) {
+            if (!response || !response.credential) return;
+            window._resetLinkedGoogleCredential = response.credential;
+            try {
+                const parts = response.credential.split('.');
+                if (parts.length === 3) {
+                    const payload = JSON.parse(atob(parts[1].replace(/-/g, '+').replace(/_/g, '/')));
+                    updateResetGoogleBadge(payload.email || 'حساب Google');
+                } else {
+                    updateResetGoogleBadge('تم اختيار الحساب');
+                }
+            } catch(e) {
+                updateResetGoogleBadge('تم اختيار الحساب');
+            }
+        }
+
+        function updateResetGoogleBadge(email) {
+            const badge = document.getElementById('resetGoogleStatusBadge');
+            const btn = document.getElementById('btnLinkGoogleReset');
+            if (badge) {
+                badge.style.background = '#dcfce7';
+                badge.style.color = '#15803d';
+                badge.innerHTML = `<i class="fas fa-check-circle"></i> مرتبط: ${email}`;
+            }
+            if (btn) {
+                btn.style.borderColor = '#86efac';
+                btn.style.background = '#f0fdf4';
+                btn.innerHTML = `<i class="fas fa-check" style="color:#16a34a;"></i> <span>تم ربط: ${email}</span>`;
+            }
+        }
+
+        onDOMReady(function() {
+            setTimeout(initGoogleIdentity, 400);
         });
     </script>
 </body>

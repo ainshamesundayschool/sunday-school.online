@@ -219,6 +219,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'logou
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
+  <script src="https://accounts.google.com/gsi/client" async defer></script>
   <link rel="icon" href="/favicon.ico">
   <style>
     /* Hide all tabs and non-info/non-coupon sections in kid profile view */
@@ -6404,6 +6405,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'logou
           <div class="ss-item-label">تغيير الصورة الشخصية</div>
           <i class="fas fa-chevron-left ss-item-arr"></i>
         </div>
+        <div class="ss-item" id="googleMenuItem" onclick="closeOv('settingsOv');setTimeout(()=>openGoogleSettingsOv(),180)">
+          <div class="ss-item-ico" style="background:#fee2e2;color:#ea4335;"><i class="fab fa-google"></i></div>
+          <div class="ss-item-label" id="googleMenuLabel">حساب Google</div>
+          <span id="googleMenuBadge" style="margin-right:auto; margin-left:8px; font-size:0.75rem; padding:2px 8px; border-radius:12px; font-weight:700;"></span>
+          <i class="fas fa-chevron-left ss-item-arr"></i>
+        </div>
         <div class="ss-item" id="notifToggleItem" style="display:none">
           <div class="ss-item-ico" style="background:#ffe4e6;color:#e11d48;"><i class="fas fa-bell"></i></div>
           <div class="ss-item-label">إشعارات الهاتف</div>
@@ -6428,6 +6435,57 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'logou
         </div>
       </div>
       <button class="ss-close-btn" onclick="closeOv('settingsOv')">إغلاق</button>
+    </div>
+  </div>
+
+  <!-- Google Account Settings Sheet -->
+  <div class="overlay settings-overlay" id="googleSettingsOv">
+    <div class="settings-sheet">
+      <div class="ss-handle"></div>
+      <div style="padding:18px 22px 8px;border-bottom:1px solid var(--bdr2);">
+        <div style="font-size:1.05rem;font-weight:800;color:var(--t1);display:flex;align-items:center;gap:10px;">
+          <div style="width:36px;height:36px;border-radius:var(--r-sm);background:#fee2e2;color:#ea4335;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+            <i class="fab fa-google"></i>
+          </div>
+          <span>ربط حساب Google</span>
+        </div>
+      </div>
+      <div style="padding:18px 22px;">
+        <div id="googleConnectedView" style="display:none;">
+          <div style="background:#f0fdf4; border:1px solid #bbf7d0; border-radius:12px; padding:14px; margin-bottom:16px;">
+            <div style="font-weight:800; font-size:0.9rem; color:#166534; margin-bottom:4px; display:flex; align-items:center; gap:6px;">
+              <i class="fas fa-check-circle" style="color:#16a34a;"></i>
+              <span>حساب Google مرتبط بنجاح</span>
+            </div>
+            <div id="googleConnectedEmailText" style="direction:ltr; unicode-bidi:embed; font-family:monospace; font-weight:700; color:#1e293b; font-size:0.85rem; margin-bottom:8px;"></div>
+            <p style="font-size:0.78rem; color:#475569; margin:0; line-height:1.4;">
+              يمكنك استخدام حساب Google هذا للدخول السريع بضغطة زر وتلقي إشعارات الحساب.
+            </p>
+          </div>
+          <button type="button" class="btn" onclick="unlinkStudentGoogle()" style="width:100%; background:#fee2e2; color:#b91c1c; border:none; padding:11px; border-radius:12px; font-weight:700; font-size:0.85rem; cursor:pointer;">
+            <i class="fas fa-unlink"></i> إلغاء ربط حساب Google
+          </button>
+        </div>
+
+        <div id="googleDisconnectedView" style="display:none;">
+          <div style="background:#f8fafc; border:1.5px dashed var(--bdr2); border-radius:12px; padding:14px; margin-bottom:16px;">
+            <div style="font-weight:800; font-size:0.9rem; color:var(--t1); margin-bottom:6px; display:flex; align-items:center; gap:6px;">
+              <i class="fab fa-google" style="color:#ea4335;"></i>
+              <span>اربط حسابك بـ Google الآن</span>
+            </div>
+            <p style="font-size:0.8rem; color:var(--t3); margin:0 0 14px; line-height:1.5;">
+              اربط حساب Google الخاص بك لتتمكن من تسجيل الدخول السريع وتأمين حسابك وتوثيق بريدك الإلكتروني لإشعارات مدارس الأحد.
+            </p>
+            <div style="display:flex; justify-content:center;">
+              <button type="button" class="btn" onclick="triggerProfileGoogleLink()" style="background:#ffffff; color:#374151; border:1px solid #d1d5db; box-shadow:0 1px 3px rgba(0,0,0,0.08); font-size:0.85rem; font-weight:700; padding:9px 16px; border-radius:20px; display:inline-flex; align-items:center; gap:8px; cursor:pointer;">
+                <svg width="18" height="18" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/></svg>
+                <span>ربط حساب Google الآن</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <button class="ss-close-btn" onclick="closeOv('googleSettingsOv')">إغلاق</button>
     </div>
   </div>
 
@@ -6936,7 +6994,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'logou
     const URL_TEMPID = (() => { const m = location.search.match(/[?&]tempid=([^&]+)/); return m ? decodeURIComponent(m[1]) : null; })();
     const IS_UNCLE_LOGGED_IN = <?php echo json_encode($isUncleLoggedIn); ?>;
     const TARGET_TRIP_ID = <?php echo json_encode($targetTripId); ?>;
-    const _creds = localStorage.getItem('rememberMe') === 'true' && !!localStorage.getItem('savedUsername') && !!localStorage.getItem('savedPassword');
+    const _creds = (localStorage.getItem('rememberMe') === 'true' && !!localStorage.getItem('savedUsername') && !!localStorage.getItem('savedPassword')) || !!localStorage.getItem('googleAuthCredential') || !!localStorage.getItem('googleAuthId');
     const IS_PUBLIC = !!(URL_ID && !_creds);
     const IS_GUEST = !!(URL_ID && !_creds && !IS_UNCLE_LOGGED_IN);
     const API_URL = (() => {
@@ -7727,9 +7785,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'logou
     async function initPrivate() {
       showLoad('جارٍ تحميل ملفك…');
       try {
-        const d = await api({ action: 'kidLogin', username: localStorage.getItem('savedUsername'), password: localStorage.getItem('savedPassword') });
+        let d = null;
+        const gCred = localStorage.getItem('googleAuthCredential');
+        const gId = localStorage.getItem('googleAuthId');
+        const u = localStorage.getItem('savedUsername');
+        const p = localStorage.getItem('savedPassword');
+
+        if (p) {
+          d = await api({ action: 'kidLogin', username: u, password: p });
+        } else if (gCred || gId) {
+          d = await api({ action: 'studentGoogleLogin', credential: gCred || '', google_id: gId || '' });
+        } else if (u) {
+          d = await api({ action: 'kidLogin', username: u, password: '' });
+        }
+
         hideLoad();
-        if (d.success && d.data && d.data.length > 0) {
+        if (d && d.success && d.data && d.data.length > 0) {
           const rawAccounts = d.data.map(norm);
           // Restore last active account from localStorage
           const savedId = parseInt(localStorage.getItem('activeKidAccountId') || '0');
@@ -7796,6 +7867,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'logou
         })(),
         birthday: s.birthday || '',
         email: s.email || '',
+        google_id: s.google_id || '',
+        google_email: s.google_email || '',
         is_email_verified: s.is_email_verified === true || s.is_email_verified === 1 || s.is_email_verified === '1',
         coupons: parseInt(s.coupons || 0),
         att_coupons: parseInt(s.attendance_coupons || 0),
@@ -8091,6 +8164,144 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'logou
 
       // Sync password overlay
       syncPassOverlay();
+
+      // Sync Google Account menu badge
+      const gBadge = document.getElementById('googleMenuBadge');
+      const isGoogleLinked = !!(s.google_id || s.google_email);
+      if (gBadge) {
+        if (isGoogleLinked) {
+          gBadge.style.background = '#dcfce7';
+          gBadge.style.color = '#15803d';
+          gBadge.innerHTML = '<i class="fas fa-check-circle"></i> مرتبط';
+        } else {
+          gBadge.style.background = '#f1f5f9';
+          gBadge.style.color = '#64748b';
+          gBadge.innerHTML = 'غير مرتبط';
+        }
+      }
+    }
+
+    function openGoogleSettingsOv() {
+      const isLinked = !!(student?.google_id || student?.google_email);
+      const connView = document.getElementById('googleConnectedView');
+      const disconnView = document.getElementById('googleDisconnectedView');
+      const emailText = document.getElementById('googleConnectedEmailText');
+
+      if (isLinked) {
+        if (connView) connView.style.display = 'block';
+        if (disconnView) disconnView.style.display = 'none';
+        if (emailText) emailText.textContent = student.google_email || student.email || 'حساب Google مرتبط';
+      } else {
+        if (connView) connView.style.display = 'none';
+        if (disconnView) disconnView.style.display = 'block';
+      }
+      openOv('googleSettingsOv');
+    }
+
+    const GOOGLE_CLIENT_ID_PROFILE = '868065099307-b2tmgprm07j4nfn8a9n6ebg0kcv0gqf7.apps.googleusercontent.com';
+
+    function triggerProfileGoogleLink() {
+      if (typeof google === 'undefined' || !google.accounts || !google.accounts.id) {
+        alert('جاري تحميل خدمات Google، يرجى المحاولة بعد لحظات...');
+        return;
+      }
+
+      try {
+        google.accounts.id.initialize({
+          client_id: GOOGLE_CLIENT_ID_PROFILE,
+          callback: handleProfileGoogleLinkResponse,
+          auto_select: false,
+          cancel_on_tap_outside: true
+        });
+
+        google.accounts.id.prompt((notification) => {
+          if (notification.isNotDisplayed() || notification.isSkippedMoment()) {
+            if (google.accounts.oauth2) {
+              const tc = google.accounts.oauth2.initTokenClient({
+                client_id: GOOGLE_CLIENT_ID_PROFILE,
+                scope: 'openid email profile',
+                callback: (resp) => {
+                  if (resp && resp.access_token) {
+                    fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
+                      headers: { Authorization: `Bearer ${resp.access_token}` }
+                    })
+                    .then(r => r.json())
+                    .then(u => {
+                      if (u && u.email) {
+                        saveProfileGoogleLink({
+                          credential: resp.access_token,
+                          google_id: u.sub,
+                          email: u.email
+                        });
+                      }
+                    });
+                  }
+                }
+              });
+              tc.requestAccessToken({ prompt: 'select_account' });
+            }
+          }
+        });
+      } catch (e) {
+        console.warn('Profile Google link trigger error:', e);
+      }
+    }
+
+    async function handleProfileGoogleLinkResponse(response) {
+      if (!response || !response.credential) return;
+      saveProfileGoogleLink({ credential: response.credential });
+    }
+
+    async function saveProfileGoogleLink(params) {
+      showLoad('جاري ربط حساب Google...');
+      try {
+        const p = {
+          action: 'linkStudentGoogleAccount',
+          student_id: student.id,
+          ...params
+        };
+        const d = await api(p);
+        hideLoad();
+        if (d.success) {
+          student.google_id = d.google_id || 'linked';
+          student.google_email = d.google_email || '';
+          if (!student.email && d.google_email) student.email = d.google_email;
+          localStorage.setItem('googleAuthCredential', params.credential || '');
+          if (d.google_id) localStorage.setItem('googleAuthId', d.google_id);
+          syncSettingsSheet(student);
+          openGoogleSettingsOv();
+          toast('تم ربط حساب Google بنجاح!', 'ok');
+        } else {
+          toast(d.message || 'فشل في ربط حساب Google', 'err');
+        }
+      } catch (e) {
+        hideLoad();
+        toast('خطأ في الاتصال بالخادم', 'err');
+      }
+    }
+
+    async function unlinkStudentGoogle() {
+      if (!confirm('هل أنت متأكد من رغبتك في إلغاء ربط حساب Google؟')) return;
+      showLoad('جاري إلغاء الربط...');
+      try {
+        const d = await api({ action: 'unlinkStudentGoogleAccount', student_id: student.id });
+        hideLoad();
+        if (d.success) {
+          student.google_id = '';
+          student.google_email = '';
+          localStorage.removeItem('googleAuthCredential');
+          localStorage.removeItem('googleAuthId');
+          localStorage.removeItem('googleAuthEmail');
+          syncSettingsSheet(student);
+          openGoogleSettingsOv();
+          toast('تم إلغاء ربط حساب Google بنجاح', 'ok');
+        } else {
+          toast(d.message || 'فشل في إلغاء الربط', 'err');
+        }
+      } catch (e) {
+        hideLoad();
+        toast('خطأ في الاتصال بالخادم', 'err');
+      }
     }
 
     // ── Hero ──────────────────────────────────────────────────────────

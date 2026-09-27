@@ -486,9 +486,9 @@ body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
         </div>
         <div class="fr full" style="margin-bottom:0">
           <div class="ff">
-            <label><i class="fas fa-envelope"></i> البريد الإلكتروني</label>
-            <input type="email" id="kidEmail" placeholder="example@email.com" />
-            <small>ستصلك رسائل إلكترونية عند قبول أو رفض طلب التسجيل</small>
+            <label><i class="fas fa-envelope"></i> البريد الإلكتروني (اختياري)</label>
+            <input type="email" id="kidEmail" placeholder="example@email.com (اختياري)" />
+            <small>اختياري — ستصلك رسائل إلكترونية عند قبول أو رفض طلب التسجيل واستعادة الحساب</small>
           </div>
         </div>
       </div>
@@ -1336,6 +1336,12 @@ function v2() {
 }
 function v3() {
   if (!val('kidAddress')) { showErr(3,'الرجاء إدخال العنوان'); focusErr('kidAddress'); return false; }
+  const em = val('kidEmail');
+  if (em && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(em)) {
+    showErr(3, 'صيغة البريد الإلكتروني غير صحيحة');
+    focusErr('kidEmail');
+    return false;
+  }
   for (const field of customFields) {
     const isRequired = field.required === true;
     if (!isRequired) continue;

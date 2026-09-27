@@ -5632,6 +5632,25 @@ try {
 
             break;
 
+        case 'studentGoogleLogin':
+        case 'kidGoogleLogin':
+
+            studentGoogleLogin();
+
+            break;
+
+        case 'linkStudentGoogleAccount':
+
+            linkStudentGoogleAccount();
+
+            break;
+
+        case 'unlinkStudentGoogleAccount':
+
+            unlinkStudentGoogleAccount();
+
+            break;
+
 
 
         case 'checkUsernameAvailable':
@@ -5680,6 +5699,43 @@ try {
 
         case 'updateStudentEmail':
             updateStudentEmail();
+            break;
+
+        case 'submitStudentPasswordRequest':
+        case 'requestStudentPasswordWithoutEmail':
+            submitStudentPasswordRequest();
+            break;
+
+        case 'generateResetLinkForStudent':
+            generateResetLinkForStudent();
+            break;
+
+        case 'updateStudentEmailOnly':
+            updateStudentEmailOnly();
+            break;
+
+        case 'getDeveloperPasswordRequests':
+            getDeveloperPasswordRequests();
+            break;
+
+        case 'updatePasswordRequestStatus':
+            updatePasswordRequestStatus();
+            break;
+
+        case 'generateDeveloperPasswordLink':
+            generateDeveloperPasswordLink();
+            break;
+
+        case 'assignStudentEmailByDeveloper':
+            assignStudentEmailByDeveloper();
+            break;
+
+        case 'verifyDeveloperPasswordToken':
+            verifyDeveloperPasswordToken();
+            break;
+
+        case 'completeDeveloperPasswordReset':
+            completeDeveloperPasswordReset();
             break;
 
         case 'getStudentProfile':
@@ -7321,7 +7377,7 @@ function getData()
                     s.id, s.name, s.address, s.phone, s.birthday, s.coupons,
                     s.attendance_coupons, s.commitment_coupons, s.task_coupons,
                     s.emergency_phone, s.parent_phones, s.medical_notes, s.custom_info,
-                    s.image_url, s.class_id, s.gender, s.is_guest,
+                    s.image_url, s.class_id, s.gender, s.is_guest, s.email, s.is_email_verified,
                     COALESCE(cc.arabic_name, gc.arabic_name, s.class) as class,
                     COALESCE(cc.code, gc.code) as class_code,
                     c.church_name, c.id as church_id_val
@@ -7396,6 +7452,10 @@ function getData()
                     'phone_label' => $phoneLabel,
                     'phone_custom_label' => $phoneCustomLabel,
                     'guardian_name' => $guardianName,
+                    'email' => $row['email'] ?? '',
+                    '_email' => $row['email'] ?? '',
+                    'البريد الإلكتروني' => $row['email'] ?? '',
+                    'is_email_verified' => intval($row['is_email_verified'] ?? 0),
                 ];
 
                 $students[] = $studentData;
@@ -7455,6 +7515,8 @@ function getData()
                 s.church_id,
                 s.gender,
                 s.is_guest,
+                s.email,
+                s.is_email_verified,
                 c.church_name,
                 COALESCE(cc.id, gc.id) as class_id,
                 COALESCE(cc.code, gc.code) as class_code, 
@@ -7668,6 +7730,10 @@ function getData()
                 'phone_label' => $phoneLabel,
                 'phone_custom_label' => $phoneCustomLabel,
                 'guardian_name' => $guardianName,
+                'email' => $row['email'] ?? '',
+                '_email' => $row['email'] ?? '',
+                'البريد الإلكتروني' => $row['email'] ?? '',
+                'is_email_verified' => intval($row['is_email_verified'] ?? 0),
             ];
 
             appendSiblingGroupToStudentPayload($studentData, $row);
@@ -9416,6 +9482,17 @@ function addStudent()
         if ($stmt->execute()) {
             $studentId = $conn->insert_id;
 
+            $inputEmail = trim(sanitize($_POST['email'] ?? ''));
+            if (!empty($inputEmail) && filter_var($inputEmail, FILTER_VALIDATE_EMAIL)) {
+                ensureStudentEmailColumns($conn);
+                $updEmail = $conn->prepare("UPDATE students SET email = ?, is_email_verified = 1 WHERE id = ?");
+                if ($updEmail) {
+                    $updEmail->bind_param("si", $inputEmail, $studentId);
+                    $updEmail->execute();
+                    $updEmail->close();
+                }
+            }
+
             if (!empty($tempid)) {
                 $insTemp = $conn->prepare("INSERT INTO student_temp_ids (student_id, temp_id) VALUES (?, ?) ON DUPLICATE KEY UPDATE temp_id = VALUES(temp_id)");
                 $insTemp->bind_param("is", $studentId, $tempid);
@@ -10049,6 +10126,20 @@ function updateStudent()
 
 
         if ($updateStmt->execute()) {
+            if (isset($_POST['email'])) {
+                $inputEmail = trim(sanitize($_POST['email']));
+                ensureStudentEmailColumns($conn);
+                if (!empty($inputEmail) && filter_var($inputEmail, FILTER_VALIDATE_EMAIL)) {
+                    $updEmail = $conn->prepare("UPDATE students SET email = ?, is_email_verified = 1 WHERE id = ? AND church_id = ?");
+                    if ($updEmail) {
+                        $updEmail->bind_param("sii", $inputEmail, $studentId, $churchId);
+                        $updEmail->execute();
+                        $updEmail->close();
+                    }
+                } elseif (empty($inputEmail)) {
+                    @$conn->query("UPDATE students SET email = NULL, is_email_verified = 0 WHERE id = {$studentId} AND church_id = {$churchId}");
+                }
+            }
 
             // Get snapshot AFTER update
 
@@ -10362,7 +10453,20 @@ function updateStudentInfo()
 
             }
 
-
+            if (isset($_POST['email'])) {
+                $inputEmail = trim(sanitize($_POST['email']));
+                ensureStudentEmailColumns($conn);
+                if (!empty($inputEmail) && filter_var($inputEmail, FILTER_VALIDATE_EMAIL)) {
+                    $updEmail = $conn->prepare("UPDATE students SET email = ?, is_email_verified = 1 WHERE id = ?");
+                    if ($updEmail) {
+                        $updEmail->bind_param("si", $inputEmail, $studentId);
+                        $updEmail->execute();
+                        $updEmail->close();
+                    }
+                } elseif (empty($inputEmail)) {
+                    @$conn->query("UPDATE students SET email = NULL, is_email_verified = 0 WHERE id = {$studentId}");
+                }
+            }
 
             sendJSON([
 
@@ -20431,6 +20535,17 @@ function ensureStudentEmailColumns(mysqli $conn): void
         @$conn->query("ALTER TABLE students ADD COLUMN `email_reset_token_expires` DATETIME DEFAULT NULL AFTER `email_reset_token`");
     }
 
+    $chkGoogleId = $conn->query("SHOW COLUMNS FROM students LIKE 'google_id'");
+    if ($chkGoogleId && $chkGoogleId->num_rows === 0) {
+        @$conn->query("ALTER TABLE students ADD COLUMN `google_id` VARCHAR(128) DEFAULT NULL AFTER `email_reset_token_expires`");
+        @$conn->query("ALTER TABLE students ADD INDEX `idx_students_google_id` (`google_id`)");
+    }
+
+    $chkGoogleEmail = $conn->query("SHOW COLUMNS FROM students LIKE 'google_email'");
+    if ($chkGoogleEmail && $chkGoogleEmail->num_rows === 0) {
+        @$conn->query("ALTER TABLE students ADD COLUMN `google_email` VARCHAR(255) DEFAULT NULL AFTER `google_id`");
+    }
+
     // Automatically mark existing accounts that already have an email as verified
     @$conn->query("UPDATE students SET is_email_verified = 1 WHERE email IS NOT NULL AND TRIM(email) != '' AND (is_email_verified IS NULL OR is_email_verified = 0)");
 }
@@ -20991,10 +21106,10 @@ function resetStudentPasswordWithToken()
 {
     try {
         $studentId = intval($_POST['studentId'] ?? $_POST['student_id'] ?? 0);
-        $token = trim($_POST['token'] ?? '');
+        $token = trim($_POST['token'] ?? $_POST['reset_token'] ?? '');
         $newPassword = $_POST['password'] ?? '';
 
-        if ($studentId <= 0 || empty($token) || empty($newPassword)) {
+        if (empty($token) || empty($newPassword)) {
             sendJSON(['success' => false, 'message' => 'بيانات غير مكتملة']);
             return;
         }
@@ -21007,21 +21122,31 @@ function resetStudentPasswordWithToken()
         $conn = getDBConnection();
         ensureStudentEmailColumns($conn);
 
-        $stmt = $conn->prepare("
-            SELECT id, phone FROM students 
-            WHERE id = ? AND email_reset_token = ? AND email_reset_token_expires >= NOW() 
-            LIMIT 1
-        ");
-        $stmt->bind_param("is", $studentId, $token);
+        if ($studentId > 0) {
+            $stmt = $conn->prepare("
+                SELECT id, phone FROM students 
+                WHERE id = ? AND email_reset_token = ? AND email_reset_token_expires >= NOW() 
+                LIMIT 1
+            ");
+            $stmt->bind_param("is", $studentId, $token);
+        } else {
+            $stmt = $conn->prepare("
+                SELECT id, phone FROM students 
+                WHERE email_reset_token = ? AND email_reset_token_expires >= NOW() 
+                LIMIT 1
+            ");
+            $stmt->bind_param("s", $token);
+        }
         $stmt->execute();
         $student = $stmt->get_result()->fetch_assoc();
         $stmt->close();
 
         if (!$student) {
-            sendJSON(['success' => false, 'message' => 'رمز التحقق غير صالح أو انتهت صلاحيته']);
+            sendJSON(['success' => false, 'message' => 'رابط إعادة التعيين غير صالح أو انتهت صلاحيته (الرابط صالح لمدة ساعتين فقط)']);
             return;
         }
 
+        $studentId = (int)$student['id'];
         $newHash = hash('sha256', $newPassword);
 
         $up = $conn->prepare("
@@ -21033,6 +21158,10 @@ function resetStudentPasswordWithToken()
         $up->execute();
         $up->close();
 
+        // Mark associated request as used
+        $tokenHash = hash('sha256', $token);
+        @$conn->query("UPDATE student_password_requests SET status = 'used', used_at = NOW() WHERE (token_hash = '$tokenHash' OR token_hash = '" . $conn->real_escape_string($token) . "') AND student_id = {$studentId}");
+
         $phone = $student['phone'] ?? '';
         if (!empty($phone)) {
             $cleanPhone = preg_replace('/[^\d]/', '', $phone);
@@ -21041,11 +21170,1200 @@ function resetStudentPasswordWithToken()
             }
         }
 
+        // Optional Google account link during reset
+        $googleToken = $_POST['google_token'] ?? $_POST['google_credential'] ?? '';
+        $gPayload = !empty($googleToken) ? verifyGoogleToken($googleToken) : null;
+        $googleId = $gPayload ? $gPayload['sub'] : sanitize($_POST['google_id'] ?? '');
+        $googleEmail = $gPayload ? $gPayload['email'] : strtolower(trim(sanitize($_POST['google_email'] ?? '')));
+
+        if (!empty($googleId) && !empty($googleEmail)) {
+            $chkG = $conn->prepare("SELECT id FROM students WHERE google_id = ? AND id != ? LIMIT 1");
+            $chkG->bind_param("si", $googleId, $studentId);
+            $chkG->execute();
+            $existG = $chkG->get_result()->fetch_assoc();
+            $chkG->close();
+            if (!$existG) {
+                $gUp = $conn->prepare("
+                    UPDATE students 
+                    SET google_id = ?, google_email = ?, email = COALESCE(NULLIF(email, ''), ?), is_email_verified = 1 
+                    WHERE id = ?
+                ");
+                $gUp->bind_param("sssi", $googleId, $googleEmail, $googleEmail, $studentId);
+                $gUp->execute();
+                $gUp->close();
+            }
+        }
+
         $_SESSION['student_id'] = $studentId;
 
         sendJSON([
             'success' => true,
             'message' => 'تم تغيير كلمة المرور بنجاح! يمكنك الآن تسجيل الدخول.'
+        ]);
+    } catch (Throwable $e) {
+        sendJSON(['success' => false, 'message' => 'خطأ: ' . $e->getMessage()]);
+    }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// GOOGLE AUTHENTICATION & ACCOUNT LINKING (NO-AUTO-REGISTER)
+// ─────────────────────────────────────────────────────────────────────────────
+
+function verifyGoogleToken(string $idToken): ?array
+{
+    $idToken = trim($idToken);
+    if (empty($idToken) || substr_count($idToken, '.') !== 2) {
+        return null;
+    }
+
+    // 1. Try Google tokeninfo endpoint
+    $url = 'https://oauth2.googleapis.com/tokeninfo?id_token=' . urlencode($idToken);
+    $response = null;
+
+    if (function_exists('curl_init')) {
+        $ch = curl_init($url);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_TIMEOUT, 6);
+        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true);
+        $response = curl_exec($ch);
+        $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        curl_close($ch);
+        if ($httpCode !== 200) {
+            $response = null;
+        }
+    }
+
+    if (!$response && ini_get('allow_url_fopen')) {
+        $ctx = stream_context_create([
+            'http' => ['timeout' => 6, 'ignore_errors' => true]
+        ]);
+        $res = @file_get_contents($url, false, $ctx);
+        if ($res && strpos($res, '"sub"') !== false) {
+            $response = $res;
+        }
+    }
+
+    if ($response) {
+        $data = json_decode($response, true);
+        if ($data && !empty($data['sub']) && !empty($data['email'])) {
+            return [
+                'sub' => (string)$data['sub'],
+                'email' => strtolower(trim($data['email'])),
+                'name' => $data['name'] ?? '',
+                'picture' => $data['picture'] ?? '',
+                'email_verified' => ($data['email_verified'] === 'true' || $data['email_verified'] === true || $data['email_verified'] === 1)
+            ];
+        }
+    }
+
+    // 2. Fallback: Parse JWT payload locally
+    $parts = explode('.', $idToken);
+    if (count($parts) === 3) {
+        $payloadRaw = base64_decode(str_replace(['-', '_'], ['+', '/'], $parts[1]));
+        if ($payloadRaw) {
+            $data = json_decode($payloadRaw, true);
+            if ($data && !empty($data['sub']) && !empty($data['email'])) {
+                if (!empty($data['exp']) && $data['exp'] < (time() - 300)) {
+                    return null; // Expired
+                }
+                $iss = $data['iss'] ?? '';
+                if ($iss === 'accounts.google.com' || $iss === 'https://accounts.google.com') {
+                    return [
+                        'sub' => (string)$data['sub'],
+                        'email' => strtolower(trim($data['email'])),
+                        'name' => $data['name'] ?? '',
+                        'picture' => $data['picture'] ?? '',
+                        'email_verified' => !empty($data['email_verified'])
+                    ];
+                }
+            }
+        }
+    }
+
+    return null;
+}
+
+function studentGoogleLogin(): void
+{
+    try {
+        $conn = getDBConnection();
+        ensureStudentEmailColumns($conn);
+
+        $token = $_POST['credential'] ?? $_POST['token'] ?? '';
+        $googleId = sanitize($_POST['google_id'] ?? '');
+        $email = strtolower(trim(sanitize($_POST['email'] ?? '')));
+
+        if (!empty($token)) {
+            $payload = verifyGoogleToken($token);
+            if ($payload) {
+                $googleId = $payload['sub'];
+                $email = $payload['email'];
+            }
+        }
+
+        if (empty($googleId) && empty($email)) {
+            sendJSON(['success' => false, 'message' => 'بيانات حساب Google غير صحيحة أو غير متوفرة']);
+            return;
+        }
+
+        // Search student: first by google_id, then by email
+        $student = null;
+        if (!empty($googleId)) {
+            $stmt = $conn->prepare("
+                SELECT s.id, s.name, s.address, s.phone, s.emergency_phone, s.parent_phones, s.birthday, s.email, s.is_email_verified,
+                       s.coupons, s.attendance_coupons, s.commitment_coupons, s.task_coupons, s.image_url, s.church_id, s.class_id,
+                       s.custom_info, s.password_hash, s.gender, s.trip_points, s.google_id, s.google_email,
+                       c.church_name, COALESCE(c.church_type, 'kids') AS church_type,
+                       COALESCE(cc.arabic_name, cl.arabic_name, s.class) AS class
+                FROM students s
+                LEFT JOIN churches c ON s.church_id = c.id
+                LEFT JOIN church_classes cc ON cc.id = s.class_id AND cc.church_id = s.church_id
+                LEFT JOIN classes cl ON cl.id = s.class_id
+                WHERE s.google_id = ?
+                LIMIT 1
+            ");
+            $stmt->bind_param("s", $googleId);
+            $stmt->execute();
+            $res = $stmt->get_result();
+            $student = $res->fetch_assoc();
+            $stmt->close();
+        }
+
+        if (!$student && !empty($email)) {
+            $stmt = $conn->prepare("
+                SELECT s.id, s.name, s.address, s.phone, s.emergency_phone, s.parent_phones, s.birthday, s.email, s.is_email_verified,
+                       s.coupons, s.attendance_coupons, s.commitment_coupons, s.task_coupons, s.image_url, s.church_id, s.class_id,
+                       s.custom_info, s.password_hash, s.gender, s.trip_points, s.google_id, s.google_email,
+                       c.church_name, COALESCE(c.church_type, 'kids') AS church_type,
+                       COALESCE(cc.arabic_name, cl.arabic_name, s.class) AS class
+                FROM students s
+                LEFT JOIN churches c ON s.church_id = c.id
+                LEFT JOIN church_classes cc ON cc.id = s.class_id AND cc.church_id = s.church_id
+                LEFT JOIN classes cl ON cl.id = s.class_id
+                WHERE LOWER(TRIM(s.email)) = LOWER(?) OR LOWER(TRIM(s.google_email)) = LOWER(?)
+                LIMIT 1
+            ");
+            $stmt->bind_param("ss", $email, $email);
+            $stmt->execute();
+            $res = $stmt->get_result();
+            $student = $res->fetch_assoc();
+            $stmt->close();
+
+            if ($student && !empty($googleId) && empty($student['google_id'])) {
+                $sId = (int)$student['id'];
+                @$conn->query("UPDATE students SET google_id = '" . $conn->real_escape_string($googleId) . "', google_email = '" . $conn->real_escape_string($email) . "' WHERE id = {$sId}");
+                $student['google_id'] = $googleId;
+                $student['google_email'] = $email;
+            }
+        }
+
+        // CRITICAL REQUIREMENT: PREVENT ACCOUNT CREATION VIA GOOGLE!
+        if (!$student) {
+            sendJSON([
+                'success' => false,
+                'code' => 'GOOGLE_NOT_LINKED',
+                'message' => 'حساب Google هذا (' . ($email ?: 'المحدد') . ') غير مرتبط بأي حساب طالب مسجل لدينا. يجب أولاً تسجيل حساب جديد من صفحة التسجيل أو ربط Google بحسابك الحالي.',
+                'google_email' => $email,
+                'google_id' => $googleId
+            ]);
+            return;
+        }
+
+        // Find siblings or family members sharing the same phone
+        $phone = $student['phone'] ?? '';
+        $candidates = [];
+        if (!empty($phone)) {
+            $phoneCandidates = findStudentsByPhoneOrSiblings($conn, $phone, true);
+            foreach ($phoneCandidates as $id => $row) {
+                $candidates[$id] = $row;
+            }
+        }
+        if (!isset($candidates[$student['id']])) {
+            $candidates[$student['id']] = $student;
+        }
+
+        $authenticated = [];
+        foreach ($candidates as $st) {
+            $st['birthday'] = formatDateFromDB($st['birthday'] ?? '');
+            $st['class'] = $st['class'] ?? '---';
+            $st['has_password'] = !empty($st['password_hash']);
+            unset($st['password_hash']);
+            $authenticated[] = $st;
+        }
+
+        $vals = array_values($authenticated);
+
+        if (session_status() === PHP_SESSION_NONE) {
+            @session_start();
+        }
+        $_SESSION['student_id'] = (int)$student['id'];
+        $_SESSION['google_logged_in'] = true;
+
+        sendJSON([
+            'success' => true,
+            'data' => $vals,
+            'users' => $vals,
+            'user' => count($vals) === 1 ? $vals[0] : $student,
+            'student' => $student,
+            'google_email' => $email,
+            'google_id' => $googleId,
+            'message' => 'تم تسجيل الدخول بنجاح بحساب Google'
+        ]);
+    } catch (Throwable $e) {
+        sendJSON(['success' => false, 'message' => 'خطأ في تسجيل الدخول عبر Google: ' . $e->getMessage()]);
+    }
+}
+
+function linkStudentGoogleAccount(): void
+{
+    try {
+        $conn = getDBConnection();
+        ensureStudentEmailColumns($conn);
+
+        $token = $_POST['credential'] ?? $_POST['token'] ?? '';
+        $payload = !empty($token) ? verifyGoogleToken($token) : null;
+        $googleId = $payload ? $payload['sub'] : sanitize($_POST['google_id'] ?? '');
+        $email = $payload ? $payload['email'] : strtolower(trim(sanitize($_POST['email'] ?? '')));
+
+        if (empty($googleId) || empty($email)) {
+            sendJSON(['success' => false, 'message' => 'بيانات حساب Google غير متوفرة أو غير صالحة']);
+            return;
+        }
+
+        $studentId = intval($_POST['student_id'] ?? $_POST['studentId'] ?? 0);
+        $resetToken = trim(sanitize($_POST['reset_token'] ?? ''));
+        $identifier = trim(sanitize($_POST['identifier'] ?? $_POST['phone'] ?? $_POST['username'] ?? ''));
+        $password = $_POST['password'] ?? '';
+
+        $targetStudent = null;
+
+        if ($studentId > 0 && !empty($resetToken)) {
+            $stmt = $conn->prepare("SELECT id, name FROM students WHERE id = ? AND email_reset_token = ? AND email_reset_token_expires >= NOW() LIMIT 1");
+            $stmt->bind_param("is", $studentId, $resetToken);
+            $stmt->execute();
+            $targetStudent = $stmt->get_result()->fetch_assoc();
+            $stmt->close();
+        } elseif ($studentId > 0) {
+            if (session_status() === PHP_SESSION_NONE) @session_start();
+            if (isset($_SESSION['student_id']) && (int)$_SESSION['student_id'] === $studentId) {
+                $targetStudent = ['id' => $studentId];
+            }
+        }
+
+        if (!$targetStudent && !empty($identifier) && !empty($password)) {
+            $candidates = findStudentsByPhoneOrSiblings($conn, $identifier, true);
+            if (empty($candidates)) {
+                $uStmt = $conn->prepare("SELECT id, name, password_hash FROM students WHERE JSON_UNQUOTE(JSON_EXTRACT(custom_info, '$.username')) = ? LIMIT 1");
+                $uStmt->bind_param("s", $identifier);
+                $uStmt->execute();
+                $res = $uStmt->get_result();
+                if ($r = $res->fetch_assoc()) $candidates[$r['id']] = $r;
+                $uStmt->close();
+            }
+            $sha256 = hash('sha256', $password);
+            foreach ($candidates as $cand) {
+                $hash = $cand['password_hash'] ?? '';
+                if (hash_equals($hash, $sha256) || password_verify($password, $hash)) {
+                    $targetStudent = ['id' => (int)$cand['id'], 'name' => $cand['name'] ?? ''];
+                    break;
+                }
+            }
+        }
+
+        if (!$targetStudent) {
+            sendJSON(['success' => false, 'message' => 'بيانات الدخول غير صحيحة أو تعذر التحقق من الحساب المراد ربطه']);
+            return;
+        }
+
+        $targetId = (int)$targetStudent['id'];
+
+        // Ensure this Google account isn't already linked to another distinct student
+        $checkStmt = $conn->prepare("SELECT id, name FROM students WHERE google_id = ? AND id != ? LIMIT 1");
+        $checkStmt->bind_param("si", $googleId, $targetId);
+        $checkStmt->execute();
+        $existRes = $checkStmt->get_result();
+        if ($existRow = $existRes->fetch_assoc()) {
+            sendJSON(['success' => false, 'message' => 'حساب Google هذا مرتبط بالفعل بحساب طالب آخر: ' . ($existRow['name'] ?? '')]);
+            return;
+        }
+        $checkStmt->close();
+
+        // Update student's google_id, google_email, and email
+        $updateStmt = $conn->prepare("
+            UPDATE students
+            SET google_id = ?,
+                google_email = ?,
+                email = COALESCE(NULLIF(email, ''), ?),
+                is_email_verified = 1
+            WHERE id = ?
+        ");
+        $updateStmt->bind_param("sssi", $googleId, $email, $email, $targetId);
+        $updateStmt->execute();
+        $updateStmt->close();
+
+        if (session_status() === PHP_SESSION_NONE) @session_start();
+        $_SESSION['student_id'] = $targetId;
+
+        sendJSON([
+            'success' => true,
+            'message' => 'تم ربط حساب Google بنجاح بالبريد: ' . $email,
+            'google_email' => $email,
+            'google_id' => $googleId,
+            'student_id' => $targetId
+        ]);
+    } catch (Throwable $e) {
+        sendJSON(['success' => false, 'message' => 'خطأ في ربط الحساب: ' . $e->getMessage()]);
+    }
+}
+
+function unlinkStudentGoogleAccount(): void
+{
+    try {
+        if (session_status() === PHP_SESSION_NONE) @session_start();
+        $studentId = intval($_POST['student_id'] ?? $_SESSION['student_id'] ?? 0);
+
+        if ($studentId <= 0) {
+            sendJSON(['success' => false, 'message' => 'غير مصرح أو الجلسة غير صالحة']);
+            return;
+        }
+
+        $conn = getDBConnection();
+        $stmt = $conn->prepare("UPDATE students SET google_id = NULL, google_email = NULL WHERE id = ?");
+        $stmt->bind_param("i", $studentId);
+        $stmt->execute();
+        $stmt->close();
+
+        sendJSON(['success' => true, 'message' => 'تم إلغاء ربط حساب Google بنجاح']);
+    } catch (Throwable $e) {
+        sendJSON(['success' => false, 'message' => 'خطأ: ' . $e->getMessage()]);
+    }
+}
+
+function ensureStudentPasswordRequestsTable(mysqli $conn): void
+{
+    static $done = false;
+    if ($done) return;
+    $done = true;
+
+    $sql = "CREATE TABLE IF NOT EXISTS `student_password_requests` (
+        `id` INT AUTO_INCREMENT PRIMARY KEY,
+        `student_id` INT NOT NULL DEFAULT 0,
+        `student_name` VARCHAR(255) DEFAULT NULL,
+        `church_id` INT NOT NULL DEFAULT 0,
+        `request_type` ENUM('setup_password', 'reset_password') NOT NULL DEFAULT 'setup_password',
+        `requested_email` VARCHAR(255) DEFAULT NULL,
+        `phone` VARCHAR(50) NOT NULL,
+        `token_hash` VARCHAR(64) DEFAULT NULL,
+        `status` ENUM('pending', 'approved', 'used', 'expired', 'rejected') NOT NULL DEFAULT 'pending',
+        `expires_at` DATETIME DEFAULT NULL,
+        `created_at` DATETIME DEFAULT CURRENT_TIMESTAMP,
+        `approved_at` DATETIME DEFAULT NULL,
+        `used_at` DATETIME DEFAULT NULL,
+        `ip_address` VARCHAR(45) DEFAULT NULL,
+        `user_agent` TEXT DEFAULT NULL,
+        INDEX `idx_token_hash` (`token_hash`),
+        INDEX `idx_student_id` (`student_id`),
+        INDEX `idx_status` (`status`),
+        INDEX `idx_created_at` (`created_at`)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci";
+
+    @$conn->query($sql);
+    @$conn->query("ALTER TABLE `student_password_requests` ADD COLUMN `student_name` VARCHAR(255) DEFAULT NULL AFTER `student_id`");
+}
+
+function submitStudentPasswordRequest(): void
+{
+    try {
+        $identifier = trim(sanitize($_POST['identifier'] ?? $_POST['phone'] ?? ''));
+        $name = trim(sanitize($_POST['name'] ?? $_POST['student_name'] ?? ''));
+        $churchIdInput = intval($_POST['church_id'] ?? 0);
+        $churchNameInput = trim(sanitize($_POST['church_name'] ?? ''));
+        $requestType = trim(sanitize($_POST['request_type'] ?? 'reset_password'));
+        if (!in_array($requestType, ['setup_password', 'reset_password'], true)) {
+            $requestType = 'reset_password';
+        }
+        $email = trim(sanitize($_POST['email'] ?? ''));
+
+        if (empty($identifier) && empty($name)) {
+            sendJSON(['success' => false, 'message' => 'البريد الإلكتروني أو رقم الهاتف أو الاسم مطلوب']);
+            return;
+        }
+
+        $conn = getDBConnection();
+        ensureStudentEmailColumns($conn);
+        ensureStudentPasswordRequestsTable($conn);
+
+        $clientIp = function_exists('getClientIp') ? getClientIp() : ($_SERVER['REMOTE_ADDR'] ?? '');
+        $clientUa = substr($_SERVER['HTTP_USER_AGENT'] ?? '', 0, 500);
+
+        // Find student
+        $student = null;
+        if (!empty($identifier)) {
+            $isEmail = filter_var($identifier, FILTER_VALIDATE_EMAIL) || strpos($identifier, '@') !== false;
+            if ($isEmail) {
+                $stmt = $conn->prepare("
+                    SELECT s.id, s.name, s.phone, s.email, s.is_email_verified, s.church_id, c.church_name 
+                    FROM students s 
+                    LEFT JOIN churches c ON s.church_id = c.id 
+                    WHERE LOWER(TRIM(s.email)) = LOWER(?) 
+                    LIMIT 1
+                ");
+                $stmt->bind_param("s", $identifier);
+                $stmt->execute();
+                $student = $stmt->get_result()->fetch_assoc();
+                $stmt->close();
+            } else {
+                $candidates = findStudentsByPhoneOrSiblings($conn, $identifier, true);
+                if (!empty($candidates)) {
+                    $student = reset($candidates);
+                    foreach ($candidates as $c) {
+                        if (!empty($c['email'])) {
+                            $student = $c;
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+
+        // If not found by identifier, try finding by name and church
+        if (!$student && !empty($name)) {
+            if ($churchIdInput > 0) {
+                $stmt = $conn->prepare("
+                    SELECT s.id, s.name, s.phone, s.email, s.is_email_verified, s.church_id, c.church_name 
+                    FROM students s 
+                    LEFT JOIN churches c ON s.church_id = c.id 
+                    WHERE (s.name LIKE ? OR ? LIKE CONCAT('%', s.name, '%')) AND s.church_id = ? 
+                    LIMIT 1
+                ");
+                $like = "%{$name}%";
+                $stmt->bind_param("ssi", $like, $name, $churchIdInput);
+            } else {
+                $stmt = $conn->prepare("
+                    SELECT s.id, s.name, s.phone, s.email, s.is_email_verified, s.church_id, c.church_name 
+                    FROM students s 
+                    LEFT JOIN churches c ON s.church_id = c.id 
+                    WHERE (s.name LIKE ? OR ? LIKE CONCAT('%', s.name, '%')) 
+                    LIMIT 1
+                ");
+                $like = "%{$name}%";
+                $stmt->bind_param("ss", $like, $name);
+            }
+            $stmt->execute();
+            $student = $stmt->get_result()->fetch_assoc();
+            $stmt->close();
+        }
+
+        if ($student) {
+            $studentId = (int)$student['id'];
+            $studentDisplayName = $student['name'];
+            $churchId = (int)($student['church_id'] ?? $churchIdInput);
+            $churchName = $student['church_name'] ?? ($churchNameInput ?: 'مدارس الأحد');
+            $studentPhone = $student['phone'] ?? $identifier;
+            $existingEmail = trim($student['email'] ?? '');
+        } else {
+            $studentId = 0;
+            $studentDisplayName = !empty($name) ? $name : 'طالب غير مسجل';
+            $churchId = $churchIdInput;
+            $churchName = $churchNameInput ?: 'مدارس الأحد';
+            $studentPhone = $identifier;
+            $existingEmail = '';
+        }
+        // Determine final requested email (COMPLETELY OPTIONAL)
+        $finalEmail = null;
+        if (!empty($email)) {
+            if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+                sendJSON(['success' => false, 'message' => 'البريد الإلكتروني المدخل غير صالح']);
+                return;
+            }
+            $finalEmail = strtolower($email);
+        } elseif (!empty($existingEmail) && filter_var($existingEmail, FILTER_VALIDATE_EMAIL)) {
+            $finalEmail = strtolower($existingEmail);
+        } else {
+            $finalEmail = null;
+        }
+
+        // Anti-spam rate limit: check if a pending request was submitted in the last 60 seconds
+        $chkRate = $conn->prepare("
+            SELECT id FROM student_password_requests 
+            WHERE student_id = ? AND status = 'pending' AND created_at >= DATE_SUB(NOW(), INTERVAL 60 SECOND) 
+            LIMIT 1
+        ");
+        if ($chkRate) {
+            $chkRate->bind_param("i", $studentId);
+            $chkRate->execute();
+            $recent = $chkRate->get_result()->fetch_assoc();
+            $chkRate->close();
+            if ($recent) {
+                sendJSON([
+                    'success' => true,
+                    'message' => 'طلبك قيد المراجعة بالفعل! سيصلك الرابط الآمن عبر واتساب أو رسالة نصية فور مراجعته من فريق العمل.'
+                ]);
+                return;
+            }
+        }
+
+        // Insert new request
+        $ins = $conn->prepare("
+            INSERT INTO student_password_requests 
+                (student_id, student_name, church_id, request_type, requested_email, phone, status, ip_address, user_agent) 
+            VALUES (?, ?, ?, ?, ?, ?, 'pending', ?, ?)
+        ");
+        $ins->bind_param("isisssss", $studentId, $studentDisplayName, $churchId, $requestType, $finalEmail, $studentPhone, $clientIp, $clientUa);
+        $ins->execute();
+        $requestId = $conn->insert_id;
+        $ins->close();
+
+        // Send Web Push Notification exclusively to developer
+        $reqLabel = ($requestType === 'reset_password') ? 'استعادة كلمة مرور' : 'تعيين كلمة مرور جديدة';
+        $notifTitle = "طلب {$reqLabel} 🔐";
+        $notifBody = "المخدوم: {$studentDisplayName} ({$studentPhone}) - الكنيسة: {$churchName}";
+        $notifUrl = '/uncle/dashboard/?open_dev_pwd_requests=1';
+
+        if (function_exists('_sendWebPushToDeveloper')) {
+            _sendWebPushToDeveloper($conn, $notifTitle, $notifBody, $notifUrl, [
+                'type' => 'dev_password_request',
+                'request_id' => $requestId,
+                'church_id' => $churchId,
+                'student_id' => $studentId,
+                'request_type' => $requestType
+            ]);
+        }
+
+        // Also add to notifications table for in-app bell notification
+        if (function_exists('pushNotification')) {
+            pushNotification($conn, $churchId, 'dev_password_request', $notifTitle, $notifBody, 'dev_password_request', $requestId);
+        }
+
+        sendJSON([
+            'success' => true,
+            'request_id' => $requestId,
+            'message' => 'تم إرسال طلبك بنجاح. سيصلك الرابط الآمن عبر واتساب أو رسالة نصية فور مراجعته من فريق العمل.'
+        ]);
+
+    } catch (Throwable $e) {
+        sendJSON(['success' => false, 'message' => 'خطأ في معالجة الطلب: ' . $e->getMessage()]);
+    }
+}
+
+function getDeveloperPasswordRequests(): void
+{
+    try {
+        if (!isDeveloperRole()) {
+            http_response_code(403);
+            sendJSON(['success' => false, 'message' => 'غير مصرح - هذه الميزة مخصصة لحساب المطور فقط']);
+            return;
+        }
+
+        $conn = getDBConnection();
+        ensureStudentPasswordRequestsTable($conn);
+
+        $sql = "
+            SELECT 
+                r.id, r.student_id, r.church_id, r.request_type, r.requested_email, r.phone,
+                COALESCE(s.email, r.requested_email) AS email,
+                s.email AS student_email,
+                s.phone AS student_phone,
+                s.emergency_phone,
+                r.status, r.expires_at, r.created_at, r.approved_at, r.used_at,
+                (CASE WHEN r.expires_at IS NOT NULL AND r.expires_at < NOW() AND r.status = 'approved' THEN 1 ELSE 0 END) AS is_expired,
+                COALESCE(s.name, r.student_name, 'طالب غير مسجل') AS student_name,
+                s.email AS current_email, s.image_url,
+                COALESCE(c.church_name, 'مدارس الأحد') AS church_name,
+                COALESCE(cc.arabic_name, cl.arabic_name, s.class, 'عام') AS class_name
+            FROM student_password_requests r
+            LEFT JOIN students s ON r.student_id = s.id
+            LEFT JOIN churches c ON r.church_id = c.id
+            LEFT JOIN church_classes cc ON cc.id = s.class_id AND cc.church_id = s.church_id
+            LEFT JOIN classes cl ON cl.id = s.class_id
+            ORDER BY 
+                CASE WHEN r.status = 'pending' THEN 1 WHEN r.status = 'approved' THEN 2 ELSE 3 END,
+                r.id DESC
+            LIMIT 150
+        ";
+
+        $res = $conn->query($sql);
+        $rows = [];
+        if ($res) {
+            while ($row = $res->fetch_assoc()) {
+                $rows[] = $row;
+            }
+        }
+
+        $pendingCount = 0;
+        foreach ($rows as $r) {
+            if ($r['status'] === 'pending') $pendingCount++;
+        }
+
+        sendJSON([
+            'success' => true,
+            'requests' => $rows,
+            'pending_count' => $pendingCount
+        ]);
+    } catch (Throwable $e) {
+        sendJSON(['success' => false, 'message' => 'خطأ: ' . $e->getMessage()]);
+    }
+}
+
+function generateDeveloperPasswordLink(): void
+{
+    try {
+        if (!isDeveloperRole()) {
+            http_response_code(403);
+            sendJSON(['success' => false, 'message' => 'غير مصرح - هذه الميزة مخصصة لحساب المطور فقط']);
+            return;
+        }
+
+        $requestId = intval($_POST['request_id'] ?? 0);
+        $updatedEmail = trim(sanitize($_POST['email'] ?? ''));
+
+        if ($requestId <= 0) {
+            sendJSON(['success' => false, 'message' => 'معرف الطلب مطلوب']);
+            return;
+        }
+
+        $conn = getDBConnection();
+        ensureStudentPasswordRequestsTable($conn);
+        ensureStudentEmailColumns($conn);
+
+        $stmt = $conn->prepare("
+            SELECT r.*, s.name AS student_name, s.phone AS student_phone, s.email AS student_email, c.church_name
+            FROM student_password_requests r
+            JOIN students s ON r.student_id = s.id
+            LEFT JOIN churches c ON r.church_id = c.id
+            WHERE r.id = ?
+            LIMIT 1
+        ");
+        $stmt->bind_param("i", $requestId);
+        $stmt->execute();
+        $req = $stmt->get_result()->fetch_assoc();
+        $stmt->close();
+
+        if (!$req) {
+            sendJSON(['success' => false, 'message' => 'لم يتم العثور على الطلب']);
+            return;
+        }
+
+        $studentId = (int)$req['student_id'];
+        $studentName = $req['student_name'] ?? 'مخدومنا العزيز';
+        $studentPhone = $req['phone'] ?: ($req['student_phone'] ?? '');
+        $requestType = $req['request_type'] ?? 'setup_password';
+
+        // If email was provided/updated by developer
+        if (!empty($updatedEmail) && filter_var($updatedEmail, FILTER_VALIDATE_EMAIL)) {
+            $upEmail = $conn->prepare("UPDATE students SET email = ?, is_email_verified = 1 WHERE id = ?");
+            if ($upEmail) {
+                $upEmail->bind_param("si", $updatedEmail, $studentId);
+                $upEmail->execute();
+                $upEmail->close();
+            }
+            $upReqEmail = $conn->prepare("UPDATE student_password_requests SET requested_email = ? WHERE id = ?");
+            if ($upReqEmail) {
+                $upReqEmail->bind_param("si", $updatedEmail, $requestId);
+                $upReqEmail->execute();
+                $upReqEmail->close();
+            }
+            $req['requested_email'] = $updatedEmail;
+        }
+
+        // Generate 64-char crypto-secure random token
+        $plainToken = bin2hex(random_bytes(32));
+        $tokenHash = hash('sha256', $plainToken);
+
+        // Update request with 24 hours expiration
+        $upd = $conn->prepare("
+            UPDATE student_password_requests 
+            SET token_hash = ?, status = 'approved', approved_at = NOW(), 
+                expires_at = DATE_ADD(NOW(), INTERVAL 24 HOUR) 
+            WHERE id = ?
+        ");
+        $upd->bind_param("si", $tokenHash, $requestId);
+        $upd->execute();
+        $upd->close();
+
+        // Build base URL
+        $protocol = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on') ? 'https' : 'http';
+        $host = $_SERVER['HTTP_HOST'] ?? 'sunday-school.online';
+        $isTesting = (strpos($_SERVER['REQUEST_URI'] ?? '', '/testing') !== false);
+        $loginPath = $isTesting ? '/testing/user/login/' : '/user/login/';
+        $secureUrl = "{$protocol}://{$host}{$loginPath}?reset_token={$plainToken}";
+
+        $actionVerb = ($requestType === 'reset_password') ? 'إعادة تعيين' : 'تعيين';
+        $msgText = "سلام ونعمة يا {$studentName}،\n"
+                 . "بناءً على طلبك لـ {$actionVerb} كلمة المرور الخاصة بحسابك في مدارس الأحد:\n"
+                 . "{$secureUrl}\n\n"
+                 . "⚠️ تنبيه أمني هام جداً: هذا الرابط سري وشخصي خاص بك وحدك صالح لمدة 24 ساعة فقط ولا يمكن استخدامه إلا مرة واحدة. يرجى عدم مشاركة هذا الرابط مع أي شخص إطلاقاً حفاظاً على أمان وسرية حسابك.";
+
+        sendJSON([
+            'success' => true,
+            'request_id' => $requestId,
+            'link' => $secureUrl,
+            'message_text' => $msgText,
+            'phone' => $studentPhone,
+            'student_name' => $studentName,
+            'expires_in' => '24 ساعة',
+            'message' => 'تم إنشاء الرابط الآمن بنجاح'
+        ]);
+
+    } catch (Throwable $e) {
+        sendJSON(['success' => false, 'message' => 'خطأ في إنشاء الرابط: ' . $e->getMessage()]);
+    }
+}
+
+function assignStudentEmailByDeveloper(): void
+{
+    try {
+        if (!isDeveloperRole()) {
+            http_response_code(403);
+            sendJSON(['success' => false, 'message' => 'غير مصرح - هذه الميزة مخصصة لحساب المطور فقط']);
+            return;
+        }
+
+        $studentId = intval($_POST['student_id'] ?? 0);
+        $requestId = intval($_POST['request_id'] ?? 0);
+        $email = trim(sanitize($_POST['email'] ?? ''));
+
+        if ($studentId <= 0) {
+            sendJSON(['success' => false, 'message' => 'معرف الطالب مطلوب']);
+            return;
+        }
+
+        if (empty($email) || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
+            sendJSON(['success' => false, 'message' => 'يرجى إدخال بريد إلكتروني صالح']);
+            return;
+        }
+
+        $conn = getDBConnection();
+        ensureStudentEmailColumns($conn);
+
+        $up = $conn->prepare("UPDATE students SET email = ?, is_email_verified = 1 WHERE id = ?");
+        $up->bind_param("si", $email, $studentId);
+        $up->execute();
+        $up->close();
+
+        if ($requestId > 0) {
+            ensureStudentPasswordRequestsTable($conn);
+            $upR = $conn->prepare("UPDATE student_password_requests SET requested_email = ? WHERE id = ?");
+            if ($upR) {
+                $upR->bind_param("si", $email, $requestId);
+                $upR->execute();
+                $upR->close();
+            }
+        }
+
+        sendJSON([
+            'success' => true,
+            'message' => 'تم تعيين البريد الإلكتروني بنجاح وتفعيله للحساب'
+        ]);
+
+    } catch (Throwable $e) {
+        sendJSON(['success' => false, 'message' => 'خطأ: ' . $e->getMessage()]);
+    }
+}
+
+function updateStudentEmailOnly(): void
+{
+    try {
+        if (!isDeveloperRole() && !isAdminOrDevRole() && empty($_SESSION['uncle_id']) && empty($_SESSION['church_id'])) {
+            http_response_code(403);
+            sendJSON(['success' => false, 'message' => 'غير مصرح بالوصول']);
+            return;
+        }
+
+        $studentId = intval($_POST['student_id'] ?? $_POST['studentId'] ?? 0);
+        $email = trim(sanitize($_POST['email'] ?? ''));
+
+        if ($studentId <= 0) {
+            sendJSON(['success' => false, 'message' => 'معرف الطالب مطلوب']);
+            return;
+        }
+
+        if (!empty($email) && !filter_var($email, FILTER_VALIDATE_EMAIL)) {
+            sendJSON(['success' => false, 'message' => 'صيغة البريد الإلكتروني غير صالحة']);
+            return;
+        }
+
+        $conn = getDBConnection();
+        ensureStudentEmailColumns($conn);
+
+        if (!empty($email)) {
+            $stmt = $conn->prepare("UPDATE students SET email = ?, is_email_verified = 1, updated_at = NOW() WHERE id = ?");
+            $stmt->bind_param("si", $email, $studentId);
+        } else {
+            $stmt = $conn->prepare("UPDATE students SET email = NULL, is_email_verified = 0, updated_at = NOW() WHERE id = ?");
+            $stmt->bind_param("i", $studentId);
+        }
+        $stmt->execute();
+        $stmt->close();
+
+        sendJSON([
+            'success' => true,
+            'message' => 'تم حفظ البريد الإلكتروني بنجاح',
+            'email' => $email
+        ]);
+    } catch (Throwable $e) {
+        sendJSON(['success' => false, 'message' => 'خطأ: ' . $e->getMessage()]);
+    }
+}
+
+function generateResetLinkForStudent(): void
+{
+    try {
+        if (!isDeveloperRole() && !isAdminOrDevRole() && empty($_SESSION['uncle_id']) && empty($_SESSION['church_id'])) {
+            http_response_code(403);
+            sendJSON(['success' => false, 'message' => 'غير مصرح بالوصول']);
+            return;
+        }
+
+        $conn = getDBConnection();
+        ensureStudentEmailColumns($conn);
+        ensureStudentPasswordRequestsTable($conn);
+
+        $studentId = intval($_POST['student_id'] ?? $_POST['studentId'] ?? 0);
+        $requestId = intval($_POST['request_id'] ?? 0);
+        $sendEmail = !empty($_POST['send_email']) && $_POST['send_email'] !== '0' && $_POST['send_email'] !== 'false';
+        $email = trim(sanitize($_POST['email'] ?? ''));
+
+        // If student_id is 0 but request_id is provided, try finding student via request
+        if ($studentId <= 0 && $requestId > 0) {
+            $stmtR = $conn->prepare("SELECT student_id, student_name, requested_email, phone, church_id FROM student_password_requests WHERE id = ? LIMIT 1");
+            $stmtR->bind_param("i", $requestId);
+            $stmtR->execute();
+            $reqRow = $stmtR->get_result()->fetch_assoc();
+            $stmtR->close();
+            if ($reqRow) {
+                $studentId = intval($reqRow['student_id']);
+                if (empty($email) && !empty($reqRow['requested_email'])) {
+                    $email = $reqRow['requested_email'];
+                }
+                // If student_id was 0, attempt lookup by phone or name
+                if ($studentId <= 0 && !empty($reqRow['phone'])) {
+                    $candidates = findStudentsByPhoneOrSiblings($conn, $reqRow['phone'], true);
+                    if (!empty($candidates)) {
+                        $cStudent = reset($candidates);
+                        $studentId = intval($cStudent['id']);
+                        @$conn->query("UPDATE student_password_requests SET student_id = {$studentId} WHERE id = {$requestId}");
+                    }
+                }
+                if ($studentId <= 0 && !empty($reqRow['student_name'])) {
+                    $cId = intval($reqRow['church_id']);
+                    $sName = $reqRow['student_name'];
+                    $stmtF = $conn->prepare("SELECT id FROM students WHERE name LIKE ? AND (church_id = ? OR ? = 0) LIMIT 1");
+                    $like = "%{$sName}%";
+                    $stmtF->bind_param("sii", $like, $cId, $cId);
+                    $stmtF->execute();
+                    $fRow = $stmtF->get_result()->fetch_assoc();
+                    $stmtF->close();
+                    if ($fRow) {
+                        $studentId = intval($fRow['id']);
+                        @$conn->query("UPDATE student_password_requests SET student_id = {$studentId} WHERE id = {$requestId}");
+                    }
+                }
+            }
+        }
+
+        if ($studentId <= 0) {
+            sendJSON(['success' => false, 'message' => 'لم يتم العثور على حساب الطالب المرتبط بالطلب في قاعدة البيانات']);
+            return;
+        }
+
+        // Fetch student
+        $stmt = $conn->prepare("SELECT id, name, phone, emergency_phone, email, church_id FROM students WHERE id = ? LIMIT 1");
+        $stmt->bind_param("i", $studentId);
+        $stmt->execute();
+        $student = $stmt->get_result()->fetch_assoc();
+        $stmt->close();
+
+        if (!$student) {
+            sendJSON(['success' => false, 'message' => 'لم يتم العثور على الطالب']);
+            return;
+        }
+
+        // If email was provided and valid, update student's email
+        $finalEmail = $student['email'] ?? '';
+        if (!empty($email)) {
+            if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+                sendJSON(['success' => false, 'message' => 'صيغة البريد الإلكتروني غير صحيحة']);
+                return;
+            }
+            $finalEmail = strtolower($email);
+            $upEmail = $conn->prepare("UPDATE students SET email = ?, is_email_verified = 1, updated_at = NOW() WHERE id = ?");
+            $upEmail->bind_param("si", $finalEmail, $studentId);
+            $upEmail->execute();
+            $upEmail->close();
+            $student['email'] = $finalEmail;
+
+            if ($requestId > 0) {
+                $upReqEmail = $conn->prepare("UPDATE student_password_requests SET requested_email = ? WHERE id = ?");
+                $upReqEmail->bind_param("si", $finalEmail, $requestId);
+                $upReqEmail->execute();
+                $upReqEmail->close();
+            }
+        }
+
+        // Generate 64-character crypto secure hex token
+        $token = bin2hex(random_bytes(32));
+        $tokenHash = hash('sha256', $token);
+
+        // Update student with 2-hour expiration
+        $upStudent = $conn->prepare("UPDATE students SET email_reset_token = ?, email_reset_token_expires = DATE_ADD(NOW(), INTERVAL 2 HOUR), updated_at = NOW() WHERE id = ?");
+        $upStudent->bind_param("si", $token, $studentId);
+        $upStudent->execute();
+        $upStudent->close();
+
+        // Update request if available
+        if ($requestId > 0) {
+            $upReq = $conn->prepare("UPDATE student_password_requests SET token_hash = ?, status = 'approved', approved_at = NOW(), expires_at = DATE_ADD(NOW(), INTERVAL 2 HOUR) WHERE id = ?");
+            $upReq->bind_param("si", $tokenHash, $requestId);
+            $upReq->execute();
+            $upReq->close();
+        } else {
+            // Update latest pending request for this student
+            $upReq = $conn->prepare("UPDATE student_password_requests SET token_hash = ?, status = 'approved', approved_at = NOW(), expires_at = DATE_ADD(NOW(), INTERVAL 2 HOUR) WHERE student_id = ? AND status = 'pending' ORDER BY id DESC LIMIT 1");
+            $upReq->bind_param("si", $tokenHash, $studentId);
+            $upReq->execute();
+            $upReq->close();
+        }
+
+        // Build reset URL
+        $protocol = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on') ? 'https' : 'http';
+        $host = $_SERVER['HTTP_HOST'] ?? 'sunday-school.online';
+        $isTesting = (strpos($_SERVER['REQUEST_URI'] ?? '', '/testing') !== false);
+        $loginPath = $isTesting ? '/testing/user/login/' : '/user/login/';
+        $resetUrl = "{$protocol}://{$host}{$loginPath}?reset_token={$token}";
+
+        $emailSent = false;
+        if ($sendEmail && !empty($finalEmail) && filter_var($finalEmail, FILTER_VALIDATE_EMAIL)) {
+            $studentName = $student['name'] ?? 'مخدومنا العزيز';
+            $subject = 'رابط إعادة تعيين كلمة المرور - مدارس الأحد';
+            $htmlBody = "
+                <div dir='rtl' style='font-family: Cairo, Tahoma, sans-serif; max-width: 580px; margin: 0 auto; background: #ffffff; border: 1px solid #e4e6f0; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 20px rgba(0,0,0,0.06);'>
+                    <div style='background: linear-gradient(135deg, #5b6cf5, #4354e8); padding: 26px 20px; text-align: center; color: #ffffff;'>
+                        <h2 style='margin: 0; font-size: 1.3rem; font-weight: 800;'>مدارس الأحد ✝️</h2>
+                        <p style='margin: 6px 0 0; font-size: 0.9rem; opacity: 0.9;'>إعادة تعيين كلمة المرور</p>
+                    </div>
+                    <div style='padding: 24px 22px; color: #1a1d2e; line-height: 1.7;'>
+                        <p style='font-size: 1rem; margin-top: 0;'>سلام ونعمة يا <strong>{$studentName}</strong>،</p>
+                        <p style='color: #4b5068;'>بناءً على طلب استعادة كلمة المرور الخاص بحسابك، قمنا بإنشاء هذا الرابط الآمن لتتمكن من كتابة وتعيين كلمة مرور جديدة:</p>
+                        <div style='text-align: center; margin: 28px 0;'>
+                            <a href='{$resetUrl}' style='display: inline-block; background: linear-gradient(135deg, #5b6cf5, #4354e8); color: #ffffff; text-decoration: none; padding: 13px 32px; border-radius: 12px; font-weight: bold; font-size: 1rem; box-shadow: 0 4px 14px rgba(91,108,245,0.3);'>إعادة تعيين كلمة المرور</a>
+                        </div>
+                        <div style='background: #fee2e2; border-right: 4px solid #ef4444; border-radius: 8px; padding: 12px 14px; margin-top: 20px;'>
+                            <p style='margin: 0; color: #dc2626; font-weight: 700; font-size: 0.88rem;'>
+                                ⚠️ ملاحظة هامة: هذا الرابط صالح للاستخدام لمدة ساعتين فقط (ينتهي بعد ساعتين) لضمان أمان حسابك.
+                            </p>
+                        </div>
+                        <p style='color: #8b90a8; font-size: 0.8rem; margin-top: 24px; text-align: center;'>إذا لم تكن قد طلبت إعادة التعيين، يمكنك تجاهل هذه الرسالة بأمان.</p>
+                    </div>
+                </div>
+            ";
+            $plainText = "سلام ونعمة يا {$studentName}،\nرابط إعادة تعيين كلمة المرور: {$resetUrl}\nصلاحية الرابط ساعتان فقط.";
+            if (function_exists('sendSundaySchoolEmail')) {
+                $emailSent = sendSundaySchoolEmail($finalEmail, $subject, $htmlBody, $plainText);
+            }
+        }
+
+        sendJSON([
+            'success' => true,
+            'token' => $token,
+            'reset_url' => $resetUrl,
+            'expires_in_minutes' => 120,
+            'email_sent' => $emailSent,
+            'student' => [
+                'id' => $studentId,
+                'name' => $student['name'],
+                'phone' => $student['phone'],
+                'emergency_phone' => $student['emergency_phone'] ?? '',
+                'email' => $finalEmail
+            ]
+        ]);
+
+    } catch (Throwable $e) {
+        sendJSON(['success' => false, 'message' => 'خطأ: ' . $e->getMessage()]);
+    }
+}
+
+function verifyDeveloperPasswordToken(): void
+{
+    try {
+        $token = trim($_POST['token'] ?? $_GET['token'] ?? '');
+        if (empty($token)) {
+            sendJSON(['success' => false, 'message' => 'رمز التحقق مفقود']);
+            return;
+        }
+
+        $conn = getDBConnection();
+        ensureStudentPasswordRequestsTable($conn);
+
+        $tokenHash = hash('sha256', $token);
+        $stmt = $conn->prepare("
+            SELECT r.*, s.name AS student_name, s.phone AS student_phone, s.email AS current_email, c.church_name
+            FROM student_password_requests r
+            JOIN students s ON r.student_id = s.id
+            LEFT JOIN churches c ON r.church_id = c.id
+            WHERE r.token_hash = ?
+            LIMIT 1
+        ");
+        $stmt->bind_param("s", $tokenHash);
+        $stmt->execute();
+        $req = $stmt->get_result()->fetch_assoc();
+        $stmt->close();
+
+        if (!$req) {
+            sendJSON(['success' => false, 'message' => 'رابط تعيين كلمة المرور غير صالح أو تم استخدامه من قبل']);
+            return;
+        }
+
+        if ($req['status'] === 'used' || !empty($req['used_at'])) {
+            sendJSON(['success' => false, 'message' => 'تم استخدام هذا الرابط مسبقاً']);
+            return;
+        }
+
+        if ($req['status'] !== 'approved') {
+            sendJSON(['success' => false, 'message' => 'هذا الطلب لم يتم اعتماده بعد']);
+            return;
+        }
+
+        if (!empty($req['expires_at']) && strtotime($req['expires_at']) < time()) {
+            sendJSON(['success' => false, 'message' => 'انتهت صلاحية هذا الرابط (صالح لمدة 24 ساعة). يرجى طلب رابط جديد.']);
+            return;
+        }
+
+        $assignedEmail = $req['requested_email'] ?: ($req['current_email'] ?? '');
+
+        sendJSON([
+            'success' => true,
+            'student_name' => $req['student_name'] ?? 'المخدوم',
+            'church_name' => $req['church_name'] ?? 'مدارس الأحد',
+            'phone' => $req['phone'] ?: ($req['student_phone'] ?? ''),
+            'email' => $assignedEmail,
+            'request_type' => $req['request_type'] ?? 'setup_password'
+        ]);
+
+    } catch (Throwable $e) {
+        sendJSON(['success' => false, 'message' => 'خطأ: ' . $e->getMessage()]);
+    }
+}
+
+function completeDeveloperPasswordReset(): void
+{
+    try {
+        $token = trim($_POST['token'] ?? '');
+        $password = $_POST['password'] ?? '';
+
+        if (empty($token) || empty($password)) {
+            sendJSON(['success' => false, 'message' => 'الرمز وكلمة المرور مطلوبان']);
+            return;
+        }
+
+        if (strlen($password) < 6) {
+            sendJSON(['success' => false, 'message' => 'كلمة المرور يجب أن تكون 6 أحرف أو أرقام على الأقل']);
+            return;
+        }
+
+        $conn = getDBConnection();
+        ensureStudentPasswordRequestsTable($conn);
+        ensureStudentEmailColumns($conn);
+
+        $tokenHash = hash('sha256', $token);
+        $stmt = $conn->prepare("
+            SELECT r.*, s.name AS student_name, s.phone AS student_phone, s.email AS current_email, s.church_id
+            FROM student_password_requests r
+            JOIN students s ON r.student_id = s.id
+            WHERE r.token_hash = ? AND r.status = 'approved' AND (r.expires_at IS NULL OR r.expires_at >= NOW()) AND r.used_at IS NULL
+            LIMIT 1
+        ");
+        $stmt->bind_param("s", $tokenHash);
+        $stmt->execute();
+        $req = $stmt->get_result()->fetch_assoc();
+        $stmt->close();
+
+        if (!$req) {
+            sendJSON(['success' => false, 'message' => 'رابط تعيين كلمة المرور غير صالح أو انتهت صلاحيته']);
+            return;
+        }
+
+        $studentId = (int)$req['student_id'];
+        $churchId = (int)$req['church_id'];
+        $phone = $req['phone'] ?: ($req['student_phone'] ?? '');
+        $cleanPhone = preg_replace('/[^\d]/', '', $phone);
+        $requestedEmail = trim($req['requested_email'] ?? '');
+
+        $sha256Password = hash('sha256', $password);
+
+        // Update password and email in database
+        if (!empty($requestedEmail) && filter_var($requestedEmail, FILTER_VALIDATE_EMAIL)) {
+            $up = $conn->prepare("UPDATE students SET password_hash = ?, email = ?, is_email_verified = 1, updated_at = NOW() WHERE id = ?");
+            $up->bind_param("ssi", $sha256Password, $requestedEmail, $studentId);
+            $up->execute();
+            $up->close();
+        } else {
+            $up = $conn->prepare("UPDATE students SET password_hash = ?, updated_at = NOW() WHERE id = ?");
+            $up->bind_param("si", $sha256Password, $studentId);
+            $up->execute();
+            $up->close();
+        }
+
+        // Also sync password across sibling accounts sharing phone
+        if (!empty($cleanPhone)) {
+            @$conn->query("UPDATE students SET password_hash = '{$sha256Password}' WHERE (phone LIKE CONCAT('%', '{$cleanPhone}') OR phone = '{$cleanPhone}') AND id != {$studentId}");
+        }
+
+        // Mark request as used immediately (single-use token invalidated)
+        $upReq = $conn->prepare("UPDATE student_password_requests SET status = 'used', used_at = NOW(), token_hash = NULL WHERE id = ?");
+        $upReq->bind_param("i", $req['id']);
+        $upReq->execute();
+        $upReq->close();
+
+        // Establish student login session
+        $_SESSION['student_id'] = $studentId;
+        $_SESSION['student_phone'] = $cleanPhone;
+        $_SESSION['login_type'] = 'phone';
+        $_SESSION['loggedIn'] = true;
+
+        sendJSON([
+            'success' => true,
+            'message' => 'تم حفظ كلمة المرور وتسجيل الدخول بنجاح!',
+            'student_id' => $studentId,
+            'phone' => $cleanPhone,
+            'student_name' => $req['student_name'] ?? ''
+        ]);
+
+    } catch (Throwable $e) {
+        sendJSON(['success' => false, 'message' => 'خطأ في حفظ كلمة المرور: ' . $e->getMessage()]);
+    }
+}
+
+function updatePasswordRequestStatus(): void
+{
+    try {
+        if (!isDeveloperRole()) {
+            http_response_code(403);
+            sendJSON(['success' => false, 'message' => 'غير مصرح - هذه الميزة مخصصة لحساب المطور فقط']);
+            return;
+        }
+
+        $requestId = intval($_POST['request_id'] ?? 0);
+        $status = trim($_POST['status'] ?? '');
+
+        $allowedStatuses = ['pending', 'approved', 'rejected', 'used'];
+        if ($requestId <= 0 || !in_array($status, $allowedStatuses, true)) {
+            sendJSON(['success' => false, 'message' => 'بيانات غير صالحة']);
+            return;
+        }
+
+        $conn = getDBConnection();
+        ensureStudentPasswordRequestsTable($conn);
+
+        $stmt = $conn->prepare("UPDATE student_password_requests SET status = ? WHERE id = ?");
+        $stmt->bind_param("si", $status, $requestId);
+        $stmt->execute();
+        $stmt->close();
+
+        sendJSON([
+            'success' => true,
+            'message' => 'تم تحديث حالة الطلب بنجاح',
+            'status' => $status
         ]);
     } catch (Throwable $e) {
         sendJSON(['success' => false, 'message' => 'خطأ: ' . $e->getMessage()]);
@@ -33695,15 +35013,25 @@ function updateStudentFull()
         }
 
         if ($stmt->execute()) {
+            if (isset($_POST['email'])) {
+                $inputEmail = trim(sanitize($_POST['email']));
+                ensureStudentEmailColumns($conn);
+                if (!empty($inputEmail) && filter_var($inputEmail, FILTER_VALIDATE_EMAIL)) {
+                    $updEmail = $conn->prepare("UPDATE students SET email = ?, is_email_verified = 1 WHERE id = ? AND church_id = ?");
+                    if ($updEmail) {
+                        $updEmail->bind_param("sii", $inputEmail, $studentId, $churchId);
+                        $updEmail->execute();
+                        $updEmail->close();
+                    }
+                } elseif (empty($inputEmail)) {
+                    @$conn->query("UPDATE students SET email = NULL, is_email_verified = 0 WHERE id = {$studentId} AND church_id = {$churchId}");
+                }
+            }
 
             sendJSON([
-
                 'success' => true,
-
                 'message' => 'تم تحديث معلومات الطفل بنجاح',
-
                 'image_url' => $imageUrl
-
             ]);
 
         } else {
