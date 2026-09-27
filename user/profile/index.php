@@ -3038,89 +3038,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'logou
       border-color: var(--brand-l);
     }
 
-    /* First-time notice inside switcher */
-    .first-time-switch-notice {
-      background: linear-gradient(135deg, #eef2ff 0%, #ede9fe 50%, #fdf4ff 100%);
-      border: 1.5px solid #a5b4fc;
-      border-radius: var(--r-md);
-      padding: 14px 16px;
-      margin-bottom: 16px;
-      display: flex;
-      align-items: flex-start;
-      gap: 12px;
-      position: relative;
-      box-shadow: 0 4px 15px rgba(99, 102, 241, 0.1);
-      animation: fadeIn 0.4s ease both;
-      direction: rtl;
-      text-align: right;
-    }
 
-    .notice-icon-box {
-      width: 36px;
-      height: 36px;
-      border-radius: 50%;
-      background: var(--brand);
-      color: #fff;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 1.1rem;
-      flex-shrink: 0;
-      box-shadow: 0 4px 12px rgba(79, 70, 229, 0.3);
-    }
-
-    .notice-text-content {
-      flex: 1;
-      min-width: 0;
-    }
-
-    .notice-title {
-      font-size: .92rem;
-      font-weight: 800;
-      color: #312e81;
-      margin-bottom: 3px;
-    }
-
-    .notice-desc {
-      font-size: .78rem;
-      color: #4338ca;
-      line-height: 1.45;
-      font-weight: 600;
-    }
-
-    .notice-arrow-hint {
-      font-size: .72rem;
-      color: #6366f1;
-      font-weight: 800;
-      margin-top: 6px;
-      display: flex;
-      align-items: center;
-      gap: 5px;
-    }
-
-    .notice-dismiss-btn {
-      background: #4f46e5;
-      color: #fff;
-      border: none;
-      border-radius: var(--r-sm);
-      padding: 6px 14px;
-      font-family: inherit;
-      font-size: .76rem;
-      font-weight: 800;
-      cursor: pointer;
-      display: inline-flex;
-      align-items: center;
-      gap: 5px;
-      flex-shrink: 0;
-      align-self: center;
-      box-shadow: 0 2px 8px rgba(79, 70, 229, 0.35);
-      transition: all var(--fast);
-    }
-
-    .notice-dismiss-btn:hover {
-      background: #4338ca;
-      transform: translateY(-1px);
-    }
 
     /* Account cards in main page */
     .acc-cards-grid {
@@ -3316,38 +3234,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'logou
         white-space: nowrap;
       }
 
-      .first-time-switch-notice {
-        padding: 8px 10px;
-        margin-bottom: 8px;
-        gap: 8px;
-        border-radius: 8px;
-      }
 
-      .notice-icon-box {
-        width: 26px;
-        height: 26px;
-        font-size: 0.8rem;
-      }
-
-      .notice-title {
-        font-size: 0.78rem;
-        margin-bottom: 1px;
-      }
-
-      .notice-desc {
-        font-size: 0.69rem;
-        line-height: 1.35;
-      }
-
-      .notice-arrow-hint {
-        display: none;
-      }
-
-      .notice-dismiss-btn {
-        padding: 3px 8px;
-        font-size: 0.68rem;
-        border-radius: 5px;
-      }
 
       .acc-cards-grid {
         grid-template-columns: 1fr;
@@ -5873,22 +5760,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'logou
 
     <!-- ══ ACCOUNT SWITCHER (MAIN PAGE) ══ -->
     <div class="sc account-switcher-box" id="scAccountSwitcher" style="display:none;">
-      <!-- First-time Notice Banner -->
-      <div class="first-time-switch-notice" id="firstTimeSwitchNotice" style="display:none;">
-        <div class="notice-icon-box">
-          <i class="fas fa-users-cog"></i>
-        </div>
-        <div class="notice-text-content">
-          <div class="notice-title" id="firstTimeNoticeTitle">مرحباً بك! يوجد حسابان مرتبطان بهذا الرقم</div>
-          <div class="notice-desc">تم ربط حسابات أولادك بهذا الرقم، ويمكنك التبديل بين الحسابات بسهولة في أي وقت من هذه المنطقة مباشرة أو من زر التبديل بالأعلى.</div>
-          <div class="notice-arrow-hint">
-            <i class="fas fa-hand-point-down"></i> اضغط على أي حساب أدناه للتبديل الفوري إليه
-          </div>
-        </div>
-        <button type="button" class="notice-dismiss-btn" onclick="dismissFirstTimeSwitchNotice(event)" title="إغلاق التنبيه">
-          <i class="fas fa-check"></i> فهمت
-        </button>
-      </div>
+
 
       <div class="sc-head as-head-bar">
         <div class="as-head-info-wrap">
@@ -10712,8 +10584,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'logou
       const switchBtnTop = document.getElementById('switchBtnTop');
       const grid = document.getElementById('accCardsGrid');
       const countBadge = document.getElementById('asCountBadge');
-      const notice = document.getElementById('firstTimeSwitchNotice');
-      const noticeTitle = document.getElementById('firstTimeNoticeTitle');
+
 
       if (allAccounts && student) {
         allAccounts = allAccounts.filter(a => doAccountsShareCommonPhone(student, a));
@@ -10744,23 +10615,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'logou
         countBadge.textContent = allAccounts.length;
       }
 
-      // First time notice check
-      const phoneOrUser = student?.phone || localStorage.getItem('savedUsername') || (student ? String(student.id) : '');
-      const noticeKey = 'multiAccNoticeSeen_' + phoneOrUser;
-      const isNoticeDismissed = localStorage.getItem(noticeKey) === 'true';
 
-      if (notice) {
-        if (!isNoticeDismissed) {
-          notice.style.display = 'flex';
-          if (noticeTitle) {
-            noticeTitle.textContent = allAccounts.length === 2
-              ? 'مرحباً بك! يوجد حسابان مرتبطان بهذا الرقم'
-              : `مرحباً بك! يوجد ${allAccounts.length} حسابات مرتبطة بهذا الرقم`;
-          }
-        } else {
-          notice.style.display = 'none';
-        }
-      }
 
       // Render cards
       if (grid) {
@@ -10856,18 +10711,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'logou
       localStorage.removeItem('justLoggedInMultiAccounts');
     }
 
-    function dismissFirstTimeSwitchNotice(e) {
-      if (e) e.stopPropagation();
-      const phoneOrUser = student?.phone || localStorage.getItem('savedUsername') || (student ? String(student.id) : '');
-      localStorage.setItem('multiAccNoticeSeen_' + phoneOrUser, 'true');
-      const notice = document.getElementById('firstTimeSwitchNotice');
-      if (notice) {
-        notice.style.transition = 'all 0.3s ease';
-        notice.style.opacity = '0';
-        notice.style.transform = 'translateY(-10px)';
-        setTimeout(() => { notice.style.display = 'none'; }, 300);
-      }
-    }
+
 
     function dismissFirstTimeModalOnly() {
       const phoneOrUser = student?.phone || localStorage.getItem('savedUsername') || (student ? String(student.id) : '');
