@@ -5242,9 +5242,28 @@ try {
 
 
         case 'uncleLogin':
-
             handleUncleLogin();
+            break;
 
+        case 'uncleGoogleLogin':
+        case 'handleUncleGoogleSignIn':
+            handleUncleGoogleSignIn();
+            break;
+
+        case 'requestUnclePasswordRecovery':
+            requestUnclePasswordRecovery();
+            break;
+
+        case 'resetUnclePasswordWithOTP':
+            resetUnclePasswordWithOTP();
+            break;
+
+        case 'completeUncleSecuritySetup':
+            completeUncleSecuritySetup();
+            break;
+
+        case 'linkUncleGoogleAccount':
+            linkUncleGoogleAccount();
             break;
 
 
@@ -16760,25 +16779,19 @@ function handleUncleLogin()
 
             ensureChurchApprovedColumn($conn);
 
-
+            ensureUncleGoogleColumns($conn);
 
             $stmt = $conn->prepare("
 
                 SELECT u.id, u.church_id, u.name, u.username, u.password_hash,
-
+                       u.email, u.google_id, u.google_email,
                        u.image_url, u.role, c.church_name, c.church_code,
-
                        c.admin_email,
                        COALESCE(c.church_type, 'kids') AS church_type,
-
                        COALESCE(c.is_approved, 1) AS is_approved
-
                 FROM uncles u
-
                 LEFT JOIN churches c ON u.church_id = c.id
-
                 WHERE u.username = ?
-
             ");
 
             $stmt->bind_param("s", $username);
@@ -16833,13 +16846,19 @@ function handleUncleLogin()
 
                 $_SESSION['login_type'] = 'uncle';
 
+                $defaultHash = '8d969eef6ecad3c29a3a629280e686cf0c3f5d5a86aff3ca12020c923adc6c92';
+                $isDefaultPassword = ($row['password_hash'] === $defaultHash);
+                $isMissingEmail = empty(trim($row['email'] ?? ''));
+                $requiresSecuritySetup = ($isDefaultPassword || $isMissingEmail);
 
+                $_SESSION['uncle_email'] = $row['email'] ?? '';
+                $_SESSION['requires_security_setup'] = $requiresSecuritySetup;
+                $_SESSION['must_change_password'] = $isDefaultPassword;
+                $_SESSION['must_add_email'] = $isMissingEmail;
 
                 auditLogin('uncle', $row['id'], $row['name']);
 
                 runBackgroundGradeUpChecks();
-
-
 
                 $sessionTokens = issueSessionTokens('uncle', intval($row['id']), null, null, null, [
                     'name' => $row['name'],
@@ -16859,12 +16878,16 @@ function handleUncleLogin()
                     'access_token' => $authToken,
                     'expires_in' => $sessionTokens['expires_in'] ?? 900,
                     'family_id' => $sessionTokens['family_id'] ?? '',
+                    'requires_security_setup' => $requiresSecuritySetup,
+                    'must_change_password' => $isDefaultPassword,
+                    'must_add_email' => $isMissingEmail,
                     'uncle' => [
                         'id' => $row['id'],
                         'name' => $row['name'],
                         'username' => $row['username'],
                         'image_url' => $row['image_url'],
-                        'role' => $row['role']
+                        'role' => $row['role'],
+                        'email' => $row['email'] ?? ''
                     ],
                     'church_name' => $row['church_name'],
                     'church_type' => $row['church_type'],
@@ -16892,6 +16915,476 @@ function handleUncleLogin()
 
     }
 
+}
+
+function ensureUncleGoogleColumns(mysqli $conn): void
+{
+    static $ensured = false;
+    if ($ensured) return;
+    $ensured = true;
+
+    $chkEmail = $conn->query("SHOW COLUMNS FROM uncles LIKE 'email'");
+    if ($chkEmail && $chkEmail->num_rows === 0) {
+        @$conn->query("ALTER TABLE uncles ADD COLUMN `email` VARCHAR(255) DEFAULT NULL AFTER `password_hash`");
+    }
+
+    $chkGoogleId = $conn->query("SHOW COLUMNS FROM uncles LIKE 'google_id'");
+    if ($chkGoogleId && $chkGoogleId->num_rows === 0) {
+        @$conn->query("ALTER TABLE uncles ADD COLUMN `google_id` VARCHAR(128) DEFAULT NULL AFTER `email`");
+        @$conn->query("ALTER TABLE uncles ADD INDEX `idx_uncles_google_id` (`google_id`)");
+    }
+
+    $chkGoogleEmail = $conn->query("SHOW COLUMNS FROM uncles LIKE 'google_email'");
+    if ($chkGoogleEmail && $chkGoogleEmail->num_rows === 0) {
+        @$conn->query("ALTER TABLE uncles ADD COLUMN `google_email` VARCHAR(255) DEFAULT NULL AFTER `google_id`");
+    }
+
+    $chkOtp = $conn->query("SHOW COLUMNS FROM uncles LIKE 'email_otp'");
+    if ($chkOtp && $chkOtp->num_rows === 0) {
+        @$conn->query("ALTER TABLE uncles ADD COLUMN `email_otp` VARCHAR(64) DEFAULT NULL AFTER `google_email`");
+    }
+
+    $chkOtpExp = $conn->query("SHOW COLUMNS FROM uncles LIKE 'email_otp_expires'");
+    if ($chkOtpExp && $chkOtpExp->num_rows === 0) {
+        @$conn->query("ALTER TABLE uncles ADD COLUMN `email_otp_expires` DATETIME DEFAULT NULL AFTER `email_otp`");
+    }
+}
+
+function completeUncleSecuritySetup(): void
+{
+    try {
+        checkUncleAuth();
+        $uncleId = intval($_SESSION['uncle_id'] ?? 0);
+        if ($uncleId <= 0) {
+            sendJSON(['success' => false, 'message' => 'غير مصرح']);
+            return;
+        }
+
+        $email = trim(sanitize($_POST['email'] ?? ''));
+        $newPassword = $_POST['new_password'] ?? '';
+        $confirmPassword = $_POST['confirm_password'] ?? '';
+
+        $conn = getDBConnection();
+        ensureUncleGoogleColumns($conn);
+
+        $stmt = $conn->prepare("SELECT id, name, username, email, password_hash FROM uncles WHERE id = ? LIMIT 1");
+        $stmt->bind_param("i", $uncleId);
+        $stmt->execute();
+        $uncle = $stmt->get_result()->fetch_assoc();
+        $stmt->close();
+
+        if (!$uncle) {
+            sendJSON(['success' => false, 'message' => 'الحساب غير موجود']);
+            return;
+        }
+
+        $defaultHash = '8d969eef6ecad3c29a3a629280e686cf0c3f5d5a86aff3ca12020c923adc6c92';
+        $isDefaultPassword = ($uncle['password_hash'] === $defaultHash);
+        $isMissingEmail = empty(trim($uncle['email'] ?? ''));
+
+        if ($isDefaultPassword || !empty($newPassword)) {
+            if (empty($newPassword) || mb_strlen($newPassword) < 6) {
+                sendJSON(['success' => false, 'message' => 'كلمة المرور يجب أن تكون 6 أحرف على الأقل']);
+                return;
+            }
+            if (!empty($confirmPassword) && $newPassword !== $confirmPassword) {
+                sendJSON(['success' => false, 'message' => 'كلمة المرور غير متطابقة']);
+                return;
+            }
+            $newHash = hash('sha256', $newPassword);
+            if ($newHash === $defaultHash) {
+                sendJSON(['success' => false, 'message' => 'يرجى اختيار كلمة مرور شخصية غير كلمة المرور الافتراضية']);
+                return;
+            }
+        }
+
+        if ($isMissingEmail || !empty($email)) {
+            if (empty($email) || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
+                sendJSON(['success' => false, 'message' => 'يرجى إدخال بريد إلكتروني صحيح لتأمين الحساب واستعادته']);
+                return;
+            }
+            $chk = $conn->prepare("SELECT id FROM uncles WHERE LOWER(TRIM(email)) = LOWER(?) AND id != ? LIMIT 1");
+            $chk->bind_param("si", $email, $uncleId);
+            $chk->execute();
+            if ($chk->get_result()->num_rows > 0) {
+                sendJSON(['success' => false, 'message' => 'هذا البريد الإلكتروني مسجل لحساب خادم آخر']);
+                return;
+            }
+            $chk->close();
+        }
+
+        $updates = [];
+        $params = [];
+        $types = "";
+
+        if ($isDefaultPassword || !empty($newPassword)) {
+            $updates[] = "password_hash = ?";
+            $params[] = hash('sha256', $newPassword);
+            $types .= "s";
+        }
+        if ($isMissingEmail || !empty($email)) {
+            $updates[] = "email = ?";
+            $params[] = $email;
+            $types .= "s";
+        }
+
+        if (!empty($updates)) {
+            $updates[] = "updated_at = NOW()";
+            $sql = "UPDATE uncles SET " . implode(", ", $updates) . " WHERE id = ?";
+            $params[] = $uncleId;
+            $types .= "i";
+
+            $up = $conn->prepare($sql);
+            $up->bind_param($types, ...$params);
+            $up->execute();
+            $up->close();
+        }
+
+        $_SESSION['requires_security_setup'] = false;
+        $_SESSION['must_change_password'] = false;
+        $_SESSION['must_add_email'] = false;
+        if (!empty($email)) $_SESSION['uncle_email'] = $email;
+
+        sendJSON([
+            'success' => true,
+            'message' => 'تم حفظ وتحديث بيانات الأمان بنجاح'
+        ]);
+    } catch (Throwable $e) {
+        sendJSON(['success' => false, 'message' => 'خطأ: ' . $e->getMessage()]);
+    }
+}
+
+function requestUnclePasswordRecovery(): void
+{
+    try {
+        $identifier = trim(sanitize($_POST['identifier'] ?? $_POST['username'] ?? $_POST['email'] ?? ''));
+        if (empty($identifier)) {
+            sendJSON(['success' => false, 'message' => 'اسم المستخدم أو البريد الإلكتروني مطلوب']);
+            return;
+        }
+
+        $conn = getDBConnection();
+        ensureUncleGoogleColumns($conn);
+
+        $isEmail = filter_var($identifier, FILTER_VALIDATE_EMAIL) || strpos($identifier, '@') !== false;
+        if ($isEmail) {
+            $stmt = $conn->prepare("SELECT id, name, username, email FROM uncles WHERE LOWER(TRIM(email)) = LOWER(?) LIMIT 1");
+            $stmt->bind_param("s", $identifier);
+        } else {
+            $stmt = $conn->prepare("SELECT id, name, username, email FROM uncles WHERE username = ? LIMIT 1");
+            $stmt->bind_param("s", $identifier);
+        }
+        $stmt->execute();
+        $uncle = $stmt->get_result()->fetch_assoc();
+        $stmt->close();
+
+        if (!$uncle) {
+            sendJSON(['success' => false, 'message' => 'لم يتم العثور على حساب خادم بهذه البيانات']);
+            return;
+        }
+
+        $email = trim($uncle['email'] ?? '');
+        if (empty($email) || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
+            sendJSON([
+                'success' => false,
+                'has_email' => false,
+                'message' => 'لم يتم ربط بريد إلكتروني بحسابك بعد. يرجى التواصل مع مسؤول الكنيسة أو المطور لمساعدتك في استعادة الحساب وتعيين بريدك الإلكتروني.'
+            ]);
+            return;
+        }
+
+        $otp = sprintf("%06d", mt_rand(100000, 999999));
+        $otpHashed = hash('sha256', $otp);
+
+        $up = $conn->prepare("UPDATE uncles SET email_otp = ?, email_otp_expires = DATE_ADD(NOW(), INTERVAL 15 MINUTE) WHERE id = ?");
+        $up->bind_param("si", $otpHashed, $uncle['id']);
+        $up->execute();
+        $up->close();
+
+        $uncleName = htmlspecialchars($uncle['name'] ?? 'أستاذنا العزيز', ENT_QUOTES, 'UTF-8');
+        $subject = "Sunday School - كود استعادة كلمة المرور لحساب الخادم: {$otp}";
+        $htmlBody = "
+            <div dir='rtl' style='font-family:\"Cairo\", Tahoma, Arial, sans-serif; max-width:600px; margin:auto; background:#ffffff; border-radius:16px; padding:28px; border:1px solid #e2e8f0; color:#1e293b;'>
+                <div style='text-align:center; margin-bottom:24px;'>
+                    <h2 style='color:#4f46e5; margin:0 0 6px 0;'>Sunday School</h2>
+                    <p style='color:#64748b; font-size:14px; margin:0;'>استعادة كلمة مرور حساب الخادم</p>
+                </div>
+                <p style='font-size:16px;'>سلام ونعمة يا <strong>{$uncleName}</strong>،</p>
+                <p style='color:#475569; font-size:15px; line-height:1.7;'>
+                    لقد تلقينا طلباً لاستعادة كلمة المرور لحسابك (اسم المستخدم: <strong>{$uncle['username']}</strong>). كود التحقق الخاص بك هو:
+                </p>
+                <div style='text-align:center; margin:28px 0;'>
+                    <span style='display:inline-block; font-size:34px; font-weight:800; letter-spacing:8px; color:#4f46e5; background:#eef0ff; padding:14px 30px; border-radius:12px; border:2px dashed #a5b0ff;'>
+                        {$otp}
+                    </span>
+                </div>
+                <p style='color:#64748b; font-size:13px; text-align:center;'>
+                    هذا الكود صالح لمدة 15 دقيقة فقط. إذا لم تكن قد طلبت استعادة الحساب، يمكنك تجاهل هذه الرسالة.
+                </p>
+            </div>
+        ";
+
+        sendSundaySchoolEmail($email, $subject, $htmlBody);
+
+        sendJSON([
+            'success' => true,
+            'has_email' => true,
+            'uncle_id' => $uncle['id'],
+            'masked_email' => maskEmail($email),
+            'message' => 'تم إرسال كود التحقق المكون من 6 أرقام إلى بريدك الإلكتروني المسجل'
+        ]);
+    } catch (Throwable $e) {
+        sendJSON(['success' => false, 'message' => 'خطأ: ' . $e->getMessage()]);
+    }
+}
+
+function resetUnclePasswordWithOTP(): void
+{
+    try {
+        $uncleId = intval($_POST['uncle_id'] ?? 0);
+        $otp = trim($_POST['otp'] ?? '');
+        $newPassword = $_POST['new_password'] ?? '';
+        $confirmPassword = $_POST['confirm_password'] ?? '';
+
+        if ($uncleId <= 0 || empty($otp)) {
+            sendJSON(['success' => false, 'message' => 'بيانات غير صالحة']);
+            return;
+        }
+
+        if (empty($newPassword) || mb_strlen($newPassword) < 6) {
+            sendJSON(['success' => false, 'message' => 'كلمة المرور يجب أن تكون 6 أحرف على الأقل']);
+            return;
+        }
+
+        if (!empty($confirmPassword) && $newPassword !== $confirmPassword) {
+            sendJSON(['success' => false, 'message' => 'كلمة المرور غير متطابقة']);
+            return;
+        }
+
+        $defaultHash = '8d969eef6ecad3c29a3a629280e686cf0c3f5d5a86aff3ca12020c923adc6c92';
+        $newHash = hash('sha256', $newPassword);
+        if ($newHash === $defaultHash) {
+            sendJSON(['success' => false, 'message' => 'يرجى اختيار كلمة مرور شخصية غير كلمة المرور الافتراضية']);
+            return;
+        }
+
+        $conn = getDBConnection();
+        ensureUncleGoogleColumns($conn);
+
+        $otpHashed = hash('sha256', $otp);
+
+        $stmt = $conn->prepare("SELECT id, name FROM uncles WHERE id = ? AND (email_otp = ? OR email_otp = ?) AND email_otp_expires >= NOW() LIMIT 1");
+        $stmt->bind_param("iss", $uncleId, $otpHashed, $otp);
+        $stmt->execute();
+        $uncle = $stmt->get_result()->fetch_assoc();
+        $stmt->close();
+
+        if (!$uncle) {
+            sendJSON(['success' => false, 'message' => 'كود التحقق غير صحيح أو انتهت صلاحيته']);
+            return;
+        }
+
+        $up = $conn->prepare("UPDATE uncles SET password_hash = ?, email_otp = NULL, email_otp_expires = NULL, updated_at = NOW() WHERE id = ?");
+        $up->bind_param("si", $newHash, $uncleId);
+        $up->execute();
+        $up->close();
+
+        sendJSON([
+            'success' => true,
+            'message' => 'تم تغيير كلمة المرور بنجاح! يمكنك الآن تسجيل الدخول بكلمة المرور الجديدة.'
+        ]);
+    } catch (Throwable $e) {
+        sendJSON(['success' => false, 'message' => 'خطأ: ' . $e->getMessage()]);
+    }
+}
+
+function handleUncleGoogleSignIn(): void
+{
+    try {
+        $credential = trim($_POST['credential'] ?? $_POST['token'] ?? '');
+        $googleId = trim(sanitize($_POST['google_id'] ?? ''));
+        $email = trim(sanitize($_POST['email'] ?? ''));
+
+        $conn = getDBConnection();
+        ensureUncleGoogleColumns($conn);
+
+        if (!empty($credential)) {
+            $payload = verifyGoogleToken($credential);
+            if ($payload) {
+                $googleId = $payload['sub'] ?? $googleId;
+                $email = $payload['email'] ?? $email;
+            }
+        }
+
+        if (empty($googleId) && empty($email)) {
+            sendJSON(['success' => false, 'message' => 'بيانات Google غير صالحة أو غير متوفرة']);
+            return;
+        }
+
+        $uncle = null;
+        if (!empty($googleId)) {
+            $stmt = $conn->prepare("
+                SELECT u.id, u.church_id, u.name, u.username, u.password_hash,
+                       u.email, u.google_id, u.google_email,
+                       u.image_url, u.role, c.church_name, c.church_code,
+                       COALESCE(c.church_type, 'kids') AS church_type,
+                       COALESCE(c.is_approved, 1) AS is_approved
+                FROM uncles u
+                LEFT JOIN churches c ON u.church_id = c.id
+                WHERE u.google_id = ?
+                LIMIT 1
+            ");
+            $stmt->bind_param("s", $googleId);
+            $stmt->execute();
+            $uncle = $stmt->get_result()->fetch_assoc();
+            $stmt->close();
+        }
+
+        if (!$uncle && !empty($email)) {
+            $stmt = $conn->prepare("
+                SELECT u.id, u.church_id, u.name, u.username, u.password_hash,
+                       u.email, u.google_id, u.google_email,
+                       u.image_url, u.role, c.church_name, c.church_code,
+                       COALESCE(c.church_type, 'kids') AS church_type,
+                       COALESCE(c.is_approved, 1) AS is_approved
+                FROM uncles u
+                LEFT JOIN churches c ON u.church_id = c.id
+                WHERE LOWER(TRIM(u.email)) = LOWER(?)
+                LIMIT 1
+            ");
+            $stmt->bind_param("s", $email);
+            $stmt->execute();
+            $uncle = $stmt->get_result()->fetch_assoc();
+            $stmt->close();
+
+            if ($uncle && empty($uncle['google_id']) && !empty($googleId)) {
+                $uId = $uncle['id'];
+                @$conn->query("UPDATE uncles SET google_id = '" . $conn->real_escape_string($googleId) . "', google_email = '" . $conn->real_escape_string($email) . "' WHERE id = {$uId}");
+                $uncle['google_id'] = $googleId;
+            }
+        }
+
+        if (!$uncle) {
+            sendJSON([
+                'success' => false,
+                'not_linked' => true,
+                'google_id' => $googleId,
+                'email' => $email,
+                'message' => 'حساب Google هذا غير مرتبط بأي حساب خادم. يرجى تسجيل الدخول باسم المستخدم وكلمة المرور أولاً لربط الحساب.'
+            ]);
+            return;
+        }
+
+        if (isset($uncle['is_approved']) && intval($uncle['is_approved']) === 0) {
+            sendJSON(['success' => false, 'message' => 'هذه الكنيسة معلقة وفي انتظار موافقة المطور للتفعيل']);
+            return;
+        }
+
+        $_SESSION = [];
+        @session_regenerate_id(true);
+        $_SESSION['uncle_logged_in'] = true;
+        $_SESSION['user_type'] = 'uncle';
+        $_SESSION['uncle_id'] = $uncle['id'];
+        $_SESSION['church_id'] = $uncle['church_id'];
+        $_SESSION['church_name'] = $uncle['church_name'];
+        $_SESSION['church_code'] = $uncle['church_code'];
+        $_SESSION['church_type'] = $uncle['church_type'];
+        $_SESSION['uncle_name'] = $uncle['name'];
+        $_SESSION['uncle_username'] = $uncle['username'];
+        $_SESSION['uncle_image'] = $uncle['image_url'];
+        $_SESSION['uncle_role'] = $uncle['role'] ?? 'uncle';
+        $_SESSION['role'] = $uncle['role'] ?? 'uncle';
+        if (in_array(strtolower(trim($uncle['role'] ?? '')), ['developer', 'dev'])) {
+            $_SESSION['is_developer'] = true;
+        }
+        $_SESSION['login_type'] = 'uncle';
+
+        auditLogin('uncle', $uncle['id'], $uncle['name']);
+
+        $defaultHash = '8d969eef6ecad3c29a3a629280e686cf0c3f5d5a86aff3ca12020c923adc6c92';
+        $isDefaultPassword = ($uncle['password_hash'] === $defaultHash);
+        $isMissingEmail = empty(trim($uncle['email'] ?? ''));
+        $requiresSecuritySetup = ($isDefaultPassword || $isMissingEmail);
+
+        $_SESSION['uncle_email'] = $uncle['email'] ?? '';
+        $_SESSION['requires_security_setup'] = $requiresSecuritySetup;
+        $_SESSION['must_change_password'] = $isDefaultPassword;
+        $_SESSION['must_add_email'] = $isMissingEmail;
+
+        sendJSON([
+            'success' => true,
+            'message' => 'تم تسجيل الدخول بنجاح',
+            'requires_security_setup' => $requiresSecuritySetup,
+            'must_change_password' => $isDefaultPassword,
+            'must_add_email' => $isMissingEmail,
+            'uncle' => [
+                'id' => $uncle['id'],
+                'name' => $uncle['name'],
+                'username' => $uncle['username'],
+                'image_url' => $uncle['image_url'],
+                'role' => $uncle['role'],
+                'email' => $uncle['email'] ?? ''
+            ],
+            'church_name' => $uncle['church_name'],
+            'church_type' => $uncle['church_type']
+        ]);
+    } catch (Throwable $e) {
+        sendJSON(['success' => false, 'message' => 'خطأ: ' . $e->getMessage()]);
+    }
+}
+
+function linkUncleGoogleAccount(): void
+{
+    try {
+        checkUncleAuth();
+        $uncleId = intval($_SESSION['uncle_id'] ?? 0);
+        if ($uncleId <= 0) {
+            sendJSON(['success' => false, 'message' => 'غير مصرح']);
+            return;
+        }
+
+        $credential = trim($_POST['credential'] ?? $_POST['token'] ?? '');
+        $googleId = trim(sanitize($_POST['google_id'] ?? ''));
+        $email = trim(sanitize($_POST['email'] ?? ''));
+
+        if (!empty($credential)) {
+            $payload = verifyGoogleToken($credential);
+            if ($payload) {
+                $googleId = $payload['sub'] ?? $googleId;
+                $email = $payload['email'] ?? $email;
+            }
+        }
+
+        if (empty($googleId)) {
+            sendJSON(['success' => false, 'message' => 'بيانات Google غير صالحة']);
+            return;
+        }
+
+        $conn = getDBConnection();
+        ensureUncleGoogleColumns($conn);
+
+        $chk = $conn->prepare("SELECT id, name FROM uncles WHERE google_id = ? AND id != ? LIMIT 1");
+        $chk->bind_param("si", $googleId, $uncleId);
+        $chk->execute();
+        if ($chk->get_result()->num_rows > 0) {
+            sendJSON(['success' => false, 'message' => 'حساب Google هذا مرتبط بالفعل بحساب خادم آخر']);
+            return;
+        }
+        $chk->close();
+
+        $up = $conn->prepare("UPDATE uncles SET google_id = ?, google_email = ?, email = COALESCE(NULLIF(email, ''), ?), updated_at = NOW() WHERE id = ?");
+        $up->bind_param("sssi", $googleId, $email, $email, $uncleId);
+        $up->execute();
+        $up->close();
+
+        sendJSON([
+            'success' => true,
+            'google_email' => $email,
+            'message' => 'تم ربط حساب Google بحساب الخادم بنجاح'
+        ]);
+    } catch (Throwable $e) {
+        sendJSON(['success' => false, 'message' => 'خطأ: ' . $e->getMessage()]);
+    }
 }
 
 
@@ -16928,8 +17421,10 @@ function getCurrentUncle()
         ensureUnclesTableCustomInfoColumn($conn);
 
         ensureChurchTypeColumn($conn);
+        ensureUncleGoogleColumns($conn);
         $stmt = $conn->prepare("
-            SELECT u.id, u.name, u.username, u.image_url, u.role, u.custom_info, u.email, u.phone, u.gender, u.birthday, u.church_id,
+            SELECT u.id, u.name, u.username, u.password_hash, u.image_url, u.role, u.custom_info, u.email, u.phone, u.gender, u.birthday, u.church_id,
+                   u.google_id, u.google_email,
                    c.church_name, c.church_code, c.admin_email, COALESCE(c.church_type, 'kids') AS church_type
             FROM uncles u
             LEFT JOIN churches c ON u.church_id = c.id
@@ -16973,7 +17468,15 @@ function getCurrentUncle()
                 $_SESSION['admin_email'] = $row['admin_email'];
             }
 
+            $defaultHash = '8d969eef6ecad3c29a3a629280e686cf0c3f5d5a86aff3ca12020c923adc6c92';
+            $isDefaultPassword = (($row['password_hash'] ?? '') === $defaultHash);
+            $isMissingEmail = empty(trim($row['email'] ?? ''));
+            $requiresSecuritySetup = ($isDefaultPassword || $isMissingEmail);
 
+            $_SESSION['uncle_email'] = $row['email'] ?? '';
+            $_SESSION['requires_security_setup'] = $requiresSecuritySetup;
+            $_SESSION['must_change_password'] = $isDefaultPassword;
+            $_SESSION['must_add_email'] = $isMissingEmail;
 
             // Also include assigned classes for this uncle (if any)
 
@@ -17003,6 +17506,12 @@ function getCurrentUncle()
 
                 'church_type' => $row['church_type'] ?? 'kids',
 
+                'requires_security_setup' => $requiresSecuritySetup,
+
+                'must_change_password' => $isDefaultPassword,
+
+                'must_add_email' => $isMissingEmail,
+
                 'uncle' => [
 
                     'church_id' => $row['church_id'] ? (int)$row['church_id'] : null,
@@ -17026,6 +17535,16 @@ function getCurrentUncle()
                     'phone' => $row['phone'] ?? '',
 
                     'gender' => $row['gender'] ?? 'male',
+
+                    'google_id' => $row['google_id'] ?? '',
+
+                    'google_email' => $row['google_email'] ?? '',
+
+                    'requires_security_setup' => $requiresSecuritySetup,
+
+                    'must_change_password' => $isDefaultPassword,
+
+                    'must_add_email' => $isMissingEmail,
 
                     'classes' => $assignedClasses
 
