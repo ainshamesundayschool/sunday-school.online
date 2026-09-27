@@ -720,6 +720,27 @@ position: absolute;
         <!-- Uncle Login Form -->
         <div class="form-container active" id="uncleLoginForm">
             <form class="login-form" data-login-type="uncle">
+                <!-- Google Sign-In for Uncle (Above Login Inputs) -->
+                <div id="uncleGoogleSignInContainer" style="width:100%; margin-bottom:14px;">
+                    <div id="uncleGoogleSignInDiv" style="display:flex; justify-content:center; width:100%; min-height:44px;"></div>
+                    <button type="button" id="customUncleGoogleBtn" onclick="triggerUncleGoogleSignIn()" style="display:none; width:100%; padding:10px 16px; border:1.5px solid var(--border-solid, #e4e6f0); border-radius:var(--radius-sm, 12px); background:#fff; color:var(--text, #1a1d2e); font-family:'Cairo', sans-serif; font-size:0.9rem; font-weight:700; cursor:pointer; align-items:center; justify-content:center; gap:10px; transition:all 0.2s; box-shadow:0 1px 3px rgba(0,0,0,0.06);" onmouseover="this.style.background='var(--surface-2, #f8f9fa)'; this.style.borderColor='var(--brand, #5b6cf5)'" onmouseout="this.style.background='#fff'; this.style.borderColor='var(--border-solid, #e4e6f0)'">
+                        <svg width="18" height="18" viewBox="0 0 24 24">
+                            <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                            <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                            <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/>
+                            <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/>
+                        </svg>
+                        <span>تسجيل الدخول بواسطة Google</span>
+                    </button>
+                </div>
+
+                <!-- Divider -->
+                <div style="display:flex; align-items:center; margin:0 0 16px 0; color:var(--secondary); font-size:0.83rem;">
+                    <span style="flex:1; height:1px; background:var(--border);"></span>
+                    <span style="padding:0 12px; font-weight:700;">أو باستخدام اسم المستخدم</span>
+                    <span style="flex:1; height:1px; background:var(--border);"></span>
+                </div>
+
                 <!-- Username -->
                 <div class="form-group">
                     <label for="uncleUsername" class="form-label">اسم المستخدم</label>
@@ -766,15 +787,6 @@ position: absolute;
                 <button type="submit" class="login-btn">
                     <i class="fas fa-sign-in-alt"></i> تسجيل الدخول
                 </button>
-
-                <!-- Divider & Google Sign-In for Uncle -->
-                <div style="display:flex; align-items:center; margin:18px 0 14px 0; color:var(--secondary); font-size:0.85rem;">
-                    <span style="flex:1; height:1px; background:var(--border);"></span>
-                    <span style="padding:0 12px; font-weight:700;">أو</span>
-                    <span style="flex:1; height:1px; background:var(--border);"></span>
-                </div>
-
-                <div id="uncleGoogleSignInDiv" style="display:flex; justify-content:center; width:100%; min-height:44px;"></div>
             </form>
         </div>
 
@@ -1058,6 +1070,9 @@ position: absolute;
         // Restore form-container active class
         document.querySelectorAll('.form-container').forEach(f => f.classList.remove('active'));
         document.getElementById(activeType === 'church' ? 'churchLoginForm' : 'uncleLoginForm').classList.add('active');
+        if (activeType === 'uncle') {
+            setTimeout(initUncleGoogleIdentity, 60);
+        }
     }
 
     function showLoading(text) {
@@ -1402,13 +1417,21 @@ position: absolute;
     let recoveryUncleId = null;
 
     let googleInitAttempts = 0;
+    let isGoogleRendered = false;
+
     function initUncleGoogleIdentity() {
+        const btnContainer = document.getElementById('uncleGoogleSignInDiv');
+        const customBtn = document.getElementById('customUncleGoogleBtn');
+
         if (typeof google === 'undefined' || !google.accounts || !google.accounts.id) {
-            if (++googleInitAttempts < 30) {
-                setTimeout(initUncleGoogleIdentity, 300);
+            // Show custom styled fallback button immediately so it is always visible
+            if (customBtn && !isGoogleRendered) customBtn.style.display = 'inline-flex';
+            if (++googleInitAttempts < 40) {
+                setTimeout(initUncleGoogleIdentity, 250);
             }
             return;
         }
+
         try {
             google.accounts.id.initialize({
                 client_id: GOOGLE_CLIENT_ID,
@@ -1417,20 +1440,86 @@ position: absolute;
                 cancel_on_tap_outside: true
             });
 
-            const btnContainer = document.getElementById('uncleGoogleSignInDiv');
             if (btnContainer) {
+                btnContainer.innerHTML = '';
+                const formBox = document.querySelector('.form-box') || document.body;
+                const calcW = Math.min(Math.max((formBox.clientWidth || 320) - 60, 240), 360);
+
                 google.accounts.id.renderButton(btnContainer, {
                     type: 'standard',
                     theme: 'outline',
                     size: 'large',
                     text: 'signin_with',
                     shape: 'pill',
-                    width: Math.min(window.innerWidth - 60, 320),
+                    width: calcW,
                     locale: 'ar'
                 });
+
+                // Check after render if Google button actually loaded inside the container
+                setTimeout(() => {
+                    if (btnContainer.firstElementChild && btnContainer.offsetHeight > 20) {
+                        isGoogleRendered = true;
+                        if (customBtn) customBtn.style.display = 'none';
+                    } else {
+                        // In case of adblocker / origin mismatch / network delay
+                        if (customBtn) customBtn.style.display = 'inline-flex';
+                    }
+                }, 400);
             }
         } catch (e) {
             console.warn('Google Identity initialization failed:', e);
+            if (customBtn) customBtn.style.display = 'inline-flex';
+        }
+    }
+
+    function triggerUncleGoogleSignIn() {
+        if (typeof google === 'undefined' || !google.accounts) {
+            alert('جاري تحميل خدمات Google، يرجى المحاولة بعد لحظات...');
+            return;
+        }
+
+        try {
+            // If OAuth2 token client is available, try authorization flow
+            if (google.accounts.oauth2) {
+                const tc = google.accounts.oauth2.initTokenClient({
+                    client_id: GOOGLE_CLIENT_ID,
+                    scope: 'openid email profile',
+                    callback: async (resp) => {
+                        if (resp && resp.access_token) {
+                            try {
+                                const uRes = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
+                                    headers: { Authorization: `Bearer ${resp.access_token}` }
+                                });
+                                const uInfo = await uRes.json();
+                                if (uInfo && (uInfo.sub || uInfo.email)) {
+                                    handleUncleGoogleSignInResponse({
+                                        credential: resp.access_token,
+                                        google_id: uInfo.sub,
+                                        email: uInfo.email
+                                    });
+                                    return;
+                                }
+                            } catch (err) {
+                                console.warn(err);
+                            }
+                            handleUncleGoogleSignInResponse({ credential: resp.access_token });
+                        }
+                    }
+                });
+                tc.requestAccessToken({ prompt: 'select_account' });
+                return;
+            }
+
+            // Fallback to Google ID prompt
+            if (google.accounts.id) {
+                google.accounts.id.prompt((notification) => {
+                    if (notification.isNotDisplayed() || notification.isSkippedMoment()) {
+                        console.warn('Google One Tap notification:', notification.getNotDisplayedReason?.());
+                    }
+                });
+            }
+        } catch (e) {
+            console.warn('Trigger Google Sign-In error:', e);
         }
     }
 
@@ -1441,6 +1530,8 @@ position: absolute;
             const fd = new FormData();
             fd.append('action', 'uncleGoogleLogin');
             fd.append('credential', response.credential);
+            if (response.google_id) fd.append('google_id', response.google_id);
+            if (response.email) fd.append('email', response.email);
 
             const r = await fetch(API, { method: 'POST', body: fd, credentials: 'include' });
             const data = await r.json();
@@ -1788,6 +1879,10 @@ position: absolute;
             errDiv.style.display = 'block';
         }
     }
+
+    window.addEventListener('load', function() {
+        setTimeout(initUncleGoogleIdentity, 200);
+    });
     </script>
 </body>
 </html>
