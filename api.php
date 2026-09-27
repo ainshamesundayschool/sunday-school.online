@@ -17195,7 +17195,7 @@ function requestUnclePasswordRecovery(): void
                     <h2 style='color:#4f46e5; margin:0 0 6px 0;'>Sunday School</h2>
                     <p style='color:#64748b; font-size:14px; margin:0;'>استعادة كلمة مرور حساب الخادم</p>
                 </div>
-                <p style='font-size:16px;'>سلام ونعمة يا <strong>{$uncleName}</strong>،</p>
+                <p style='font-size:16px;'>أهلاً يا <strong>{$uncleName}</strong>،</p>
                 <p style='color:#475569; font-size:15px; line-height:1.7;'>
                     لقد تلقينا طلباً لاستعادة كلمة المرور لحسابك (اسم المستخدم: <strong>{$uncle['username']}</strong>). كود التحقق الخاص بك هو:
                 </p>
@@ -21576,7 +21576,7 @@ function requestStudentEmailVerification()
                     <h2 style='color:#5b6cf5; margin:0 0 6px 0;'>Sunday School Online</h2>
                     <p style='color:#64748b; font-size:14px; margin:0;'>تأكيد البريد الإلكتروني وتأمين الحساب</p>
                 </div>
-                <p style='font-size:16px;'>سلام ونعمة يا <strong>{$studentName}</strong>،</p>
+                <p style='font-size:16px;'>أهلاً يا <strong>{$studentName}</strong>،</p>
                 <p style='color:#475569; font-size:15px; line-height:1.7;'>
                     كود التحقق الخاص بك لتأكيد بريدك الإلكتروني وتأمين حسابك هو:
                 </p>
@@ -21752,7 +21752,7 @@ function requestStudentPasswordRecovery()
                         <h2 style='color:#5b6cf5; margin:0 0 6px 0;'>Sunday School Online</h2>
                         <p style='color:#64748b; font-size:14px; margin:0;'>استعادة كلمة المرور</p>
                     </div>
-                    <p style='font-size:16px;'>سلام ونعمة يا <strong>{$studentName}</strong>،</p>
+                    <p style='font-size:16px;'>أهلاً يا <strong>{$studentName}</strong>،</p>
                     <p style='color:#475569; font-size:15px; line-height:1.7;'>
                         لقد تلقينا طلباً لإعادة تعيين كلمة المرور لحسابك. كود التحقق الخاص بك هو:
                     </p>
@@ -22603,16 +22603,14 @@ function submitStudentPasswordRequest(): void
         if (function_exists('_sendWebPushToDeveloper')) {
             _sendWebPushToDeveloper($conn, $notifTitle, $notifBody, $notifUrl, [
                 'type' => 'dev_password_request',
+                'notifType' => 'dev_password_request',
+                'entity_type' => 'dev_password_request',
                 'request_id' => $requestId,
-                'church_id' => $churchId,
+                'entity_id' => $requestId,
+                'church_id' => 0, // MUST BE 0 so it is NEVER assigned to or visible by church admins or normal uncles
                 'student_id' => $studentId,
                 'request_type' => $requestType
             ]);
-        }
-
-        // Also add to notifications table for in-app bell notification
-        if (function_exists('pushNotification')) {
-            pushNotification($conn, $churchId, 'dev_password_request', $notifTitle, $notifBody, 'dev_password_request', $requestId);
         }
 
         sendJSON([
@@ -22777,7 +22775,7 @@ function generateDeveloperPasswordLink(): void
         $secureUrl = "{$protocol}://{$host}{$loginPath}?reset_token={$plainToken}";
 
         $actionVerb = ($requestType === 'reset_password') ? 'إعادة تعيين' : 'تعيين';
-        $msgText = "سلام ونعمة يا {$studentName}،\n"
+        $msgText = "أهلاً يا {$studentName}،\n"
                  . "بناءً على طلبك لـ {$actionVerb} كلمة المرور الخاصة بحسابك في مدارس الأحد:\n"
                  . "{$secureUrl}\n\n"
                  . "⚠️ تنبيه أمني هام: هذا الرابط سري وشخصي خاص بك وحدك صالح لمدة ساعتين فقط (ينتهي بعد ساعتين) ولا يمكن استخدامه إلا مرة واحدة.";
@@ -23031,7 +23029,7 @@ function generateResetLinkForStudent(): void
                         <p style='margin: 6px 0 0; font-size: 0.9rem; opacity: 0.9;'>إعادة تعيين كلمة المرور</p>
                     </div>
                     <div style='padding: 24px 22px; color: #1a1d2e; line-height: 1.7;'>
-                        <p style='font-size: 1rem; margin-top: 0;'>سلام ونعمة يا <strong>{$studentName}</strong>،</p>
+                        <p style='font-size: 1rem; margin-top: 0;'>أهلاً يا <strong>{$studentName}</strong>،</p>
                         <p style='color: #4b5068;'>بناءً على طلب استعادة كلمة المرور الخاص بحسابك، قمنا بإنشاء هذا الرابط الآمن لتتمكن من كتابة وتعيين كلمة مرور جديدة:</p>
                         <div style='text-align: center; margin: 28px 0;'>
                             <a href='{$resetUrl}' style='display: inline-block; background: linear-gradient(135deg, #5b6cf5, #4354e8); color: #ffffff; text-decoration: none; padding: 13px 32px; border-radius: 12px; font-weight: bold; font-size: 1rem; box-shadow: 0 4px 14px rgba(91,108,245,0.3);'>إعادة تعيين كلمة المرور</a>
@@ -23045,7 +23043,7 @@ function generateResetLinkForStudent(): void
                     </div>
                 </div>
             ";
-            $plainText = "سلام ونعمة يا {$studentName}،\nرابط إعادة تعيين كلمة المرور: {$resetUrl}\nصلاحية الرابط ساعتان فقط.";
+            $plainText = "أهلاً يا {$studentName}،\nرابط إعادة تعيين كلمة المرور: {$resetUrl}\nصلاحية الرابط ساعتان فقط.";
             if (function_exists('sendSundaySchoolEmail')) {
                 $emailSent = sendSundaySchoolEmail($finalEmail, $subject, $htmlBody, $plainText);
             }
