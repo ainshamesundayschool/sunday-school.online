@@ -30,6 +30,9 @@
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
 <script src="/js/search_intelligent.js"></script>
+<script src="https://accounts.google.com/gsi/client" async defer></script>
+<script src="/js/password_rules.js"></script>
+<script src="/js/google_reg_helper.js"></script>
 <style>
 *,*::before,*::after{margin:0;padding:0;box-sizing:border-box;}
 :root{
@@ -484,11 +487,39 @@ body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
             <input type="text" id="kidAddress" placeholder="مثال: مصر الجديدة، القاهرة" />
           </div>
         </div>
-        <div class="fr full" style="margin-bottom:0">
+        <!-- Google Quick Sign-In Option -->
+        <div style="margin-top:14px; margin-bottom:12px;">
+          <div id="kidGoogleBadge" style="display:none; margin-bottom:10px;"></div>
+          <button type="button" id="btnGoogleRegStudent" style="width:100%; padding:11px 16px; border:1.5px solid var(--border-solid); border-radius:var(--r-md); background:#fff; color:var(--text); font-family:'Cairo', sans-serif; font-size:0.92rem; font-weight:700; cursor:pointer; display:inline-flex; align-items:center; justify-content:center; gap:10px; transition:all 0.2s; box-shadow:0 1px 4px rgba(0,0,0,0.06);" onmouseover="this.style.background='var(--surface-2)'; this.style.borderColor='var(--brand)';" onmouseout="this.style.background='#fff'; this.style.borderColor='var(--border-solid)';">
+            <svg width="18" height="18" viewBox="0 0 24 24">
+              <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+              <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+              <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/>
+              <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/>
+            </svg>
+            <span>تسجيل وتأكيد البريد بحساب Google تلقائياً</span>
+          </button>
+        </div>
+
+        <div id="emailDivider" style="display:flex; align-items:center; margin:10px 0 16px 0; color:var(--text-3); font-size:0.8rem;">
+          <span style="flex:1; height:1px; background:var(--border);"></span>
+          <span style="padding:0 12px; font-weight:700;">أو كتابة وتأكيد البريد الإلكتروني يدوياً</span>
+          <span style="flex:1; height:1px; background:var(--border);"></span>
+        </div>
+
+        <div class="fr full" style="margin-bottom:12px">
           <div class="ff">
-            <label><i class="fas fa-envelope"></i> البريد الإلكتروني (اختياري)</label>
-            <input type="email" id="kidEmail" placeholder="example@email.com (اختياري)" />
-            <small>اختياري — ستصلك رسائل إلكترونية عند قبول أو رفض طلب التسجيل واستعادة الحساب</small>
+            <label><i class="fas fa-envelope"></i> البريد الإلكتروني <span class="req">*</span></label>
+            <input type="email" id="kidEmail" placeholder="example@email.com" autocomplete="email" style="direction:ltr;text-align:left;" />
+            <small>مطلوب — لتأمين الحساب واستعادة كلمة المرور تلقائياً واستلام الإشعارات</small>
+          </div>
+        </div>
+
+        <div class="fr full" id="kidEmailConfirmGroup" style="margin-bottom:0">
+          <div class="ff">
+            <label><i class="fas fa-check-double"></i> تأكيد البريد الإلكتروني <span class="req">*</span></label>
+            <input type="email" id="kidEmailConfirm" placeholder="أعد كتابة البريد الإلكتروني للتأكيد" autocomplete="email" style="direction:ltr;text-align:left;" />
+            <small>يرجى إعادة كتابة البريد للتأكد من عدم وجود أي خطأ إملائي</small>
           </div>
         </div>
       </div>
@@ -527,7 +558,7 @@ body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
               <input type="password" id="kidPassword" placeholder="••••••••" autocomplete="new-password" style="direction:ltr;text-align:left;padding-left:44px;" />
               <button type="button" onclick="togglePwd('kidPassword','eyeBtn1')" id="eyeBtn1" style="position:absolute;left:12px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:var(--text-3);font-size:.9rem;padding:4px;"><i class="fas fa-eye"></i></button>
             </div>
-            <small>6 أحرف على الأقل</small>
+            <small style="color:var(--text-3);margin-top:4px;display:block;">يجب أن تحتوي على حرف كبير (A-Z)، حرف صغير (a-z)، رقم (0-9)، و 6 خانات على الأقل</small>
           </div>
         </div>
         <div class="fr full" style="margin-bottom:0">
@@ -647,6 +678,7 @@ let customFields = [];   // [{key, name, icon, placeholder, required}]
 let step         = 1;
 const TOTAL      = 5;
 let avatarBase64 = null; // base64 string of chosen profile picture
+let googleRegInstance = null;
 
 /* ════════════════ LOCALSTORAGE ════════════════ */
 function getRegs() {
@@ -1075,6 +1107,7 @@ function showForm() {
   document.getElementById('mainContent').style.flexDirection = 'column';
   document.getElementById('mainContent').style.alignItems = 'center';
   updateRail(1);
+  initGoogleAndSecurity();
 }
 function showInvalid(isNotFound = true) {
   document.getElementById('stepRail').style.display  = 'none';
@@ -1284,13 +1317,22 @@ function updateRail(s) {
 function showPanel(s) {
   document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
   document.getElementById('p' + s).classList.add('active');
+  if (s === 3 || s === 4) {
+    initGoogleAndSecurity();
+  }
 }
 
 /* ════════════════ HELPERS ════════════════ */
 const val = id => (document.getElementById(id)?.value || '').trim();
+function hideErr(s) {
+  const el = document.getElementById('err' + s);
+  if (el) el.classList.remove('on');
+}
 function showErr(s, msg) {
   const el = document.getElementById('err' + s);
-  document.getElementById('errTxt' + s).textContent = msg;
+  if (!el) return;
+  const txt = document.getElementById('errTxt' + s);
+  if (txt) txt.textContent = msg;
   el.classList.add('on');
   el.scrollIntoView({behavior:'smooth',block:'center'});
   setTimeout(() => el.classList.remove('on'), 6000);
@@ -1336,12 +1378,39 @@ function v2() {
 }
 function v3() {
   if (!val('kidAddress')) { showErr(3,'الرجاء إدخال العنوان'); focusErr('kidAddress'); return false; }
-  const em = val('kidEmail');
-  if (em && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(em)) {
-    showErr(3, 'صيغة البريد الإلكتروني غير صحيحة');
-    focusErr('kidEmail');
-    return false;
+  
+  if (googleRegInstance && typeof googleRegInstance.validate === 'function') {
+    const vRes = googleRegInstance.validate();
+    if (!vRes.valid) {
+      showErr(3, vRes.message);
+      if (vRes.targetId) focusErr(vRes.targetId);
+      return false;
+    }
+  } else {
+    const em = val('kidEmail');
+    if (!em) {
+      showErr(3, 'البريد الإلكتروني مطلوب لتأمين الحساب واستعادة كلمة المرور');
+      focusErr('kidEmail');
+      return false;
+    }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(em)) {
+      showErr(3, 'صيغة البريد الإلكتروني غير صحيحة (مثال: example@gmail.com)');
+      focusErr('kidEmail');
+      return false;
+    }
+    const emConf = val('kidEmailConfirm');
+    if (!emConf) {
+      showErr(3, 'يرجى تأكيد البريد الإلكتروني لتفادي أي خطأ إملائي');
+      focusErr('kidEmailConfirm');
+      return false;
+    }
+    if (em.toLowerCase() !== emConf.toLowerCase()) {
+      showErr(3, 'البريد الإلكتروني وتأكيد البريد غير متطابقين');
+      focusErr('kidEmailConfirm');
+      return false;
+    }
   }
+
   for (const field of customFields) {
     const isRequired = field.required === true;
     if (!isRequired) continue;
@@ -1358,10 +1427,41 @@ function v4() {
   const uname = val('kidUsername');
   if (uname && uname.length < 3) { showErr(4,'اسم المستخدم يجب أن يكون 3 أحرف على الأقل'); focusErr('kidUsername'); return false; }
   if (uname && !/^[a-zA-Z0-9_\u0600-\u06FF]+$/.test(uname)) { showErr(4,'اسم المستخدم يحتوي على أحرف غير مسموح بها'); focusErr('kidUsername'); return false; }
+  
   const pwd = document.getElementById('kidPassword').value;
-  if (!pwd || pwd.length < 6) { showErr(4,'كلمة المرور يجب أن تكون 6 أحرف على الأقل'); focusErr('kidPassword'); return false; }
+  if (!pwd) {
+    showErr(4, 'يرجى إدخال كلمة المرور');
+    focusErr('kidPassword');
+    return false;
+  }
+
+  if (window.PasswordRules) {
+    const pCheck = PasswordRules.check(pwd);
+    if (!pCheck.isValid) {
+      const msg = (pCheck.errors && pCheck.errors.length > 0) ? pCheck.errors[0] : 'كلمة المرور لا تلبي معايير الأمان (يجب أن تحتوي على حرف كبير وحرف صغير ورقم و 6 خانات)';
+      showErr(4, msg);
+      focusErr('kidPassword');
+      return false;
+    }
+  } else {
+    if (pwd.length < 6) {
+      showErr(4, 'كلمة المرور يجب أن لا تقل عن 6 أحرف أو أرقام');
+      focusErr('kidPassword');
+      return false;
+    }
+  }
+
   const pwd2 = document.getElementById('kidPasswordConfirm').value;
-  if (pwd !== pwd2) { showErr(4,'كلمة المرور غير متطابقة'); focusErr('kidPasswordConfirm'); return false; }
+  if (!pwd2) {
+    showErr(4, 'يرجى تأكيد كلمة المرور');
+    focusErr('kidPasswordConfirm');
+    return false;
+  }
+  if (pwd !== pwd2) {
+    showErr(4, 'كلمة المرور وتأكيد كلمة المرور غير متطابقين');
+    focusErr('kidPasswordConfirm');
+    return false;
+  }
   return true;
 }
 
@@ -1380,7 +1480,15 @@ function fillReview() {
   document.getElementById('rv-phone').innerHTML     = pNum ? `<span dir="ltr">${escapeHtml(pNum)}</span> <span style="display:inline-block; font-size:0.8rem; background:var(--brand-bg); color:var(--brand); border-radius:4px; padding:1px 7px; font-weight:700; margin-right:6px;">${escapeHtml(pOwnerLbl)}</span>` : '—';
 
   document.getElementById('rv-address').textContent = val('kidAddress') || '—';
-  document.getElementById('rv-email').textContent   = val('kidEmail')   || '—';
+  const emVal = val('kidEmail') || '—';
+  const gState = (googleRegInstance && typeof googleRegInstance.getState === 'function') ? googleRegInstance.getState() : null;
+  const isGVer = gState && gState.isGoogleVerified;
+  const rvEmailEl = document.getElementById('rv-email');
+  if (rvEmailEl) {
+    rvEmailEl.innerHTML = emVal !== '—'
+      ? `<span dir="ltr">${escapeHtml(emVal)}</span> ${isGVer ? '<span style="display:inline-flex; align-items:center; gap:4px; margin-right:6px; font-size:0.75rem; background:#dcfce7; color:#15803d; border-radius:12px; padding:2px 8px; font-weight:700;"><i class="fas fa-check-circle"></i> تم التحقق بـ Google</span>' : ''}`
+      : '—';
+  }
   document.getElementById('rv-username').textContent= val('kidUsername')|| '—';
   const rvUsernameRow = document.getElementById('rv-username-row');
   if (rvUsernameRow) rvUsernameRow.style.display = val('kidUsername') ? '' : 'none';
@@ -1525,6 +1633,14 @@ async function doSubmitRegistrationRequest() {
     fd.append('address',    address);
     if (username) fd.append('username', username);
     fd.append('password',   password);
+
+    if (googleRegInstance && typeof googleRegInstance.getState === 'function') {
+      const gState = googleRegInstance.getState();
+      if (gState && gState.isGoogleVerified) {
+        if (gState.googleId) fd.append('google_id', gState.googleId);
+        if (gState.googleCredential) fd.append('google_credential', gState.googleCredential);
+      }
+    }
     if (parentPhones.length > 0) {
       fd.append('parent_phones', JSON.stringify(parentPhones));
     }
@@ -1640,7 +1756,36 @@ function renderCustomFields() {
   container.appendChild(card);
 }
 
+/* ════════════════ GOOGLE & SECURITY HELPER ════════════════ */
+function initGoogleAndSecurity() {
+  if (window.PasswordRules && !window._pwdRulesAttached) {
+    const attached = PasswordRules.attach('kidPassword');
+    if (attached) window._pwdRulesAttached = true;
+  }
+  if (window.GoogleRegHelper && !googleRegInstance) {
+    googleRegInstance = GoogleRegHelper.setup({
+      emailInputId: 'kidEmail',
+      confirmInputId: 'kidEmailConfirm',
+      confirmGroupId: 'kidEmailConfirmGroup',
+      badgeContainerId: 'kidGoogleBadge',
+      googleBtnId: 'btnGoogleRegStudent',
+      optional: false,
+      onError: function(msg) {
+        showErr(3, msg);
+      },
+      onVerified: function(data) {
+        hideErr(3);
+        const nameInput = document.getElementById('kidName');
+        if (nameInput && !nameInput.value.trim() && data.name) {
+          nameInput.value = data.name;
+        }
+      }
+    });
+  }
+}
+
 /* ════════════════ BOOT ════════════════ */
+initGoogleAndSecurity();
 init();
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {

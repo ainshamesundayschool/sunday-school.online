@@ -27,6 +27,9 @@
 <title>تسجيل خادم جديد</title>
 <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<script src="https://accounts.google.com/gsi/client" async defer></script>
+<script src="/js/password_rules.js"></script>
+<script src="/js/google_reg_helper.js"></script>
 <style>
 *,*::before,*::after{margin:0;padding:0;box-sizing:border-box;}
 :root{
@@ -380,6 +383,42 @@ body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
             <small><i class="fas fa-info-circle"></i> بالصيغة يوم/شهر (مثال: 15/08) أو يوم/شهر/سنة</small>
           </div>
         </div>
+
+        <!-- Google Quick Sign-In Option -->
+        <div style="margin-top:14px; margin-bottom:12px;">
+          <div id="uncleGoogleBadge" style="display:none; margin-bottom:10px;"></div>
+          <button type="button" id="btnGoogleRegUncle" style="width:100%; padding:11px 16px; border:1.5px solid var(--border-solid); border-radius:var(--r-md); background:var(--surface); color:var(--text); font-family:'Cairo', sans-serif; font-size:0.92rem; font-weight:700; cursor:pointer; display:inline-flex; align-items:center; justify-content:center; gap:10px; transition:all 0.2s; box-shadow:var(--shadow-sm);" onmouseover="this.style.background='var(--surface-2)'; this.style.borderColor='var(--brand)';" onmouseout="this.style.background='var(--surface)'; this.style.borderColor='var(--border-solid)';">
+            <svg width="18" height="18" viewBox="0 0 24 24">
+              <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+              <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+              <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/>
+              <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/>
+            </svg>
+            <span>تسجيل وتأكيد البريد بحساب Google تلقائياً</span>
+          </button>
+        </div>
+
+        <div id="uncleEmailDivider" style="display:flex; align-items:center; margin:10px 0 16px 0; color:var(--text-3); font-size:0.8rem;">
+          <span style="flex:1; height:1px; background:var(--border-solid);"></span>
+          <span style="padding:0 12px; font-weight:700;">أو كتابة وتأكيد البريد الإلكتروني يدوياً</span>
+          <span style="flex:1; height:1px; background:var(--border-solid);"></span>
+        </div>
+
+        <div class="fr full" style="margin-bottom:12px">
+          <div class="ff">
+            <label><i class="fas fa-envelope"></i> البريد الإلكتروني <span class="req">*</span></label>
+            <input type="email" id="uncleEmail" placeholder="example@email.com" autocomplete="email" style="direction:ltr;text-align:left;" />
+            <small>مطلوب — لتأمين حساب الخادم واستعادة كلمة المرور تلقائياً واستلام الإشعارات</small>
+          </div>
+        </div>
+
+        <div class="fr full" id="uncleEmailConfirmGroup" style="margin-bottom:0">
+          <div class="ff">
+            <label><i class="fas fa-check-double"></i> تأكيد البريد الإلكتروني <span class="req">*</span></label>
+            <input type="email" id="uncleEmailConfirm" placeholder="أعد كتابة البريد الإلكتروني للتأكيد" autocomplete="email" style="direction:ltr;text-align:left;" />
+            <small>يرجى إعادة كتابة البريد للتأكد من عدم وجود أي خطأ إملائي</small>
+          </div>
+        </div>
       </div>
       <div class="alert alert-err" id="err1"><i class="fas fa-circle-exclamation"></i><span id="errTxt1"></span></div>
       <div class="act-bar">
@@ -408,16 +447,20 @@ body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
         <div class="fr full">
           <div class="ff">
             <label><i class="fas fa-lock"></i> كلمة المرور <span class="req">*</span></label>
-            <input type="password" id="unclePassword" placeholder="على الأقل 6 أحرف"
-              oninput="updatePwdStrength(this.value)" />
-            <div class="pwd-strength"><div class="pwd-strength-bar" id="pwdBar"></div></div>
-            <small id="pwdHint">أدخل كلمة مرور قوية</small>
+            <div style="position:relative;">
+              <input type="password" id="unclePassword" placeholder="••••••••" autocomplete="new-password" style="direction:ltr;text-align:left;padding-left:44px;" />
+              <button type="button" onclick="toggleUnclePwd('unclePassword','eyeBtnUncle1')" id="eyeBtnUncle1" style="position:absolute;left:12px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:var(--text-3);font-size:.9rem;padding:4px;"><i class="fas fa-eye"></i></button>
+            </div>
+            <small style="color:var(--text-3);margin-top:4px;display:block;">يجب أن تحتوي على حرف كبير (A-Z)، حرف صغير (a-z)، رقم (0-9)، و 6 خانات على الأقل</small>
           </div>
         </div>
         <div class="fr full" style="margin-bottom:0">
           <div class="ff">
             <label><i class="fas fa-lock"></i> تأكيد كلمة المرور <span class="req">*</span></label>
-            <input type="password" id="unclePasswordConfirm" placeholder="أعد كتابة كلمة المرور" />
+            <div style="position:relative;">
+              <input type="password" id="unclePasswordConfirm" placeholder="••••••••" autocomplete="new-password" style="direction:ltr;text-align:left;padding-left:44px;" />
+              <button type="button" onclick="toggleUnclePwd('unclePasswordConfirm','eyeBtnUncle2')" id="eyeBtnUncle2" style="position:absolute;left:12px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:var(--text-3);font-size:.9rem;padding:4px;"><i class="fas fa-eye"></i></button>
+            </div>
           </div>
         </div>
       </div>
@@ -470,6 +513,7 @@ body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
         <div class="rv-row"><span class="rv-lbl">الاسم الكامل</span><span class="rv-val" id="rv-name">—</span></div>
         <div class="rv-row"><span class="rv-lbl">رقم التليفون</span><span class="rv-val" id="rv-phone">—</span></div>
         <div class="rv-row"><span class="rv-lbl">تاريخ الميلاد</span><span class="rv-val" id="rv-birthday">—</span></div>
+        <div class="rv-row"><span class="rv-lbl">البريد الإلكتروني</span><span class="rv-val" id="rv-email">—</span></div>
         <div class="rv-row"><span class="rv-lbl">اسم المستخدم</span><span class="rv-val" id="rv-username">—</span></div>
         <div class="rv-row"><span class="rv-lbl">كلمة المرور</span><span class="rv-val">••••••</span></div>
         <div class="rv-row"><span class="rv-lbl">الفصول المختارة</span><span class="rv-val" id="rv-classes">—</span></div>
@@ -518,6 +562,7 @@ let classes    = [];
 let selectedClasses = [];
 let step       = 1;
 const TOTAL    = 4;
+let googleRegInstance = null;
 
 /* ════════════════ API HELPER ════════════════ */
 async function apiFetch(data) {
@@ -612,6 +657,7 @@ function showForm() {
   document.getElementById('mainContent').style.flexDirection = 'column';
   document.getElementById('mainContent').style.alignItems = 'center';
   updateRail(1);
+  initGoogleAndSecurity();
 }
 function showInvalid() {
   document.getElementById('stepRail').style.display  = 'none';
@@ -663,6 +709,9 @@ function updateRail(s) {
 function showPanel(s) {
   document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
   document.getElementById('p' + s).classList.add('active');
+  if (s === 1 || s === 2) {
+    initGoogleAndSecurity();
+  }
 }
 
 /* ════════════════ HELPERS ════════════════ */
@@ -682,23 +731,50 @@ function focusErr(id) {
   el.addEventListener('input', () => el.classList.remove('err'), {once:true});
 }
 
-/* ── password strength ── */
-function updatePwdStrength(pwd) {
-  const bar  = document.getElementById('pwdBar');
-  const hint = document.getElementById('pwdHint');
-  let score  = 0;
-  if (pwd.length >= 6)  score++;
-  if (pwd.length >= 10) score++;
-  if (/[A-Z]/.test(pwd)) score++;
-  if (/[0-9]/.test(pwd)) score++;
-  if (/[^A-Za-z0-9]/.test(pwd)) score++;
-  const pct   = (score / 5) * 100;
-  const color = score <= 1 ? 'var(--danger)' : score <= 3 ? 'var(--warning)' : 'var(--success)';
-  const label = score <= 1 ? 'ضعيفة' : score <= 3 ? 'متوسطة' : 'قوية';
-  bar.style.width    = pct + '%';
-  bar.style.background = color;
-  hint.textContent   = pwd ? 'قوة كلمة المرور: ' + label : 'أدخل كلمة مرور قوية';
-  hint.style.color   = pwd ? color : 'var(--text-3)';
+function escapeHtml(str) {
+  if (!str) return '';
+  const d = document.createElement('div');
+  d.textContent = str;
+  return d.innerHTML;
+}
+
+function toggleUnclePwd(id, btnId) {
+  const input = document.getElementById(id);
+  const btn = document.getElementById(btnId);
+  if (!input) return;
+  const show = input.type === 'password';
+  input.type = show ? 'text' : 'password';
+  if (btn) {
+    const icon = btn.querySelector('i');
+    if (icon) icon.className = show ? 'fas fa-eye-slash' : 'fas fa-eye';
+  }
+}
+
+/* ════════════════ GOOGLE & SECURITY HELPER ════════════════ */
+function initGoogleAndSecurity() {
+  if (window.PasswordRules && !window._pwdRulesAttachedUncle) {
+    const attached = PasswordRules.attach('unclePassword');
+    if (attached) window._pwdRulesAttachedUncle = true;
+  }
+  if (window.GoogleRegHelper && !googleRegInstance) {
+    googleRegInstance = GoogleRegHelper.setup({
+      emailInputId: 'uncleEmail',
+      confirmInputId: 'uncleEmailConfirm',
+      confirmGroupId: 'uncleEmailConfirmGroup',
+      badgeContainerId: 'uncleGoogleBadge',
+      googleBtnId: 'btnGoogleRegUncle',
+      optional: false,
+      onError: function(msg) {
+        showErr(1, msg);
+      },
+      onVerified: function(data) {
+        const nameInput = document.getElementById('uncleName');
+        if (nameInput && !nameInput.value.trim() && data.name) {
+          nameInput.value = data.name;
+        }
+      }
+    });
+  }
 }
 
 /* ════════════════ VALIDATION ════════════════ */
@@ -733,18 +809,84 @@ function v1() {
   } else {
     showErr(1, 'تاريخ الميلاد غير صحيح — الرجاء إدخاله بالصيغة يوم/شهر (مثال: 15/08) أو يوم/شهر/سنة'); focusErr('uncleBirthday'); return false;
   }
+
+  if (googleRegInstance && typeof googleRegInstance.validate === 'function') {
+    const vRes = googleRegInstance.validate();
+    if (!vRes.valid) {
+      showErr(1, vRes.message);
+      if (vRes.targetId) focusErr(vRes.targetId);
+      return false;
+    }
+  } else {
+    const em = val('uncleEmail');
+    if (!em) {
+      showErr(1, 'البريد الإلكتروني مطلوب لتأمين الحساب واستعادة كلمة المرور');
+      focusErr('uncleEmail');
+      return false;
+    }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(em)) {
+      showErr(1, 'صيغة البريد الإلكتروني غير صحيحة (مثال: example@gmail.com)');
+      focusErr('uncleEmail');
+      return false;
+    }
+    const emConf = val('uncleEmailConfirm');
+    if (!emConf) {
+      showErr(1, 'يرجى تأكيد البريد الإلكتروني لتفادي أي خطأ إملائي');
+      focusErr('uncleEmailConfirm');
+      return false;
+    }
+    if (em.toLowerCase() !== emConf.toLowerCase()) {
+      showErr(1, 'البريد الإلكتروني وتأكيد البريد غير متطابقين');
+      focusErr('uncleEmailConfirm');
+      return false;
+    }
+  }
+
   return true;
 }
+
 function v2() {
-  if (!val('uncleUsername'))  { showErr(2,'الرجاء إدخال اسم المستخدم'); focusErr('uncleUsername'); return false; }
-  if (val('uncleUsername').length < 3) { showErr(2,'اسم المستخدم يجب أن يكون 3 أحرف على الأقل'); focusErr('uncleUsername'); return false; }
-  if (!val('unclePassword'))  { showErr(2,'الرجاء إدخال كلمة المرور'); focusErr('unclePassword'); return false; }
-  if (val('unclePassword').length < 6) { showErr(2,'كلمة المرور يجب أن تكون 6 أحرف على الأقل'); focusErr('unclePassword'); return false; }
-  if (val('unclePassword') !== val('unclePasswordConfirm')) {
-    showErr(2,'كلمتا المرور غير متطابقتين'); focusErr('unclePasswordConfirm'); return false;
+  const uname = val('uncleUsername');
+  if (!uname)  { showErr(2,'الرجاء إدخال اسم المستخدم'); focusErr('uncleUsername'); return false; }
+  if (uname.length < 3) { showErr(2,'اسم المستخدم يجب أن يكون 3 أحرف على الأقل'); focusErr('uncleUsername'); return false; }
+  
+  const pwd = document.getElementById('unclePassword').value;
+  if (!pwd) {
+    showErr(2, 'الرجاء إدخال كلمة المرور');
+    focusErr('unclePassword');
+    return false;
+  }
+
+  if (window.PasswordRules) {
+    const pCheck = PasswordRules.check(pwd);
+    if (!pCheck.isValid) {
+      const msg = (pCheck.errors && pCheck.errors.length > 0) ? pCheck.errors[0] : 'كلمة المرور لا تلبي معايير الأمان (يجب أن تحتوي على حرف كبير وحرف صغير ورقم و 6 خانات)';
+      showErr(2, msg);
+      focusErr('unclePassword');
+      return false;
+    }
+  } else {
+    if (pwd.length < 6) {
+      showErr(2, 'كلمة المرور يجب أن تكون 6 أحرف على الأقل');
+      focusErr('unclePassword');
+      return false;
+    }
+  }
+
+  const pwd2 = document.getElementById('unclePasswordConfirm').value;
+  if (!pwd2) {
+    showErr(2, 'يرجى تأكيد كلمة المرور');
+    focusErr('unclePasswordConfirm');
+    return false;
+  }
+  if (pwd !== pwd2) {
+    showErr(2, 'كلمتا المرور غير متطابقتين');
+    focusErr('unclePasswordConfirm');
+    return false;
   }
   return true;
 }
+
 function v3() {
   // Classes are optional — no validation needed
   return true;
@@ -756,6 +898,17 @@ function fillReview() {
   document.getElementById('rv-name').textContent     = val('uncleName')    || '—';
   document.getElementById('rv-phone').textContent    = val('unclePhone')   || '—';
   document.getElementById('rv-birthday').textContent = val('uncleBirthday')|| '—';
+
+  const emVal = val('uncleEmail') || '—';
+  const gState = (googleRegInstance && typeof googleRegInstance.getState === 'function') ? googleRegInstance.getState() : null;
+  const isGVer = gState && gState.isGoogleVerified;
+  const rvEmailEl = document.getElementById('rv-email');
+  if (rvEmailEl) {
+    rvEmailEl.innerHTML = emVal !== '—'
+      ? `<span dir="ltr">${escapeHtml(emVal)}</span> ${isGVer ? '<span style="display:inline-flex; align-items:center; gap:4px; margin-right:6px; font-size:0.75rem; background:#dcfce7; color:#15803d; border-radius:12px; padding:2px 8px; font-weight:700;"><i class="fas fa-check-circle"></i> تم التحقق بـ Google</span>' : ''}`
+      : '—';
+  }
+
   document.getElementById('rv-username').textContent = val('uncleUsername') || '—';
   document.getElementById('rv-classes').textContent  = selectedClasses.length
     ? selectedClasses.join(' · ')
@@ -793,21 +946,33 @@ async function submitForm() {
   const name     = val('uncleName');
   const phone    = val('unclePhone').replace(/\D/g,'');
   const birthday = val('uncleBirthday');
+  const email    = val('uncleEmail');
   const username = val('uncleUsername');
   const password = val('unclePassword');
 
   try {
-    const data = await apiFetch({
+    const postData = {
       action:      'registerUncleWithChurchCode',
       church_code: churchCode,
       church_id:   churchId || '',
       name,
       phone,
       birthday,
+      email,
       username,
       password,
       classes:     JSON.stringify(selectedClasses)
-    });
+    };
+
+    if (googleRegInstance && typeof googleRegInstance.getState === 'function') {
+      const gState = googleRegInstance.getState();
+      if (gState && gState.isGoogleVerified) {
+        if (gState.googleId) postData.google_id = gState.googleId;
+        if (gState.googleCredential) postData.google_credential = gState.googleCredential;
+      }
+    }
+
+    const data = await apiFetch(postData);
 
     document.getElementById('progFill').style.width = '100%';
     await new Promise(r => setTimeout(r, 300));

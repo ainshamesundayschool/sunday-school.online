@@ -15625,25 +15625,32 @@ function submitRegistrationRequest()
             return;
         }
 
-        if (!empty($email) && !filter_var($email, FILTER_VALIDATE_EMAIL)) {
+        if (empty($email)) {
+            sendJSON(['success' => false, 'message' => 'البريد الإلكتروني مطلوب لتأمين الحساب واستعادة كلمة المرور']);
+            return;
+        }
+        if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
             sendJSON(['success' => false, 'message' => 'صيغة البريد الإلكتروني غير صحيحة']);
             return;
         }
-        $email = !empty($email) ? trim($email) : null;
+        $email = trim($email);
 
-        if (!empty($password)) {
-            if ($password === '123456' || strtolower($password) === 'password') {
-                sendJSON(['success' => false, 'message' => 'لا يمكنك استخدام كلمة المرور الافتراضية 123456، يرجى كتابة كلمة مرور شخصية خاصة بك']);
-                return;
-            }
-            if (strlen($password) < 6) {
-                sendJSON(['success' => false, 'message' => 'كلمة المرور يجب أن لا تقل عن 6 خانات']);
-                return;
-            }
-            if (!preg_match('/[A-Z]/', $password) || !preg_match('/[a-z]/', $password) || !preg_match('/[0-9]/', $password)) {
-                sendJSON(['success' => false, 'message' => 'كلمة المرور يجب أن تحتوي على حرف كبير (A-Z) وحرف صغير (a-z) ورقم (0-9)']);
-                return;
-            }
+        if (empty($password)) {
+            sendJSON(['success' => false, 'message' => 'كلمة المرور مطلوبة لإنشاء حساب الطالب']);
+            return;
+        }
+
+        if ($password === '123456' || strtolower($password) === 'password') {
+            sendJSON(['success' => false, 'message' => 'لا يمكنك استخدام كلمة المرور الافتراضية 123456، يرجى كتابة كلمة مرور شخصية خاصة بك']);
+            return;
+        }
+        if (strlen($password) < 6) {
+            sendJSON(['success' => false, 'message' => 'كلمة المرور يجب أن لا تقل عن 6 خانات']);
+            return;
+        }
+        if (!preg_match('/[A-Z]/', $password) || !preg_match('/[a-z]/', $password) || !preg_match('/[0-9]/', $password)) {
+            sendJSON(['success' => false, 'message' => 'كلمة المرور يجب أن تحتوي على حرف كبير (A-Z) وحرف صغير (a-z) ورقم (0-9)']);
+            return;
         }
 
         if ($gender !== 'male' && $gender !== 'female') {
@@ -15932,6 +15939,13 @@ function submitRegistrationRequest()
             $pendStmt->execute();
             $registrationId = $conn->insert_id;
 
+            if (!empty($newStudentId)) {
+                $conn->query("UPDATE students SET email = '" . $conn->real_escape_string($email) . "'" . (!empty($googleId) ? ", google_id = '" . $conn->real_escape_string($googleId) . "', google_email = '" . $conn->real_escape_string($email) . "', is_email_verified = 1" : "") . " WHERE id = " . intval($newStudentId));
+            }
+            if (!empty($googleId) && !empty($registrationId)) {
+                @$conn->query("UPDATE pending_registrations SET google_id = '" . $conn->real_escape_string($googleId) . "' WHERE id = " . intval($registrationId));
+            }
+
             $conn->commit();
 
             // ── Notification: new kid auto-added ──────────────────
@@ -15990,8 +16004,10 @@ function submitRegistrationRequest()
 
 
             if ($stmt->execute()) {
-
                 $registrationId = $conn->insert_id;
+                if (!empty($googleId) && $registrationId > 0) {
+                    @$conn->query("UPDATE pending_registrations SET google_id = '" . $conn->real_escape_string($googleId) . "' WHERE id = " . intval($registrationId));
+                }
 
                 error_log("✅ تم حفظ التسجيل بنجاح - ID: $registrationId, الفصل: '$class'");
 
@@ -43532,9 +43548,19 @@ function createChurchWithAdmin()
 
 
 
+        $adminGoogleId = sanitize($_POST['admin_google_id'] ?? '');
+
         if (empty($churchName))
 
             throw new Exception('اسم الكنيسة مطلوب');
+
+        if (empty($churchEmail))
+
+            throw new Exception('البريد الإلكتروني للكنيسة مطلوب لتأمين الحساب');
+
+        if (!filter_var($churchEmail, FILTER_VALIDATE_EMAIL))
+
+            throw new Exception('صيغة البريد الإلكتروني للكنيسة غير صحيحة');
 
         if (empty($adminName))
 
@@ -43544,25 +43570,36 @@ function createChurchWithAdmin()
 
             throw new Exception('رقم تليفون المسؤول مطلوب');
 
+        if (empty($adminEmail))
+
+            throw new Exception('البريد الإلكتروني للمسؤول مطلوب لتأمين الحساب');
+
+        if (!filter_var($adminEmail, FILTER_VALIDATE_EMAIL))
+
+            throw new Exception('صيغة البريد الإلكتروني للمسؤول غير صحيحة');
+
+        if ($adminPassword === '123456' || strtolower($adminPassword) === 'password')
+            throw new Exception('لا يمكنك استخدام كلمة مرور افتراضية شائعة (123456) لحساب المسؤول');
+
         if (strlen($adminPassword) < 6)
+            throw new Exception('كلمة مرور المسؤول يجب أن تكون 6 أحرف على الأقل');
 
-            throw new Exception('كلمة المرور يجب أن تكون 6 أحرف على الأقل');
-
-
+        if (!preg_match('/[A-Z]/', $adminPassword) || !preg_match('/[a-z]/', $adminPassword) || !preg_match('/[0-9]/', $adminPassword))
+            throw new Exception('كلمة مرور المسؤول يجب أن تحتوي على حرف كبير (A-Z) وحرف صغير (a-z) ورقم (0-9)');
 
         // Check phone not already used
-
         $chk = $conn->prepare("SELECT id FROM uncles WHERE phone = ? LIMIT 1");
-
         $chk->bind_param("s", $adminPhone);
-
         $chk->execute();
-
         if ($chk->get_result()->fetch_assoc())
-
             throw new Exception('رقم التليفون مستخدم بالفعل في كنيسة أخرى');
 
-
+        // Check admin email not already used
+        $echk = $conn->prepare("SELECT id FROM uncles WHERE email = ? LIMIT 1");
+        $echk->bind_param("s", $adminEmail);
+        $echk->execute();
+        if ($echk->get_result()->fetch_assoc())
+            throw new Exception('البريد الإلكتروني للمسؤول مستخدم بالفعل بحساب خادم آخر');
 
         // Generate unique church code from name or provided code
         $providedCode = sanitize($_POST['church_code'] ?? '');
@@ -43583,6 +43620,15 @@ function createChurchWithAdmin()
 
         // Create church — password for direct church login (same hashing as addChurch)
         $churchPw = !empty($_POST['church_password']) ? $_POST['church_password'] : $adminPassword;
+
+        if ($churchPw === '123456' || strtolower($churchPw) === 'password')
+            throw new Exception('لا يمكنك استخدام كلمة مرور افتراضية شائعة (123456) لحساب الكنيسة');
+
+        if (strlen($churchPw) < 6)
+            throw new Exception('كلمة مرور الكنيسة يجب أن تكون 6 أحرف على الأقل');
+        if (!preg_match('/[A-Z]/', $churchPw) || !preg_match('/[a-z]/', $churchPw) || !preg_match('/[0-9]/', $churchPw))
+            throw new Exception('كلمة مرور الكنيسة يجب أن تحتوي على حرف كبير (A-Z) وحرف صغير (a-z) ورقم (0-9)');
+
         $hashedChurchPw = hash('sha256', $churchPw);
 
         $insChurch = $conn->prepare("
@@ -43605,8 +43651,6 @@ function createChurchWithAdmin()
         if ($uchk->get_result()->fetch_assoc())
             throw new Exception('اسم المستخدم للمسؤول مستخدم بالفعل، يرجى اختيار اسم مستخدم آخر');
 
-
-
         $insUncle = $conn->prepare("
 
             INSERT INTO uncles (church_id, name, phone, username, password, password_hash, email, class, role, is_active, created_at)
@@ -43622,6 +43666,11 @@ function createChurchWithAdmin()
             throw new Exception('فشل إنشاء حساب المسؤول: ' . $conn->error);
 
         $newUncleId = $conn->insert_id;
+
+        ensureUncleGoogleColumns($conn);
+        if (!empty($adminGoogleId) && $newUncleId > 0) {
+            $conn->query("UPDATE uncles SET google_id = '" . $conn->real_escape_string($adminGoogleId) . "', google_email = '" . $conn->real_escape_string($adminEmail) . "' WHERE id = " . intval($newUncleId));
+        }
 
 
 
@@ -43908,6 +43957,10 @@ function registerUncleWithChurchCode()
 
     $birthday = sanitize($_POST['birthday'] ?? '');
 
+    $email = sanitize($_POST['email'] ?? '');
+
+    $googleId = sanitize($_POST['google_id'] ?? '');
+
     $classes = $_POST['classes'] ?? '[]';
 
     if ((!$churchCode && !$churchIdDirect) || !$name || !$username || strlen($password) < 6) {
@@ -43918,7 +43971,34 @@ function registerUncleWithChurchCode()
 
     }
 
+    if (empty($email)) {
+        sendJSON(['success' => false, 'message' => 'البريد الإلكتروني مطلوب لتأمين الحساب واستعادة كلمة المرور']);
+        return;
+    }
+
+    if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+        sendJSON(['success' => false, 'message' => 'صيغة البريد الإلكتروني غير صحيحة']);
+        return;
+    }
+
+    if ($password === '123456' || strtolower($password) === 'password') {
+        sendJSON(['success' => false, 'message' => 'لا يمكنك استخدام كلمة المرور الافتراضية 123456، يرجى كتابة كلمة مرور شخصية خاصة بك']);
+        return;
+    }
+
+    if (strlen($password) < 6) {
+        sendJSON(['success' => false, 'message' => 'كلمة المرور يجب أن لا تقل عن 6 خانات']);
+        return;
+    }
+
+    if (!preg_match('/[A-Z]/', $password) || !preg_match('/[a-z]/', $password) || !preg_match('/[0-9]/', $password)) {
+        sendJSON(['success' => false, 'message' => 'كلمة المرور يجب أن تحتوي على حرف كبير (A-Z) وحرف صغير (a-z) ورقم (0-9)']);
+        return;
+    }
+
     $conn = getDBConnection();
+
+    ensureUncleGoogleColumns($conn);
 
     // Resolve church code
     $church = findChurchRow($conn, $churchCode, $churchIdDirect);
@@ -43949,13 +44029,24 @@ function registerUncleWithChurchCode()
 
     }
 
+    // Check email unique
+    $echk = $conn->prepare("SELECT id FROM uncles WHERE email = ? LIMIT 1");
+    $echk->bind_param("s", $email);
+    $echk->execute();
+    if ($echk->get_result()->fetch_assoc()) {
+        sendJSON(['success' => false, 'message' => 'البريد الإلكتروني مستخدم بالفعل بحساب خادم آخر']);
+        return;
+    }
+
     $hash = hash('sha256', $password);
 
     $role = 'uncle';
 
-    $stmt = $conn->prepare("INSERT INTO uncles (church_id, name, username, password_hash, role, phone, birthday) VALUES (?,?,?,?,?,?,?)");
+    $googleEmail = !empty($googleId) ? $email : null;
 
-    $stmt->bind_param("issssss", $churchId, $name, $username, $hash, $role, $phone, $birthday);
+    $stmt = $conn->prepare("INSERT INTO uncles (church_id, name, username, password_hash, email, google_id, google_email, role, phone, birthday) VALUES (?,?,?,?,?,?,?,?,?,?)");
+
+    $stmt->bind_param("isssssssss", $churchId, $name, $username, $hash, $email, $googleId, $googleEmail, $role, $phone, $birthday);
 
     if ($stmt->execute()) {
 

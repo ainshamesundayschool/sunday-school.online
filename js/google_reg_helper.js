@@ -177,7 +177,7 @@
                         googleBtn.style.display = 'none';
                     }
                 } else {
-                    if (confirmGroup) confirmGroup.style.display = 'block';
+                    if (confirmGroup) confirmGroup.style.display = '';
                     if (badgeEl) {
                         badgeEl.style.display = 'none';
                         badgeEl.innerHTML = '';
@@ -241,6 +241,9 @@
                 validate: function() {
                     const em = (emailInput.value || '').trim();
                     if (!em) {
+                        if (cfg.optional) {
+                            return { valid: true, email: '', isGoogleVerified: false, googleId: '', googleCredential: '' };
+                        }
                         return { valid: false, message: 'البريد الإلكتروني مطلوب لتأمين الحساب واستعادة كلمة المرور', targetId: cfg.emailInputId };
                     }
                     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(em)) {

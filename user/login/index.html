@@ -42,6 +42,7 @@
     </script>
     <script src="https://accounts.google.com/gsi/client" async defer></script>
     <script src="/js/search_intelligent.js"></script>
+    <script src="/js/password_rules.js"></script>
 
     <style>
         :root {
@@ -1913,6 +1914,10 @@
 
             // Add event listeners for password setup
             setTimeout(() => {
+                if (window.PasswordRules) {
+                    PasswordRules.attach('newPassword');
+                }
+
                 document.getElementById('passwordSetupForm').addEventListener('submit', function(e) {
                     e.preventDefault();
                     setupNewPassword(phone, studentId);
@@ -1950,6 +1955,14 @@
             if (newPassword.length < 6) {
                 showSetupError('كلمة المرور يجب أن تكون 6 أحرف على الأقل');
                 return;
+            }
+
+            if (window.PasswordRules) {
+                const chk = PasswordRules.check(newPassword);
+                if (!chk.isValid && chk.errors && chk.errors.length) {
+                    showSetupError(chk.errors[0]);
+                    return;
+                }
             }
             
             if (newPassword !== confirmPassword) {
@@ -2909,6 +2922,10 @@
                     </form>
                 `;
 
+                if (window.PasswordRules) {
+                    PasswordRules.attach('newPassword');
+                }
+
                 document.getElementById('passwordResetForm').addEventListener('submit', function(e) {
                     e.preventDefault();
                     const p1 = document.getElementById('newPassword').value.trim();
@@ -2932,6 +2949,15 @@
                         showSetupError('كلمة المرور يجب أن تكون 6 أحرف على الأقل');
                         return;
                     }
+
+                    if (window.PasswordRules) {
+                        const chk = PasswordRules.check(p1);
+                        if (!chk.isValid && chk.errors && chk.errors.length) {
+                            showSetupError(chk.errors[0]);
+                            return;
+                        }
+                    }
+
                     if (p1 !== p2) {
                         showSetupError('كلمتا المرور غير متطابقتين');
                         return;
