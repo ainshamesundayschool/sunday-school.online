@@ -429,23 +429,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'logou
     .hero {
       position: relative;
       overflow: hidden;
-      background: linear-gradient(145deg, #312e81 0%, #4f46e5 35%, #7c3aed 70%, #5b21b6 100%);
-      padding: 0 0 0;
+      background: var(--brand);
+      padding: 16px 16px 26px;
       display: flex;
       flex-direction: column;
-      min-height: 260px;
-      transition: min-height .28s var(--ease), height .28s var(--ease), padding .28s var(--ease), box-shadow .2s var(--ease);
-    }
-
-    /* static mesh — no infinite pulse animation */
-    .hero::before {
-      content: '';
-      position: absolute;
-      inset: 0;
-      background:
-        radial-gradient(circle at 20% 30%, rgba(255, 255, 255, .05) 0%, transparent 40%),
-        radial-gradient(circle at 80% 70%, rgba(255, 255, 255, .04) 0%, transparent 35%);
-      pointer-events: none;
+      border-radius: 0 0 32px 32px;
+      box-shadow: 0 10px 30px rgba(79, 70, 229, .18);
     }
 
     .hero-top {
@@ -454,20 +443,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'logou
       display: flex;
       align-items: center;
       justify-content: space-between;
-      padding: 12px 16px 0;
+      padding: 0 4px;
     }
 
     .hero-church-chip {
       display: inline-flex;
       align-items: center;
       gap: 6px;
-      background: rgba(255, 255, 255, .16);
-      color: rgba(255, 255, 255, .92);
-      font-size: .78rem;
-      font-weight: 600;
-      padding: 5px 13px;
+      background: rgba(255, 255, 255, .18);
+      color: #fff;
+      font-size: .8rem;
+      font-weight: 700;
+      padding: 6px 14px;
       border-radius: var(--r-full);
-      border: 1px solid rgba(255, 255, 255, .12);
+      border: none;
       max-width: 180px;
       overflow: hidden;
       text-overflow: ellipsis;
@@ -480,22 +469,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'logou
     }
 
     .hero-ico-btn {
-      width: 34px;
-      height: 34px;
+      width: 36px;
+      height: 36px;
       border-radius: 50%;
       background: rgba(255, 255, 255, .18);
-      border: 1px solid rgba(255, 255, 255, .12);
+      border: none;
       color: #fff;
-      font-size: .9rem;
+      font-size: .92rem;
       cursor: pointer;
       display: flex;
       align-items: center;
       justify-content: center;
-      transition: var(--fast);
+      transition: background var(--fast), transform var(--fast);
     }
 
     .hero-ico-btn:hover {
-      background: rgba(255, 255, 255, .28);
+      background: rgba(255, 255, 255, .32);
+      transform: scale(1.05);
     }
 
     /* center content */
@@ -505,7 +495,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'logou
       display: flex;
       flex-direction: column;
       align-items: center;
-      padding: 16px 16px 0;
+      padding: 14px 12px 0;
       flex: 1;
     }
 
@@ -514,12 +504,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'logou
       width: 92px;
       height: 92px;
       border-radius: 50%;
-      border: 3px solid rgba(255, 255, 255, .9);
-      box-shadow: 0 4px 16px rgba(0, 0, 0, .15);
+      border: 3.5px solid rgba(255, 255, 255, .95);
+      box-shadow: 0 6px 20px rgba(0, 0, 0, .2);
       cursor: pointer;
-      transition: width .28s var(--ease), height .28s var(--ease), transform var(--fast);
       background: transparent;
       padding: 0;
+      transition: transform var(--fast);
     }
 
     .avatar-ring:hover {
@@ -550,18 +540,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'logou
       position: absolute;
       bottom: 0px;
       left: 0px;
-      width: 26px;
-      height: 26px;
+      width: 28px;
+      height: 28px;
       border-radius: 50%;
-      background: var(--brand);
+      background: var(--brand-d);
       border: 2px solid #fff;
       display: none;
       align-items: center;
       justify-content: center;
-      font-size: .58rem;
+      font-size: .62rem;
       color: #fff;
       cursor: pointer;
-      box-shadow: 0 2px 6px rgba(0, 0, 0, .2);
+      box-shadow: 0 2px 8px rgba(0, 0, 0, .25);
       transition: var(--fast);
     }
 
@@ -570,7 +560,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'logou
     }
 
     .avatar-edit-fab:hover {
-      background: var(--brand-d);
+      background: #312e81;
       transform: scale(1.1);
     }
 
@@ -580,9 +570,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'logou
       font-weight: 800;
       color: #fff;
       text-align: center;
-      text-shadow: 0 2px 10px rgba(0, 0, 0, .2);
-      line-height: 1.2;
-      transition: font-size .28s var(--ease), margin .28s var(--ease);
+      text-shadow: 0 2px 10px rgba(0, 0, 0, .18);
+      line-height: 1.25;
     }
 
     @media(max-width:400px) {
@@ -593,9 +582,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'logou
 
     .hero-subtitle {
       font-size: .88rem;
-      font-weight: 500;
-      color: rgba(255, 255, 255, .78);
-      margin-top: 3px;
+      font-weight: 600;
+      color: rgba(255, 255, 255, .84);
+      margin-top: 4px;
       text-align: center;
       line-height: 1.3;
     }
@@ -604,7 +593,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'logou
       display: flex;
       align-items: center;
       justify-content: center;
-      gap: 7px;
+      gap: 8px;
       flex-wrap: wrap;
       margin-top: 8px;
     }
@@ -612,43 +601,42 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'logou
     .htag {
       display: inline-flex;
       align-items: center;
-      gap: 5px;
-      padding: 4px 13px;
+      gap: 6px;
+      padding: 5px 14px;
       border-radius: var(--r-full);
       font-size: .78rem;
       font-weight: 700;
-      background: rgba(255, 255, 255, .16);
-      border: 1px solid rgba(255, 255, 255, .24);
+      background: rgba(255, 255, 255, .18);
+      border: none;
       color: #fff;
       transition: var(--fast);
     }
 
     .htag.class-tag {
-      background: rgba(255, 255, 255, .95);
-      color: var(--brand-d);
-      border-color: transparent;
+      background: rgba(255, 255, 255, .22);
+      color: #fff;
     }
 
     .htag.switch-tag {
-      background: rgba(255, 255, 255, .18);
-      border: 1px solid rgba(255, 255, 255, .28);
-      color: #fff;
+      background: #ffffff;
+      border: none;
+      color: var(--brand);
       cursor: pointer;
       display: inline-flex;
       align-items: center;
       gap: 6px;
-      padding: 4px 12px;
+      padding: 5px 14px;
       border-radius: var(--r-full);
       font-size: .78rem;
       font-weight: 700;
       font-family: inherit;
       transition: all var(--fast);
-      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+      box-shadow: 0 3px 10px rgba(0, 0, 0, 0.12);
     }
 
     .htag.switch-tag:hover {
-      background: rgba(255, 255, 255, .28);
-      border-color: rgba(255, 255, 255, .45);
+      background: rgba(255, 255, 255, .92);
+      transform: translateY(-1px);
     }
 
     .htag.switch-tag:active {
@@ -659,89 +647,86 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'logou
     .coupon-hero {
       position: relative;
       z-index: 2;
-      margin: 16px 14px 0;
-      background: rgba(255, 255, 255, .12);
-      border: 1px solid rgba(255, 255, 255, .18);
-      border-radius: var(--r-lg);
+      margin: 16px 4px 0;
+      background: rgba(255, 255, 255, .16);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border: none;
+      border-radius: var(--r-xl);
       padding: 14px 18px;
       display: grid;
       grid-template-columns: 1fr auto;
       align-items: center;
       gap: 14px;
       overflow: hidden;
+      box-shadow: 0 4px 18px rgba(0, 0, 0, .08);
+      color: #fff;
     }
 
     .ch-total-label {
-      font-size: .74rem;
-      font-weight: 600;
-      color: rgba(255, 255, 255, .8);
+      font-size: .76rem;
+      font-weight: 700;
+      color: rgba(255, 255, 255, .9);
       margin-bottom: 2px;
       display: flex;
       align-items: center;
-      gap: 5px;
+      gap: 6px;
     }
 
     .ch-total-val {
-      font-size: 2.5rem;
-      font-weight: 800;
+      font-size: 2.3rem;
+      font-weight: 900;
       color: #fff;
       line-height: 1;
-      text-shadow: 0 2px 12px rgba(0, 0, 0, .2);
+      text-shadow: 0 2px 10px rgba(0, 0, 0, .18);
     }
 
     .ch-total-unit {
       font-size: .84rem;
-      color: rgba(255, 255, 255, .85);
-      margin-top: 1px;
-      font-weight: 600;
+      color: rgba(255, 255, 255, .9);
+      margin-top: 2px;
+      font-weight: 700;
     }
 
     .ch-breakdown {
       display: flex;
       flex-direction: column;
-      gap: 4px;
+      gap: 5px;
     }
 
     .ch-row {
       display: flex;
       align-items: center;
-      gap: 6px;
-      font-size: .74rem;
-      color: rgba(255, 255, 255, .9);
-      font-weight: 600;
-      background: rgba(255, 255, 255, .14);
-      padding: 4px 10px;
+      gap: 7px;
+      font-size: .76rem;
+      color: #fff;
+      font-weight: 700;
+      background: rgba(255, 255, 255, .2);
+      padding: 5px 12px;
       border-radius: var(--r-full);
+      border: none;
     }
 
     .ch-row i {
-      font-size: .72rem;
+      font-size: .74rem;
     }
 
-    /* ── HERO WAVE BOTTOM ──────────────────────────────── */
+    /* ── HERO WAVE (CLEANED) ───────────────────────────── */
     .hero-wave {
-      position: relative;
-      z-index: 2;
-      margin-top: 18px;
-      height: 34px;
-      background: var(--bg);
-      clip-path: ellipse(56% 100% at 50% 100%);
-      flex-shrink: 0;
+      display: none !important;
     }
 
-    /* ── CONTINUOUS SCROLL-RESPONSIVE MOBILE HERO ──────────────── */
+    /* ── MOBILE HERO (REFERENCE-MATCHED, NO SCROLL LAG) ── */
     @media (max-width: 899px) {
       .hero {
-        position: sticky;
-        top: 0;
-        z-index: 500;
-        overflow: hidden;
-        /* Dynamic height: smoothly transitions from 240px to 62px */
-        height: calc(240px - (var(--hero-p, 0) * 178px));
-        min-height: 62px;
-        padding: calc(10px - (var(--hero-p, 0) * 4px)) 14px calc(14px - (var(--hero-p, 0) * 10px));
-        box-shadow: 0 4px calc(6px + var(--hero-p, 0) * 16px) rgba(0, 0, 0, calc(0.08 + var(--hero-p, 0) * 0.16));
-        will-change: height, padding, box-shadow;
+        position: relative;
+        height: auto !important;
+        min-height: auto !important;
+        padding: 16px 16px 26px !important;
+        border-radius: 0 0 32px 32px !important;
+        box-shadow: 0 10px 30px rgba(79, 70, 229, .18) !important;
+        margin-bottom: 14px;
+        overflow: visible !important;
       }
 
       .hero-top {
@@ -752,64 +737,42 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'logou
       }
 
       .hero-church-chip {
-        opacity: calc(1 - (var(--hero-p, 0) * 2.5));
-        transform: translateY(calc(var(--hero-p, 0) * -12px));
-        pointer-events: calc(1 - var(--hero-p, 0) < 0.25 ? 'none' : 'auto');
+        opacity: 1 !important;
+        transform: none !important;
+        pointer-events: auto !important;
       }
 
       .hero-body {
-        padding: 0;
-        position: relative;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        transform: translateY(calc(var(--hero-p, 0) * -18px));
-        will-change: transform;
+        padding: 14px 0 0 0;
+        transform: none !important;
       }
 
       .avatar-ring {
-        width: calc(88px - (var(--hero-p, 0) * 48px));
-        height: calc(88px - (var(--hero-p, 0) * 48px));
-        border-width: calc(3px - (var(--hero-p, 0) * 1px));
-        box-shadow: 0 2px calc(8px - (var(--hero-p, 0) * 4px)) rgba(0, 0, 0, .2);
-        will-change: width, height;
-      }
-
-      .avatar-inner {
-        font-size: calc(2.2rem - (var(--hero-p, 0) * 1.25rem));
-      }
-
-      .avatar-edit-fab,
-      #deleteStudentPhotoBtn {
-        opacity: calc(1 - (var(--hero-p, 0) * 3));
-        transform: scale(calc(1 - var(--hero-p, 0)));
-        pointer-events: calc(1 - var(--hero-p, 0) < 0.25 ? 'none' : 'auto');
+        width: 88px !important;
+        height: 88px !important;
+        border-width: 3.5px !important;
       }
 
       .hero-name {
-        margin-top: calc(8px - (var(--hero-p, 0) * 6px));
-        font-size: calc(1.35rem - (var(--hero-p, 0) * 0.42rem));
-        font-weight: 800;
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        max-width: 90vw;
-        transform: translateY(calc(var(--hero-p, 0) * -2px));
+        font-size: 1.4rem !important;
+        transform: none !important;
+        opacity: 1 !important;
+        white-space: normal !important;
       }
 
       .hero-subtitle,
       .hero-tags,
       #birthdayGreetingBtn,
-      .coupon-hero,
-      .hero-wave {
-        opacity: calc(1 - (var(--hero-p, 0) * 2.2));
-        transform: translateY(calc(var(--hero-p, 0) * -12px));
-        max-height: calc(120px * (1 - var(--hero-p, 0)));
-        margin-top: calc(6px * (1 - var(--hero-p, 0)));
-        pointer-events: calc(1 - var(--hero-p, 0) < 0.2 ? 'none' : 'auto');
-        overflow: hidden;
-        will-change: opacity, transform, max-height;
+      .coupon-hero {
+        opacity: 1 !important;
+        transform: none !important;
+        max-height: none !important;
+        overflow: visible !important;
+      }
+
+      .coupon-hero {
+        display: grid;
+        margin-top: 14px !important;
       }
     }
 
@@ -819,26 +782,31 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'logou
       grid-template-columns: repeat(4, 1fr);
       margin: 0 12px 14px;
       background: var(--surf);
-      border-radius: var(--r-md);
-      border: 1px solid var(--bdr);
-      box-shadow: var(--sh-sm);
+      border-radius: var(--r-xl);
+      border: none;
+      box-shadow: var(--shadow-sm);
       overflow: hidden;
+      padding: 6px;
+      gap: 6px;
     }
 
     .sb-cell {
-      padding: 10px 6px;
+      padding: 10px 4px;
       text-align: center;
-      border-left: 1px solid var(--bdr);
-      transition: var(--fast);
+      background: var(--surface-2);
+      border-radius: var(--r-md);
+      border: none;
+      transition: background var(--fast), transform var(--fast);
       position: relative;
     }
 
     .sb-cell:last-child {
-      border-left: none;
+      border: none;
     }
 
     .sb-cell:hover {
-      background: var(--s2);
+      background: var(--brand-bg);
+      transform: translateY(-1px);
     }
 
     .sb-val {
@@ -884,17 +852,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'logou
     .sc {
       position: relative;
       background: var(--surf);
-      border-radius: 20px;
-      border: 1px solid var(--bdr);
-      box-shadow: var(--sh-sm);
+      border-radius: var(--r-xl);
+      border: none;
+      box-shadow: var(--shadow-sm);
       overflow: hidden;
-      margin-bottom: 12px;
-      transition: box-shadow var(--fast), border-color var(--fast);
+      margin-bottom: 14px;
+      transition: box-shadow var(--fast), background var(--fast);
     }
 
     .sc:hover {
-      box-shadow: var(--sh-md);
-      border-color: rgba(129, 140, 248, .35);
+      box-shadow: var(--shadow-md);
     }
 
     .sc-head {
@@ -902,8 +869,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'logou
       display: flex;
       align-items: center;
       gap: 12px;
-      padding: 14px 16px 12px;
-      border-bottom: 1px solid var(--bdr2);
+      padding: 14px 18px 12px;
+      border-bottom: 1px solid var(--border-solid);
       background: var(--surf);
     }
 
@@ -939,11 +906,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'logou
     .sc-badge {
       font-size: .72rem;
       font-weight: 800;
-      padding: 5px 11px;
+      padding: 5px 12px;
       border-radius: var(--r-full);
-      background: linear-gradient(135deg, rgba(238, 242, 255, .96), rgba(224, 231, 255, .96));
+      background: var(--brand-bg);
       color: var(--brand);
-      border: 1px solid rgba(129, 140, 248, .2);
+      border: none;
     }
 
     .sc-body {
@@ -961,15 +928,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'logou
       display: flex;
       align-items: flex-start;
       gap: 9px;
-      padding: 11px 13px;
+      padding: 12px 14px;
       border-radius: var(--r-md);
-      background: var(--s2);
-      border: 1px solid var(--bdr);
+      background: var(--surface-2);
+      border: none;
       transition: var(--fast);
     }
 
     .ip:hover {
-      border-color: var(--brand-l);
       background: var(--brand-bg);
     }
 
@@ -1325,12 +1291,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'logou
     }
 
     .fchip {
-      padding: 5px 12px;
+      padding: 6px 14px;
       border-radius: var(--r-full);
-      font-size: .72rem;
+      font-size: .74rem;
       font-weight: 700;
-      border: 1.5px solid var(--bdr);
-      background: var(--surf);
+      border: none;
+      background: var(--surface-2);
       color: var(--t3);
       cursor: pointer;
       transition: var(--fast);
@@ -1338,25 +1304,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'logou
     }
 
     .fchip:hover {
-      border-color: var(--brand);
+      background: var(--brand-bg);
       color: var(--brand);
     }
 
     .fchip.active {
       background: var(--brand);
-      border-color: var(--brand);
       color: #fff;
     }
 
     .fchip.ok.active {
       background: var(--ok);
-      border-color: var(--ok);
       color: #fff;
     }
 
     .fchip.err.active {
       background: var(--err);
-      border-color: var(--err);
       color: #fff;
     }
 
@@ -1604,9 +1567,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'logou
     }
 
     .trip-card {
-      border-radius: var(--r-md);
+      border-radius: var(--r-lg);
       overflow: hidden;
-      border: 1px solid var(--bdr);
+      border: none;
+      box-shadow: var(--shadow-sm);
       background: var(--surf);
       transition: var(--norm);
       cursor: pointer;
@@ -1617,8 +1581,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'logou
 
     .trip-card:hover {
       transform: translateY(-3px);
-      box-shadow: var(--sh-md);
-      border-color: var(--trip-l);
+      box-shadow: var(--shadow-md);
+      background: var(--surface-2);
     }
 
     .trip-thumb {
@@ -1907,7 +1871,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'logou
     .task-card {
       border-radius: var(--r-md);
       overflow: hidden;
-      border: 1px solid var(--bdr);
+      border: none;
+      box-shadow: var(--shadow-sm);
       margin-bottom: 10px;
       background: var(--surf);
       transition: var(--fast);
@@ -1921,8 +1886,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'logou
 
     .task-card:hover {
       transform: translateX(-2px);
-      box-shadow: var(--sh-sm);
-      border-color: var(--brand-l);
+      box-shadow: var(--shadow-md);
+      background: var(--surface-2);
     }
 
     .task-bar {
@@ -2127,10 +2092,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'logou
       gap: 10px;
       padding: 15px 16px;
       border-radius: 20px;
-      background: linear-gradient(180deg, rgba(248, 250, 252, .95), rgba(255, 255, 255, .98));
-      border: 1px solid rgba(226, 232, 240, .95);
-      box-shadow: 0 8px 22px rgba(15, 23, 42, .04);
-      transition: transform var(--fast), box-shadow var(--fast), border-color var(--fast);
+      background: var(--surf);
+      border: none;
+      box-shadow: var(--shadow-sm);
+      transition: transform var(--fast), box-shadow var(--fast), background var(--fast);
     }
 
     .ann-item::before {
@@ -2145,8 +2110,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'logou
 
     .ann-item:hover {
       transform: translateY(-2px);
-      border-color: rgba(129, 140, 248, .4);
-      box-shadow: 0 14px 28px rgba(15, 23, 42, .07);
+      background: var(--surface-2);
+      box-shadow: var(--shadow-md);
     }
 
     .ann-top {
@@ -3025,7 +2990,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'logou
     .acc-item:hover,
     .acc-item.active {
       background: var(--brand-bg);
-      border-color: var(--brand-l);
+      border-color: transparent;
     }
 
     .acc-av {
@@ -3040,7 +3005,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'logou
       justify-content: center;
       flex-shrink: 0;
       overflow: hidden;
-      border: 2px solid var(--bdr);
+      border: 2px solid #fff;
+      box-shadow: var(--shadow-sm);
     }
 
     .acc-av img {
@@ -3231,9 +3197,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'logou
 
     .acc-card-item:hover {
       background: var(--surf);
-      border-color: var(--brand-l);
+      border-color: transparent;
       transform: translateY(-2px);
-      box-shadow: var(--sh-sm);
+      box-shadow: var(--shadow-sm);
     }
 
     .acc-card-item.active {
@@ -4440,19 +4406,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'logou
       align-items: center;
       gap: 8px;
       cursor: pointer;
-      padding: 12px 8px;
+      padding: 14px 10px;
       border-radius: var(--r-lg);
-      border: 1.5px solid var(--bdr);
-      background: var(--surf);
+      border: none;
+      background: var(--surface-2);
+      box-shadow: var(--shadow-sm);
       transition: var(--fast);
       text-align: center;
     }
 
     .uncle-card:hover {
-      border-color: var(--cou-l);
-      background: var(--cou-bg);
+      background: var(--coupon-bg);
       transform: translateY(-2px);
-      box-shadow: var(--sh-sm);
+      box-shadow: var(--shadow-md);
     }
 
     .uncle-card-av {
@@ -4467,7 +4433,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'logou
       align-items: center;
       justify-content: center;
       overflow: hidden;
-      border: 2px solid var(--bdr);
+      border: 2px solid #fff;
+      box-shadow: var(--shadow-sm);
       flex-shrink: 0;
       transition: var(--fast);
     }
@@ -5000,15 +4967,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'logou
     }
 
     /* ══ SIBLINGS & TABS CUSTOM STYLES ══════════════════════════ */
+    .sibling-card {
+      border: none !important;
+      background: var(--surface-2) !important;
+      box-shadow: var(--shadow-sm) !important;
+      border-radius: var(--r-md) !important;
+      transition: all var(--fast) !important;
+    }
+
     .sibling-card:hover {
-      border-color: var(--brand) !important;
+      background: var(--brand-bg) !important;
+      border-color: transparent !important;
       transform: translateY(-2px);
-      box-shadow: var(--sh-md) !important;
+      box-shadow: var(--shadow-md) !important;
     }
 
     .send-cat-btn {
-      background: var(--s2);
-      border: 1.5px solid var(--bdr);
+      background: var(--surface-2);
+      border: none;
       border-radius: var(--r-sm);
       padding: 8px 4px;
       font-size: .75rem;
@@ -5023,7 +4999,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'logou
     .send-cat-btn.active {
       background: var(--brand);
       color: #fff;
-      border-color: var(--brand);
     }
 
     .send-recipient-chip {
@@ -5031,8 +5006,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'logou
       flex-direction: column;
       align-items: center;
       padding: 8px 12px;
-      background: var(--s2);
-      border: 1.5px solid var(--bdr);
+      background: var(--surface-2);
+      border: none;
       border-radius: var(--r-md);
       font-size: .75rem;
       font-weight: 800;
@@ -5044,7 +5019,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'logou
     }
 
     .send-recipient-chip.active {
-      border-color: var(--brand);
       background: var(--brand-bg);
       color: var(--brand);
     }
@@ -5696,7 +5670,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'logou
         top: 0 !important;
         height: auto !important;
         box-shadow: 0 12px 32px rgba(49, 46, 129, 0.18) !important;
-        background: linear-gradient(145deg, #312e81 0%, #4f46e5 35%, #7c3aed 70%, #5b21b6 100%) !important;
+        background: var(--brand) !important;
         overflow: hidden !important;
         box-sizing: border-box !important;
         display: block !important;
@@ -5731,9 +5705,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'logou
       }
 
       .hero-church-chip {
-        background: rgba(255, 255, 255, 0.16) !important;
-        color: rgba(255, 255, 255, 0.95) !important;
-        border: 1px solid rgba(255, 255, 255, 0.2) !important;
+        background: rgba(255, 255, 255, 0.18) !important;
+        color: #fff !important;
+        border: none !important;
         max-width: none !important;
       }
 
@@ -5774,9 +5748,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'logou
       .coupon-hero {
         width: 100% !important;
         margin: 18px 0 0 0 !important;
-        background: rgba(255, 255, 255, 0.12) !important;
-        border: 1px solid rgba(255, 255, 255, 0.18) !important;
-        border-radius: var(--r-lg) !important;
+        background: rgba(255, 255, 255, 0.16) !important;
+        border: none !important;
+        border-radius: var(--r-xl) !important;
         display: grid !important;
         grid-template-columns: 1fr auto !important;
         align-items: center !important;
@@ -6086,7 +6060,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'logou
         <i class="fas fa-search"
           style="position:absolute; right:16px; top:50%; transform:translateY(-50%); color:var(--t4); font-size:.95rem; pointer-events:none;"></i>
         <input type="text" id="homeFriendSearch" placeholder="ابحث عن أصحابك في الكنيسة..."
-          style="width:100%; padding:12px 42px 12px 42px; border:2px solid var(--bdr); border-radius:var(--r-xl); font-family:inherit; font-size:.88rem; outline:none; background:var(--surf); color:var(--t1); box-shadow:var(--sh-sm); transition:all var(--fast);"
+          style="width:100%; padding:12px 42px 12px 42px; border:1px solid var(--border-solid); border-radius:var(--r-xl); font-family:inherit; font-size:.88rem; outline:none; background:var(--surf); color:var(--t1); box-shadow:var(--sh-sm); transition:all var(--fast);"
           oninput="onHomeSearch(this.value)" autocomplete="off">
         <button onclick="clearHomeSearch()"
           style="position:absolute; left:16px; top:50%; transform:translateY(-50%); background:none; border:none; color:var(--t4); cursor:pointer; font-size:.95rem; display:flex; align-items:center; justify-content:center;"><i
@@ -7081,53 +7055,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'logou
     let birthdayGreetingStudent = null;
     let maxFetchedTaskAnnId = 0;
 
-    // ── Mobile Continuous Responsive Hero Scroll Listener ───────────────
+    // ── Mobile Hero (Static Clean - Scroll Collapse Removed) ─────────────
     function initHeroScrollCollapse() {
-      let ticking = false;
-      const maxScroll = 140; // Full collapse reached at 140px scroll
-      function onScroll() {
-        if (window.innerWidth >= 900) {
-          document.documentElement.style.setProperty('--hero-p', '0');
-          if (document.body.classList.contains('hero-collapsed')) {
-            document.body.classList.remove('hero-collapsed');
-          }
-          return;
-        }
-        const scrollY = window.pageYOffset || document.documentElement.scrollTop || 0;
-        const progress = Math.min(1, Math.max(0, scrollY / maxScroll));
-        document.documentElement.style.setProperty('--hero-p', progress.toFixed(3));
-        
-        if (progress > 0.85) {
-          if (!document.body.classList.contains('hero-collapsed')) {
-            document.body.classList.add('hero-collapsed');
-          }
-        } else {
-          if (document.body.classList.contains('hero-collapsed')) {
-            document.body.classList.remove('hero-collapsed');
-          }
-        }
-      }
-      window.addEventListener('scroll', function () {
-        if (!ticking) {
-          window.requestAnimationFrame(function () {
-            onScroll();
-            ticking = false;
-          });
-          ticking = true;
-        }
-      }, { passive: true });
-      window.addEventListener('resize', function () {
-        if (window.innerWidth >= 900) {
-          document.documentElement.style.setProperty('--hero-p', '0');
-          if (document.body.classList.contains('hero-collapsed')) {
-            document.body.classList.remove('hero-collapsed');
-          }
-        } else {
-          onScroll();
-        }
-      }, { passive: true });
-      // Initial trigger
-      onScroll();
+      // Natural 60fps scrolling without collapse lag
     }
 
     function onDOMReady(fn) {
@@ -12018,7 +11948,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'logou
               ? `<img src="${esc(s.image_url)}" style="width:100%;height:100%;object-fit:cover;border-radius:var(--r-md);" alt="${esc(s.name)}">`
               : `<i class="fas fa-user" style="font-size:1.8rem;color:var(--t4);"></i>`;
             return `
-              <div class="sibling-card" onclick="openFriendProfile(${s.id})" style="background:var(--surf);border:1.5px solid var(--bdr);border-radius:var(--r-md);padding:14px 10px;text-align:center;cursor:pointer;transition:all var(--fast);display:flex;flex-direction:column;align-items:center;gap:8px;box-shadow:var(--sh-sm);">
+              <div class="sibling-card" onclick="openFriendProfile(${s.id})" style="background:var(--surf);border:none;border-radius:var(--r-md);padding:14px 10px;text-align:center;cursor:pointer;transition:all var(--fast);display:flex;flex-direction:column;align-items:center;gap:8px;box-shadow:var(--sh-sm);">
                 <div style="width:56px;height:56px;border-radius:var(--r-md);background:var(--bg);display:flex;align-items:center;justify-content:center;overflow:hidden;flex-shrink:0;">
                   ${photo}
                 </div>
@@ -12079,7 +12009,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'logou
               ? `<img src="${esc(s.image_url)}" style="width:100%;height:100%;object-fit:cover;border-radius:var(--r-md);" alt="${esc(s.name)}">`
               : `<i class="fas fa-user" style="font-size:1.8rem;color:var(--t4);"></i>`;
             return `
-              <div class="sibling-card" onclick="openFriendProfile(${s.id})" style="background:var(--surf);border:1.5px solid var(--bdr);border-radius:var(--r-md);padding:14px 10px;text-align:center;cursor:pointer;transition:all var(--fast);display:flex;flex-direction:column;align-items:center;gap:8px;box-shadow:var(--sh-sm);">
+              <div class="sibling-card" onclick="openFriendProfile(${s.id})" style="background:var(--surf);border:none;border-radius:var(--r-md);padding:14px 10px;text-align:center;cursor:pointer;transition:all var(--fast);display:flex;flex-direction:column;align-items:center;gap:8px;box-shadow:var(--sh-sm);">
                 <div style="width:56px;height:56px;border-radius:var(--r-md);background:var(--bg);display:flex;align-items:center;justify-content:center;overflow:hidden;flex-shrink:0;">
                   ${photo}
                 </div>
