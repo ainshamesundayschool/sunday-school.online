@@ -14718,134 +14718,133 @@ $showSettings = $hasChurchId || $isDevOrAdmin;
     <!-- Developer Password Requests & Reset Modal -->
     <!-- Developer Password Requests & Reset Modal -->
     <div class="modal-overlay" id="devPasswordRequestsModal" style="z-index:1000008;">
-        <div class="modal" style="max-width:520px; width:95%; max-height:85vh; overflow-y:auto; -webkit-overflow-scrolling:touch; overscroll-behavior-y:contain; display:flex; flex-direction:column; padding:0 16px 16px;">
-            <div class="modal-header" style="display:flex; align-items:center; justify-content:space-between; padding:14px 16px; border-bottom:1px solid var(--border-solid); position:sticky; top:0; background:var(--surface); z-index:10;">
-                <h3 style="display:flex; align-items:center; gap:8px; margin:0; font-size:1.05rem; font-weight:700;">
-                    <button class="back-btn" id="devPwdBackBtn" onclick="devPwdShowListView()" style="display:none; background:var(--surface-3); border:none; width:30px; height:30px; border-radius:var(--r-md); cursor:pointer; color:var(--text); align-items:center; justify-content:center;">
-                        <i class="fas fa-arrow-right"></i>
+        <div class="modal" style="max-width:480px; width:95%; max-height:82vh; overflow-y:auto; -webkit-overflow-scrolling:touch; overscroll-behavior-y:contain; display:flex; flex-direction:column; padding:0 12px 12px; border-radius:var(--r-xl);">
+            <div class="modal-header" style="display:flex; align-items:center; justify-content:space-between; padding:10px 12px; border-bottom:1px solid var(--border-solid); position:sticky; top:0; background:var(--surface); z-index:10;">
+                <h3 style="display:flex; align-items:center; gap:8px; margin:0; font-size:0.98rem; font-weight:700;">
+                    <button class="back-btn" id="devPwdBackBtn" onclick="devPwdShowListView()" style="display:none; background:var(--surface-3); border:none; width:28px; height:28px; border-radius:var(--r-md); cursor:pointer; color:var(--text); align-items:center; justify-content:center;">
+                        <i class="fas fa-arrow-right" style="font-size:0.8rem;"></i>
                     </button>
-                    <span id="devPwdModalTitleText"><i class="fas fa-key" style="color:var(--brand); margin-left:6px;"></i>طلبات إعادة تعيين كلمة المرور</span>
+                    <span id="devPwdModalTitleText"><i class="fas fa-key" style="color:var(--brand); margin-left:6px;"></i>طلبات تعيين كلمة المرور</span>
                 </h3>
-                <div style="display:flex; align-items:center; gap:8px;">
-                    <button type="button" class="btn btn-sm" id="devPwdRefreshBtn" onclick="loadDevPasswordRequests(true)" title="تحديث" style="padding:5px 10px; background:var(--surface-2); color:var(--text); border:1px solid var(--border-solid); border-radius:var(--r-md); cursor:pointer;">
+                <div style="display:flex; align-items:center; gap:6px;">
+                    <button type="button" class="btn btn-sm" id="devPwdRefreshBtn" onclick="loadDevPasswordRequests(true)" title="تحديث" style="padding:4px 8px; background:var(--surface-2); color:var(--text); border:1px solid var(--border-solid); border-radius:var(--r-md); cursor:pointer; font-size:0.8rem;">
                         <i class="fas fa-sync-alt"></i>
                     </button>
-                    <button class="close-btn" onclick="closeDevPasswordRequestsModal()">&times;</button>
+                    <button class="close-btn" onclick="closeDevPasswordRequestsModal()" style="width:28px; height:28px; font-size:1.1rem;">&times;</button>
                 </div>
             </div>
             
-            <div class="modal-body" style="padding:14px 4px 6px;">
+            <div class="modal-body" style="padding:10px 2px 4px;">
                 <!-- VIEW 1: REQUESTS LIST & SEARCH -->
                 <div id="devPwdListView">
                     <!-- Filter and Search -->
-                    <div style="display:flex; gap:8px; margin-bottom:12px; flex-wrap:wrap;">
-                        <div class="input-icon-wrap" style="flex:1; min-width:180px;">
-                            <i class="fas fa-search input-icon"></i>
-                            <input type="text" id="devPwdSearchInput" class="form-input" placeholder="ابحث باسم الطالب، الكنيسة، الفصل، أو الهاتف..." oninput="filterDevPasswordRequests()" style="font-size:0.85rem; padding:8px 10px 8px 34px;">
+                    <div style="display:flex; gap:6px; margin-bottom:10px; flex-wrap:wrap; align-items:center;">
+                        <div class="input-icon-wrap" style="flex:1; min-width:160px;">
+                            <i class="fas fa-search input-icon" style="font-size:0.8rem;"></i>
+                            <input type="text" id="devPwdSearchInput" class="form-input" placeholder="بحث بالاسم، الكنيسة، الهاتف..." oninput="filterDevPasswordRequests()" style="font-size:0.8rem; padding:6px 8px 6px 30px; height:34px;">
                         </div>
-                        <div style="display:flex; gap:4px;">
-                            <button type="button" class="btn btn-sm dev-pwd-tab active" data-tab="all" onclick="setDevPwdTab('all')" style="padding:6px 12px; border-radius:var(--r-md); font-weight:700; font-size:0.8rem;">الكل</button>
-                            <button type="button" class="btn btn-sm dev-pwd-tab btn-secondary" data-tab="pending" onclick="setDevPwdTab('pending')" style="padding:6px 12px; border-radius:var(--r-md); font-weight:700; font-size:0.8rem;">المعلقة <span id="devPwdTabPendingBadge" style="background:var(--danger); color:#fff; border-radius:10px; padding:1px 5px; font-size:0.65rem; margin-right:3px; display:none;">0</span></button>
-                            <button type="button" class="btn btn-sm dev-pwd-tab btn-secondary" data-tab="completed" onclick="setDevPwdTab('completed')" style="padding:6px 12px; border-radius:var(--r-md); font-weight:700; font-size:0.8rem;">المكتملة</button>
+                        <div style="display:flex; gap:3px;">
+                            <button type="button" class="btn btn-sm dev-pwd-tab active" data-tab="all" onclick="setDevPwdTab('all')" style="padding:4px 10px; height:34px; border-radius:var(--r-md); font-weight:700; font-size:0.76rem;">الكل</button>
+                            <button type="button" class="btn btn-sm dev-pwd-tab btn-secondary" data-tab="pending" onclick="setDevPwdTab('pending')" style="padding:4px 10px; height:34px; border-radius:var(--r-md); font-weight:700; font-size:0.76rem;">المعلقة <span id="devPwdTabPendingBadge" style="background:var(--danger); color:#fff; border-radius:10px; padding:1px 5px; font-size:0.65rem; margin-right:3px; display:none;">0</span></button>
+                            <button type="button" class="btn btn-sm dev-pwd-tab btn-secondary" data-tab="completed" onclick="setDevPwdTab('completed')" style="padding:4px 10px; height:34px; border-radius:var(--r-md); font-weight:700; font-size:0.76rem;">المكتملة</button>
                         </div>
                     </div>
 
                     <!-- Requests Container -->
-                    <div id="devPwdListContainer" style="display:flex; flex-direction:column; gap:8px;">
+                    <div id="devPwdListContainer" style="display:flex; flex-direction:column; gap:6px;">
                         <!-- Dynamic rows injected here -->
                     </div>
                 </div>
 
-                <!-- VIEW 2: DEDICATED STUDENT DETAIL & RESET ACTION -->
-                <!-- VIEW 2: DEDICATED STUDENT DETAIL & RESET ACTION SUITE -->
-                <div id="devPwdDetailView" style="display:none; flex-direction:column; gap:12px;">
+                <!-- VIEW 2: DEDICATED STUDENT DETAIL & RESET ACTION SUITE (COMPACT) -->
+                <div id="devPwdDetailView" style="display:none; flex-direction:column; gap:8px;">
                     <!-- Student Identity Verification Card -->
-                    <div style="background:var(--surface-2); border:1px solid var(--border-solid); border-radius:var(--r-lg); padding:14px;">
-                        <div id="devPwdStudentCard" style="display:flex; align-items:center; gap:14px;">
+                    <div style="background:var(--surface-2); border:1px solid var(--border-solid); border-radius:var(--r-md); padding:10px 12px;">
+                        <div id="devPwdStudentCard" style="display:flex; align-items:center; gap:10px;">
                             <!-- Injected dynamically: Avatar, Name, Church, Class, ID, Phones with direct dial -->
                         </div>
                     </div>
 
                     <!-- Email Suite Card (Save Only & Generate + Send to Email) -->
-                    <div style="background:var(--surface-2); border:1px solid var(--border-solid); border-radius:var(--r-lg); padding:14px;">
-                        <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:8px;">
-                            <label class="form-label" style="margin:0; font-size:0.82rem; font-weight:700; color:var(--text); display:flex; align-items:center; gap:6px;">
+                    <div style="background:var(--surface-2); border:1px solid var(--border-solid); border-radius:var(--r-md); padding:10px 12px;">
+                        <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:6px;">
+                            <label class="form-label" style="margin:0; font-size:0.78rem; font-weight:700; color:var(--text); display:flex; align-items:center; gap:6px;">
                                 <i class="fas fa-envelope" style="color:var(--brand);"></i> البريد الإلكتروني للطالب
                             </label>
-                            <span id="devPwdEmailStatusBadge" style="font-size:0.72rem; padding:2px 8px; border-radius:4px; font-weight:700;"></span>
+                            <span id="devPwdEmailStatusBadge" style="font-size:0.68rem; padding:1px 6px; border-radius:4px; font-weight:700;"></span>
                         </div>
-                        <div class="input-icon-wrap" style="margin-bottom:10px;">
-                            <i class="fas fa-at input-icon"></i>
-                            <input type="email" id="devPwdDetailEmail" class="form-input" placeholder="student@example.com" dir="ltr" style="font-family:monospace; font-size:0.84rem; padding:8px 10px 8px 34px;">
+                        <div class="input-icon-wrap" style="margin-bottom:8px;">
+                            <i class="fas fa-at input-icon" style="font-size:0.8rem;"></i>
+                            <input type="email" id="devPwdDetailEmail" class="form-input" placeholder="student@example.com" dir="ltr" style="font-family:monospace; font-size:0.8rem; padding:6px 8px 6px 30px; height:32px;">
                         </div>
-                        <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px;">
-                            <button type="button" class="btn btn-sm btn-secondary" onclick="saveDevPwdStudentEmailOnly()" id="devPwdSaveEmailBtn" style="padding:9px 12px; font-size:0.8rem; font-weight:700; justify-content:center; background:var(--surface-3); border:1px solid var(--border-solid); border-radius:var(--r-md); cursor:pointer;">
-                                <i class="fas fa-save" style="margin-left:4px;"></i> حفظ الإيميل فقط
+                        <div style="display:grid; grid-template-columns:1fr 1fr; gap:6px;">
+                            <button type="button" class="btn btn-sm btn-secondary" onclick="saveDevPwdStudentEmailOnly()" id="devPwdSaveEmailBtn" style="padding:6px 10px; font-size:0.76rem; font-weight:700; justify-content:center; background:var(--surface-3); border:1px solid var(--border-solid); border-radius:var(--r-md); cursor:pointer;">
+                                <i class="fas fa-save" style="margin-left:4px;"></i> حفظ الإيميل
                             </button>
-                            <button type="button" class="btn btn-sm" onclick="generateAndSendDevPwdLinkToEmail()" id="devPwdSendEmailBtn" style="padding:9px 12px; font-size:0.8rem; font-weight:700; justify-content:center; background:linear-gradient(135deg, var(--coupon), var(--coupon-dark)); color:#fff; border:none; border-radius:var(--r-md); cursor:pointer; box-shadow:0 3px 10px rgba(139,92,246,0.25);">
-                                <i class="fas fa-paper-plane" style="margin-left:4px;"></i> إنشاء الرابط وإرساله للإيميل
+                            <button type="button" class="btn btn-sm" onclick="generateAndSendDevPwdLinkToEmail()" id="devPwdSendEmailBtn" style="padding:6px 10px; font-size:0.76rem; font-weight:700; justify-content:center; background:linear-gradient(135deg, var(--coupon), var(--coupon-dark)); color:#fff; border:none; border-radius:var(--r-md); cursor:pointer; box-shadow:0 2px 8px rgba(139,92,246,0.22);">
+                                <i class="fas fa-paper-plane" style="margin-left:4px;"></i> إرسال للإيميل
                             </button>
                         </div>
                     </div>
 
                     <!-- Direct Instant Dispatch (WhatsApp / SMS / Link) -->
-                    <div style="background:var(--surface-2); border:1px solid var(--border-solid); border-radius:var(--r-lg); padding:14px;">
-                        <div style="font-size:0.82rem; font-weight:700; color:var(--text); margin-bottom:10px; display:flex; align-items:center; gap:6px;">
+                    <div style="background:var(--surface-2); border:1px solid var(--border-solid); border-radius:var(--r-md); padding:10px 12px;">
+                        <div style="font-size:0.78rem; font-weight:700; color:var(--text); margin-bottom:8px; display:flex; align-items:center; gap:6px;">
                             <i class="fas fa-share-alt" style="color:var(--brand);"></i> إرسال رابط الاستعادة المباشر
                         </div>
 
                         <!-- Target Phone Selector (shown when both student phone and parent phone are present) -->
-                        <div id="devPwdTargetPhoneSelector" style="display:none; margin-bottom:10px; background:var(--surface-3); padding:8px 10px; border-radius:var(--r-md); border:1px solid var(--border-solid);">
-                            <div style="font-size:0.75rem; color:var(--text-3); font-weight:700; margin-bottom:6px;">
+                        <div id="devPwdTargetPhoneSelector" style="display:none; margin-bottom:8px; background:var(--surface-3); padding:6px 8px; border-radius:var(--r-sm); border:1px solid var(--border-solid);">
+                            <div style="font-size:0.72rem; color:var(--text-3); font-weight:700; margin-bottom:4px;">
                                 <i class="fas fa-mobile-alt" style="margin-left:4px; color:var(--brand);"></i> اختر رقم الإرسال:
                             </div>
-                            <div style="display:flex; gap:8px;">
-                                <label id="devPwdTargetMainLabel" style="flex:1; display:flex; align-items:center; gap:6px; cursor:pointer; font-size:0.78rem; background:var(--surface); padding:6px 8px; border-radius:var(--r-sm); border:1.5px solid var(--brand); color:var(--brand); font-weight:700;">
+                            <div style="display:flex; gap:6px;">
+                                <label id="devPwdTargetMainLabel" style="flex:1; display:flex; align-items:center; gap:5px; cursor:pointer; font-size:0.74rem; background:var(--surface); padding:4px 6px; border-radius:var(--r-sm); border:1.5px solid var(--brand); color:var(--brand); font-weight:700;">
                                     <input type="radio" name="dev_pwd_phone_choice" value="main" checked onchange="onDevPwdPhoneChoiceChange(this.value)">
                                     <span id="devPwdTargetMainText">هاتف المخدوم</span>
                                 </label>
-                                <label id="devPwdTargetEmergLabel" style="flex:1; display:flex; align-items:center; gap:6px; cursor:pointer; font-size:0.78rem; background:var(--surface); padding:6px 8px; border-radius:var(--r-sm); border:1.5px solid var(--border-solid); color:var(--text-2); font-weight:700;">
+                                <label id="devPwdTargetEmergLabel" style="flex:1; display:flex; align-items:center; gap:5px; cursor:pointer; font-size:0.74rem; background:var(--surface); padding:4px 6px; border-radius:var(--r-sm); border:1.5px solid var(--border-solid); color:var(--text-2); font-weight:700;">
                                     <input type="radio" name="dev_pwd_phone_choice" value="emerg" onchange="onDevPwdPhoneChoiceChange(this.value)">
                                     <span id="devPwdTargetEmergText">ولي الأمر</span>
                                 </label>
                             </div>
                         </div>
                         
-                        <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:10px;">
-                            <button type="button" class="btn" id="devPwdWhatsAppActionBtn" onclick="sendDevPwdLinkToWhatsApp()" style="padding:10px 14px; background:#25d366; color:#fff; border:none; border-radius:var(--r-md); font-weight:700; font-size:0.85rem; cursor:pointer; display:inline-flex; align-items:center; justify-content:center; gap:6px; box-shadow:0 3px 10px rgba(37,211,102,0.25);">
-                                <i class="fab fa-whatsapp" style="font-size:1.15rem;"></i>
+                        <div style="display:grid; grid-template-columns:1fr 1fr; gap:6px; margin-bottom:8px;">
+                            <button type="button" class="btn" id="devPwdWhatsAppActionBtn" onclick="sendDevPwdLinkToWhatsApp()" style="padding:8px 12px; background:#25d366; color:#fff; border:none; border-radius:var(--r-md); font-weight:700; font-size:0.8rem; cursor:pointer; display:inline-flex; align-items:center; justify-content:center; gap:5px; box-shadow:0 2px 8px rgba(37,211,102,0.22);">
+                                <i class="fab fa-whatsapp" style="font-size:1.05rem;"></i>
                                 <span id="devPwdWhatsAppBtnText">فتح واتساب</span>
                             </button>
-                            <button type="button" class="btn btn-secondary" id="devPwdSmsActionBtn" onclick="sendDevPwdLinkToSms()" style="padding:10px 14px; background:var(--surface-3); color:var(--text); border:1px solid var(--border-solid); border-radius:var(--r-md); font-weight:700; font-size:0.85rem; cursor:pointer; display:inline-flex; align-items:center; justify-content:center; gap:6px;">
-                                <i class="fas fa-sms" style="color:var(--brand); font-size:1.1rem;"></i>
+                            <button type="button" class="btn btn-secondary" id="devPwdSmsActionBtn" onclick="sendDevPwdLinkToSms()" style="padding:8px 12px; background:var(--surface-3); color:var(--text); border:1px solid var(--border-solid); border-radius:var(--r-md); font-weight:700; font-size:0.8rem; cursor:pointer; display:inline-flex; align-items:center; justify-content:center; gap:5px;">
+                                <i class="fas fa-sms" style="color:var(--brand); font-size:0.95rem;"></i>
                                 <span id="devPwdSmsBtnText">إرسال SMS</span>
                             </button>
                         </div>
 
-                        <!-- 2-Hour Expiration Warning Banner -->
-                        <div style="background:var(--warning-bg); border:1px solid rgba(245,158,11,0.25); border-radius:var(--r-md); padding:8px 12px; font-size:0.75rem; color:var(--warning-dark); display:flex; align-items:flex-start; gap:8px; margin-bottom:10px;">
-                            <i class="fas fa-clock" style="margin-top:2px; font-size:0.85rem;"></i>
-                            <div style="line-height:1.4;">
-                                <strong>تنبيه هام (صلاحية الرابط ساعتان فقط):</strong> هذا الرابط الآمن صالح للاستخدام لمدة ساعتين فقط (ينتهي بعد ساعتين) لحماية وتأمين الحساب.
+                        <!-- 2-Hour Expiration Warning Banner (Compact) -->
+                        <div style="background:var(--warning-bg); border:1px solid rgba(245,158,11,0.25); border-radius:var(--r-sm); padding:6px 10px; font-size:0.72rem; color:var(--warning-dark); display:flex; align-items:center; gap:6px; margin-bottom:8px;">
+                            <i class="fas fa-clock" style="font-size:0.8rem; flex-shrink:0;"></i>
+                            <div style="line-height:1.3;">
+                                <strong>تنبيه:</strong> صلاحية الرابط ساعتان فقط من وقت الإنشاء.
                             </div>
                         </div>
 
                         <!-- Generated Link & Copy Suite -->
-                        <div id="devPwdCompactLinkBox" style="display:none; background:var(--surface-3); border:1px solid var(--border-solid); border-radius:var(--r-md); padding:10px;">
-                            <label style="display:block; font-size:0.72rem; color:var(--text-3); font-weight:600; margin-bottom:4px;">الرابط المشفر المنشأ:</label>
-                            <div style="display:flex; align-items:center; gap:6px; margin-bottom:8px;">
-                                <input type="text" id="devPwdGeneratedLinkInput" readonly class="form-input" dir="ltr" style="font-family:monospace; font-size:0.75rem; padding:6px 8px; flex:1; background:var(--surface); border:1px solid var(--border-solid); border-radius:var(--r-sm);">
-                                <button type="button" class="btn btn-sm btn-secondary" onclick="copyDevPwdLinkOnly()" style="padding:6px 10px; font-size:0.75rem; white-space:nowrap; border-radius:var(--r-sm);">
-                                    <i class="fas fa-link"></i> نسخ الرابط
+                        <div id="devPwdCompactLinkBox" style="display:none; background:var(--surface-3); border:1px solid var(--border-solid); border-radius:var(--r-sm); padding:8px;">
+                            <label style="display:block; font-size:0.7rem; color:var(--text-3); font-weight:600; margin-bottom:3px;">الرابط المشفر المنشأ:</label>
+                            <div style="display:flex; align-items:center; gap:5px; margin-bottom:6px;">
+                                <input type="text" id="devPwdGeneratedLinkInput" readonly class="form-input" dir="ltr" style="font-family:monospace; font-size:0.72rem; padding:4px 6px; flex:1; height:28px; background:var(--surface); border:1px solid var(--border-solid); border-radius:var(--r-xs);">
+                                <button type="button" class="btn btn-sm btn-secondary" onclick="copyDevPwdLinkOnly()" style="padding:4px 8px; font-size:0.72rem; white-space:nowrap; border-radius:var(--r-xs); height:28px;">
+                                    <i class="fas fa-link"></i> نسخ
                                 </button>
                             </div>
-                            <button type="button" class="btn btn-sm btn-secondary" onclick="copyDevPwdFullMsg()" style="width:100%; padding:6px 10px; font-size:0.75rem; border-radius:var(--r-sm); background:var(--surface); border:1px solid var(--border-solid); color:var(--text-2); justify-content:center; display:flex; align-items:center; gap:6px;">
-                                <i class="fas fa-copy"></i> نسخ الرسالة كاملة (مع تنبيه الساعتين)
+                            <button type="button" class="btn btn-sm btn-secondary" onclick="copyDevPwdFullMsg()" style="width:100%; padding:5px 8px; font-size:0.72rem; border-radius:var(--r-xs); background:var(--surface); border:1px solid var(--border-solid); color:var(--text-2); justify-content:center; display:flex; align-items:center; gap:5px;">
+                                <i class="fas fa-copy"></i> نسخ الرسالة كاملة
                             </button>
                         </div>
 
-                        <div id="devPwdGenerateOnlyBtnWrap" style="text-align:center; margin-top:8px;">
-                            <button type="button" onclick="generateDevPwdLinkOnly()" style="background:none; border:none; color:var(--text-3); font-size:0.76rem; cursor:pointer; text-decoration:underline;">
+                        <div id="devPwdGenerateOnlyBtnWrap" style="text-align:center; margin-top:6px;">
+                            <button type="button" onclick="generateDevPwdLinkOnly()" style="background:none; border:none; color:var(--text-3); font-size:0.72rem; cursor:pointer; text-decoration:underline;">
                                 <i class="fas fa-magic" style="margin-left:3px;"></i> إنشاء الرابط فقط وعرضه هنا
                             </button>
                         </div>
@@ -24532,70 +24531,130 @@ $showSettings = $hasChurchId || $isDevOrAdmin;
                 const isPending = req.status === 'pending';
                 const isGenerated = req.status === 'generated';
                 const statusBadge = isPending
-                    ? `<span style="background:var(--warning-bg); color:var(--warning-dark); padding:3px 8px; border-radius:6px; font-size:0.75rem; font-weight:700;"><i class="fas fa-clock"></i> معلق</span>`
+                    ? `<span style="background:var(--warning-bg); color:var(--warning-dark); padding:2px 7px; border-radius:6px; font-size:0.68rem; font-weight:700;"><i class="fas fa-clock"></i> معلق</span>`
                     : (isGenerated
-                        ? `<span style="background:var(--success-bg); color:var(--success-dark); padding:3px 8px; border-radius:6px; font-size:0.75rem; font-weight:700;"><i class="fas fa-link"></i> تم إنشاء الرابط</span>`
-                        : `<span style="background:var(--brand-bg); color:var(--brand); padding:3px 8px; border-radius:6px; font-size:0.75rem; font-weight:700;"><i class="fas fa-check-double"></i> مكتمل</span>`);
+                        ? `<span style="background:var(--success-bg); color:var(--success-dark); padding:2px 7px; border-radius:6px; font-size:0.68rem; font-weight:700;"><i class="fas fa-link"></i> تم الرابط</span>`
+                        : `<span style="background:var(--brand-bg); color:var(--brand); padding:2px 7px; border-radius:6px; font-size:0.68rem; font-weight:700;"><i class="fas fa-check-double"></i> مكتمل</span>`);
 
                 const reqDate = req.created_at ? new Date(req.created_at).toLocaleString('ar-EG', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : '';
-                const reqTypeLabel = req.request_type === 'new_registration' ? 'تسجيل جديد' : 'نسيان كلمة المرور';
+                const reqTypeLabel = req.request_type === 'new_registration' ? 'تسجيل جديد' : 'استعادة';
 
                 const avatarSrc = req.image_url || '';
                 const avatarHtml = avatarSrc
-                    ? `<img src="${avatarSrc}" style="width:46px; height:46px; border-radius:50%; object-fit:cover; border:2px solid var(--border-solid);" onerror="this.outerHTML='<div style=\'width:46px;height:46px;border-radius:50%;background:var(--brand-bg);color:var(--brand);display:flex;align-items:center;justify-content:center;font-size:1.1rem;\'><i class=\'fas fa-user\'></i></div>'">`
-                    : `<div style="width:46px; height:46px; border-radius:50%; background:var(--brand-bg); color:var(--brand); display:flex; align-items:center; justify-content:center; font-size:1.1rem;"><i class="fas fa-user"></i></div>`;
+                    ? `<img src="${avatarSrc}" style="width:34px; height:34px; border-radius:50%; object-fit:cover; border:1.5px solid var(--border-solid);" onerror="this.outerHTML='<div style=\'width:34px;height:34px;border-radius:50%;background:var(--brand-bg);color:var(--brand);display:flex;align-items:center;justify-content:center;font-size:0.85rem;\'><i class=\'fas fa-user\'></i></div>'">`
+                    : `<div style="width:34px; height:34px; border-radius:50%; background:var(--brand-bg); color:var(--brand); display:flex; align-items:center; justify-content:center; font-size:0.85rem; flex-shrink:0;"><i class="fas fa-user"></i></div>`;
 
                 const safeJson = escAttr(JSON.stringify(req));
+                const itemKey = req.id || req.student_id;
 
                 return `
-                <div style="background:var(--surface); border:1px solid var(--border-solid); border-radius:var(--r-lg); padding:14px 16px; box-shadow:var(--shadow-sm); display:flex; flex-direction:column; gap:10px; transition:border-color .2s;" onmouseenter="this.style.borderColor='var(--brand)'" onmouseleave="this.style.borderColor='var(--border-solid)'">
-                    <div style="display:flex; align-items:flex-start; justify-content:space-between; gap:12px;">
-                        <div style="display:flex; align-items:center; gap:12px;">
+                <div style="background:var(--surface); border:1px solid var(--border-solid); border-radius:var(--r-md); padding:8px 10px; box-shadow:var(--shadow-sm); display:flex; flex-direction:column; gap:5px; transition:border-color .2s;" onmouseenter="this.style.borderColor='var(--brand)'" onmouseleave="this.style.borderColor='var(--border-solid)'">
+                    <div style="display:flex; align-items:center; justify-content:space-between; gap:8px;">
+                        <div style="display:flex; align-items:center; gap:8px; min-width:0; flex:1;">
                             ${avatarHtml}
-                            <div>
-                                <div style="font-weight:700; font-size:0.95rem; color:var(--text);">${sName}</div>
-                                <div style="font-size:0.78rem; color:var(--text-3); display:flex; align-items:center; gap:8px; margin-top:2px;">
-                                    <span><i class="fas fa-church" style="margin-left:3px; color:var(--brand);"></i>${church}</span>
-                                    <span>•</span>
-                                    <span><i class="fas fa-chalkboard" style="margin-left:3px;"></i>${cls}</span>
+                            <div style="min-width:0; flex:1;">
+                                <div style="display:flex; align-items:center; gap:6px; flex-wrap:wrap;">
+                                    <span style="font-weight:700; font-size:0.86rem; color:var(--text); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${sName}</span>
+                                    <span style="font-size:0.67rem; color:var(--text-3); background:var(--surface-2); padding:1px 5px; border-radius:4px; border:1px solid var(--border-solid);">${church} • ${cls}</span>
+                                </div>
+                                <div style="font-size:0.72rem; color:var(--text-2); display:flex; align-items:center; gap:8px; margin-top:1px; flex-wrap:wrap;">
+                                    ${phone ? `<span dir="ltr" style="font-family:monospace; font-weight:700;"><i class="fas fa-phone" style="color:var(--success); font-size:0.66rem; margin-right:2px;"></i>${phone}</span>` : '<span style="color:var(--text-3);">بدون هاتف</span>'}
+                                    ${emergPhone ? `<span dir="ltr" style="color:var(--text-3); font-size:0.68rem;" title="ولي الأمر"><i class="fas fa-user-friends" style="color:var(--primary); font-size:0.66rem;"></i> ${emergPhone}</span>` : ''}
+                                    ${displayEmail ? `<span dir="ltr" style="color:var(--text-3); font-size:0.7rem; max-width:140px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;"><i class="fas fa-envelope" style="color:var(--brand); font-size:0.66rem; margin-right:2px;"></i>${displayEmail}</span>` : ''}
                                 </div>
                             </div>
                         </div>
-                        <div style="text-align:left;">
-                            ${statusBadge}
-                            <div style="font-size:0.7rem; color:var(--text-3); margin-top:4px;">${reqDate}</div>
+                        <div style="display:flex; flex-direction:column; align-items:flex-end; gap:1px; flex-shrink:0;">
+                            <div id="devPwdStatusBadge_${itemKey}">${statusBadge}</div>
+                            <span style="font-size:0.64rem; color:var(--text-3);">${reqDate}</span>
                         </div>
                     </div>
 
-                    <!-- Details Row -->
-                    <div style="background:var(--surface-2); border-radius:var(--r-md); padding:8px 12px; font-size:0.8rem; display:grid; grid-template-columns:repeat(auto-fit, minmax(180px, 1fr)); gap:8px;">
-                        <div style="display:flex; align-items:center; gap:6px;">
-                            <i class="fas fa-phone" style="color:var(--success);"></i>
-                            <span style="color:var(--text-3);">الهاتف:</span>
-                            <span dir="ltr" style="font-family:monospace; font-weight:700;">${phone || 'غير مسجل'}</span>
+                    <!-- Compact Actions Bar with Direct WhatsApp Button -->
+                    <div style="display:flex; align-items:center; justify-content:space-between; gap:6px; padding-top:5px; border-top:1px dashed var(--border-solid);">
+                        <span style="font-size:0.68rem; color:var(--text-3); display:inline-flex; align-items:center; gap:3px;">
+                            <i class="fas ${req.request_type === 'new_registration' ? 'fa-user-plus' : 'fa-key'}" style="color:var(--brand); font-size:0.68rem;"></i>
+                            <span>${reqTypeLabel}</span>
+                        </span>
+                        <div style="display:flex; align-items:center; gap:5px;">
+                            <!-- Direct WhatsApp Send from Outside -->
+                            <button type="button" class="btn btn-sm" id="devPwdWaListBtn_${itemKey}" onclick='sendDevPwdWhatsAppFromList(event, ${req.student_id}, ${safeJson})' style="padding:3px 10px; background:#25d366; color:#fff; border:none; border-radius:var(--r-md); font-weight:700; font-size:0.76rem; cursor:pointer; display:inline-flex; align-items:center; gap:4px; box-shadow:0 1px 5px rgba(37,211,102,0.22);" title="إرسال رابط الاستعادة إلى واتساب فوراً من الخارج">
+                                <i class="fab fa-whatsapp" style="font-size:0.9rem;"></i>
+                                <span>واتساب</span>
+                            </button>
+                            <!-- More Options Button -->
+                            <button type="button" class="btn btn-sm btn-secondary" onclick='selectDevPwdStudent(${req.student_id}, ${safeJson})' style="padding:3px 8px; background:var(--surface-2); color:var(--text); border:1px solid var(--border-solid); border-radius:var(--r-md); font-weight:600; font-size:0.74rem; cursor:pointer; display:inline-flex; align-items:center; gap:3px;" title="خيارات إضافية، تعديل الإيميل، إرسال SMS، أو نسخ الرابط">
+                                <i class="fas fa-sliders-h" style="font-size:0.7rem;"></i>
+                                <span>خيارات</span>
+                            </button>
                         </div>
-                        ${emergPhone ? `
-                        <div style="display:flex; align-items:center; gap:6px;">
-                            <i class="fas fa-user-friends" style="color:var(--primary);"></i>
-                            <span style="color:var(--text-3);">ولي الأمر:</span>
-                            <span dir="ltr" style="font-family:monospace; font-weight:700;">${emergPhone}</span>
-                        </div>` : ''}
-                        <div style="display:flex; align-items:center; gap:6px; grid-column:1/-1;">
-                            <i class="fas fa-envelope" style="color:var(--brand);"></i>
-                            <span style="color:var(--text-3);">البريد:</span>
-                            <span dir="ltr" style="font-family:monospace; font-weight:600; color:${displayEmail ? 'var(--text)' : 'var(--danger)'};">${displayEmail || 'لا يوجد بريد مسجل'}</span>
-                            ${req.request_type ? `<span style="margin-right:auto; font-size:0.72rem; color:var(--text-3); background:var(--surface-3); padding:2px 6px; border-radius:4px;">${reqTypeLabel}</span>` : ''}
-                        </div>
-                    </div>
-
-                    <!-- Actions -->
-                    <div style="display:flex; justify-content:flex-end; gap:8px;">
-                        <button type="button" class="btn btn-sm" onclick='selectDevPwdStudent(${req.student_id}, ${safeJson})' style="padding:6px 14px; background:linear-gradient(135deg, var(--brand), var(--brand-dark)); color:#fff; border:none; border-radius:var(--r-md); font-weight:700; cursor:pointer; display:inline-flex; align-items:center; gap:6px; box-shadow:0 2px 8px var(--brand-glow);">
-                            <i class="fas fa-key"></i> إدارة الرابط والإيميل
-                        </button>
                     </div>
                 </div>`;
             }).join('');
+        }
+
+        async function sendDevPwdWhatsAppFromList(event, studentId, reqData) {
+            if (event) event.stopPropagation();
+            const itemKey = reqData?.id || studentId;
+            const btn = document.getElementById(`devPwdWaListBtn_${itemKey}`);
+            const origHtml = btn ? btn.innerHTML : '<i class="fab fa-whatsapp"></i> <span>واتساب</span>';
+            if (btn) {
+                btn.disabled = true;
+                btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> <span>جاري...</span>';
+            }
+
+            // Resolve target phone
+            const targetPhone = reqData?.phone || reqData?.student_phone || reqData?.emergency_phone || '';
+            const waPhone = formatPhoneForWhatsApp(targetPhone);
+            const sName = reqData?.student_name || 'الطفل';
+            const reqId = reqData?.id || 0;
+            const email = (reqData?.email || reqData?.student_email || '').trim();
+
+            try {
+                const fd = new FormData();
+                fd.append('action', 'generateResetLinkForStudent');
+                fd.append('student_id', studentId);
+                if (reqId) fd.append('request_id', reqId);
+                fd.append('send_email', '0');
+                if (email) fd.append('email', email);
+                if (typeof _appendDevOverride === 'function') _appendDevOverride(fd);
+
+                const d = await fetch(API_URL, { method: 'POST', body: fd, credentials: 'include' }).then(r => r.json());
+                if (btn) {
+                    btn.disabled = false;
+                    btn.innerHTML = origHtml;
+                }
+
+                if (d.success && d.reset_url) {
+                    const formattedMessage = `رابط إعادة تعيين كلمة المرور لحساب: ${sName}\n${d.reset_url}\n\n⚠️ ملاحظة هامة: هذا الرابط صالح للاستخدام لمدة ساعتين فقط (ينتهي بعد ساعتين).`;
+                    const waUrl = waPhone
+                        ? `https://api.whatsapp.com/send?phone=${waPhone}&text=${encodeURIComponent(formattedMessage)}`
+                        : `https://api.whatsapp.com/send?text=${encodeURIComponent(formattedMessage)}`;
+
+                    window.open(waUrl, '_blank');
+                    showToast('تم إنشاء الرابط وفتح محادثة واتساب ✓', 'success');
+
+                    // Update badge in the list item immediately
+                    const badgeEl = document.getElementById(`devPwdStatusBadge_${itemKey}`);
+                    if (badgeEl) {
+                        badgeEl.innerHTML = `<span style="background:var(--success-bg); color:var(--success-dark); padding:2px 7px; border-radius:6px; font-size:0.68rem; font-weight:700;"><i class="fas fa-link"></i> تم الرابط</span>`;
+                    }
+
+                    // Update in-memory status
+                    const found = _devPasswordRequests.find(r => (reqData?.id && r.id == reqData.id) || r.student_id == studentId);
+                    if (found) found.status = 'generated';
+
+                    loadDevPasswordRequests();
+                } else {
+                    showToast('فشل إنشاء الرابط: ' + (d.message || 'خطأ'), 'error');
+                }
+            } catch (e) {
+                if (btn) {
+                    btn.disabled = false;
+                    btn.innerHTML = origHtml;
+                }
+                showToast('خطأ في الاتصال بالخادم', 'error');
+            }
         }
 
         async function selectDevPwdStudent(studentId, reqData = null) {
@@ -24652,9 +24711,9 @@ $showSettings = $hasChurchId || $isDevOrAdmin;
             if (listView) listView.style.display = 'none';
             if (detailView) detailView.style.display = 'flex';
             if (backBtn) backBtn.style.display = 'inline-flex';
-            if (titleEl) titleEl.innerHTML = `<i class="fas fa-user-shield" style="color:var(--brand);margin-left:8px;"></i>إدارة كلمة مرور: ${escHtml(student.name || '')}`;
+            if (titleEl) titleEl.innerHTML = `<i class="fas fa-user-shield" style="color:var(--brand);margin-left:6px;"></i>خيارات: ${escHtml(student.name || '')}`;
 
-            // Render student identity card
+            // Render student identity card (compact)
             const sName = escHtml(student.name || '---');
             const churchName = escHtml(student._churchName || student['الكنيسة'] || reqData?.church_name || 'الكنيسة العامة');
             const cls = escHtml(student.class || student['الفصل'] || reqData?.class_name || '---');
@@ -24663,32 +24722,30 @@ $showSettings = $hasChurchId || $isDevOrAdmin;
             const photoVal = student.image_url || student['صورة'] || student.photo || '';
             const photoSrc = photoVal ? ((typeof window.photoUrl === 'function' && !photoVal.startsWith('http') && !photoVal.startsWith('/')) ? window.photoUrl(photoVal) : photoVal) : '';
             const avatarHtml = photoSrc
-                ? `<img src="${photoSrc}" style="width:62px; height:62px; border-radius:50%; object-fit:cover; border:2.5px solid var(--border-solid);" onerror="this.outerHTML='<div style=\'width:62px;height:62px;border-radius:50%;background:var(--brand-bg);color:var(--brand);display:flex;align-items:center;justify-content:center;font-size:1.6rem;\'><i class=\'fas fa-user\'></i></div>'">`
-                : `<div style="width:62px; height:62px; border-radius:50%; background:var(--brand-bg); color:var(--brand); display:flex; align-items:center; justify-content:center; font-size:1.6rem;"><i class="fas fa-user"></i></div>`;
+                ? `<img src="${photoSrc}" style="width:40px; height:40px; border-radius:50%; object-fit:cover; border:2px solid var(--border-solid);" onerror="this.outerHTML='<div style=\'width:40px;height:40px;border-radius:50%;background:var(--brand-bg);color:var(--brand);display:flex;align-items:center;justify-content:center;font-size:1.1rem;\'><i class=\'fas fa-user\'></i></div>'">`
+                : `<div style="width:40px; height:40px; border-radius:50%; background:var(--brand-bg); color:var(--brand); display:flex; align-items:center; justify-content:center; font-size:1.1rem; flex-shrink:0;"><i class="fas fa-user"></i></div>`;
 
             const sCard = document.getElementById('devPwdStudentCard');
             if (sCard) {
                 sCard.innerHTML = `
                     ${avatarHtml}
                     <div style="flex:1; min-width:0;">
-                        <div style="font-weight:800; font-size:1.1rem; color:var(--text); margin-bottom:4px;">${sName}</div>
-                        <div style="display:flex; flex-wrap:wrap; gap:8px; font-size:0.8rem; color:var(--text-3); margin-bottom:8px;">
-                            <span style="background:var(--brand-bg); color:var(--brand); padding:2px 8px; border-radius:6px; font-weight:700;"><i class="fas fa-church"></i> ${churchName}</span>
-                            <span style="background:var(--surface-3); color:var(--text-2); padding:2px 8px; border-radius:6px;"><i class="fas fa-chalkboard"></i> ${cls}</span>
-                            <span style="background:var(--surface-3); color:var(--text-2); padding:2px 8px; border-radius:6px;"><i class="fas fa-fingerprint"></i> ID: ${getStudentDbId(student)}</span>
+                        <div style="font-weight:700; font-size:0.95rem; color:var(--text); margin-bottom:2px;">${sName}</div>
+                        <div style="display:flex; flex-wrap:wrap; gap:6px; font-size:0.74rem; color:var(--text-3); margin-bottom:4px;">
+                            <span style="background:var(--brand-bg); color:var(--brand); padding:1px 6px; border-radius:4px; font-weight:700;"><i class="fas fa-church"></i> ${churchName}</span>
+                            <span style="background:var(--surface-3); color:var(--text-2); padding:1px 6px; border-radius:4px;"><i class="fas fa-chalkboard"></i> ${cls}</span>
                         </div>
-                        <div style="display:flex; gap:14px; flex-wrap:wrap; font-size:0.82rem;">
-                            <div style="display:flex; align-items:center; gap:6px;">
+                        <div style="display:flex; gap:10px; flex-wrap:wrap; font-size:0.78rem;">
+                            <div style="display:flex; align-items:center; gap:4px;">
                                 <i class="fas fa-phone" style="color:var(--success);"></i>
                                 <span dir="ltr" style="font-family:monospace; font-weight:700;">${mainPhone || 'بدون هاتف'}</span>
-                                ${mainPhone ? `<a href="tel:${mainPhone}" style="color:var(--success); font-size:0.8rem;"><i class="fas fa-phone-volume"></i></a>` : ''}
+                                ${mainPhone ? `<a href="tel:${mainPhone}" style="color:var(--success); font-size:0.75rem;"><i class="fas fa-phone-volume"></i></a>` : ''}
                             </div>
                             ${emergPhone ? `
-                            <div style="display:flex; align-items:center; gap:6px;">
+                            <div style="display:flex; align-items:center; gap:4px;">
                                 <i class="fas fa-user-friends" style="color:var(--primary);"></i>
-                                <span style="color:var(--text-3);">ولي الأمر:</span>
                                 <span dir="ltr" style="font-family:monospace; font-weight:700;">${emergPhone}</span>
-                                <a href="tel:${emergPhone}" style="color:var(--primary); font-size:0.8rem;"><i class="fas fa-phone-volume"></i></a>
+                                <a href="tel:${emergPhone}" style="color:var(--primary); font-size:0.75rem;"><i class="fas fa-phone-volume"></i></a>
                             </div>` : ''}
                         </div>
                     </div>
