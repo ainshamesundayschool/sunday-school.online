@@ -172,7 +172,6 @@
             object-fit: contain;
             border-radius: 22px;
             background: #ffffff;
-            padding: 6px;
             box-shadow: 0 10px 25px -4px rgba(79, 70, 229, 0.25), 0 2px 6px rgba(0, 0, 0, 0.04);
             border: 1.5px solid rgba(79, 70, 229, 0.15);
             transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.25s cubic-bezier(0.4, 0, 0.2, 1);
@@ -1106,7 +1105,7 @@
                 </form>
             </div>
 
-            <!-- PANEL 2: DEVELOPER LINK RECOVERY (Main for students with NO email, and secondary for email issues) -->
+            <!-- PANEL 2: SECURE LINK RECOVERY (Main for students with NO email, and secondary for email issues) -->
             <div id="recoveryDevPanel" style="display:none; text-align:center;">
                 <div style="width:62px; height:62px; border-radius:50%; background:var(--primary-light); color:var(--primary); display:flex; align-items:center; justify-content:center; margin:0 auto 12px; font-size:1.5rem; border:2px solid rgba(91, 108, 245, 0.2);">
                     <i class="fas fa-paper-plane"></i>
@@ -1114,14 +1113,45 @@
                 <h3 style="font-size:1.2rem; font-weight:800; color:var(--dark); margin-bottom:6px;">استعادة كلمة المرور</h3>
                 <p style="font-size:0.86rem; color:var(--secondary); margin-bottom:16px; background:var(--primary-light); padding:12px 14px; border-radius:var(--radius-sm); border:1px solid rgba(91, 108, 245, 0.15); line-height:1.6; text-align:right;">
                     <i class="fas fa-shield-alt" style="color:var(--primary); margin-left:4px;"></i>
-                    سيتم إرسال طلب للمطور لإنشاء رابط آمن وخاص بك لإعادة تعيين كلمة المرور، وسيصلك الرابط فوراً عبر واتساب أو رسالة نصية على رقم هاتفك:
+                    سيتم إرسال طلب لإنشاء رابط آمن وخاص بك لإعادة تعيين كلمة المرور، وسيصلك الرابط فوراً عبر واتساب أو رسالة نصية على رقم هاتفك المعتمد:
                 </p>
 
+                <!-- Phone display and edit section -->
                 <div class="form-group" style="margin-bottom:16px; text-align:right;">
-                    <label for="devReqPhone" class="form-label" style="font-weight:700;">رقم الهاتف لاستلام الرابط</label>
-                    <div class="input-container">
-                        <i class="fas fa-phone input-icon"></i>
-                        <input type="tel" id="devReqPhone" class="form-input" placeholder="01xxxxxxxxx" dir="ltr" style="font-weight:800; font-size:1.05rem; letter-spacing:1px; text-align:center;">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                        <label class="form-label" style="font-weight:700; margin-bottom:0;">رقم الهاتف المعتمد لاستلام الرابط</label>
+                        <button type="button" id="editRecoveryPhoneBtn" onclick="toggleEditRecoveryPhone(true)" style="background:none; border:none; color:var(--primary); font-size:0.82rem; font-weight:700; cursor:pointer; display:inline-flex; align-items:center; gap:5px; padding:3px 8px; border-radius:6px; transition:all 0.2s;" onmouseover="this.style.background='rgba(91,108,245,0.08)'" onmouseout="this.style.background='none'">
+                            <i class="fas fa-pencil-alt" style="font-size:0.75rem;"></i>
+                            <span>تعديل الرقم</span>
+                        </button>
+                    </div>
+
+                    <!-- Locked View (Default) -->
+                    <div id="recoveryPhoneLockedWrap" class="input-container" style="background:var(--light, #f8fafc); border:1.5px solid var(--border, #e2e8f0); border-radius:var(--radius-sm, 12px); padding:4px 12px; display:flex; align-items:center; justify-content:space-between; gap:8px;">
+                        <div style="display:flex; align-items:center; gap:8px; flex:1;">
+                            <i class="fas fa-lock" style="color:var(--secondary); opacity:0.7; font-size:0.95rem;"></i>
+                            <input type="tel" id="recoveryLockedPhone" class="form-input" readonly disabled dir="ltr" style="background:transparent; border:none; box-shadow:none; font-weight:800; font-size:1.1rem; letter-spacing:1.5px; text-align:center; color:var(--dark); cursor:not-allowed; padding:6px 0;" value="">
+                        </div>
+                        <span style="font-size:0.78rem; font-weight:700; color:var(--success); display:inline-flex; align-items:center; gap:4px; white-space:nowrap; background:#ecfdf5; padding:3px 8px; border-radius:6px;">
+                            <i class="fas fa-check-circle"></i> مؤكد
+                        </span>
+                    </div>
+
+                    <!-- Edit View (Hidden by default) -->
+                    <div id="recoveryPhoneEditWrap" style="display:none; text-align:right;">
+                        <div class="input-container" style="position:relative;">
+                            <i class="fas fa-phone input-icon"></i>
+                            <input type="tel" id="recoveryNewPhoneInput" class="form-input" placeholder="01xxxxxxxxx" dir="ltr" style="font-weight:800; font-size:1.05rem; letter-spacing:1px; text-align:center;" autocomplete="tel">
+                        </div>
+                        <div style="display:flex; gap:8px; margin-top:8px;">
+                            <button type="button" id="saveNewPhoneBtn" onclick="verifyAndApplyNewRecoveryPhone()" class="btn" style="flex:1; background:var(--primary); color:#fff; border:none; padding:9px 14px; border-radius:10px; font-weight:700; font-size:0.85rem; cursor:pointer; display:inline-flex; align-items:center; justify-content:center; gap:6px;">
+                                <i class="fas fa-check"></i> تحقق وتحديث
+                            </button>
+                            <button type="button" onclick="toggleEditRecoveryPhone(false)" style="background:var(--light, #f8fafc); color:var(--secondary); border:1px solid var(--border, #e2e8f0); padding:9px 14px; border-radius:10px; font-weight:700; font-size:0.85rem; cursor:pointer;">
+                                إلغاء
+                            </button>
+                        </div>
+                        <div id="recoveryPhoneEditError" style="display:none; color:var(--danger); font-size:0.83rem; font-weight:700; margin-top:6px;"></div>
                     </div>
                 </div>
 
@@ -1130,7 +1160,7 @@
                 <!-- MAIN FOCAL BUTTON -->
                 <button type="button" class="login-btn" id="recoveryDevSubmitBtn" onclick="submitDevPasswordRequest()" style="margin-bottom:14px; padding:14px 20px; font-size:1.05rem; font-weight:800; background:linear-gradient(135deg, var(--primary), var(--primary-dark)); box-shadow:0 8px 24px -4px rgba(91, 108, 245, 0.4); display:flex; align-items:center; justify-content:center; gap:10px;">
                     <i class="fas fa-paper-plane" style="font-size:1.15rem;"></i>
-                    <span>إرسال طلب رابط الاستعادة للمطور</span>
+                    <span>إرسال طلب رابط الاستعادة</span>
                 </button>
             </div>
 
@@ -1141,7 +1171,7 @@
                 </div>
                 <h3 style="font-size:1.18rem; font-weight:800; color:var(--dark); margin-bottom:8px;">تم إرسال طلبك بنجاح! ✝️</h3>
                 <p id="recoverySuccessMsg" style="font-size:0.87rem; color:var(--secondary); font-weight:600; line-height:1.6; margin-bottom:20px;">
-                    تم استلام طلبك بنجاح. سيقوم المطور بمراجعة الطلب وإرسال رابط تعيين كلمة المرور الجديدة إليك عبر واتساب أو رسالة نصية قريباً.
+                    تم استلام طلبك بنجاح. سيتم مراجعة الطلب وإرسال رابط تعيين كلمة المرور الجديدة إليك عبر واتساب أو رسالة نصية قريباً.
                 </p>
                 <button type="button" class="login-btn" onclick="cancelPasswordRecovery()">
                     <i class="fas fa-arrow-right"></i>
@@ -2042,6 +2072,138 @@
             });
         }
 
+        let activeRecoveryPhone = '';
+
+        function toggleEditRecoveryPhone(isEditing) {
+            const lockedWrap = document.getElementById('recoveryPhoneLockedWrap');
+            const editWrap = document.getElementById('recoveryPhoneEditWrap');
+            const editBtn = document.getElementById('editRecoveryPhoneBtn');
+            const editErr = document.getElementById('recoveryPhoneEditError');
+
+            if (editErr) editErr.style.display = 'none';
+
+            if (isEditing) {
+                if (lockedWrap) lockedWrap.style.display = 'none';
+                if (editBtn) editBtn.style.display = 'none';
+                if (editWrap) {
+                    editWrap.style.display = 'block';
+                    const input = document.getElementById('recoveryNewPhoneInput');
+                    if (input) {
+                        input.value = activeRecoveryPhone || '';
+                        setTimeout(() => input.focus(), 100);
+                    }
+                }
+            } else {
+                if (lockedWrap) lockedWrap.style.display = 'flex';
+                if (editBtn) editBtn.style.display = 'inline-flex';
+                if (editWrap) editWrap.style.display = 'none';
+            }
+        }
+
+        async function verifyAndApplyNewRecoveryPhone() {
+            const input = document.getElementById('recoveryNewPhoneInput');
+            const errEl = document.getElementById('recoveryPhoneEditError');
+            const saveBtn = document.getElementById('saveNewPhoneBtn');
+
+            if (errEl) errEl.style.display = 'none';
+
+            const rawVal = (input?.value || '').trim();
+            const cleanPhone = formatIdentifier(rawVal);
+
+            if (!cleanPhone || cleanPhone.length < 10) {
+                if (errEl) {
+                    errEl.textContent = 'يرجى إدخال رقم هاتف صحيح (11 رقم يبدأ بـ 01)';
+                    errEl.style.display = 'block';
+                }
+                return;
+            }
+
+            if (saveBtn) {
+                saveBtn.disabled = true;
+                saveBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري التحقق...';
+            }
+
+            try {
+                const formData = new FormData();
+                formData.append('action', 'requestStudentPasswordRecovery');
+                formData.append('identifier', cleanPhone);
+                formData.append('phone', cleanPhone);
+
+                const res = await fetch(API_URL, {
+                    method: 'POST',
+                    body: formData,
+                    credentials: 'include'
+                }).then(r => r.json());
+
+                if (saveBtn) {
+                    saveBtn.disabled = false;
+                    saveBtn.innerHTML = '<i class="fas fa-check"></i> تحقق وتحديث';
+                }
+
+                if (res && (res.cookie_check || (res.message && res.message.includes('الكوكيز')))) {
+                    window.location.reload();
+                    return;
+                }
+
+                if (!res || !res.success) {
+                    // Not found as a kid in the system
+                    if (errEl) {
+                        errEl.textContent = 'هذا الرقم غير مسجل لأي مخدوم، يرجى التأكد من الرقم.';
+                        errEl.style.display = 'block';
+                    }
+                    return;
+                }
+
+                // Verified as registered student
+                activeRecoveryPhone = res.student_phone || cleanPhone;
+                const lockedInput = document.getElementById('recoveryLockedPhone');
+                if (lockedInput) lockedInput.value = activeRecoveryPhone;
+
+                // If this student has an email, seamlessly move to the email OTP flow!
+                if (res.has_email) {
+                    toggleEditRecoveryPhone(false);
+                    const recoveryContainer = document.getElementById('passwordRecoveryContainer');
+                    if (recoveryContainer) recoveryContainer.classList.remove('active');
+
+                    const emailBox = document.getElementById('emailOtpContainer');
+                    if (emailBox) {
+                        emailBox.classList.add('active');
+                        pendingEmailVerification = {
+                            student_id: res.student_id,
+                            email: res.email,
+                            masked_email: res.masked_email,
+                            phone: activeRecoveryPhone
+                        };
+
+                        const maskedDisplay = document.getElementById('maskedEmailDisplay');
+                        if (maskedDisplay) maskedDisplay.textContent = res.masked_email || res.email;
+
+                        const otpInput = document.getElementById('emailOtpInput');
+                        if (otpInput) {
+                            otpInput.value = '';
+                            setTimeout(() => otpInput.focus(), 150);
+                        }
+
+                        startEmailOtpCountdown(60);
+                    }
+                    return;
+                }
+
+                // Student has no email, keep in link request flow with the newly locked and verified number!
+                toggleEditRecoveryPhone(false);
+
+            } catch (e) {
+                if (saveBtn) {
+                    saveBtn.disabled = false;
+                    saveBtn.innerHTML = '<i class="fas fa-check"></i> تحقق وتحديث';
+                }
+                if (errEl) {
+                    errEl.textContent = 'خطأ في الاتصال بالخادم، يرجى المحاولة مرة أخرى.';
+                    errEl.style.display = 'block';
+                }
+            }
+        }
+
         function showDevRecoveryView(phone) {
             elements.phoneLoginForm.classList.remove('active');
             elements.usernameLoginForm.classList.remove('active');
@@ -2060,8 +2222,11 @@
                 const devPanel = document.getElementById('recoveryDevPanel');
                 if (devPanel) devPanel.style.display = 'block';
 
-                const devPhoneInput = document.getElementById('devReqPhone');
-                if (devPhoneInput) devPhoneInput.value = phone || '';
+                activeRecoveryPhone = phone || activeRecoveryPhone || (elements.phoneInput?.value || '').trim();
+                const lockedPhoneInput = document.getElementById('recoveryLockedPhone');
+                if (lockedPhoneInput) lockedPhoneInput.value = activeRecoveryPhone;
+
+                toggleEditRecoveryPhone(false);
 
                 const devErr = document.getElementById('recoveryDevError');
                 if (devErr) devErr.style.display = 'none';
@@ -2070,7 +2235,7 @@
 
         function showDevRecoveryFallback() {
             // Secondary option when user has email but encounters email issues
-            const phone = pendingEmailVerification?.phone || (elements.phoneInput?.value || '').trim();
+            const phone = pendingEmailVerification?.phone || activeRecoveryPhone || (elements.phoneInput?.value || '').trim();
             showDevRecoveryView(phone);
         }
 
@@ -2084,7 +2249,7 @@
             const errEl = document.getElementById('recoveryDevError');
             if (errEl) errEl.style.display = 'none';
 
-            let phone = (document.getElementById('devReqPhone')?.value || '').trim();
+            let phone = activeRecoveryPhone || (document.getElementById('recoveryLockedPhone')?.value || '').trim();
             if (!phone) {
                 phone = (document.getElementById('phoneInput')?.value || '').trim();
             }
@@ -2094,7 +2259,7 @@
                 return;
             }
 
-            showLoading('جاري إرسال طلب رابط الاستعادة للمطور...');
+            showLoading('جاري إرسال طلب رابط الاستعادة...');
 
             const fd = new FormData();
             fd.append('action', 'submitStudentPasswordRequest');
@@ -2117,7 +2282,7 @@
 
                     const succMsg = document.getElementById('recoverySuccessMsg');
                     if (succMsg) {
-                        succMsg.textContent = res.message || `تم إرسال طلبك بنجاح للمطور. سيصلك الرابط الآمن عبر واتساب أو رسالة نصية على رقم هاتفك (${phone}) فور مراجعته.`;
+                        succMsg.textContent = res.message || `تم إرسال طلبك بنجاح. سيصلك الرابط الآمن عبر واتساب أو رسالة نصية على رقم هاتفك (${phone}) فور مراجعته.`;
                     }
                 } else {
                     if (errEl) {
