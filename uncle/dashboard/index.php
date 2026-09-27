@@ -14716,107 +14716,98 @@ $showSettings = $hasChurchId || $isDevOrAdmin;
     </div>
 
     <!-- Developer Password Requests & Reset Modal -->
-    <div class="modal-overlay" id="devPasswordRequestsModal" style="z-index:1000008; display:none;">
-        <div class="modal" style="max-width:680px; width:95%; max-height:90vh; display:flex; flex-direction:column; overflow:hidden;">
-            <div class="modal-header" style="display:flex; align-items:center; justify-content:space-between; padding:16px 20px; border-bottom:1px solid var(--border-solid); position:relative;">
-                <h3 style="display:flex; align-items:center; gap:10px; margin:0; font-size:1.1rem; font-weight:700;">
-                    <button class="back-btn" id="devPwdBackBtn" onclick="devPwdShowListView()" style="display:none; background:var(--surface-3); border:none; width:32px; height:32px; border-radius:var(--r-md); cursor:pointer; color:var(--text); align-items:center; justify-content:center;">
+    <!-- Developer Password Requests & Reset Modal -->
+    <div class="modal-overlay" id="devPasswordRequestsModal" style="z-index:1000008;">
+        <div class="modal" style="max-width:520px; width:95%; max-height:85vh; overflow-y:auto; -webkit-overflow-scrolling:touch; overscroll-behavior-y:contain; display:flex; flex-direction:column; padding:0 16px 16px;">
+            <div class="modal-header" style="display:flex; align-items:center; justify-content:space-between; padding:14px 16px; border-bottom:1px solid var(--border-solid); position:sticky; top:0; background:var(--surface); z-index:10;">
+                <h3 style="display:flex; align-items:center; gap:8px; margin:0; font-size:1.05rem; font-weight:700;">
+                    <button class="back-btn" id="devPwdBackBtn" onclick="devPwdShowListView()" style="display:none; background:var(--surface-3); border:none; width:30px; height:30px; border-radius:var(--r-md); cursor:pointer; color:var(--text); align-items:center; justify-content:center;">
                         <i class="fas fa-arrow-right"></i>
                     </button>
-                    <span id="devPwdModalTitleText"><i class="fas fa-key" style="color:var(--brand);"></i> طلبات إعادة تعيين كلمة المرور</span>
+                    <span id="devPwdModalTitleText"><i class="fas fa-key" style="color:var(--brand); margin-left:6px;"></i>طلبات إعادة تعيين كلمة المرور</span>
                 </h3>
                 <div style="display:flex; align-items:center; gap:8px;">
-                    <button type="button" class="btn btn-sm" id="devPwdRefreshBtn" onclick="loadDevPasswordRequests(true)" title="تحديث" style="padding:6px 12px; background:var(--surface-2); color:var(--text); border:1px solid var(--border-solid); border-radius:var(--r-md); cursor:pointer;">
+                    <button type="button" class="btn btn-sm" id="devPwdRefreshBtn" onclick="loadDevPasswordRequests(true)" title="تحديث" style="padding:5px 10px; background:var(--surface-2); color:var(--text); border:1px solid var(--border-solid); border-radius:var(--r-md); cursor:pointer;">
                         <i class="fas fa-sync-alt"></i>
                     </button>
                     <button class="close-btn" onclick="closeDevPasswordRequestsModal()">&times;</button>
                 </div>
             </div>
             
-            <div class="modal-body" style="flex:1; overflow-y:auto; padding:16px 20px;">
+            <div class="modal-body" style="padding:14px 4px 6px;">
                 <!-- VIEW 1: REQUESTS LIST & SEARCH -->
                 <div id="devPwdListView">
                     <!-- Filter and Search -->
-                    <div style="display:flex; gap:10px; margin-bottom:14px; flex-wrap:wrap;">
-                        <div class="input-icon-wrap" style="flex:1; min-width:200px;">
+                    <div style="display:flex; gap:8px; margin-bottom:12px; flex-wrap:wrap;">
+                        <div class="input-icon-wrap" style="flex:1; min-width:180px;">
                             <i class="fas fa-search input-icon"></i>
-                            <input type="text" id="devPwdSearchInput" class="form-input" placeholder="ابحث باسم الطالب، الكنيسة، الفصل، أو الهاتف..." oninput="filterDevPasswordRequests()">
+                            <input type="text" id="devPwdSearchInput" class="form-input" placeholder="ابحث باسم الطالب، الكنيسة، الفصل، أو الهاتف..." oninput="filterDevPasswordRequests()" style="font-size:0.85rem; padding:8px 10px 8px 34px;">
                         </div>
-                        <div style="display:flex; gap:6px;">
-                            <button type="button" class="btn btn-sm dev-pwd-tab active" data-tab="all" onclick="setDevPwdTab('all')" style="padding:8px 14px; border-radius:var(--r-md); font-weight:700;">الكل</button>
-                            <button type="button" class="btn btn-sm dev-pwd-tab btn-secondary" data-tab="pending" onclick="setDevPwdTab('pending')" style="padding:8px 14px; border-radius:var(--r-md); font-weight:700;">المعلقة <span id="devPwdTabPendingBadge" style="background:var(--danger); color:#fff; border-radius:10px; padding:1px 6px; font-size:0.7rem; margin-right:4px; display:none;">0</span></button>
-                            <button type="button" class="btn btn-sm dev-pwd-tab btn-secondary" data-tab="completed" onclick="setDevPwdTab('completed')" style="padding:8px 14px; border-radius:var(--r-md); font-weight:700;">المكتملة</button>
+                        <div style="display:flex; gap:4px;">
+                            <button type="button" class="btn btn-sm dev-pwd-tab active" data-tab="all" onclick="setDevPwdTab('all')" style="padding:6px 12px; border-radius:var(--r-md); font-weight:700; font-size:0.8rem;">الكل</button>
+                            <button type="button" class="btn btn-sm dev-pwd-tab btn-secondary" data-tab="pending" onclick="setDevPwdTab('pending')" style="padding:6px 12px; border-radius:var(--r-md); font-weight:700; font-size:0.8rem;">المعلقة <span id="devPwdTabPendingBadge" style="background:var(--danger); color:#fff; border-radius:10px; padding:1px 5px; font-size:0.65rem; margin-right:3px; display:none;">0</span></button>
+                            <button type="button" class="btn btn-sm dev-pwd-tab btn-secondary" data-tab="completed" onclick="setDevPwdTab('completed')" style="padding:6px 12px; border-radius:var(--r-md); font-weight:700; font-size:0.8rem;">المكتملة</button>
                         </div>
                     </div>
 
                     <!-- Requests Container -->
-                    <div id="devPwdListContainer" style="display:flex; flex-direction:column; gap:10px;">
+                    <div id="devPwdListContainer" style="display:flex; flex-direction:column; gap:8px;">
                         <!-- Dynamic rows injected here -->
                     </div>
                 </div>
 
                 <!-- VIEW 2: DEDICATED STUDENT DETAIL & RESET ACTION -->
                 <div id="devPwdDetailView" style="display:none;">
-                    <!-- Student Identity Card -->
-                    <div id="devPwdStudentCard" style="background:var(--surface-2); border:1px solid var(--border-solid); border-radius:var(--r-lg); padding:16px; margin-bottom:16px; display:flex; align-items:center; gap:16px;">
-                        <!-- Dynamic Student info injected here -->
+                    <!-- Compact Student Identity Card with Side Email Option -->
+                    <div style="background:var(--surface-2); border:1px solid var(--border-solid); border-radius:var(--r-lg); padding:12px 14px; margin-bottom:12px;">
+                        <div style="display:flex; align-items:center; justify-content:space-between; gap:10px;">
+                            <div id="devPwdStudentCard" style="flex:1; min-width:0;">
+                                <!-- Dynamic Student info injected here -->
+                            </div>
+                            <!-- Side Email Button -->
+                            <div style="flex-shrink:0;">
+                                <button type="button" class="btn btn-sm btn-secondary" id="devPwdToggleEmailBtn" onclick="toggleDevPwdEmailDrawer()" style="padding:6px 10px; font-size:0.75rem; border-radius:var(--r-md); display:flex; align-items:center; gap:5px; white-space:nowrap; background:var(--surface-3); border:1px solid var(--border-solid);">
+                                    <i class="fas fa-envelope" style="color:var(--brand);"></i>
+                                    <span id="devPwdToggleEmailBtnText">إضافة إيميل له</span>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Expandable Email Drawer (Hidden by default) -->
+                        <div id="devPwdEmailDrawer" style="display:none; margin-top:10px; padding-top:10px; border-top:1px dashed var(--border-solid);">
+                            <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:6px;">
+                                <span style="font-size:0.78rem; font-weight:700; color:var(--text-2);">البريد الإلكتروني:</span>
+                                <span id="devPwdEmailStatusBadge" style="font-size:0.7rem; padding:1px 6px; border-radius:4px; font-weight:600;"></span>
+                            </div>
+                            <div style="display:flex; gap:6px;">
+                                <input type="email" id="devPwdDetailEmail" class="form-input" placeholder="student@example.com" dir="ltr" style="font-family:monospace; font-size:0.8rem; padding:6px 10px; flex:1;">
+                                <button type="button" class="btn btn-sm" onclick="saveDevPwdStudentEmailOnly()" style="padding:6px 12px; font-size:0.78rem; font-weight:700; background:linear-gradient(135deg, var(--brand), var(--brand-dark)); color:#fff; border:none; border-radius:var(--r-md);">
+                                    حفظ
+                                </button>
+                            </div>
+                        </div>
                     </div>
 
-                    <!-- Email Management Card -->
-                    <div style="background:var(--surface-2); border:1px solid var(--border-solid); border-radius:var(--r-lg); padding:16px; margin-bottom:16px;">
-                        <div style="font-weight:700; font-size:0.95rem; margin-bottom:8px; display:flex; align-items:center; justify-content:space-between;">
-                            <span><i class="fas fa-envelope" style="color:var(--brand); margin-left:6px;"></i>البريد الإلكتروني للطفل / ولي الأمر</span>
-                            <span id="devPwdEmailStatusBadge" style="font-size:0.75rem; padding:2px 8px; border-radius:6px; font-weight:600;"></span>
-                        </div>
-                        <p style="font-size:0.8rem; color:var(--text-3); margin-bottom:10px;">يمكنك حفظ الإيميل للطالب الآن، أو إنشاء الرابط الآمن وإرساله مباشرة إلى هذا الإيميل.</p>
-                        
-                        <div class="input-icon-wrap" style="margin-bottom:12px;">
-                            <i class="fas fa-at input-icon"></i>
-                            <input type="email" id="devPwdDetailEmail" class="form-input" placeholder="student@example.com" dir="ltr" style="font-family:monospace;">
+                    <!-- Single Main WhatsApp Action -->
+                    <div style="display:flex; flex-direction:column; gap:10px;">
+                        <button type="button" class="btn" id="devPwdWhatsAppActionBtn" onclick="sendDevPwdLinkToWhatsApp()" style="width:100%; padding:12px 16px; background:#25d366; color:#fff; border:none; border-radius:var(--r-lg); font-weight:700; font-size:0.95rem; cursor:pointer; display:inline-flex; align-items:center; justify-content:center; gap:8px; box-shadow:0 4px 14px rgba(37,211,102,0.3); transition:transform .15s, box-shadow .15s;" onmouseenter="this.style.transform='translateY(-1px)'" onmouseleave="this.style.transform='translateY(0)'">
+                            <i class="fab fa-whatsapp" style="font-size:1.3rem;"></i>
+                            <span id="devPwdWhatsAppBtnText">إرسال رابط الاستعادة إلى واتساب</span>
+                        </button>
+
+                        <div style="background:var(--surface-2); border-radius:var(--r-md); padding:8px 12px; font-size:0.76rem; color:var(--text-3); display:flex; align-items:center; gap:6px;">
+                            <i class="fas fa-info-circle" style="color:var(--brand);"></i>
+                            <span>الرابط يتم توليده بصلاحية ساعتين، ويفتح محادثة واتساب مع ولي الأمر والرسالة مجهزة وجاهزة للإرسال مباشرة.</span>
                         </div>
 
-                        <!-- 2 Email Actions -->
-                        <div style="display:flex; gap:10px; flex-wrap:wrap;">
-                            <button type="button" class="btn btn-secondary" id="devPwdSaveEmailBtn" onclick="saveDevPwdStudentEmailOnly()" style="flex:1; min-width:140px;">
-                                <i class="fas fa-save"></i> حفظ الإيميل فقط
-                            </button>
-                            <button type="button" class="btn" id="devPwdSendEmailBtn" onclick="generateDevPwdLinkAndSendEmail()" style="flex:1.5; min-width:200px; background:linear-gradient(135deg, var(--brand), var(--brand-dark)); color:#fff; border:none; box-shadow:0 4px 12px var(--brand-glow);">
-                                <i class="fas fa-paper-plane"></i> إنشاء الرابط وإرساله للإيميل
-                            </button>
-                            <button type="button" class="btn btn-outline" id="devPwdGenOnlyBtn" onclick="generateDevPwdLinkOnly()" style="flex:1; min-width:140px;">
-                                <i class="fas fa-link"></i> إنشاء الرابط فقط
-                            </button>
-                        </div>
-                        <div id="devPwdGoogleRow" style="display:none;"></div>
-                    </div>
-
-                    <!-- Generated Link & Share Box (Visible after link creation) -->
-                    <div id="devPwdShareSection" style="display:none; background:var(--surface); border:1.5px solid var(--border-solid); border-radius:var(--r-lg); padding:16px;">
-                        <div style="background:var(--warning-bg); color:var(--warning-dark); padding:10px 14px; border-radius:var(--r-md); font-size:0.85rem; font-weight:700; display:flex; align-items:center; gap:8px; margin-bottom:14px; border:1px solid rgba(245, 158, 11, 0.3);">
-                            <i class="fas fa-clock" style="font-size:1.1rem;"></i>
-                            <span>تنبيه هام: هذا الرابط صالح للاستخدام لمدة <strong>ساعتين فقط</strong> (ينتهي بعد ساعتين).</span>
-                        </div>
-
-                        <label class="form-label" style="font-weight:700; font-size:0.85rem; margin-bottom:6px;">رابط إعادة التعيين المباشر:</label>
-                        <div style="display:flex; gap:8px; margin-bottom:16px;">
-                            <input type="text" id="devPwdGeneratedLinkInput" readonly class="form-input" dir="ltr" style="font-family:monospace; font-size:0.85rem; background:var(--surface-3); font-weight:600;">
-                            <button type="button" class="btn btn-secondary" onclick="copyDevPwdLinkOnly()" style="padding:0 16px; white-space:nowrap;">
-                                <i class="fas fa-copy"></i> نسخ
-                            </button>
-                        </div>
-
-                        <!-- Direct Share Buttons: WhatsApp and SMS -->
-                        <div style="font-weight:700; font-size:0.85rem; margin-bottom:8px; color:var(--text-2);"><i class="fas fa-share-alt" style="margin-left:6px;"></i>إرسال مباشر لولي الأمر / الطفل:</div>
-                        <div style="display:flex; gap:10px; flex-wrap:wrap; margin-bottom:10px;">
-                            <a id="devPwdWaBtn" href="#" target="_blank" class="btn" style="flex:1; min-width:160px; background:#25d366; color:#fff; border:none; text-decoration:none; display:inline-flex; align-items:center; justify-content:center; gap:8px; font-weight:700; box-shadow:0 4px 12px rgba(37,211,102,0.25);">
-                                <i class="fab fa-whatsapp" style="font-size:1.15rem;"></i> إرسال عبر واتساب
-                            </a>
-                            <a id="devPwdSmsBtn" href="#" class="btn" style="flex:1; min-width:160px; background:#3b82f6; color:#fff; border:none; text-decoration:none; display:inline-flex; align-items:center; justify-content:center; gap:8px; font-weight:700; box-shadow:0 4px 12px rgba(59,130,246,0.25);">
-                                <i class="fas fa-comment-dots" style="font-size:1.1rem;"></i> إرسال رسالة SMS
-                            </a>
-                            <button type="button" class="btn btn-secondary" onclick="copyDevPwdFullMessage()" style="flex:1; min-width:160px;">
-                                <i class="fas fa-clipboard-check"></i> نسخ الرسالة كاملة
-                            </button>
+                        <!-- Compact Link & Copy Box (Shows if link generated) -->
+                        <div id="devPwdCompactLinkBox" style="display:none; background:var(--surface-3); border:1px solid var(--border-solid); border-radius:var(--r-md); padding:8px 10px;">
+                            <div style="display:flex; align-items:center; gap:6px;">
+                                <input type="text" id="devPwdGeneratedLinkInput" readonly class="form-input" dir="ltr" style="font-family:monospace; font-size:0.75rem; padding:4px 8px; flex:1; background:var(--surface); border:1px solid var(--border-solid); border-radius:var(--r-sm);">
+                                <button type="button" class="btn btn-sm btn-secondary" onclick="copyDevPwdLinkOnly()" style="padding:4px 10px; font-size:0.75rem; white-space:nowrap; border-radius:var(--r-sm);">
+                                    <i class="fas fa-copy"></i> نسخ
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -24664,10 +24655,24 @@ $showSettings = $hasChurchId || $isDevOrAdmin;
                 `;
             }
 
-            // Pre-fill email
+            // Pre-fill email and configure side email button
             const activeEmail = student.email || student['البريد الإلكتروني'] || reqData?.email || reqData?.student_email || '';
             const emailInput = document.getElementById('devPwdDetailEmail');
             if (emailInput) emailInput.value = activeEmail;
+
+            const toggleBtnText = document.getElementById('devPwdToggleEmailBtnText');
+            if (toggleBtnText) {
+                if (student.email) {
+                    toggleBtnText.textContent = 'تعديل الإيميل';
+                } else if (reqData?.email) {
+                    toggleBtnText.textContent = 'حفظ الإيميل المطلوب';
+                } else {
+                    toggleBtnText.textContent = 'إضافة إيميل له';
+                }
+            }
+
+            const emailDrawer = document.getElementById('devPwdEmailDrawer');
+            if (emailDrawer) emailDrawer.style.display = 'none';
 
             // Email badge
             const badge = document.getElementById('devPwdEmailStatusBadge');
@@ -24687,46 +24692,27 @@ $showSettings = $hasChurchId || $isDevOrAdmin;
                 }
             }
 
-            // Google linking status
-            const googleEmail = student.google_email || student.google_id || '';
-            const gRow = document.getElementById('devPwdGoogleRow');
-            if (gRow) {
-                if (googleEmail) {
-                    gRow.innerHTML = `
-                        <div style="margin-top:10px; padding:8px 12px; background:rgba(66, 133, 244, 0.08); border:1px solid rgba(66, 133, 244, 0.2); border-radius:var(--r-sm); display:flex; align-items:center; justify-content:space-between; font-size:0.8rem;">
-                            <div style="display:flex; align-items:center; gap:8px;">
-                                <i class="fab fa-google" style="color:#4285F4; font-size:1rem;"></i>
-                                <span style="color:var(--text-2);">حساب Google:</span>
-                                <strong dir="ltr" style="color:var(--text); font-family:monospace;">${student.google_email || 'مرتبط'}</strong>
-                            </div>
-                            <span class="badge" style="background:var(--success-bg); color:var(--success-dark); font-size:0.75rem; padding:2px 8px; border-radius:4px; font-weight:700;">مرتبط ومفعل</span>
-                        </div>
-                    `;
-                    gRow.style.display = 'block';
-                } else {
-                    gRow.innerHTML = `
-                        <div style="margin-top:10px; padding:8px 12px; background:var(--surface-3); border:1px dashed var(--border-solid); border-radius:var(--r-sm); display:flex; align-items:center; justify-content:space-between; font-size:0.8rem; color:var(--text-3);">
-                            <div style="display:flex; align-items:center; gap:8px;">
-                                <i class="fab fa-google" style="opacity:0.5;"></i>
-                                <span>حساب Google:</span>
-                                <span>غير مرتبط</span>
-                            </div>
-                            <span style="font-size:0.75rem;">(يستطيع الطالب ربطه عند فتح رابط إعادة التعيين)</span>
-                        </div>
-                    `;
-                    gRow.style.display = 'block';
-                }
-            }
-
-            // Hide or restore share section
-            const shareSec = document.getElementById('devPwdShareSection');
+            // Compact Link box
+            const compactLinkBox = document.getElementById('devPwdCompactLinkBox');
             if (reqData && reqData.reset_token) {
-                // Construct existing link
                 const rootUrl = window.location.origin;
                 const link = `${rootUrl}/user/login/?reset_token=${encodeURIComponent(reqData.reset_token)}`;
-                renderDevPwdShareSection(link);
+                const input = document.getElementById('devPwdGeneratedLinkInput');
+                if (input) input.value = link;
+                if (compactLinkBox) compactLinkBox.style.display = 'block';
             } else {
-                if (shareSec) shareSec.style.display = 'none';
+                if (compactLinkBox) compactLinkBox.style.display = 'none';
+            }
+        }
+
+        function toggleDevPwdEmailDrawer() {
+            const drawer = document.getElementById('devPwdEmailDrawer');
+            if (!drawer) return;
+            const isHidden = drawer.style.display === 'none' || !drawer.style.display;
+            drawer.style.display = isHidden ? 'block' : 'none';
+            if (isHidden) {
+                const input = document.getElementById('devPwdDetailEmail');
+                if (input) input.focus();
             }
         }
 
@@ -24761,6 +24747,8 @@ $showSettings = $hasChurchId || $isDevOrAdmin;
                         badge.style.background = email ? 'var(--success-bg)' : 'var(--danger-bg)';
                         badge.style.color = email ? 'var(--success-dark)' : 'var(--danger-dark)';
                     }
+                    const toggleBtnText = document.getElementById('devPwdToggleEmailBtnText');
+                    if (toggleBtnText) toggleBtnText.textContent = email ? 'تعديل الإيميل' : 'إضافة إيميل له';
                 } else {
                     showToast('فشل حفظ البريد: ' + (d.message || 'خطأ'), 'error');
                 }
@@ -24770,119 +24758,77 @@ $showSettings = $hasChurchId || $isDevOrAdmin;
             }
         }
 
-        async function generateDevPwdLinkAndSendEmail() {
-            const email = (document.getElementById('devPwdDetailEmail')?.value || '').trim();
-            if (!email) {
-                showToast('يرجى كتابة البريد الإلكتروني أولاً لإرسال الرابط إليه', 'warning');
-                document.getElementById('devPwdDetailEmail')?.focus();
-                return;
-            }
-            if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-                showToast('صيغة البريد الإلكتروني غير صحيحة', 'warning');
-                return;
-            }
-
-            await executeDevPwdLinkGeneration(true, email);
-        }
-
-        async function generateDevPwdLinkOnly() {
-            const email = (document.getElementById('devPwdDetailEmail')?.value || '').trim();
-            await executeDevPwdLinkGeneration(false, email);
-        }
-
-        async function executeDevPwdLinkGeneration(sendEmail, email) {
+        async function sendDevPwdLinkToWhatsApp() {
             if (!_devPwdSelectedStudent) return;
+            const btn = document.getElementById('devPwdWhatsAppActionBtn');
+            const btnText = document.getElementById('devPwdWhatsAppBtnText');
+            const origText = btnText ? btnText.textContent : 'إرسال رابط الاستعادة إلى واتساب';
+
+            if (btn) btn.disabled = true;
+            if (btnText) btnText.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري إنشاء الرابط...';
+
             const sId = getStudentDbId(_devPwdSelectedStudent);
             const reqId = _devPwdCurrentReqData?.id || 0;
+            const email = (document.getElementById('devPwdDetailEmail')?.value || '').trim();
 
-            showLoading(sendEmail ? 'جاري إنشاء الرابط وإرساله للإيميل...' : 'جاري إنشاء الرابط الآمن...');
             try {
                 const fd = new FormData();
                 fd.append('action', 'generateResetLinkForStudent');
                 fd.append('student_id', sId);
                 if (reqId) fd.append('request_id', reqId);
-                fd.append('send_email', sendEmail ? '1' : '0');
+                fd.append('send_email', '0'); // generate link only
                 if (email) fd.append('email', email);
                 if (typeof _appendDevOverride === 'function') _appendDevOverride(fd);
 
                 const d = await fetch(API_URL, { method: 'POST', body: fd, credentials: 'include' }).then(r => r.json());
-                hideLoading();
+                if (btn) btn.disabled = false;
+                if (btnText) btnText.textContent = origText;
 
                 if (d.success && d.reset_url) {
                     _devPwdLastGeneratedData = d;
-                    if (email) _devPwdSelectedStudent.email = email;
+                    const student = _devPwdSelectedStudent;
+                    const sName = student.name || 'الطفل';
+                    const phone = student.phone || student['رقم التليفون'] || _devPwdCurrentReqData?.phone || _devPwdCurrentReqData?.emergency_phone || student.emergency_phone || '';
 
-                    if (sendEmail) {
-                        showToast(d.email_sent ? 'تم إنشاء الرابط وإرساله للإيميل بنجاح ✓' : 'تم إنشاء الرابط (تعذر إرسال الإيميل، يمكنك إرساله عبر واتساب أو SMS)', d.email_sent ? 'success' : 'warning');
-                    } else {
-                        showToast('تم إنشاء رابط إعادة التعيين الآمن بنجاح ✓', 'success');
+                    // Clean phone for whatsapp
+                    let rawDigits = (phone || '').replace(/[^\d]/g, '');
+                    let waPhone = '';
+                    if (rawDigits.startsWith('01') && rawDigits.length === 11) {
+                        waPhone = '20' + rawDigits.substring(1);
+                    } else if (rawDigits.startsWith('201') && rawDigits.length === 12) {
+                        waPhone = rawDigits;
+                    } else if (rawDigits.length > 5) {
+                        waPhone = rawDigits;
                     }
 
-                    renderDevPwdShareSection(d.reset_url);
+                    const formattedMessage = `سلام ونعمة ✝️\nرابط إعادة تعيين كلمة المرور لحساب: ${sName}\n${d.reset_url}\n\n⚠️ ملاحظة هامة: هذا الرابط صالح للاستخدام لمدة ساعتين فقط (ينتهي بعد ساعتين).`;
 
-                    // Refresh requests list in background
+                    // Show compact link box
+                    const compactBox = document.getElementById('devPwdCompactLinkBox');
+                    const linkInput = document.getElementById('devPwdGeneratedLinkInput');
+                    if (compactBox && linkInput) {
+                        linkInput.value = d.reset_url;
+                        compactBox.style.display = 'block';
+                    }
+
+                    // Open WhatsApp
+                    const waUrl = waPhone
+                        ? `https://api.whatsapp.com/send?phone=${waPhone}&text=${encodeURIComponent(formattedMessage)}`
+                        : `https://api.whatsapp.com/send?text=${encodeURIComponent(formattedMessage)}`;
+
+                    window.open(waUrl, '_blank');
+                    showToast('تم إنشاء الرابط وفتح محادثة واتساب ✓', 'success');
+
+                    // Refresh requests in background
                     loadDevPasswordRequests();
                 } else {
                     showToast('فشل إنشاء الرابط: ' + (d.message || 'خطأ'), 'error');
                 }
             } catch (e) {
-                hideLoading();
-                showToast('خطأ في الاتصال', 'error');
+                if (btn) btn.disabled = false;
+                if (btnText) btnText.textContent = origText;
+                showToast('خطأ في الاتصال بالخادم', 'error');
             }
-        }
-
-        function renderDevPwdShareSection(resetUrl) {
-            const shareSec = document.getElementById('devPwdShareSection');
-            if (!shareSec) return;
-            shareSec.style.display = 'block';
-
-            const input = document.getElementById('devPwdGeneratedLinkInput');
-            if (input) input.value = resetUrl;
-
-            const student = _devPwdSelectedStudent || {};
-            const sName = student.name || 'الطفل';
-            const phone = student.phone || student['رقم التليفون'] || _devPwdCurrentReqData?.phone || _devPwdCurrentReqData?.emergency_phone || student.emergency_phone || '';
-
-            // Clean phone for whatsapp & SMS
-            let rawDigits = (phone || '').replace(/[^\d]/g, '');
-            let waPhone = '';
-            let smsPhone = '';
-
-            if (rawDigits.startsWith('01') && rawDigits.length === 11) {
-                waPhone = '20' + rawDigits.substring(1);
-                smsPhone = '+20' + rawDigits.substring(1);
-            } else if (rawDigits.startsWith('201') && rawDigits.length === 12) {
-                waPhone = rawDigits;
-                smsPhone = '+' + rawDigits;
-            } else if (rawDigits.length > 5) {
-                waPhone = rawDigits;
-                smsPhone = (phone || '').startsWith('+') ? ('+' + rawDigits) : rawDigits;
-            }
-
-            const formattedMessage = `رابط إعادة تعيين كلمة المرور لحساب: ${sName}\n${resetUrl}\n\n⚠️ ملاحظة هامة: هذا الرابط صالح للاستخدام لمدة ساعتين فقط (ينتهي بعد ساعتين).`;
-
-            // WhatsApp link
-            const waBtn = document.getElementById('devPwdWaBtn');
-            if (waBtn) {
-                const waUrl = waPhone
-                    ? `https://api.whatsapp.com/send?phone=${waPhone}&text=${encodeURIComponent(formattedMessage)}`
-                    : `https://api.whatsapp.com/send?text=${encodeURIComponent(formattedMessage)}`;
-                waBtn.href = waUrl;
-            }
-
-            // SMS link
-            const smsBtn = document.getElementById('devPwdSmsBtn');
-            if (smsBtn) {
-                const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
-                const smsSep = isIOS ? '&' : '?';
-                const smsUrl = smsPhone
-                    ? `sms:${smsPhone}${smsSep}body=${encodeURIComponent(formattedMessage)}`
-                    : `sms:${smsSep}body=${encodeURIComponent(formattedMessage)}`;
-                smsBtn.href = smsUrl;
-            }
-
-            // Store message for copy
-            window._currentDevPwdFormattedMsg = formattedMessage;
         }
 
         function copyDevPwdLinkOnly() {
@@ -24894,16 +24840,6 @@ $showSettings = $hasChurchId || $isDevOrAdmin;
                 input.select();
                 document.execCommand('copy');
                 showToast('تم نسخ الرابط ✓', 'success');
-            });
-        }
-
-        function copyDevPwdFullMessage() {
-            const msg = window._currentDevPwdFormattedMsg;
-            if (!msg) return;
-            navigator.clipboard.writeText(msg).then(() => {
-                showToast('تم نسخ الرسالة كاملة مع التنبيه بنجاح ✓', 'success');
-            }).catch(() => {
-                showToast('فشل النسخ التلقائي', 'error');
             });
         }
 

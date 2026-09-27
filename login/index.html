@@ -53,6 +53,12 @@
     <title>تسجيل الدخول - Sunday School Online</title>
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script>
+        // Safeguard for browser extensions (like iCloud Passwords) that access strURL
+        if (typeof window.strURL === 'undefined') {
+            window.strURL = window.location.href;
+        }
+    </script>
     <script src="https://accounts.google.com/gsi/client" async defer></script>
     <style>
         :root {
@@ -1395,9 +1401,12 @@ position: absolute;
     let pendingGoogleEmail = null;
     let recoveryUncleId = null;
 
+    let googleInitAttempts = 0;
     function initUncleGoogleIdentity() {
         if (typeof google === 'undefined' || !google.accounts || !google.accounts.id) {
-            setTimeout(initUncleGoogleIdentity, 300);
+            if (++googleInitAttempts < 30) {
+                setTimeout(initUncleGoogleIdentity, 300);
+            }
             return;
         }
         try {
