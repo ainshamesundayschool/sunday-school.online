@@ -21966,11 +21966,39 @@ function verifyGoogleToken(string $idToken): ?array
             if ($httpCode === 200 && $response) {
                 $data = json_decode($response, true);
                 if (!empty($data['sub']) && !empty($data['email'])) {
+                    $phone = $data['phone_number'] ?? $data['phoneNumber'] ?? $data['phone'] ?? '';
+                    if (empty($phone)) {
+                        // Query Google People API for phone numbers if scope permits
+                        $chP = curl_init('https://people.googleapis.com/v1/people/me?personFields=phoneNumbers');
+                        curl_setopt($chP, CURLOPT_RETURNTRANSFER, true);
+                        curl_setopt($chP, CURLOPT_TIMEOUT, 6);
+                        curl_setopt($chP, CURLOPT_SSL_VERIFYPEER, true);
+                        curl_setopt($chP, CURLOPT_HTTPHEADER, ['Authorization: Bearer ' . $idToken]);
+                        $resP = curl_exec($chP);
+                        $httpP = curl_getinfo($chP, CURLINFO_HTTP_CODE);
+                        curl_close($chP);
+                        if ($httpP === 200 && $resP) {
+                            $dataP = json_decode($resP, true);
+                            if (!empty($dataP['phoneNumbers']) && is_array($dataP['phoneNumbers'])) {
+                                foreach ($dataP['phoneNumbers'] as $pn) {
+                                    if (!empty($pn['value'])) {
+                                        $phone = $pn['value'];
+                                        break;
+                                    } elseif (!empty($pn['canonicalForm'])) {
+                                        $phone = $pn['canonicalForm'];
+                                        break;
+                                    }
+                                }
+                            }
+                        }
+                    }
+
                     return [
                         'sub' => (string)$data['sub'],
                         'email' => strtolower(trim($data['email'])),
                         'name' => $data['name'] ?? '',
                         'picture' => $data['picture'] ?? '',
+                        'phone' => $phone,
                         'email_verified' => true
                     ];
                 }
@@ -22009,11 +22037,13 @@ function verifyGoogleToken(string $idToken): ?array
     if ($response) {
         $data = json_decode($response, true);
         if ($data && !empty($data['sub']) && !empty($data['email'])) {
+            $phone = $data['phone_number'] ?? $data['phoneNumber'] ?? $data['phone'] ?? '';
             return [
                 'sub' => (string)$data['sub'],
                 'email' => strtolower(trim($data['email'])),
                 'name' => $data['name'] ?? '',
                 'picture' => $data['picture'] ?? '',
+                'phone' => $phone,
                 'email_verified' => ($data['email_verified'] === 'true' || $data['email_verified'] === true || $data['email_verified'] === 1)
             ];
         }
@@ -22031,11 +22061,13 @@ function verifyGoogleToken(string $idToken): ?array
                 }
                 $iss = $data['iss'] ?? '';
                 if ($iss === 'accounts.google.com' || $iss === 'https://accounts.google.com') {
+                    $phone = $data['phone_number'] ?? $data['phoneNumber'] ?? $data['phone'] ?? '';
                     return [
                         'sub' => (string)$data['sub'],
                         'email' => strtolower(trim($data['email'])),
                         'name' => $data['name'] ?? '',
                         'picture' => $data['picture'] ?? '',
+                        'phone' => $phone,
                         'email_verified' => !empty($data['email_verified'])
                     ];
                 }

@@ -25035,7 +25035,13 @@ $showSettings = $hasChurchId || $isDevOrAdmin;
                     const sName = student.name || 'الطفل';
                     const targetPhone = getDevPwdTargetPhone();
                     let rawDigits = (targetPhone || '').replace(/[^\d]/g, '');
+                    if (rawDigits.startsWith('002')) rawDigits = rawDigits.substring(2);
                     let smsPhone = rawDigits;
+                    if (rawDigits.startsWith('201') && rawDigits.length === 12) {
+                        smsPhone = '0' + rawDigits.substring(2);
+                    } else if (rawDigits.startsWith('01') && rawDigits.length === 11) {
+                        smsPhone = rawDigits;
+                    }
 
                     const formattedMessage = `سلام ونعمة ✝️\nرابط إعادة تعيين كلمة المرور لحساب: ${sName}\n${d.reset_url}\n\n⚠️ ملاحظة هامة: هذا الرابط صالح للاستخدام لمدة ساعتين فقط (ينتهي بعد ساعتين).`;
 
