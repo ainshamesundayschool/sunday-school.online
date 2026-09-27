@@ -23002,7 +23002,7 @@ function generateResetLinkForStudent(): void
             $htmlBody = "
                 <div dir='rtl' style='font-family: Cairo, Tahoma, sans-serif; max-width: 580px; margin: 0 auto; background: #ffffff; border: 1px solid #e4e6f0; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 20px rgba(0,0,0,0.06);'>
                     <div style='background: linear-gradient(135deg, #5b6cf5, #4354e8); padding: 26px 20px; text-align: center; color: #ffffff;'>
-                        <h2 style='margin: 0; font-size: 1.3rem; font-weight: 800;'>مدارس الأحد ✝️</h2>
+                        <h2 style='margin: 0; font-size: 1.3rem; font-weight: 800;'>مدارس الأحد</h2>
                         <p style='margin: 6px 0 0; font-size: 0.9rem; opacity: 0.9;'>إعادة تعيين كلمة المرور</p>
                     </div>
                     <div style='padding: 24px 22px; color: #1a1d2e; line-height: 1.7;'>

@@ -24912,7 +24912,7 @@ $showSettings = $hasChurchId || $isDevOrAdmin;
                     const targetPhone = getDevPwdTargetPhone();
                     const waPhone = formatPhoneForWhatsApp(targetPhone);
 
-                    const formattedMessage = `سلام ونعمة ✝️\nرابط إعادة تعيين كلمة المرور لحساب: ${sName}\n${d.reset_url}\n\n⚠️ ملاحظة هامة: هذا الرابط صالح للاستخدام لمدة ساعتين فقط (ينتهي بعد ساعتين).`;
+                    const formattedMessage = `رابط إعادة تعيين كلمة المرور لحساب: ${sName}\n${d.reset_url}\n\n⚠️ ملاحظة هامة: هذا الرابط صالح للاستخدام لمدة ساعتين فقط (ينتهي بعد ساعتين).`;
 
                     // Show compact link box
                     const compactBox = document.getElementById('devPwdCompactLinkBox');
@@ -25043,7 +25043,7 @@ $showSettings = $hasChurchId || $isDevOrAdmin;
                         smsPhone = rawDigits;
                     }
 
-                    const formattedMessage = `سلام ونعمة ✝️\nرابط إعادة تعيين كلمة المرور لحساب: ${sName}\n${d.reset_url}\n\n⚠️ ملاحظة هامة: هذا الرابط صالح للاستخدام لمدة ساعتين فقط (ينتهي بعد ساعتين).`;
+                    const formattedMessage = `رابط إعادة تعيين كلمة المرور لحساب: ${sName}\n${d.reset_url}\n\n⚠️ ملاحظة هامة: هذا الرابط صالح للاستخدام لمدة ساعتين فقط (ينتهي بعد ساعتين).`;
 
                     const compactBox = document.getElementById('devPwdCompactLinkBox');
                     const linkInput = document.getElementById('devPwdGeneratedLinkInput');
@@ -25116,7 +25116,7 @@ $showSettings = $hasChurchId || $isDevOrAdmin;
                 return;
             }
             const sName = _devPwdSelectedStudent?.name || 'الطفل';
-            const formattedMessage = `سلام ونعمة ✝️\nرابط إعادة تعيين كلمة المرور لحساب: ${sName}\n${link}\n\n⚠️ ملاحظة هامة: هذا الرابط صالح للاستخدام لمدة ساعتين فقط (ينتهي بعد ساعتين).`;
+            const formattedMessage = `رابط إعادة تعيين كلمة المرور لحساب: ${sName}\n${link}\n\n⚠️ ملاحظة هامة: هذا الرابط صالح للاستخدام لمدة ساعتين فقط (ينتهي بعد ساعتين).`;
 
             navigator.clipboard.writeText(formattedMessage).then(() => {
                 showToast('تم نسخ نص الرسالة بالكامل مع التنبيه ✓', 'success');
