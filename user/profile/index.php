@@ -5428,7 +5428,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'logou
     }
 
     .notif-sheet-body {
-      padding: 16px 20px;
+      padding: 16px 18px;
       overflow-y: auto;
       flex: 1;
       max-height: calc(92vh - 140px);
@@ -5437,6 +5437,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'logou
       display: flex;
       flex-direction: column;
       gap: 14px;
+      background: #f8fafc;
     }
 
     .notif-sheet-footer {
@@ -5448,20 +5449,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'logou
       width: calc(100% - 32px);
       margin: 14px 16px 16px;
       padding: 13px;
-      border-radius: var(--r-md);
-      background: var(--s2);
-      border: 1.5px solid var(--bdr);
+      border-radius: 16px;
+      background: #f1f5f9;
+      border: none !important;
       font-family: 'Cairo', sans-serif;
-      font-size: .9rem;
-      font-weight: 700;
-      color: var(--t2);
+      font-size: .92rem;
+      font-weight: 800;
+      color: #334155;
       cursor: pointer;
       text-align: center;
       transition: all var(--fast);
     }
 
     .btn-notif-close:hover {
-      background: var(--bdr);
+      background: #e2e8f0;
+      color: #0f172a;
     }
 
     .btn-secondary-pill {
@@ -5469,7 +5471,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'logou
       padding: 11px;
       border-radius: var(--r-md);
       background: var(--surface-3);
-      border: 1px solid var(--border-solid);
+      border: none !important;
       color: var(--text);
       font-weight: 800;
       font-family: var(--font-main);
@@ -5482,14 +5484,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'logou
       color: var(--brand);
     }
 
+    /* ── NOTIFICATION CARD: MODERN MINIMAL ROUNDED (NO STROKE) ── */
     .notif-card {
       position: relative;
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: var(--r-lg);
-      padding: 16px;
-      box-shadow: var(--shadow-sm);
-      transition: all var(--fast);
+      background: #ffffff;
+      border: none !important;
+      border-radius: 20px;
+      padding: 18px 20px;
+      box-shadow: 0 4px 20px -2px rgba(15, 23, 42, 0.05), 0 2px 6px -1px rgba(15, 23, 42, 0.03);
+      transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1);
       display: flex;
       flex-direction: column;
       gap: 10px;
@@ -5497,9 +5500,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'logou
     }
 
     .notif-card:hover {
-      border-color: rgba(91, 108, 245, .32);
-      box-shadow: var(--shadow-md);
-      transform: translateY(-1px);
+      transform: translateY(-2px);
+      box-shadow: 0 12px 30px -4px rgba(79, 70, 229, 0.1), 0 4px 10px -2px rgba(15, 23, 42, 0.04);
     }
 
     .notif-card-header {
@@ -5520,162 +5522,179 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'logou
       display: inline-flex;
       align-items: center;
       gap: 5px;
-      padding: 4px 11px;
-      border-radius: var(--r-full);
+      padding: 4px 12px;
+      border-radius: 9999px;
       font-size: 0.72rem;
       font-weight: 800;
+      border: none !important;
     }
 
     .notif-badge.announcement {
-      background: var(--warning-bg);
-      color: var(--warning-dark);
+      background: #fef3c7;
+      color: #b45309;
     }
 
     .notif-badge.link {
-      background: var(--coupon-bg);
-      color: var(--coupon-dark);
+      background: #ede9fe;
+      color: #7c3aed;
     }
 
     .notif-badge.dev {
-      background: var(--brand-bg);
-      color: var(--brand-dark);
+      background: #eef2ff;
+      color: #4f46e5;
     }
 
     .notif-time {
       font-size: 0.72rem;
-      color: var(--text-3);
+      color: #94a3b8;
       font-weight: 600;
       display: inline-flex;
       align-items: center;
-      gap: 4px;
+      gap: 5px;
     }
 
     .notif-dismiss-btn {
-      width: 28px;
-      height: 28px;
+      width: 30px;
+      height: 30px;
       border-radius: 50% !important;
-      background: var(--surface-2);
-      border: 1px solid var(--border);
-      color: var(--text-3);
+      background: #f8fafc;
+      border: none !important;
+      color: #94a3b8;
       cursor: pointer;
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 0.75rem;
-      transition: all var(--fast);
+      font-size: 0.78rem;
+      transition: all 0.18s ease;
       flex-shrink: 0;
     }
 
     .notif-dismiss-btn:hover {
-      background: var(--danger-bg);
-      color: var(--danger);
-      border-color: rgba(239, 68, 68, 0.3);
-      transform: scale(1.08);
+      background: #fee2e2;
+      color: #dc2626;
+      transform: scale(1.1);
     }
 
     .notif-card-title {
-      font-size: 0.98rem;
+      font-size: 1.02rem;
       font-weight: 800;
-      color: var(--text);
+      color: #0f172a;
       line-height: 1.45;
+      margin-top: 2px;
     }
 
     .notif-card-desc {
-      font-size: 0.86rem;
-      color: var(--text-2);
-      line-height: 1.65;
+      font-size: 0.88rem;
+      color: #475569;
+      line-height: 1.7;
       white-space: pre-wrap;
       word-break: break-word;
-      margin: 2px 0 4px;
-      background: none;
-      border: none;
-      padding: 0;
+      margin: 2px 0 6px;
+      background: none !important;
+      border: none !important;
+      padding: 0 !important;
     }
 
     .notif-card-footer {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      gap: 10px;
-      margin-top: 4px;
-      padding-top: 10px;
-      border-top: 1px solid var(--border);
+      gap: 12px;
+      margin-top: 6px;
+      padding-top: 4px;
+      border: none !important;
     }
 
     .notif-source {
-      font-size: 0.74rem;
-      color: var(--text-3);
+      font-size: 0.76rem;
+      color: #475569;
       font-weight: 700;
+      background: #f1f5f9;
+      padding: 6px 14px;
+      border-radius: 9999px;
       display: inline-flex;
       align-items: center;
-      gap: 6px;
+      gap: 7px;
+      border: none !important;
     }
 
     .notif-source i {
-      color: var(--brand);
-      font-size: 0.8rem;
+      color: #4f46e5;
+      font-size: 0.85rem;
     }
 
+    /* ── ACTION BUTTON: SOLID BRAND, NO GRADIENT, NO STROKE ── */
     .notif-action-btn,
     .ann-link-btn {
       display: inline-flex;
       align-items: center;
-      gap: 6px;
-      padding: 7px 16px;
-      border-radius: var(--r-full);
-      background: linear-gradient(135deg, var(--brand), var(--brand-dark));
-      color: #fff !important;
-      font-size: .78rem;
+      gap: 7px;
+      padding: 8px 18px;
+      border-radius: 9999px;
+      background: #4f46e5 !important;
+      color: #ffffff !important;
+      font-size: .82rem;
       font-weight: 800;
       font-family: 'Cairo', sans-serif;
       text-decoration: none;
-      border: none;
+      border: none !important;
+      outline: none !important;
       cursor: pointer;
-      transition: all var(--fast);
-      box-shadow:
-        0 1px 0 rgba(255, 255, 255, .22) inset,
-        0 4px 14px var(--brand-glow);
+      transition: all 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+      box-shadow: 0 4px 14px rgba(79, 70, 229, 0.3);
     }
 
     .notif-action-btn:hover,
     .ann-link-btn:hover {
-      transform: translateY(-1px);
-      box-shadow:
-        0 1px 0 rgba(255, 255, 255, .26) inset,
-        0 8px 20px var(--brand-glow);
-      color: #fff !important;
+      background: #4338ca !important;
+      color: #ffffff !important;
+      transform: translateY(-2px);
+      box-shadow: 0 8px 20px rgba(79, 70, 229, 0.4);
+    }
+
+    .notif-action-btn:active,
+    .ann-link-btn:active {
+      transform: translateY(0);
+      box-shadow: 0 2px 8px rgba(79, 70, 229, 0.25);
     }
 
     .notif-empty-state {
       text-align: center;
-      padding: 48px 20px;
-      color: var(--text-3);
+      padding: 56px 20px;
+      color: #94a3b8;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
     }
 
     .notif-empty-icon {
-      width: 56px;
-      height: 56px;
+      width: 60px;
+      height: 60px;
       border-radius: 50%;
-      background: var(--surface-2);
-      color: var(--text-3);
+      background: #f1f5f9;
+      color: #94a3b8;
       display: flex;
       align-items: center;
       justify-content: center;
       font-size: 1.6rem;
-      margin: 0 auto 14px auto;
+      margin: 0 auto 12px auto;
+      border: none !important;
     }
 
     .notif-empty-title {
       font-size: 1.05rem;
       font-weight: 800;
-      color: var(--text);
-      margin-bottom: 4px;
+      color: #0f172a;
+      margin-bottom: 2px;
     }
 
     .notif-empty-desc {
-      font-size: 0.78rem;
-      color: var(--text-3);
-      line-height: 1.5;
+      font-size: 0.82rem;
+      color: #64748b;
+      line-height: 1.6;
+      max-width: 280px;
     }
 
     /* ══ DESKTOP HORIZONTAL LAYOUT (NOT SIDE THING) ══════════════ */
@@ -5911,7 +5930,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'logou
             title="الإشعارات">
             <i class="fas fa-bell"></i>
             <span id="notifBadgeTop"
-              style="display:none; position:absolute; top:-4px; right:-4px; min-width:16px; height:16px; padding:0 4px; background:var(--err); color:#fff; font-size:.62rem; font-weight:800; border-radius:10px; display:flex; align-items:center; justify-content:center; border:1.5px solid #fff; box-sizing:border-box;">0</span>
+              style="display:none; position:absolute; top:-4px; right:-4px; min-width:16px; height:16px; padding:0 4px; background:var(--err); color:#fff; font-size:.62rem; font-weight:800; border-radius:10px; align-items:center; justify-content:center; border:none; box-sizing:border-box;"></span>
           </div>
           <div class="hero-ico-btn" id="switchBtnTop" style="display:none" onclick="openOv('switchOv')"
             title="تبديل الحساب"><i class="fas fa-exchange-alt"></i></div>
@@ -10466,6 +10485,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'logou
             notifBadgeTop.textContent = String(activeAnns.length);
             notifBadgeTop.style.display = 'flex';
           } else {
+            notifBadgeTop.textContent = '';
             notifBadgeTop.style.display = 'none';
           }
         }
@@ -10484,7 +10504,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'logou
             notifListModal.innerHTML = `
               <div style="display:flex; flex-direction:column; gap:12px;">
                 ${activeAnns.map(a => {
-              const imgHtml = a.image_url ? `<div style="margin: 6px 0;"><img src="${esc(a.image_url)}" style="max-width:100%; border-radius:var(--r-md); border:1px solid var(--border); max-height:220px; object-fit:cover; display:block;"/></div>` : '';
+              const imgHtml = a.image_url ? `<div style="margin: 6px 0;"><img src="${esc(a.image_url)}" style="width:100%; border-radius:16px; border:none; max-height:220px; object-fit:cover; display:block; box-shadow:0 2px 10px rgba(0,0,0,0.06);"/></div>` : '';
               const descHtml = a.description ? `<div class="notif-card-desc">${esc(a.description)}</div>` : '';
               const linkHtml = a.link ? `<a href="${esc(a.link)}" target="_blank" rel="noopener noreferrer" class="notif-action-btn"><i class="fas fa-external-link-alt"></i> <span>${esc(a.button_text || 'فتح الرابط')}</span></a>` : '';
               const badgeType = a.type === 'button' ? 'link' : (a.type === 'developer' ? 'dev' : 'announcement');

@@ -10278,7 +10278,7 @@ $showSettings = $hasChurchId || $isDevOrAdmin;
             height: 18px;
             border-radius: 9px;
             background: #ef4444;
-            border: 2.5px solid white;
+            border: none;
             font-size: .58rem;
             font-weight: 800;
             color: #fff;
@@ -12362,14 +12362,14 @@ $showSettings = $hasChurchId || $isDevOrAdmin;
                     style="display:none; position:relative; overflow:visible; color:var(--brand);">
                     <i class="fas fa-key"></i>
                     <span id="devPwdRequestsBadge"
-                        style="display:none;position:absolute;top:-3px;right:-3px;min-width:17px;height:17px;background:var(--amber,#f59e0b);border-radius:9px;border:2px solid white;font-size:.58rem;font-weight:800;color:#fff;align-items:center;justify-content:center;padding:0 3px;"></span>
+                        style="display:none;position:absolute;top:-3px;right:-3px;min-width:17px;height:17px;background:var(--amber,#f59e0b);border-radius:9px;border:none;font-size:.58rem;font-weight:800;color:#fff;align-items:center;justify-content:center;padding:0 3px;"></span>
                 </button>
                 <!-- Unified notification bell (unread count + push permission) -->
                 <button class="topbar-btn" id="notifBellBtn" onclick="toggleNotifPanel()" title="الإشعارات"
                     style="position:relative; overflow:visible;">
                     <i class="fas fa-bell"></i>
                     <span id="notifBellBadge"
-                        style="display:none;position:absolute;top:-3px;right:-3px;min-width:17px;height:17px;background:var(--danger,#ef4444);border-radius:9px;border:2px solid white;font-size:.58rem;font-weight:800;color:#fff;display:none;align-items:center;justify-content:center;padding:0 3px;"></span>
+                        style="display:none;position:absolute;top:-3px;right:-3px;min-width:16px;height:16px;background:var(--danger,#ef4444);border-radius:9px;border:none;font-size:.58rem;font-weight:800;color:#fff;align-items:center;justify-content:center;padding:0 3px;"></span>
                 </button>
                 <!-- Dev Switcher in Topbar Actions -->
                 <div id="devDashboardChurchSwitcher" class="dev-church-bar-pill"
@@ -31382,7 +31382,7 @@ $showSettings = $hasChurchId || $isDevOrAdmin;
                 const d = await fetch(API_URL, { method: 'POST', body: fd, credentials: 'include' }).then(r => r.json());
                 if (!d.success) return;
                 _notifData = d.notifications || [];
-                const unread = d.unread_count || 0;
+                const unread = parseInt(d.unread_count !== undefined ? d.unread_count : (_notifData.filter(n => n.is_read == 0).length), 10) || 0;
                 // Update Developer Password Requests badge
                 if (typeof isUserDeveloper === 'function' && isUserDeveloper()) {
                     loadDevPasswordRequests();
@@ -31394,6 +31394,7 @@ $showSettings = $hasChurchId || $isDevOrAdmin;
                         badge.textContent = unread > 99 ? '99+' : unread;
                         badge.style.display = 'flex';
                     } else {
+                        badge.textContent = '';
                         badge.style.display = 'none';
                     }
                 }
@@ -31551,6 +31552,11 @@ $showSettings = $hasChurchId || $isDevOrAdmin;
                 _appendDevOverride(fd);
             } else if (typeof devViewChurchId !== 'undefined' && devViewChurchId > 0) {
                 fd.append('dev_override_church_id', devViewChurchId);
+            }
+            const badge = document.getElementById('notifBellBadge');
+            if (badge) {
+                badge.textContent = '';
+                badge.style.display = 'none';
             }
             await fetch(API_URL, { method: 'POST', body: fd, credentials: 'include' });
             _notifData.forEach(n => n.is_read = 1);
