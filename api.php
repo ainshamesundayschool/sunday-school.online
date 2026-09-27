@@ -4755,6 +4755,7 @@ if (!empty($_GET['action'])) {
         if (is_array($jsonInput) && !empty($jsonInput['action'])) {
             $action = $jsonInput['action'];
             $_REQUEST = array_merge($_REQUEST, $jsonInput);
+            $_POST = array_merge($_POST, $jsonInput);
         }
     }
 }
@@ -5266,10 +5267,12 @@ try {
             completeUncleSecuritySetup();
             break;
 
+        case 'linkUncleGoogle':
         case 'linkUncleGoogleAccount':
             linkUncleGoogleAccount();
             break;
 
+        case 'unlinkUncleGoogle':
         case 'unlinkUncleGoogleAccount':
             unlinkUncleGoogleAccount();
             break;
@@ -17474,6 +17477,9 @@ function linkUncleGoogleAccount(): void
     try {
         checkUncleAuth();
         $uncleId = intval($_SESSION['uncle_id'] ?? 0);
+        if ($uncleId <= 0 && !empty($_POST['uncle_id']) && (!empty($_SESSION['church_id']) || !empty($_SESSION['is_developer']))) {
+            $uncleId = intval($_POST['uncle_id']);
+        }
         if ($uncleId <= 0) {
             sendJSON(['success' => false, 'message' => 'غير مصرح']);
             return;
@@ -17513,6 +17519,12 @@ function linkUncleGoogleAccount(): void
         $up->execute();
         $up->close();
 
+        $_SESSION['uncle_google_id'] = $googleId;
+        $_SESSION['uncle_google_email'] = $email;
+        if (!empty($email) && empty($_SESSION['uncle_email'])) {
+            $_SESSION['uncle_email'] = $email;
+        }
+
         sendJSON([
             'success' => true,
             'google_id' => $googleId,
@@ -17529,6 +17541,9 @@ function unlinkUncleGoogleAccount(): void
     try {
         checkUncleAuth();
         $uncleId = intval($_SESSION['uncle_id'] ?? 0);
+        if ($uncleId <= 0 && !empty($_POST['uncle_id']) && (!empty($_SESSION['church_id']) || !empty($_SESSION['is_developer']))) {
+            $uncleId = intval($_POST['uncle_id']);
+        }
         if ($uncleId <= 0) {
             sendJSON(['success' => false, 'message' => 'غير مصرح أو الجلسة غير صالحة']);
             return;
@@ -17541,6 +17556,8 @@ function unlinkUncleGoogleAccount(): void
         $stmt->bind_param("i", $uncleId);
         $stmt->execute();
         $stmt->close();
+
+        unset($_SESSION['uncle_google_id'], $_SESSION['uncle_google_email']);
 
         sendJSON(['success' => true, 'message' => 'تم إلغاء ربط حساب Google بنجاح']);
     } catch (Throwable $e) {
