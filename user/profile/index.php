@@ -778,10 +778,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'logou
     .stats-bar {
       display: grid;
       grid-template-columns: repeat(4, 1fr);
-      margin: 0 12px 14px;
+      margin: 0 12px 10px;
       background: var(--surface);
       border-radius: var(--r-xl);
-      border: 1px solid var(--border-solid);
+      border: none;
       box-shadow: var(--shadow-sm);
       overflow: hidden;
       padding: 0;
@@ -789,12 +789,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'logou
     }
 
     .sb-cell {
-      padding: 12px 4px;
+      padding: 7px 4px;
       text-align: center;
       background: transparent;
       border-radius: 0;
       border: none;
-      border-left: 1px solid var(--border-solid);
+      border-left: 1px solid var(--border);
       transition: background var(--fast), transform var(--fast);
       position: relative;
     }
@@ -809,16 +809,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'logou
     }
 
     .sb-val {
-      font-size: 1.15rem;
+      font-size: 0.98rem;
       font-weight: 800;
-      line-height: 1;
+      line-height: 1.1;
       color: var(--t1);
     }
 
     .sb-lbl {
-      font-size: .63rem;
+      font-size: .58rem;
       color: var(--t4);
-      margin-top: 2px;
+      margin-top: 1px;
       font-weight: 600;
     }
 
@@ -965,38 +965,38 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'logou
       line-height: 1.3;
     }
 
-    /* ══ ATTENDANCE ══════════════════════════════════════ */
+    /* ══ ATTENDANCE ═══════════════════════════════════════ */
     .att-stats {
       display: grid;
       grid-template-columns: repeat(3, 1fr);
-      gap: 10px;
-      margin-bottom: 14px;
+      gap: 8px;
+      margin-bottom: 10px;
     }
 
     .as {
       text-align: center;
-      padding: 11px 6px;
+      padding: 7px 6px;
       border-radius: var(--r-md);
-      background: var(--s2);
-      border: 1px solid var(--bdr);
+      background: var(--surface-2);
+      border: none;
     }
 
     .as-val {
-      font-size: 1.35rem;
+      font-size: 1.1rem;
       font-weight: 800;
-      line-height: 1;
+      line-height: 1.1;
     }
 
     .as-lbl {
-      font-size: .65rem;
+      font-size: .6rem;
       color: var(--t4);
-      margin-top: 2px;
+      margin-top: 1px;
       font-weight: 600;
     }
 
     .as.ok {
       background: var(--ok-bg);
-      border-color: rgba(16, 185, 129, 0.2);
+      border: none;
     }
 
     .as.ok .as-val {
@@ -1005,11 +1005,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'logou
 
     .as.err {
       background: var(--err-bg);
-      border-color: rgba(239, 68, 68, 0.2);
+      border: none;
     }
 
     .as.err .as-val {
       color: var(--err);
+    }
+
+    .as.neu {
+      background: var(--brand-bg);
+      border: none;
     }
 
     .as.neu .as-val {
@@ -4349,31 +4354,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'logou
       }
 
       .stats-bar {
-        grid-template-columns: repeat(2, 1fr);
+        grid-template-columns: repeat(4, 1fr);
         border-radius: var(--r-lg);
+        border: none !important;
         overflow: hidden;
       }
 
       .sb-cell {
         border-radius: 0 !important;
         border: none !important;
+        border-left: 1px solid var(--border) !important;
+        padding: 6px 2px !important;
       }
 
-      .sb-cell:nth-child(odd) {
-        border-left: 1px solid var(--border-solid) !important;
-      }
-
-      .ann-summary {
-        grid-template-columns: 1fr;
-      }
-
-      .ann-stat-grid {
-        grid-template-columns: repeat(2, 1fr);
-      }
-
-      .sb-cell:nth-child(3),
-      .sb-cell:nth-child(4) {
-        border-top: 1px solid var(--border-solid) !important;
+      .sb-cell:last-child {
+        border-left: none !important;
       }
     }
 
@@ -5454,26 +5449,26 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'logou
 
     .btn-notif-close {
       width: 100%;
-      padding: 12px 20px;
+      padding: 10px 16px;
       border-radius: var(--r-md);
-      background: linear-gradient(135deg, var(--brand), var(--brand-dark));
-      border: none;
-      color: #ffffff;
-      font-weight: 800;
-      font-size: 0.95rem;
+      background: var(--surface-3);
+      border: 1px solid var(--border-solid);
+      color: var(--text-2);
+      font-weight: 700;
+      font-size: 0.88rem;
       font-family: 'Cairo', sans-serif;
       cursor: pointer;
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      gap: 8px;
-      box-shadow: 0 1px 0 rgba(255, 255, 255, .22) inset, 0 8px 18px rgba(79, 70, 229, .22);
+      gap: 6px;
       transition: all var(--fast);
     }
 
     .btn-notif-close:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 1px 0 rgba(255, 255, 255, .26) inset, 0 12px 24px rgba(79, 70, 229, .28);
+      background: var(--brand-bg);
+      color: var(--brand);
+      border-color: var(--border);
     }
 
     .btn-secondary-pill {
@@ -5627,23 +5622,25 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'logou
     }
 
     .notif-action-btn {
+      font-size: .74rem;
+      color: var(--brand);
+      font-weight: 700;
+      background: var(--brand-bg);
+      padding: 5px 12px;
+      border-radius: var(--r-full);
       display: inline-flex;
       align-items: center;
-      gap: 6px;
-      padding: 7px 16px;
-      border-radius: var(--r-full);
-      background: linear-gradient(135deg, var(--brand), var(--brand-dark));
-      color: #fff;
-      font-size: 0.8rem;
-      font-weight: 800;
+      gap: 5px;
       text-decoration: none;
-      box-shadow: 0 4px 12px rgba(91, 108, 245, 0.25);
+      border: 1px solid rgba(91, 108, 245, 0.15);
       transition: all var(--fast);
     }
 
     .notif-action-btn:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 6px 16px rgba(91, 108, 245, 0.35);
+      background: var(--brand);
+      color: #fff;
+      border-color: var(--brand);
+      transform: translateY(-1px);
     }
 
     .notif-empty-state {
@@ -5877,11 +5874,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'logou
       .stats-bar {
         width: 100% !important;
         max-width: 1000px !important;
-        margin: 0 0 20px 0 !important;
+        margin: 0 0 12px 0 !important;
         box-shadow: var(--shadow-sm) !important;
-        border-radius: var(--r-md) !important;
+        border-radius: var(--r-xl) !important;
         background: var(--surface) !important;
-        border: 1px solid var(--border-solid) !important;
+        border: none !important;
       }
     }
   </style>
@@ -5996,29 +5993,29 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'logou
     <!-- stats bar -->
     <div class="stats-bar" id="statsBar" style="display:none">
     <div class="sb-cell ok">
-      <div style="display:flex; align-items:center; justify-content:center; gap:6px;">
-        <i class="fas fa-check-circle" style="font-size:1.05rem; color:var(--ok-l);"></i>
+      <div style="display:flex; align-items:center; justify-content:center; gap:4px;">
+        <i class="fas fa-check-circle" style="font-size:0.88rem; color:var(--ok-l);"></i>
         <div class="sb-val" id="sbP">0</div>
       </div>
       <div class="sb-lbl">حضر</div>
     </div>
     <div class="sb-cell err">
-      <div style="display:flex; align-items:center; justify-content:center; gap:6px;">
-        <i class="fas fa-times-circle" style="font-size:1.05rem; color:var(--err-l);"></i>
+      <div style="display:flex; align-items:center; justify-content:center; gap:4px;">
+        <i class="fas fa-times-circle" style="font-size:0.88rem; color:var(--err-l);"></i>
         <div class="sb-val" id="sbA">0</div>
       </div>
       <div class="sb-lbl">غاب</div>
     </div>
     <div class="sb-cell neu">
-      <div style="display:flex; align-items:center; justify-content:center; gap:6px;">
-        <i class="fas fa-chart-line" style="font-size:1.05rem; color:var(--brand-l);"></i>
+      <div style="display:flex; align-items:center; justify-content:center; gap:4px;">
+        <i class="fas fa-chart-line" style="font-size:0.88rem; color:var(--brand-l);"></i>
         <div class="sb-val" id="sbR">0%</div>
       </div>
       <div class="sb-lbl">نسبة الحضور</div>
     </div>
     <div class="sb-cell cou">
-      <div style="display:flex; align-items:center; justify-content:center; gap:6px;">
-        <i class="fas fa-star" style="font-size:1.05rem; color:var(--cou-l);"></i>
+      <div style="display:flex; align-items:center; justify-content:center; gap:4px;">
+        <i class="fas fa-star" style="font-size:0.88rem; color:var(--cou-l);"></i>
         <div class="sb-val" id="sbC">0</div>
       </div>
       <div class="sb-lbl">كوبونات</div>
@@ -6812,10 +6809,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'logou
       <div id="notifListModal" class="notif-sheet-body">
       </div>
       <div class="notif-sheet-footer">
-        <button type="button" class="btn-notif-close" onclick="closeOv('notifOv')">
-          <i class="fas fa-check"></i>
-          <span>إغلاق الإشعارات</span>
-        </button>
+        <button type="button" class="btn-notif-close" onclick="closeOv('notifOv')">إغلاق</button>
       </div>
     </div>
   </div>
@@ -11652,7 +11646,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'logou
         if (scAttHistory) showWithAnimation(scAttHistory);
         if (statsBar) {
           statsBar.style.setProperty('display', 'grid', 'important');
-          statsBar.style.marginTop = '18px';
+          statsBar.style.marginTop = '8px';
           statsBar.style.animation = 'tabContentFadeIn 0.28s var(--spring) both';
         }
         loadAttHistoryInline();
