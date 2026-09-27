@@ -14793,6 +14793,23 @@ $showSettings = $hasChurchId || $isDevOrAdmin;
                         <div style="font-size:0.82rem; font-weight:700; color:var(--text); margin-bottom:10px; display:flex; align-items:center; gap:6px;">
                             <i class="fas fa-share-alt" style="color:var(--brand);"></i> إرسال رابط الاستعادة المباشر
                         </div>
+
+                        <!-- Target Phone Selector (shown when both student phone and parent phone are present) -->
+                        <div id="devPwdTargetPhoneSelector" style="display:none; margin-bottom:10px; background:var(--surface-3); padding:8px 10px; border-radius:var(--r-md); border:1px solid var(--border-solid);">
+                            <div style="font-size:0.75rem; color:var(--text-3); font-weight:700; margin-bottom:6px;">
+                                <i class="fas fa-mobile-alt" style="margin-left:4px; color:var(--brand);"></i> اختر رقم الإرسال:
+                            </div>
+                            <div style="display:flex; gap:8px;">
+                                <label id="devPwdTargetMainLabel" style="flex:1; display:flex; align-items:center; gap:6px; cursor:pointer; font-size:0.78rem; background:var(--surface); padding:6px 8px; border-radius:var(--r-sm); border:1.5px solid var(--brand); color:var(--brand); font-weight:700;">
+                                    <input type="radio" name="dev_pwd_phone_choice" value="main" checked onchange="onDevPwdPhoneChoiceChange(this.value)">
+                                    <span id="devPwdTargetMainText">هاتف المخدوم</span>
+                                </label>
+                                <label id="devPwdTargetEmergLabel" style="flex:1; display:flex; align-items:center; gap:6px; cursor:pointer; font-size:0.78rem; background:var(--surface); padding:6px 8px; border-radius:var(--r-sm); border:1.5px solid var(--border-solid); color:var(--text-2); font-weight:700;">
+                                    <input type="radio" name="dev_pwd_phone_choice" value="emerg" onchange="onDevPwdPhoneChoiceChange(this.value)">
+                                    <span id="devPwdTargetEmergText">ولي الأمر</span>
+                                </label>
+                            </div>
+                        </div>
                         
                         <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:10px;">
                             <button type="button" class="btn" id="devPwdWhatsAppActionBtn" onclick="sendDevPwdLinkToWhatsApp()" style="padding:10px 14px; background:#25d366; color:#fff; border:none; border-radius:var(--r-md); font-weight:700; font-size:0.85rem; cursor:pointer; display:inline-flex; align-items:center; justify-content:center; gap:6px; box-shadow:0 3px 10px rgba(37,211,102,0.25);">
@@ -24715,6 +24732,30 @@ $showSettings = $hasChurchId || $isDevOrAdmin;
                 }
             }
 
+            // Phone choice configuration
+            const targetPhoneBox = document.getElementById('devPwdTargetPhoneSelector');
+            const mainRadio = document.querySelector('input[name="dev_pwd_phone_choice"][value="main"]');
+            const emergRadio = document.querySelector('input[name="dev_pwd_phone_choice"][value="emerg"]');
+            const mainText = document.getElementById('devPwdTargetMainText');
+            const emergText = document.getElementById('devPwdTargetEmergText');
+
+            if (mainPhone && emergPhone && mainPhone !== emergPhone) {
+                if (targetPhoneBox) targetPhoneBox.style.display = 'block';
+                if (mainText) mainText.textContent = `هاتف المخدوم (${mainPhone})`;
+                if (emergText) emergText.textContent = `ولي الأمر (${emergPhone})`;
+                if (mainRadio) mainRadio.checked = true;
+                onDevPwdPhoneChoiceChange('main');
+            } else {
+                if (targetPhoneBox) targetPhoneBox.style.display = 'none';
+                if (mainPhone) {
+                    if (mainRadio) mainRadio.checked = true;
+                    onDevPwdPhoneChoiceChange('main');
+                } else if (emergPhone) {
+                    if (emergRadio) emergRadio.checked = true;
+                    onDevPwdPhoneChoiceChange('emerg');
+                }
+            }
+
             // Compact Link box
             const compactLinkBox = document.getElementById('devPwdCompactLinkBox');
             if (reqData && reqData.reset_token) {
@@ -24726,6 +24767,63 @@ $showSettings = $hasChurchId || $isDevOrAdmin;
             } else {
                 if (compactLinkBox) compactLinkBox.style.display = 'none';
             }
+        }
+
+        let _devPwdChosenPhoneType = 'main';
+
+        function onDevPwdPhoneChoiceChange(val) {
+            _devPwdChosenPhoneType = val;
+            const mainLbl = document.getElementById('devPwdTargetMainLabel');
+            const emergLbl = document.getElementById('devPwdTargetEmergLabel');
+            if (val === 'main') {
+                if (mainLbl) {
+                    mainLbl.style.borderColor = 'var(--brand)';
+                    mainLbl.style.color = 'var(--brand)';
+                }
+                if (emergLbl) {
+                    emergLbl.style.borderColor = 'var(--border-solid)';
+                    emergLbl.style.color = 'var(--text-2)';
+                }
+            } else {
+                if (emergLbl) {
+                    emergLbl.style.borderColor = 'var(--brand)';
+                    emergLbl.style.color = 'var(--brand)';
+                }
+                if (mainLbl) {
+                    mainLbl.style.borderColor = 'var(--border-solid)';
+                    mainLbl.style.color = 'var(--text-2)';
+                }
+            }
+        }
+
+        function getDevPwdTargetPhone() {
+            if (!_devPwdSelectedStudent) return '';
+            const mainPhone = _devPwdSelectedStudent.phone || _devPwdSelectedStudent['رقم التليفون'] || _devPwdCurrentReqData?.phone || '';
+            const emergPhone = _devPwdSelectedStudent.emergency_phone || _devPwdSelectedStudent['تليفون الطوارئ'] || _devPwdCurrentReqData?.emergency_phone || '';
+
+            if (mainPhone && emergPhone && mainPhone !== emergPhone) {
+                return _devPwdChosenPhoneType === 'emerg' ? emergPhone : mainPhone;
+            }
+            return mainPhone || emergPhone || '';
+        }
+
+        function formatPhoneForWhatsApp(phone) {
+            if (!phone) return '';
+            let digits = String(phone).replace(/[^\d]/g, '');
+            if (!digits) return '';
+            if (digits.startsWith('002')) {
+                digits = digits.substring(2);
+            }
+            if (digits.startsWith('01') && digits.length === 11) {
+                return '2' + digits;
+            }
+            if (digits.startsWith('201') && digits.length === 12) {
+                return digits;
+            }
+            if ((digits.startsWith('10') || digits.startsWith('11') || digits.startsWith('12') || digits.startsWith('15')) && digits.length === 10) {
+                return '20' + digits;
+            }
+            return digits;
         }
 
         function toggleDevPwdEmailDrawer() {
@@ -24811,18 +24909,8 @@ $showSettings = $hasChurchId || $isDevOrAdmin;
                     _devPwdLastGeneratedData = d;
                     const student = _devPwdSelectedStudent;
                     const sName = student.name || 'الطفل';
-                    const phone = student.phone || student['رقم التليفون'] || _devPwdCurrentReqData?.phone || _devPwdCurrentReqData?.emergency_phone || student.emergency_phone || '';
-
-                    // Clean phone for whatsapp
-                    let rawDigits = (phone || '').replace(/[^\d]/g, '');
-                    let waPhone = '';
-                    if (rawDigits.startsWith('01') && rawDigits.length === 11) {
-                        waPhone = '20' + rawDigits.substring(1);
-                    } else if (rawDigits.startsWith('201') && rawDigits.length === 12) {
-                        waPhone = rawDigits;
-                    } else if (rawDigits.length > 5) {
-                        waPhone = rawDigits;
-                    }
+                    const targetPhone = getDevPwdTargetPhone();
+                    const waPhone = formatPhoneForWhatsApp(targetPhone);
 
                     const formattedMessage = `سلام ونعمة ✝️\nرابط إعادة تعيين كلمة المرور لحساب: ${sName}\n${d.reset_url}\n\n⚠️ ملاحظة هامة: هذا الرابط صالح للاستخدام لمدة ساعتين فقط (ينتهي بعد ساعتين).`;
 
@@ -24945,9 +25033,8 @@ $showSettings = $hasChurchId || $isDevOrAdmin;
                     _devPwdLastGeneratedData = d;
                     const student = _devPwdSelectedStudent;
                     const sName = student.name || 'الطفل';
-                    const phone = student.emergency_phone || student['تليفون الطوارئ'] || _devPwdCurrentReqData?.emergency_phone || student.phone || student['رقم التليفون'] || '';
-
-                    let rawDigits = (phone || '').replace(/[^\d]/g, '');
+                    const targetPhone = getDevPwdTargetPhone();
+                    let rawDigits = (targetPhone || '').replace(/[^\d]/g, '');
                     let smsPhone = rawDigits;
 
                     const formattedMessage = `سلام ونعمة ✝️\nرابط إعادة تعيين كلمة المرور لحساب: ${sName}\n${d.reset_url}\n\n⚠️ ملاحظة هامة: هذا الرابط صالح للاستخدام لمدة ساعتين فقط (ينتهي بعد ساعتين).`;

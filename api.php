@@ -5254,6 +5254,10 @@ try {
             requestUnclePasswordRecovery();
             break;
 
+        case 'verifyUncleRecoveryOTP':
+            verifyUncleRecoveryOTP();
+            break;
+
         case 'resetUnclePasswordWithOTP':
             resetUnclePasswordWithOTP();
             break;
@@ -13583,11 +13587,38 @@ function updateRegistration()
 
 
                 if (!$addStmt->execute()) {
-
                     throw new Exception("فشل في إضافة الطفل: " . $addStmt->error);
-
                 }
+                $newStudentId = $conn->insert_id;
+                if ($newStudentId > 0) {
+                    ensureStudentEmailColumns($conn);
+                    $regEmail = $registration['email'] ?? null;
+                    $regPass = $registration['password_hash'] ?? null;
+                    $regImg = $registration['image_url'] ?? null;
+                    $regGoogle = $registration['google_id'] ?? null;
+                    $regParentPhones = $registration['parent_phones'] ?? null;
+                    $regGender = $registration['gender'] ?? null;
 
+                    $uParts = [];
+                    $uParams = [];
+                    $uTypes = '';
+                    if (!empty($regEmail)) { $uParts[] = "email = ?"; $uParams[] = $regEmail; $uTypes .= 's'; }
+                    if (!empty($regPass)) { $uParts[] = "password_hash = ?"; $uParams[] = $regPass; $uTypes .= 's'; }
+                    if (!empty($regImg)) { $uParts[] = "image_url = ?"; $uParams[] = $regImg; $uTypes .= 's'; }
+                    if (!empty($regGoogle)) { $uParts[] = "google_id = ?"; $uParams[] = $regGoogle; $uTypes .= 's'; }
+                    if (!empty($regParentPhones)) { $uParts[] = "parent_phones = ?"; $uParams[] = $regParentPhones; $uTypes .= 's'; }
+                    if (!empty($regGender)) { $uParts[] = "gender = ?"; $uParams[] = $regGender; $uTypes .= 's'; }
+
+                    if (!empty($uParts)) {
+                        $uSql = "UPDATE students SET " . implode(", ", $uParts) . " WHERE id = ?";
+                        $uParams[] = $newStudentId;
+                        $uTypes .= 'i';
+                        $updS = $conn->prepare($uSql);
+                        $updS->bind_param($uTypes, ...$uParams);
+                        $updS->execute();
+                        $updS->close();
+                    }
+                }
             }
 
 
@@ -15586,17 +15617,19 @@ function submitRegistrationRequest()
 
 
 
+        $gender = sanitize($_POST['gender'] ?? '');
+        $googleId = sanitize($_POST['google_id'] ?? '');
+
         if ($churchId === 0 || empty($name) || empty($class)) {
-
             sendJSON(['success' => false, 'message' => 'البيانات المطلوبة ناقصة']);
-
             return;
-
         }
 
-
-
-        $gender = sanitize($_POST['gender'] ?? '');
+        if (!empty($email) && !filter_var($email, FILTER_VALIDATE_EMAIL)) {
+            sendJSON(['success' => false, 'message' => 'صيغة البريد الإلكتروني غير صحيحة']);
+            return;
+        }
+        $email = !empty($email) ? trim($email) : null;
 
         if ($gender !== 'male' && $gender !== 'female') {
 
@@ -15763,7 +15796,9 @@ function submitRegistrationRequest()
         $conn->query("ALTER TABLE pending_registrations ADD COLUMN IF NOT EXISTS password_hash VARCHAR(255) DEFAULT NULL");
         $conn->query("ALTER TABLE pending_registrations ADD COLUMN IF NOT EXISTS image_url TEXT DEFAULT NULL");
         $conn->query("ALTER TABLE pending_registrations ADD COLUMN IF NOT EXISTS parent_phones LONGTEXT DEFAULT NULL");
+        $conn->query("ALTER TABLE pending_registrations ADD COLUMN IF NOT EXISTS google_id VARCHAR(128) DEFAULT NULL");
         ensureParentPhonesColumn($conn);
+        ensureStudentEmailColumns($conn);
 
         $rawParentPhones = $_POST['parent_phones'] ?? ($extraData['parent_phones'] ?? '');
         $parentPhonesList = normalizeParentPhones($rawParentPhones);
@@ -16996,6 +17031,10 @@ function completeUncleSecuritySetup(): void
                 sendJSON(['success' => false, 'message' => 'كلمة المرور يجب أن تكون 6 أحرف على الأقل']);
                 return;
             }
+            if (!preg_match('/[a-z]/', $newPassword) || !preg_match('/[A-Z]/', $newPassword) || !preg_match('/[0-9]/', $newPassword)) {
+                sendJSON(['success' => false, 'message' => 'كلمة المرور يجب أن تحتوي على أحرف كبيرة (A-Z) وصغيرة (a-z) وأرقام (0-9)']);
+                return;
+            }
             if (!empty($confirmPassword) && $newPassword !== $confirmPassword) {
                 sendJSON(['success' => false, 'message' => 'كلمة المرور غير متطابقة']);
                 return;
@@ -17147,6 +17186,58 @@ function requestUnclePasswordRecovery(): void
     }
 }
 
+function verifyUncleRecoveryOTP(): void
+{
+    try {
+        $uncleId = intval($_POST['uncle_id'] ?? 0);
+        $identifier = trim(sanitize($_POST['identifier'] ?? ''));
+        $otp = trim($_POST['otp'] ?? '');
+
+        if (empty($otp)) {
+            sendJSON(['success' => false, 'message' => 'يرجى إدخال كود التحقق']);
+            return;
+        }
+
+        $conn = getDBConnection();
+        ensureUncleGoogleColumns($conn);
+
+        if ($uncleId <= 0 && !empty($identifier)) {
+            $stmt = $conn->prepare("SELECT id FROM uncles WHERE (LOWER(TRIM(username)) = LOWER(?) OR LOWER(TRIM(email)) = LOWER(?)) LIMIT 1");
+            $stmt->bind_param("ss", $identifier, $identifier);
+            $stmt->execute();
+            $uRow = $stmt->get_result()->fetch_assoc();
+            $stmt->close();
+            if ($uRow) $uncleId = intval($uRow['id']);
+        }
+
+        if ($uncleId <= 0) {
+            sendJSON(['success' => false, 'message' => 'بيانات الحساب غير موجودة']);
+            return;
+        }
+
+        $otpHashed = hash('sha256', $otp);
+
+        $stmt = $conn->prepare("SELECT id, name FROM uncles WHERE id = ? AND (email_otp = ? OR email_otp = ?) AND email_otp_expires >= NOW() LIMIT 1");
+        $stmt->bind_param("iss", $uncleId, $otpHashed, $otp);
+        $stmt->execute();
+        $uncle = $stmt->get_result()->fetch_assoc();
+        $stmt->close();
+
+        if (!$uncle) {
+            sendJSON(['success' => false, 'message' => 'كود التحقق غير صحيح أو انتهت صلاحيته (صلاحية الكود 15 دقيقة)']);
+            return;
+        }
+
+        sendJSON([
+            'success' => true,
+            'uncle_id' => $uncle['id'],
+            'message' => 'تم تأكيد كود التحقق بنجاح'
+        ]);
+    } catch (Throwable $e) {
+        sendJSON(['success' => false, 'message' => 'خطأ: ' . $e->getMessage()]);
+    }
+}
+
 function resetUnclePasswordWithOTP(): void
 {
     try {
@@ -17162,6 +17253,11 @@ function resetUnclePasswordWithOTP(): void
 
         if (empty($newPassword) || mb_strlen($newPassword) < 6) {
             sendJSON(['success' => false, 'message' => 'كلمة المرور يجب أن تكون 6 أحرف على الأقل']);
+            return;
+        }
+
+        if (!preg_match('/[a-z]/', $newPassword) || !preg_match('/[A-Z]/', $newPassword) || !preg_match('/[0-9]/', $newPassword)) {
+            sendJSON(['success' => false, 'message' => 'كلمة المرور يجب أن تحتوي على أحرف كبيرة (A-Z) وصغيرة (a-z) وأرقام (0-9)']);
             return;
         }
 
