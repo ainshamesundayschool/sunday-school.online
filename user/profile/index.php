@@ -504,7 +504,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'logou
       width: 92px;
       height: 92px;
       border-radius: 50%;
-      border: 3.5px solid rgba(255, 255, 255, .95);
       box-shadow: 0 6px 20px rgba(0, 0, 0, .2);
       cursor: pointer;
       background: transparent;
@@ -544,7 +543,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'logou
       height: 28px;
       border-radius: 50%;
       background: var(--brand-d);
-      border: 2px solid #fff;
       display: none;
       align-items: center;
       justify-content: center;
@@ -750,7 +748,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'logou
       .avatar-ring {
         width: 88px !important;
         height: 88px !important;
-        border-width: 3.5px !important;
+        border: none !important;
       }
 
       .hero-name {
@@ -781,31 +779,32 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'logou
       display: grid;
       grid-template-columns: repeat(4, 1fr);
       margin: 0 12px 14px;
-      background: var(--surf);
+      background: var(--surface);
       border-radius: var(--r-xl);
-      border: none;
+      border: 1px solid var(--border-solid);
       box-shadow: var(--shadow-sm);
       overflow: hidden;
-      padding: 6px;
-      gap: 6px;
+      padding: 0;
+      gap: 0;
     }
 
     .sb-cell {
-      padding: 10px 4px;
+      padding: 12px 4px;
       text-align: center;
-      background: var(--surface-2);
-      border-radius: var(--r-md);
+      background: transparent;
+      border-radius: 0;
       border: none;
+      border-left: 1px solid var(--border-solid);
       transition: background var(--fast), transform var(--fast);
       position: relative;
     }
 
     .sb-cell:last-child {
-      border: none;
+      border-left: none;
     }
 
     .sb-cell:hover {
-      background: var(--brand-bg);
+      background: var(--surface-2);
       transform: translateY(-1px);
     }
 
@@ -4241,10 +4240,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'logou
       width: 24px;
       height: 24px;
       border-radius: 50%;
-      border: 2px solid #fff;
-      background: linear-gradient(135deg, #6366f1, #a78bfa);
-      color: #fff;
-      font-size: .58rem;
+      background: #4f46e5;
+      color: #e1e0ff;
+      font-size: 0.68rem;
       font-weight: 800;
       display: flex;
       align-items: center;
@@ -4352,14 +4350,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'logou
 
       .stats-bar {
         grid-template-columns: repeat(2, 1fr);
+        border-radius: var(--r-lg);
+        overflow: hidden;
       }
 
       .sb-cell {
-        border-left: none;
+        border-radius: 0 !important;
+        border: none !important;
       }
 
       .sb-cell:nth-child(odd) {
-        border-left: 1px solid var(--bdr);
+        border-left: 1px solid var(--border-solid) !important;
       }
 
       .ann-summary {
@@ -4370,12 +4371,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'logou
         grid-template-columns: repeat(2, 1fr);
       }
 
-      .sb-cell:nth-child(3) {
-        border-top: 1px solid var(--bdr);
-      }
-
+      .sb-cell:nth-child(3),
       .sb-cell:nth-child(4) {
-        border-top: 1px solid var(--bdr);
+        border-top: 1px solid var(--border-solid) !important;
       }
     }
 
@@ -4953,6 +4951,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'logou
       color: var(--brand);
       background: var(--brand-bg);
       font-weight: 800;
+      margin-inline: 10px;
     }
 
     .bottom-nav-item.active i {
@@ -5391,7 +5390,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'logou
 
     /* ══ NOTIFICATIONS & ANNOUNCEMENTS REDESIGN ══════════════════ */
     .notif-sheet-header {
-      padding: 16px 20px 14px;
+      padding: 18px 22px 16px;
       border-bottom: 1px solid var(--border-solid);
       display: flex;
       align-items: center;
@@ -5401,15 +5400,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'logou
     }
 
     .notif-sheet-icon {
-      width: 40px;
-      height: 40px;
-      border-radius: 50%;
-      background: var(--warning-bg);
-      color: var(--warning);
+      width: 42px;
+      height: 42px;
+      border-radius: var(--r-md);
+      background: var(--brand-bg);
+      color: var(--brand);
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 1.15rem;
+      font-size: 1.25rem;
       flex-shrink: 0;
     }
 
@@ -5434,7 +5433,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'logou
     }
 
     .notif-sheet-body {
-      padding: 16px 18px;
+      padding: 16px 20px;
       overflow-y: auto;
       flex: 1;
       max-height: calc(92vh - 140px);
@@ -5442,51 +5441,78 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'logou
       direction: rtl;
       display: flex;
       flex-direction: column;
-      gap: 12px;
+      gap: 14px;
     }
 
     .notif-sheet-footer {
-      padding: 12px 18px;
+      padding: 14px 20px;
       border-top: 1px solid var(--border-solid);
       display: flex;
-      justify-content: flex-end;
+      justify-content: stretch;
+      background: var(--surface);
+    }
+
+    .btn-notif-close {
+      width: 100%;
+      padding: 12px 20px;
+      border-radius: var(--r-md);
+      background: linear-gradient(135deg, var(--brand), var(--brand-dark));
+      border: none;
+      color: #ffffff;
+      font-weight: 800;
+      font-size: 0.95rem;
+      font-family: 'Cairo', sans-serif;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      box-shadow: 0 1px 0 rgba(255, 255, 255, .22) inset, 0 8px 18px rgba(79, 70, 229, .22);
+      transition: all var(--fast);
+    }
+
+    .btn-notif-close:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 1px 0 rgba(255, 255, 255, .26) inset, 0 12px 24px rgba(79, 70, 229, .28);
     }
 
     .btn-secondary-pill {
       width: 100%;
-      padding: 10px;
+      padding: 11px;
       border-radius: var(--r-md);
-      background: var(--surface-2);
+      background: var(--surface-3);
       border: 1px solid var(--border-solid);
-      color: var(--text-2);
-      font-weight: 700;
+      color: var(--text);
+      font-weight: 800;
       font-family: var(--font-main);
       cursor: pointer;
       transition: all var(--fast);
     }
 
     .btn-secondary-pill:hover {
-      background: var(--surface-3);
+      background: var(--brand-bg);
       color: var(--brand);
     }
 
     .notif-card {
       position: relative;
-      background: var(--surface);
+      background: var(--surface-2);
       border: 1px solid var(--border-solid);
-      border-radius: var(--r-lg);
-      padding: 14px 16px;
-      box-shadow: var(--shadow-sm);
+      border-radius: var(--r-xl);
+      padding: 16px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, .04);
       transition: all var(--fast);
       display: flex;
       flex-direction: column;
-      gap: 8px;
+      gap: 10px;
       text-align: right;
     }
 
     .notif-card:hover {
       border-color: var(--brand-light);
-      box-shadow: var(--shadow-md);
+      background: var(--surface);
+      box-shadow: 0 6px 20px rgba(91, 108, 245, .12);
+      transform: translateY(-2px);
     }
 
     .notif-card-header {
@@ -5507,10 +5533,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'logou
       display: inline-flex;
       align-items: center;
       gap: 5px;
-      padding: 4px 10px;
+      padding: 5px 12px;
       border-radius: var(--r-full);
-      font-size: 0.72rem;
-      font-weight: 700;
+      font-size: 0.74rem;
+      font-weight: 800;
     }
 
     .notif-badge.announcement {
@@ -5529,46 +5555,56 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'logou
     }
 
     .notif-time {
-      font-size: 0.68rem;
+      font-size: 0.7rem;
       color: var(--text-3);
-      font-weight: 500;
+      font-weight: 600;
       display: inline-flex;
       align-items: center;
       gap: 4px;
     }
 
     .notif-dismiss-btn {
-      width: 26px;
-      height: 26px;
+      width: 28px;
+      height: 28px;
       border-radius: 50% !important;
-      background: var(--surface-2);
+      background: var(--surface-3);
       border: none;
       color: var(--text-3);
       cursor: pointer;
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 0.72rem;
+      font-size: 0.75rem;
       transition: all var(--fast);
+      flex-shrink: 0;
     }
 
     .notif-dismiss-btn:hover {
       background: var(--danger-bg);
       color: var(--danger);
+      transform: scale(1.1);
     }
 
     .notif-card-title {
-      font-size: 0.94rem;
+      font-size: 0.98rem;
       font-weight: 800;
       color: var(--text);
-      line-height: 1.5;
+      line-height: 1.45;
     }
 
     .notif-card-desc {
-      font-size: 0.82rem;
+      font-size: 0.85rem;
       color: var(--text-2);
-      line-height: 1.6;
+      line-height: 1.65;
       white-space: pre-wrap;
+      background: var(--surface);
+      border: 1px solid var(--border-solid);
+      border-radius: var(--r-md);
+      padding: 10px 14px;
+    }
+
+    .notif-card:hover .notif-card-desc {
+      background: var(--surface-2);
     }
 
     .notif-card-footer {
@@ -5577,14 +5613,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'logou
       justify-content: space-between;
       gap: 10px;
       margin-top: 4px;
-      padding-top: 8px;
+      padding-top: 10px;
       border-top: 1px solid var(--border-solid);
     }
 
     .notif-source {
-      font-size: 0.7rem;
+      font-size: 0.72rem;
       color: var(--text-3);
-      font-weight: 600;
+      font-weight: 700;
       display: inline-flex;
       align-items: center;
       gap: 5px;
@@ -5594,20 +5630,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'logou
       display: inline-flex;
       align-items: center;
       gap: 6px;
-      padding: 6px 14px;
+      padding: 7px 16px;
       border-radius: var(--r-full);
       background: linear-gradient(135deg, var(--brand), var(--brand-dark));
       color: #fff;
-      font-size: 0.78rem;
-      font-weight: 700;
+      font-size: 0.8rem;
+      font-weight: 800;
       text-decoration: none;
-      box-shadow: 0 4px 10px rgba(91, 108, 245, 0.25);
+      box-shadow: 0 4px 12px rgba(91, 108, 245, 0.25);
       transition: all var(--fast);
     }
 
     .notif-action-btn:hover {
-      transform: translateY(-1px);
-      box-shadow: 0 6px 14px rgba(91, 108, 245, 0.35);
+      transform: translateY(-2px);
+      box-shadow: 0 6px 16px rgba(91, 108, 245, 0.35);
     }
 
     .notif-empty-state {
@@ -6007,7 +6043,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'logou
     </div>
 
     <!-- Profile picture suggestion banner -->
-    <div id="profilePicSuggestionBanner" style="display:none; background: linear-gradient(135deg, var(--brand-bg), rgba(79, 70, 229, 0.15)); border: 1px solid var(--brand); padding: 12px 16px; border-radius: 12px; margin-bottom: 12px; align-items: center; justify-content: space-between; gap: 12px; direction: rtl; text-align: right; position: relative;">
+    <div id="profilePicSuggestionBanner" style="display:none; background: linear-gradient(135deg, var(--brand-bg), rgba(79, 70, 229, 0.15)); padding: 12px 16px; border-radius: 12px; margin-bottom: 12px; align-items: center; justify-content: space-between; gap: 12px; direction: rtl; text-align: right; position: relative;">
         <div style="display:flex; align-items:center; gap:10px; min-width:0; flex:1;">
             <div style="background:var(--brand); color:#fff; width:36px; height:36px; border-radius:50%; display:flex; align-items:center; justify-content:center; flex-shrink:0;">
                 <i class="fas fa-camera"></i>
@@ -6776,7 +6812,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'logou
       <div id="notifListModal" class="notif-sheet-body">
       </div>
       <div class="notif-sheet-footer">
-        <button class="btn-secondary-pill" onclick="closeOv('notifOv')">إغلاق</button>
+        <button type="button" class="btn-notif-close" onclick="closeOv('notifOv')">
+          <i class="fas fa-check"></i>
+          <span>إغلاق الإشعارات</span>
+        </button>
       </div>
     </div>
   </div>
