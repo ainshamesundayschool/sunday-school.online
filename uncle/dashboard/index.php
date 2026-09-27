@@ -24950,7 +24950,7 @@ $showSettings = $hasChurchId || $isDevOrAdmin;
                     let rawDigits = (phone || '').replace(/[^\d]/g, '');
                     let smsPhone = rawDigits;
 
-                    const formattedMessage = `سلام ونعمة ✝️\nرابط استعادة كلمة المرور لحساب: ${sName}\n${d.reset_url}\n\n⚠️ ملاحظة هامة: هذا الرابط صالح للاستخدام لمدة ساعتين فقط (ينتهي بعد ساعتين).`;
+                    const formattedMessage = `سلام ونعمة ✝️\nرابط إعادة تعيين كلمة المرور لحساب: ${sName}\n${d.reset_url}\n\n⚠️ ملاحظة هامة: هذا الرابط صالح للاستخدام لمدة ساعتين فقط (ينتهي بعد ساعتين).`;
 
                     const compactBox = document.getElementById('devPwdCompactLinkBox');
                     const linkInput = document.getElementById('devPwdGeneratedLinkInput');

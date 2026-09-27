@@ -8888,6 +8888,7 @@ function findStudentsByPhoneOrSiblings($conn, $phone, $includeSiblings = true): 
         s.id, s.name, s.address, s.phone, s.emergency_phone, s.parent_phones, s.birthday, s.email, s.is_email_verified,
         s.coupons, s.attendance_coupons, s.commitment_coupons, s.task_coupons,
         s.image_url, s.church_id, s.class_id, s.custom_info, s.password_hash, s.gender, s.trip_points,
+        s.google_id, s.google_email,
         c.church_name,
         COALESCE(c.church_type, 'kids') AS church_type,
         COALESCE(cc.arabic_name, cl.arabic_name, s.class) AS class
@@ -23916,6 +23917,7 @@ function kidLoginByPhoneWithPassword() {
                 SELECT s.id, s.name, s.address, s.phone, s.emergency_phone, s.parent_phones, s.birthday, s.email,
                        s.is_email_verified, s.coupons, s.attendance_coupons, s.commitment_coupons, s.task_coupons,
                        s.image_url, s.church_id, s.class_id, s.custom_info, s.password_hash, s.gender, s.trip_points,
+                       s.google_id, s.google_email,
                        c.church_name,
                        COALESCE(c.church_type, 'kids') AS church_type,
                        COALESCE(cc.arabic_name, cl.arabic_name, s.class) AS class
@@ -23942,6 +23944,7 @@ function kidLoginByPhoneWithPassword() {
                 SELECT s.id, s.name, s.address, s.phone, s.emergency_phone, s.parent_phones, s.birthday, s.email,
                        s.is_email_verified, s.coupons, s.attendance_coupons, s.commitment_coupons, s.task_coupons,
                        s.image_url, s.church_id, s.class_id, s.custom_info, s.password_hash, s.gender, s.trip_points,
+                       s.google_id, s.google_email,
                        c.church_name,
                        COALESCE(c.church_type, 'kids') AS church_type,
                        COALESCE(cc.arabic_name, cl.arabic_name, s.class) AS class
