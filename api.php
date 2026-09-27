@@ -22087,7 +22087,15 @@ function ensureStudentPasswordRequestsTable(mysqli $conn): void
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci";
 
     @$conn->query($sql);
-    @$conn->query("ALTER TABLE `student_password_requests` ADD COLUMN `student_name` VARCHAR(255) DEFAULT NULL AFTER `student_id`");
+
+    $chkCol = $conn->query("SHOW COLUMNS FROM `student_password_requests` LIKE 'student_name'");
+    if ($chkCol && $chkCol->num_rows === 0) {
+        try {
+            $conn->query("ALTER TABLE `student_password_requests` ADD COLUMN `student_name` VARCHAR(255) DEFAULT NULL AFTER `student_id`");
+        } catch (Throwable $e) {
+            // Already added
+        }
+    }
 }
 
 function submitStudentPasswordRequest(): void
