@@ -15631,6 +15631,21 @@ function submitRegistrationRequest()
         }
         $email = !empty($email) ? trim($email) : null;
 
+        if (!empty($password)) {
+            if ($password === '123456' || strtolower($password) === 'password') {
+                sendJSON(['success' => false, 'message' => 'لا يمكنك استخدام كلمة المرور الافتراضية 123456، يرجى كتابة كلمة مرور شخصية خاصة بك']);
+                return;
+            }
+            if (strlen($password) < 6) {
+                sendJSON(['success' => false, 'message' => 'كلمة المرور يجب أن لا تقل عن 6 خانات']);
+                return;
+            }
+            if (!preg_match('/[A-Z]/', $password) || !preg_match('/[a-z]/', $password) || !preg_match('/[0-9]/', $password)) {
+                sendJSON(['success' => false, 'message' => 'كلمة المرور يجب أن تحتوي على حرف كبير (A-Z) وحرف صغير (a-z) ورقم (0-9)']);
+                return;
+            }
+        }
+
         if ($gender !== 'male' && $gender !== 'female') {
 
             $gender = detectGenderFromName($name);
@@ -22694,16 +22709,24 @@ function generateDeveloperPasswordLink(): void
         $plainToken = bin2hex(random_bytes(32));
         $tokenHash = hash('sha256', $plainToken);
 
-        // Update request with 24 hours expiration
+        // Update request with 2 hours expiration
         $upd = $conn->prepare("
             UPDATE student_password_requests 
             SET token_hash = ?, status = 'approved', approved_at = NOW(), 
-                expires_at = DATE_ADD(NOW(), INTERVAL 24 HOUR) 
+                expires_at = DATE_ADD(NOW(), INTERVAL 2 HOUR) 
             WHERE id = ?
         ");
         $upd->bind_param("si", $tokenHash, $requestId);
         $upd->execute();
         $upd->close();
+
+        // Also save token directly to student record for direct lookup
+        $upStu = $conn->prepare("UPDATE students SET email_reset_token = ?, email_reset_token_expires = DATE_ADD(NOW(), INTERVAL 2 HOUR), updated_at = NOW() WHERE id = ?");
+        if ($upStu) {
+            $upStu->bind_param("si", $plainToken, $studentId);
+            $upStu->execute();
+            $upStu->close();
+        }
 
         // Build base URL
         $protocol = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on') ? 'https' : 'http';
@@ -22716,7 +22739,7 @@ function generateDeveloperPasswordLink(): void
         $msgText = "سلام ونعمة يا {$studentName}،\n"
                  . "بناءً على طلبك لـ {$actionVerb} كلمة المرور الخاصة بحسابك في مدارس الأحد:\n"
                  . "{$secureUrl}\n\n"
-                 . "⚠️ تنبيه أمني هام جداً: هذا الرابط سري وشخصي خاص بك وحدك صالح لمدة 24 ساعة فقط ولا يمكن استخدامه إلا مرة واحدة. يرجى عدم مشاركة هذا الرابط مع أي شخص إطلاقاً حفاظاً على أمان وسرية حسابك.";
+                 . "⚠️ تنبيه أمني هام: هذا الرابط سري وشخصي خاص بك وحدك صالح لمدة ساعتين فقط (ينتهي بعد ساعتين) ولا يمكن استخدامه إلا مرة واحدة.";
 
         sendJSON([
             'success' => true,
@@ -22725,7 +22748,7 @@ function generateDeveloperPasswordLink(): void
             'message_text' => $msgText,
             'phone' => $studentPhone,
             'student_name' => $studentName,
-            'expires_in' => '24 ساعة',
+            'expires_in' => 'ساعتان',
             'message' => 'تم إنشاء الرابط الآمن بنجاح'
         ]);
 
