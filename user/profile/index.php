@@ -214,8 +214,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'logou
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="/fonts/cairo.css">
-  <link href="https://fonts.googleapis.com/css2?family=Baloo+Bhaijaan+2:wght@400;500;600;700;800&family=Cairo:wght@300;400;600;700;800&display=swap"
-    rel="stylesheet">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800;900&display=swap">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
@@ -320,6 +319,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'logou
 
     /* ══ TOKENS ══════════════════════════════════════════════════ */
     :root {
+      --font-main: 'Cairo', sans-serif;
       --brand: #4f46e5;
       --brand-d: #3730a3;
       --brand-l: #818cf8;
@@ -334,6 +334,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'logou
       --warn: #d97706;
       --warn-l: #f59e0b;
       --warn-bg: #fef3c7;
+      --coupon: #8b5cf6;
+      --coupon-dark: #7c3aed;
+      --coupon-bg: #ede9fe;
+      --coupon-grad: linear-gradient(135deg, #8b5cf6, #7c3aed);
       --cou: #7c3aed;
       --cou-l: #8b5cf6;
       --cou-bg: #ede9fe;
@@ -398,12 +402,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'logou
     }
 
     body {
-      font-family: 'Baloo Bhaijaan 2', 'Cairo', system-ui, -apple-system, sans-serif;
+      font-family: var(--font-main);
       background: var(--bg);
       color: var(--t1);
       min-height: 100vh;
       overflow-x: hidden;
       -webkit-font-smoothing: antialiased;
+    }
+
+    input, button, select, textarea {
+      font-family: var(--font-main);
     }
 
     body::before {
@@ -425,40 +433,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'logou
       padding: 0 0 0;
       display: flex;
       flex-direction: column;
-      min-height: 340px;
+      min-height: 260px;
+      transition: min-height .28s var(--ease), height .28s var(--ease), padding .28s var(--ease), box-shadow .2s var(--ease);
     }
 
-    /* animated mesh */
+    /* static mesh — no infinite pulse animation */
     .hero::before {
       content: '';
       position: absolute;
       inset: 0;
       background:
-        radial-gradient(circle at 20% 30%, rgba(255, 255, 255, .07) 0%, transparent 40%),
-        radial-gradient(circle at 80% 70%, rgba(255, 255, 255, .05) 0%, transparent 35%);
-      animation: hero-pulse 6s ease-in-out infinite;
-    }
-
-    @keyframes hero-pulse {
-
-      0%,
-      100% {
-        opacity: 1;
-      }
-
-      50% {
-        opacity: .6;
-      }
-    }
-
-    /* star/dot texture */
-    .hero::after {
-      content: '';
-      position: absolute;
-      inset: 0;
+        radial-gradient(circle at 20% 30%, rgba(255, 255, 255, .05) 0%, transparent 40%),
+        radial-gradient(circle at 80% 70%, rgba(255, 255, 255, .04) 0%, transparent 35%);
       pointer-events: none;
-      background-image: radial-gradient(circle, rgba(255, 255, 255, .08) 1px, transparent 1px);
-      background-size: 28px 28px;
     }
 
     .hero-top {
@@ -467,21 +454,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'logou
       display: flex;
       align-items: center;
       justify-content: space-between;
-      padding: 14px 18px 0;
+      padding: 12px 16px 0;
     }
 
     .hero-church-chip {
       display: inline-flex;
       align-items: center;
       gap: 6px;
-      background: rgba(255, 255, 255, .14);
-      backdrop-filter: blur(10px);
+      background: rgba(255, 255, 255, .16);
       color: rgba(255, 255, 255, .92);
       font-size: .78rem;
       font-weight: 600;
       padding: 5px 13px;
       border-radius: var(--r-full);
-      border: none;
+      border: 1px solid rgba(255, 255, 255, .12);
       max-width: 180px;
       overflow: hidden;
       text-overflow: ellipsis;
@@ -497,9 +483,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'logou
       width: 34px;
       height: 34px;
       border-radius: 50%;
-      background: rgba(255, 255, 255, .15);
-      backdrop-filter: blur(8px);
-      border: none;
+      background: rgba(255, 255, 255, .18);
+      border: 1px solid rgba(255, 255, 255, .12);
       color: #fff;
       font-size: .9rem;
       cursor: pointer;
@@ -510,7 +495,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'logou
     }
 
     .hero-ico-btn:hover {
-      background: rgba(255, 255, 255, .26);
+      background: rgba(255, 255, 255, .28);
     }
 
     /* center content */
@@ -520,36 +505,25 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'logou
       display: flex;
       flex-direction: column;
       align-items: center;
-      padding: 22px 20px 0;
+      padding: 16px 16px 0;
       flex: 1;
     }
 
     .avatar-ring {
       position: relative;
-      width: 116px;
-      height: 116px;
-      /* glowing ring */
-      background: conic-gradient(from 0deg, #818cf8, #c4b5fd, #e0e7ff, #818cf8);
+      width: 92px;
+      height: 92px;
       border-radius: 50%;
-      padding: 3px;
-      box-shadow: 0 0 0 4px rgba(255, 255, 255, .15), 0 8px 32px rgba(0, 0, 0, .25);
+      border: 3px solid rgba(255, 255, 255, .9);
+      box-shadow: 0 4px 16px rgba(0, 0, 0, .15);
       cursor: pointer;
-      transition: var(--norm);
-      animation: ring-spin 8s linear infinite;
-    }
-
-    @keyframes ring-spin {
-      from {
-        background: conic-gradient(from 0deg, #818cf8, #c4b5fd, #e0e7ff, #818cf8);
-      }
-
-      to {
-        background: conic-gradient(from 360deg, #818cf8, #c4b5fd, #e0e7ff, #818cf8);
-      }
+      transition: width .28s var(--ease), height .28s var(--ease), transform var(--fast);
+      background: transparent;
+      padding: 0;
     }
 
     .avatar-ring:hover {
-      transform: scale(1.04);
+      transform: scale(1.03);
     }
 
     .avatar-inner {
@@ -561,9 +535,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'logou
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 2.6rem;
+      font-size: 2.2rem;
       color: #818cf8;
-      border: 3px solid rgba(255, 255, 255, .9);
+      border: none;
     }
 
     .avatar-inner img {
@@ -574,8 +548,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'logou
 
     .avatar-edit-fab {
       position: absolute;
-      bottom: 2px;
-      left: 2px;
+      bottom: 0px;
+      left: 0px;
       width: 26px;
       height: 26px;
       border-radius: 50%;
@@ -587,7 +561,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'logou
       font-size: .58rem;
       color: #fff;
       cursor: pointer;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, .2);
+      box-shadow: 0 2px 6px rgba(0, 0, 0, .2);
       transition: var(--fast);
     }
 
@@ -597,23 +571,33 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'logou
 
     .avatar-edit-fab:hover {
       background: var(--brand-d);
-      transform: scale(1.12);
+      transform: scale(1.1);
     }
 
     .hero-name {
-      margin-top: 14px;
-      font-size: 1.85rem;
+      margin-top: 10px;
+      font-size: 1.45rem;
       font-weight: 800;
       color: #fff;
       text-align: center;
-      text-shadow: 0 2px 12px rgba(0, 0, 0, .2);
-      line-height: 1.15;
+      text-shadow: 0 2px 10px rgba(0, 0, 0, .2);
+      line-height: 1.2;
+      transition: font-size .28s var(--ease), margin .28s var(--ease);
     }
 
     @media(max-width:400px) {
       .hero-name {
-        font-size: 1.5rem;
+        font-size: 1.3rem;
       }
+    }
+
+    .hero-subtitle {
+      font-size: .88rem;
+      font-weight: 500;
+      color: rgba(255, 255, 255, .78);
+      margin-top: 3px;
+      text-align: center;
+      line-height: 1.3;
     }
 
     .hero-tags {
@@ -622,7 +606,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'logou
       justify-content: center;
       gap: 7px;
       flex-wrap: wrap;
-      margin-top: 10px;
+      margin-top: 8px;
     }
 
     .htag {
@@ -634,8 +618,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'logou
       font-size: .78rem;
       font-weight: 700;
       background: rgba(255, 255, 255, .16);
-      backdrop-filter: blur(8px);
-      border: 1px solid rgba(255, 255, 255, .28);
+      border: 1px solid rgba(255, 255, 255, .24);
       color: #fff;
       transition: var(--fast);
     }
@@ -648,7 +631,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'logou
 
     .htag.switch-tag {
       background: rgba(255, 255, 255, .18);
-      border: 1px solid rgba(255, 255, 255, .32);
+      border: 1px solid rgba(255, 255, 255, .28);
       color: #fff;
       cursor: pointer;
       display: inline-flex;
@@ -660,16 +643,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'logou
       font-weight: 700;
       font-family: inherit;
       transition: all var(--fast);
-      backdrop-filter: blur(8px);
-      -webkit-backdrop-filter: blur(8px);
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
     }
 
     .htag.switch-tag:hover {
       background: rgba(255, 255, 255, .28);
-      transform: translateY(-2px);
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.18);
-      border-color: rgba(255, 255, 255, .55);
+      border-color: rgba(255, 255, 255, .45);
     }
 
     .htag.switch-tag:active {
@@ -680,49 +659,39 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'logou
     .coupon-hero {
       position: relative;
       z-index: 2;
-      margin: 20px 16px 0;
-      background: rgba(255, 255, 255, .1);
-      backdrop-filter: blur(14px);
-      border: 1px solid rgba(255, 255, 255, .22);
-      border-radius: var(--r-xl);
-      padding: 18px 20px 16px;
+      margin: 16px 14px 0;
+      background: rgba(255, 255, 255, .12);
+      border: 1px solid rgba(255, 255, 255, .18);
+      border-radius: var(--r-lg);
+      padding: 14px 18px;
       display: grid;
       grid-template-columns: 1fr auto;
       align-items: center;
-      gap: 16px;
+      gap: 14px;
       overflow: hidden;
-    }
-
-    .coupon-hero::before {
-      content: '';
-      position: absolute;
-      top: -30px;
-      left: -30px;
-      width: 140px;
-      height: 140px;
-      border-radius: 50%;
-      background: radial-gradient(circle, rgba(196, 181, 253, .25), transparent 70%);
-      pointer-events: none;
     }
 
     .ch-total-label {
       font-size: .74rem;
       font-weight: 600;
-      color: rgba(255, 255, 255, .75);
-      margin-bottom: 3px;
+      color: rgba(255, 255, 255, .8);
+      margin-bottom: 2px;
+      display: flex;
+      align-items: center;
+      gap: 5px;
     }
 
     .ch-total-val {
-      font-size: 2.9rem;
+      font-size: 2.5rem;
       font-weight: 800;
       color: #fff;
       line-height: 1;
-      text-shadow: 0 2px 16px rgba(0, 0, 0, .2);
+      text-shadow: 0 2px 12px rgba(0, 0, 0, .2);
     }
 
     .ch-total-unit {
-      font-size: .88rem;
-      color: rgba(255, 255, 255, .8);
+      font-size: .84rem;
+      color: rgba(255, 255, 255, .85);
       margin-top: 1px;
       font-weight: 600;
     }
@@ -730,7 +699,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'logou
     .ch-breakdown {
       display: flex;
       flex-direction: column;
-      gap: 5px;
+      gap: 4px;
     }
 
     .ch-row {
@@ -738,9 +707,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'logou
       align-items: center;
       gap: 6px;
       font-size: .74rem;
-      color: rgba(255, 255, 255, .85);
+      color: rgba(255, 255, 255, .9);
       font-weight: 600;
-      background: rgba(255, 255, 255, .1);
+      background: rgba(255, 255, 255, .14);
       padding: 4px 10px;
       border-radius: var(--r-full);
     }
@@ -753,27 +722,100 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'logou
     .hero-wave {
       position: relative;
       z-index: 2;
-      margin-top: 20px;
-      height: 38px;
+      margin-top: 18px;
+      height: 34px;
       background: var(--bg);
       clip-path: ellipse(56% 100% at 50% 100%);
       flex-shrink: 0;
+    }
+
+    /* ── COLLAPSED MOBILE HERO STATE (§5) ──────────────── */
+    @media (max-width: 899px) {
+      body.hero-collapsed .hero {
+        position: sticky;
+        top: 0;
+        z-index: 900;
+        min-height: 58px;
+        height: 58px;
+        flex-direction: row;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0 14px;
+        box-shadow: 0 4px 18px rgba(0, 0, 0, .18);
+      }
+
+      body.hero-collapsed .hero-top {
+        order: 2;
+        padding: 0;
+        width: auto;
+      }
+
+      body.hero-collapsed .hero-church-chip {
+        display: none !important;
+      }
+
+      body.hero-collapsed .hero-body {
+        order: 1;
+        flex-direction: row;
+        align-items: center;
+        justify-content: flex-start;
+        gap: 10px;
+        padding: 0;
+        flex: 1;
+        min-width: 0;
+      }
+
+      body.hero-collapsed .avatar-ring {
+        width: 36px;
+        height: 36px;
+        border-width: 2px;
+        box-shadow: 0 2px 6px rgba(0, 0, 0, .2);
+        flex-shrink: 0;
+      }
+
+      body.hero-collapsed .avatar-inner {
+        font-size: .95rem;
+      }
+
+      body.hero-collapsed .avatar-edit-fab,
+      body.hero-collapsed #deleteStudentPhotoBtn {
+        display: none !important;
+      }
+
+      body.hero-collapsed .hero-name {
+        margin: 0;
+        font-size: .95rem;
+        font-weight: 700;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        text-align: right;
+      }
+
+      body.hero-collapsed .hero-subtitle,
+      body.hero-collapsed .hero-tags,
+      body.hero-collapsed #birthdayGreetingBtn,
+      body.hero-collapsed #scInfo,
+      body.hero-collapsed .coupon-hero,
+      body.hero-collapsed .hero-wave {
+        display: none !important;
+      }
     }
 
     /* ══ STATS BAR ═══════════════════════════════════════ */
     .stats-bar {
       display: grid;
       grid-template-columns: repeat(4, 1fr);
-      margin: 0 14px 18px;
+      margin: 0 12px 14px;
       background: var(--surf);
-      border-radius: var(--r-lg);
+      border-radius: var(--r-md);
       border: 1px solid var(--bdr);
-      box-shadow: var(--sh-md);
+      box-shadow: var(--sh-sm);
       overflow: hidden;
     }
 
     .sb-cell {
-      padding: 12px 8px;
+      padding: 10px 6px;
       text-align: center;
       border-left: 1px solid var(--bdr);
       transition: var(--fast);
@@ -789,7 +831,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'logou
     }
 
     .sb-val {
-      font-size: 1.3rem;
+      font-size: 1.15rem;
       font-weight: 800;
       line-height: 1;
       color: var(--t1);
@@ -822,7 +864,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'logou
     .page {
       max-width: 860px;
       margin: 0 auto;
-      padding: 0 14px 90px;
+      padding: 0 12px 90px;
       position: relative;
       z-index: 1;
     }
@@ -830,33 +872,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'logou
     /* ══ SECTION CARD ════════════════════════════════════ */
     .sc {
       position: relative;
-      background:
-        linear-gradient(180deg, rgba(255, 255, 255, .98), rgba(248, 250, 252, .98));
-      border-radius: 26px;
-      border: 1px solid rgba(226, 232, 240, .9);
-      box-shadow:
-        0 1px 0 rgba(255, 255, 255, .85) inset,
-        0 14px 34px rgba(15, 23, 42, .06);
+      background: var(--surf);
+      border-radius: 20px;
+      border: 1px solid var(--bdr);
+      box-shadow: var(--sh-sm);
       overflow: hidden;
-      margin-bottom: 16px;
-      transition: box-shadow var(--norm), transform var(--norm), border-color var(--norm);
-    }
-
-    .sc::before {
-      content: '';
-      position: absolute;
-      inset: 0 0 auto 0;
-      height: 1px;
-      background: linear-gradient(90deg, rgba(255, 255, 255, 0), rgba(255, 255, 255, .9), rgba(255, 255, 255, 0));
-      pointer-events: none;
+      margin-bottom: 12px;
+      transition: box-shadow var(--fast), border-color var(--fast);
     }
 
     .sc:hover {
-      transform: translateY(-3px);
-      border-color: rgba(129, 140, 248, .45);
-      box-shadow:
-        0 1px 0 rgba(255, 255, 255, .92) inset,
-        0 20px 46px rgba(15, 23, 42, .09);
+      box-shadow: var(--sh-md);
+      border-color: rgba(129, 140, 248, .35);
     }
 
     .sc-head {
@@ -864,25 +891,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'logou
       display: flex;
       align-items: center;
       gap: 12px;
-      padding: 18px 20px 14px;
-      border-bottom: 1px solid rgba(241, 245, 249, .95);
-      background:
-        radial-gradient(circle at top right, rgba(99, 102, 241, .07), transparent 42%),
-        linear-gradient(180deg, rgba(255, 255, 255, .96), rgba(248, 250, 252, .86));
+      padding: 14px 16px 12px;
+      border-bottom: 1px solid var(--bdr2);
+      background: var(--surf);
     }
 
     .sc-ico {
-      width: 42px;
-      height: 42px;
-      border-radius: 14px;
+      width: 38px;
+      height: 38px;
+      border-radius: 12px;
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 1rem;
+      font-size: .95rem;
       flex-shrink: 0;
-      box-shadow:
-        0 1px 0 rgba(255, 255, 255, .8) inset,
-        0 10px 22px rgba(15, 23, 42, .08);
+      box-shadow: 0 4px 12px rgba(15, 23, 42, .06);
     }
 
     .sc-label {
@@ -890,7 +913,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'logou
     }
 
     .sc-title {
-      font-size: 1rem;
+      font-size: .98rem;
       font-weight: 800;
       color: var(--t1);
     }
@@ -913,7 +936,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'logou
     }
 
     .sc-body {
-      padding: 18px;
+      padding: 14px;
     }
 
     /* ══ INFO PILLS ══════════════════════════════════════ */
@@ -937,7 +960,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'logou
     .ip:hover {
       border-color: var(--brand-l);
       background: var(--brand-bg);
-      transform: translateY(-1px);
     }
 
     .ip-ico {
@@ -1034,7 +1056,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'logou
     }
 
     .cal-day:hover {
-      transform: translateY(-2px);
       box-shadow: var(--sh-sm);
     }
 
@@ -1135,7 +1156,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'logou
       padding: 9px 14px;
       border: 1.5px solid var(--bdr);
       border-radius: var(--r-sm);
-      font-family: 'Baloo Bhaijaan 2', sans-serif;
+      font-family: var(--font-main);
       font-size: .88rem;
       background: var(--surf);
       color: var(--t1);
@@ -1194,7 +1215,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'logou
       padding: 7px 12px;
       border: 1.5px solid var(--bdr);
       border-radius: var(--r-sm);
-      font-family: 'Baloo Bhaijaan 2', sans-serif;
+      font-family: var(--font-main);
       font-size: .8rem;
       background: var(--surf);
       color: var(--t2);
@@ -2054,7 +2075,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'logou
       text-decoration: none;
       border: none;
       cursor: pointer;
-      font-family: 'Baloo Bhaijaan 2', sans-serif;
+      font-family: var(--font-main);
       transition: var(--fast);
       box-shadow:
         0 1px 0 rgba(255, 255, 255, .22) inset,
@@ -2062,7 +2083,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'logou
     }
 
     .ann-link-btn:hover {
-      transform: translateY(-2px);
       box-shadow:
         0 1px 0 rgba(255, 255, 255, .24) inset,
         0 14px 24px rgba(124, 58, 237, .22);
@@ -2384,7 +2404,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'logou
       padding: 11px 13px;
       border: 1.5px solid var(--bdr);
       border-radius: var(--r-md);
-      font-family: 'Baloo Bhaijaan 2', sans-serif;
+      font-family: var(--font-main);
       font-size: .9rem;
       color: var(--t1);
       background: var(--surf);
@@ -2666,7 +2686,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'logou
       border-radius: var(--r-md);
       border: 1.5px solid var(--bdr);
       background: var(--surf);
-      font-family: 'Baloo Bhaijaan 2', sans-serif;
+      font-family: var(--font-main);
       font-weight: 700;
       font-size: .88rem;
       color: var(--t1);
@@ -2719,7 +2739,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'logou
       padding: 10px 12px;
       border: 1.5px solid var(--bdr);
       border-radius: var(--r-md);
-      font-family: 'Baloo Bhaijaan 2', sans-serif;
+      font-family: var(--font-main);
       font-size: .87rem;
       color: var(--t1);
       background: var(--surf);
@@ -2760,7 +2780,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'logou
       gap: 5px;
       padding: 8px 17px;
       border-radius: var(--r-full);
-      font-family: 'Baloo Bhaijaan 2', sans-serif;
+      font-family: var(--font-main);
       font-size: .84rem;
       font-weight: 700;
       border: 1.5px solid transparent;
@@ -4058,7 +4078,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'logou
       border-radius: var(--r-md);
       background: var(--s2);
       border: 1.5px solid var(--bdr);
-      font-family: 'Baloo Bhaijaan 2', sans-serif;
+      font-family: var(--font-main);
       font-size: .9rem;
       font-weight: 700;
       color: var(--t2);
@@ -4384,7 +4404,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'logou
       cursor: pointer;
       transition: var(--fast);
       width: 100%;
-      font-family: 'Baloo Bhaijaan 2', sans-serif;
+      font-family: var(--font-main);
       font-size: .93rem;
       font-weight: 700;
       color: var(--t1);
@@ -4423,7 +4443,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'logou
 
     /* ══ EXAM SCREEN ════════════════════════════════════════ */
     #examScreen {
-      font-family: 'Baloo Bhaijaan 2', sans-serif;
+      font-family: var(--font-main);
     }
 
     /* ── Start card ── */
@@ -4566,7 +4586,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'logou
       background: var(--warn-bg);
       border: 1.5px solid #fde68a;
       color: var(--warn);
-      font-family: 'Baloo Bhaijaan 2', sans-serif;
+      font-family: var(--font-main);
       transition: background var(--fast), color var(--fast), border-color var(--fast);
     }
 
@@ -5235,7 +5255,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'logou
     .hero #scInfo .ip:hover {
       background: rgba(255, 255, 255, 0.16) !important;
       border-color: rgba(255, 255, 255, 0.25) !important;
-      transform: translateY(-1px) !important;
     }
     
     .hero #scInfo .ip-ico {
@@ -5274,16 +5293,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'logou
         z-index: 500;
         box-sizing: border-box !important;
         box-shadow: 0 12px 32px rgba(49, 46, 129, 0.25) !important;
-        animation: sidebarSlideIn 0.5s var(--spring) both;
+        animation: sidebarSlideIn 0.32s var(--ease) both;
       }
 
-      /* ── Desktop entrance animations ── */
+      /* ── Desktop entrance animations (smoothed per §8) ── */
       @keyframes sidebarSlideIn {
-        from { transform: translateX(40px); opacity: 0; }
+        from { transform: translateX(16px); opacity: 0; }
         to   { transform: translateX(0);   opacity: 1; }
       }
       @keyframes fadeUp {
-        from { transform: translateY(18px); opacity: 0; }
+        from { transform: translateY(8px); opacity: 0; }
         to   { transform: translateY(0);    opacity: 1; }
       }
       @keyframes fadeIn {
@@ -5291,10 +5310,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'logou
         to   { opacity: 1; }
       }
 
-      /* Main side-by-side grid layout */
+      /* Main side-by-side grid layout with fluid sidebar per §7 */
       body {
         display: grid;
-        grid-template-columns: 380px minmax(auto, 1000px);
+        grid-template-columns: clamp(280px, 26vw, 380px) minmax(auto, 1000px);
         grid-template-rows: auto 1fr;
         justify-content: center;
         min-height: 100vh;
@@ -5312,7 +5331,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'logou
         text-align: center !important;
         background: transparent !important;
         border: none !important;
-        padding: 40px 28px 30px !important;
+        padding: 32px 20px 24px !important;
         height: auto !important;
         min-height: auto !important;
         box-shadow: none !important;
@@ -5320,15 +5339,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'logou
         position: relative !important;
         width: 100% !important;
         box-sizing: border-box !important;
-        animation: fadeIn 0.6s var(--ease) 0.15s both;
+        animation: fadeIn 0.32s var(--ease) 0.05s both;
       }
 
-      /* Stagger sidebar children for polish */
-      .avatar-ring    { animation: fadeUp 0.5s var(--spring) 0.2s  both !important; }
-      .hero-name      { animation: fadeUp 0.5s var(--spring) 0.3s  both !important; }
-      .hero-tags      { animation: fadeUp 0.5s var(--spring) 0.35s both !important; }
-      #scInfo         { animation: fadeUp 0.5s var(--spring) 0.4s  both !important; }
-      .coupon-hero    { animation: fadeUp 0.5s var(--spring) 0.45s both !important; }
+      /* Stagger sidebar children for smooth polish per §8 */
+      .avatar-ring    { animation: fadeUp 0.32s var(--ease) 0.05s both !important; }
+      .hero-name      { animation: fadeUp 0.32s var(--ease) 0.08s both !important; }
+      .hero-subtitle,
+      .hero-tags      { animation: fadeUp 0.32s var(--ease) 0.12s both !important; }
+      #scInfo         { animation: fadeUp 0.32s var(--ease) 0.16s both !important; }
+      .coupon-hero    { animation: fadeUp 0.32s var(--ease) 0.2s both !important; }
 
       /* Always show personal info in sidebar on desktop view */
       .hero #scInfo {
@@ -5338,8 +5358,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'logou
       /* Adjust text colors in sidebar profile */
       .hero-name {
         color: #fff !important;
-        font-size: 1.15rem !important;
-        margin-top: 12px !important;
+        font-size: 1.22rem !important;
+        margin-top: 10px !important;
         text-shadow: 0 2px 10px rgba(0, 0, 0, .2) !important;
       }
 
@@ -5358,10 +5378,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'logou
         align-items: center !important;
         padding: 6px !important;
         border-radius: var(--r-full) !important;
-        margin: 0 auto 30px auto !important;
+        margin: 0 auto 24px auto !important;
         gap: 6px !important;
         z-index: 10 !important;
-        animation: fadeUp 0.5s var(--spring) 0.1s both;
+        animation: fadeUp 0.32s var(--ease) 0.05s both;
       }
 
       .bottom-nav-item {
@@ -5369,12 +5389,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'logou
         justify-content: center !important;
         align-items: center !important;
         gap: 8px !important;
-        padding: 10px 20px !important;
+        padding: 9px 18px !important;
         border-radius: var(--r-full) !important;
         height: auto !important;
         flex: 0 0 auto !important;
         margin-bottom: 0 !important;
-        font-size: 0.95rem !important;
+        font-size: 0.92rem !important;
         color: var(--t3) !important;
         transition: all var(--fast) !important;
         background: transparent !important;
@@ -5382,7 +5402,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'logou
       }
 
       .bottom-nav-item i {
-        font-size: 1.15rem !important;
+        font-size: 1.1rem !important;
         transform: none !important;
       }
 
@@ -5394,7 +5414,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'logou
       .bottom-nav-item.active {
         background: var(--brand) !important;
         color: #fff !important;
-        box-shadow: var(--sh-brand) !important;
+        box-shadow: 0 4px 12px rgba(79, 70, 229, .24) !important;
       }
 
       .bottom-nav-item.active i {
@@ -5404,8 +5424,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'logou
 
       /* Send tab: hide the fab-btn wrapper on desktop — use normal pill styling */
       .bottom-nav-item.center-fab {
-        padding: 10px 20px !important;
-        padding-bottom: 10px !important;
+        padding: 9px 18px !important;
         order: 0 !important;
         flex-direction: row !important;
         align-items: center !important;
@@ -5427,14 +5446,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'logou
       }
 
       .fab-btn i {
-        font-size: 1.15rem !important;
+        font-size: 1.1rem !important;
         color: inherit !important;
       }
 
       /* Show the إرسال label next to the icon */
       .bottom-nav-item.center-fab > span {
         display: inline !important;
-        font-size: 0.95rem !important;
+        font-size: 0.92rem !important;
         font-weight: 700 !important;
       }
 
@@ -5451,11 +5470,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'logou
         align-items: center !important;
         width: 100% !important;
         box-sizing: border-box !important;
-        padding: 40px 12px 80px 24px !important;
+        padding: 32px 12px 60px 24px !important;
         max-width: 1000px !important;
         margin: 0 !important;
         min-height: 100vh !important;
-        animation: fadeIn 0.5s var(--ease) 0.05s both;
+        animation: fadeIn 0.32s var(--ease) 0.05s both;
       }
 
       /* Main Page Content Container */
@@ -5474,11 +5493,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'logou
       .stats-bar {
         width: 100% !important;
         max-width: 960px !important;
-        margin: 0 0 24px 0 !important;
+        margin: 0 0 20px 0 !important;
         box-shadow: var(--sh-sm) !important;
-        border-radius: var(--r-lg) !important;
+        border-radius: var(--r-md) !important;
         background: var(--surf) !important;
-        border: 1px solid var(--bdr2) !important;
+        border: 1px solid var(--bdr) !important;
         align-self: stretch !important;
         grid-template-columns: repeat(4, 1fr) !important;
         position: relative !important;
@@ -5489,7 +5508,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'logou
         display: flex !important;
         flex-direction: column !important;
         align-items: center !important;
-        gap: 12px !important;
+        gap: 10px !important;
         width: 100% !important;
         box-sizing: border-box !important;
         padding: 0 16px !important;
@@ -5506,38 +5525,39 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'logou
       /* Hide app download floating / top buttons and place in profile */
       .hero-actions-top {
         margin-top: 0 !important;
-        gap: 12px !important;
+        gap: 10px !important;
       }
-       .hero-ico-btn {
-        background: rgba(255, 255, 255, .15) !important;
+      .hero-ico-btn {
+        background: rgba(255, 255, 255, .18) !important;
         color: #fff !important;
-        border: none !important;
+        border: 1px solid rgba(255, 255, 255, .12) !important;
       }
       .hero-ico-btn:hover {
-        background: rgba(255, 255, 255, .26) !important;
+        background: rgba(255, 255, 255, .28) !important;
         color: #fff !important;
       }
 
-      /* Desktop coupon-hero: use horizontal grid layout same as mobile */
+      /* Desktop coupon-hero: flat solid surface, no blur per §3 */
       .coupon-hero {
-        background: rgba(255, 255, 255, .1) !important;
-        backdrop-filter: blur(14px) !important;
-        border: 1px solid rgba(255, 255, 255, .22) !important;
+        background: rgba(255, 255, 255, .12) !important;
+        backdrop-filter: none !important;
+        -webkit-backdrop-filter: none !important;
+        border: 1px solid rgba(255, 255, 255, .18) !important;
         box-shadow: none !important;
         width: calc(100% - 32px) !important;
-        margin: 20px auto 0 !important;
+        margin: 16px auto 0 !important;
         border-radius: var(--r-lg) !important;
         display: grid !important;
         grid-template-columns: 1fr auto !important;
         align-items: center !important;
         text-align: right !important;
-        gap: 16px !important;
-        padding: 18px 20px 16px !important;
+        gap: 14px !important;
+        padding: 14px 18px !important;
       }
       .ch-breakdown {
         display: flex !important;
         flex-direction: column !important;
-        gap: 5px !important;
+        gap: 4px !important;
         align-items: flex-start !important;
       }
       .ch-total-label {
@@ -5554,6 +5574,54 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'logou
         color: #fff !important;
       }
     }
+
+    /* ── Mid-size laptop step (900px - 1100px) per §7 ── */
+    @media (min-width: 900px) and (max-width: 1100px) {
+      .sidebar-desktop {
+        margin: 16px 16px 16px 8px !important;
+      }
+      .hero {
+        padding: 24px 14px 18px !important;
+      }
+      .avatar-ring {
+        width: 80px !important;
+        height: 80px !important;
+      }
+      .avatar-inner {
+        font-size: 1.8rem !important;
+      }
+      .hero-name {
+        font-size: 1.15rem !important;
+        margin-top: 8px !important;
+      }
+      .coupon-hero {
+        padding: 12px 14px !important;
+        gap: 10px !important;
+      }
+      .ch-total-val {
+        font-size: 2.1rem !important;
+      }
+    }
+
+    /* ── Wide Desktop (>= 1200px): 2-column card flow per §7 ── */
+    @media (min-width: 1200px) {
+      .page {
+        display: grid !important;
+        grid-template-columns: repeat(2, 1fr) !important;
+        gap: 12px !important;
+        align-items: start !important;
+      }
+      .page > .pinned-email-security-banner,
+      .page > #guestLoginPrompt,
+      .page > #profilePicSuggestionBanner,
+      .page > #scAnnBanner,
+      .page > #homeSearchBar,
+      .page > #scSendCoupons,
+      .page > #scAtt,
+      .page > #scAccountSwitcher {
+        grid-column: 1 / -1 !important;
+      }
+    }
   </style>
   <script src="/js/og-meta.js"></script>
 </head>
@@ -5564,7 +5632,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'logou
     <div class="spin"></div><span id="lt">جارٍ التحميل…</span>
   </div>
 
-  <div id="tempIdAssignContainer" style="display:none; padding:20px; max-width:600px; margin:0 auto; direction:rtl; text-align:right; font-family:'Baloo Bhaijaan 2', sans-serif;"></div>
+  <div id="tempIdAssignContainer" style="display:none; padding:20px; max-width:600px; margin:0 auto; direction:rtl; text-align:right;"></div>
 
   <!-- ══ SIDEBAR (DESKTOP) ══ -->
   <aside class="sidebar-desktop" id="sidebarDesktop">
@@ -5598,9 +5666,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'logou
           <button type="button" id="deleteStudentPhotoBtn" onclick="deleteStudentPhoto(event)" style="display:none; position:absolute; top:-4px; right:-4px; background:var(--err); color:white; border:none; border-radius:50%; width:28px; height:28px; cursor:pointer; align-items:center; justify-content:center; box-shadow:0 2px 5px rgba(0,0,0,0.2); z-index:10;"><i class="fas fa-trash-alt" style="font-size:0.8rem;"></i></button>
         </div>
         <div class="hero-name" id="heroName">—</div>
+        <div class="hero-subtitle" id="heroClass">
+          <span id="heroClassTxt">—</span>
+        </div>
         <div class="hero-tags" id="heroTags">
-          <span class="htag class-tag" id="heroClass"><i class="fas fa-graduation-cap"></i><span
-              id="heroClassTxt">—</span></span>
           <button type="button" class="htag switch-tag" id="heroSwitchTag" style="display:none" onclick="openOv('switchOv')" title="تبديل الحساب">
             <i class="fas fa-exchange-alt"></i><span>تبديل الحساب (<span id="heroSwitchCount">0</span>)</span>
           </button>
@@ -5711,7 +5780,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'logou
   <div class="page" id="mainPage" style="display:none">
 
     <!-- Guest Login Prompt -->
-    <div id="guestLoginPrompt" style="display:none; text-align:center; padding:40px 20px; background:rgba(255,255,255,0.85); backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px); border:2px dashed var(--brand-l); border-radius:var(--r-md); margin:20px 0; box-shadow:var(--sh-md); font-family:'Cairo','Baloo Bhaijaan 2',sans-serif;">
+    <div id="guestLoginPrompt" style="display:none; text-align:center; padding:40px 20px; background:rgba(255,255,255,0.85); backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px); border:2px dashed var(--brand-l); border-radius:var(--r-md); margin:20px 0; box-shadow:var(--sh-md); font-family:var(--font-main);">
         <div style="background:var(--brand-bg); color:var(--brand); width:70px; height:70px; border-radius:50%; display:flex; align-items:center; justify-content:center; margin:0 auto 18px; font-size:2rem; box-shadow:var(--brand-glow);">
             <i class="fas fa-lock"></i>
         </div>
@@ -5731,12 +5800,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'logou
                 <i class="fas fa-camera"></i>
             </div>
             <div style="min-width:0; flex:1;">
-                <h4 style="margin:0 0 2px 0; font-size:0.9rem; font-weight:800; color:var(--t1); font-family: 'Baloo Bhaijaan 2', sans-serif;">أضف صورتك الشخصية</h4>
-                <p style="margin:0; font-size:0.78rem; color:var(--t3); line-height:1.3; font-family: 'Baloo Bhaijaan 2', sans-serif; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">اضغط هنا لتحديث صورتك</p>
+                <h4 style="margin:0 0 2px 0; font-size:0.9rem; font-weight:800; color:var(--t1);">أضف صورتك الشخصية</h4>
+                <p style="margin:0; font-size:0.78rem; color:var(--t3); line-height:1.3; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">اضغط هنا لتحديث صورتك</p>
             </div>
         </div>
         <div style="display:flex; align-items:center; gap:8px; flex-shrink:0;">
-            <button onclick="openOv('photoOv')" style="font-size:0.75rem; font-weight:800; padding:6px 12px; background:var(--brand); color:#fff; border:none; border-radius:8px; cursor:pointer; font-family: 'Baloo Bhaijaan 2', sans-serif;">إضافة الآن</button>
+            <button onclick="openOv('photoOv')" style="font-size:0.75rem; font-weight:800; padding:6px 12px; background:var(--brand); color:#fff; border:none; border-radius:8px; cursor:pointer;">إضافة الآن</button>
             <button onclick="dismissProfilePicSuggestion()" style="background:none; border:none; color:var(--t3); cursor:pointer; padding:4px 6px; font-size:0.9rem;" title="إغلاق"><i class="fas fa-times"></i></button>
         </div>
     </div>
@@ -6175,10 +6244,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'logou
       <div
         style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:10px 16px;border-bottom:1px solid var(--bdr2);background:var(--s2);">
         <input id="attHistSearch" type="text" placeholder="ابحث بالتاريخ…"
-          style="flex:1;min-width:120px;padding:8px 12px;border:1.5px solid var(--bdr);border-radius:var(--r-sm);font-family:'Baloo Bhaijaan 2',sans-serif;font-size:.86rem;background:var(--surf);color:var(--t1);outline:none;"
+          style="flex:1;min-width:120px;padding:8px 12px;border:1.5px solid var(--bdr);border-radius:var(--r-sm);font-family:var(--font-main);font-size:.86rem;background:var(--surf);color:var(--t1);outline:none;"
           oninput="renderAttHist()" />
         <select id="attHistSort" onchange="renderAttHist()"
-          style="padding:7px 10px;border:1.5px solid var(--bdr);border-radius:var(--r-sm);font-family:'Baloo Bhaijaan 2',sans-serif;font-size:.8rem;background:var(--surf);color:var(--t2);outline:none;">
+          style="padding:7px 10px;border:1.5px solid var(--bdr);border-radius:var(--r-sm);font-family:var(--font-main);font-size:.8rem;background:var(--surf);color:var(--t2);outline:none;">
           <option value="newest">الأحدث أولاً</option>
           <option value="oldest">الأقدم أولاً</option>
         </select>
@@ -6229,11 +6298,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'logou
         <div style="font-size:.74rem;font-weight:700;color:var(--t3);margin-bottom:10px;">المفروض أنا كنت</div>
         <div style="display:flex;gap:10px;">
           <button id="reportShouldPresent" onclick="setReportShould('present')"
-            style="flex:1;padding:14px 8px;border-radius:var(--r-md);border:2px solid var(--bdr);background:var(--surf);color:var(--t2);font-family:'Baloo Bhaijaan 2',sans-serif;font-size:.95rem;font-weight:800;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:7px;transition:var(--fast);">
+            style="flex:1;padding:14px 8px;border-radius:var(--r-md);border:2px solid var(--bdr);background:var(--surf);color:var(--t2);font-family:var(--font-main);font-size:.95rem;font-weight:800;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:7px;transition:var(--fast);">
             <i class="fas fa-check-circle"></i> <span>حضر</span>
           </button>
           <button id="reportShouldAbsent" onclick="setReportShould('absent')"
-            style="flex:1;padding:14px 8px;border-radius:var(--r-md);border:2px solid var(--bdr);background:var(--surf);color:var(--t2);font-family:'Baloo Bhaijaan 2',sans-serif;font-size:.95rem;font-weight:800;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:7px;transition:var(--fast);">
+            style="flex:1;padding:14px 8px;border-radius:var(--r-md);border:2px solid var(--bdr);background:var(--surf);color:var(--t2);font-family:var(--font-main);font-size:.95rem;font-weight:800;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:7px;transition:var(--fast);">
             <i class="fas fa-times-circle"></i> <span>غاب</span>
           </button>
         </div>
@@ -6870,8 +6939,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'logou
     const IS_PUBLIC = !!(URL_ID && !_creds);
     const IS_GUEST = !!(URL_ID && !_creds && !IS_UNCLE_LOGGED_IN);
     const API_URL = (() => {
-      const segs = location.pathname.replace(/\/[^/]*$/, '').split('/').filter(Boolean);
-      return segs.map(() => '../').join('') + 'api.php';
+      const isTesting = window.location.pathname.indexOf('/testing/') !== -1;
+      return isTesting ? '/testing/api.php' : '/api.php';
     })();
     const LETTERS = ['أ', 'ب', 'ج', 'د', 'هـ'];
     // attendance_day: DB 1=Mon…7=Sun → JS getDay() 0=Sun 1=Mon…6=Sat
@@ -6888,6 +6957,43 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'logou
     let birthdayGreetingStudent = null;
     let maxFetchedTaskAnnId = 0;
 
+    // ── Mobile Collapsing Header Scroll Listener (§5) ─────────────────
+    function initHeroScrollCollapse() {
+      let ticking = false;
+      const threshold = 110;
+      function onScroll() {
+        if (window.innerWidth >= 900) {
+          if (document.body.classList.contains('hero-collapsed')) {
+            document.body.classList.remove('hero-collapsed');
+          }
+          return;
+        }
+        const scrollY = window.pageYOffset || document.documentElement.scrollTop;
+        if (scrollY > threshold) {
+          if (!document.body.classList.contains('hero-collapsed')) {
+            document.body.classList.add('hero-collapsed');
+          }
+        } else if (scrollY < threshold - 40) {
+          if (document.body.classList.contains('hero-collapsed')) {
+            document.body.classList.remove('hero-collapsed');
+          }
+        }
+      }
+      window.addEventListener('scroll', function () {
+        if (!ticking) {
+          window.requestAnimationFrame(function () {
+            onScroll();
+            ticking = false;
+          });
+          ticking = true;
+        }
+      }, { passive: true });
+      window.addEventListener('resize', function () {
+        if (window.innerWidth >= 900 && document.body.classList.contains('hero-collapsed')) {
+          document.body.classList.remove('hero-collapsed');
+        }
+      }, { passive: true });
+    }
 
     function onDOMReady(fn) {
       if (document.readyState === 'interactive' || document.readyState === 'complete') {
@@ -6899,6 +7005,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'logou
 
     // ── Boot ──────────────────────────────────────────────────────────
     onDOMReady(async () => {
+      initHeroScrollCollapse();
       if (URL_TEMPID) {
         initTempIdAssignment(URL_TEMPID);
         return;
@@ -7149,7 +7256,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'logou
         container.innerHTML = `
           <div style="background:#fff; padding:24px; border-radius:16px; box-shadow:var(--sh-md); text-align:center; max-width:450px; margin:40px auto; border: 1.5px solid var(--bdr);">
             <div style="font-size:3.5rem; color:var(--brand); margin-bottom:16px;"><i class="fas fa-qrcode"></i></div>
-            <h2 style="font-size:1.4rem; font-weight:800; color:var(--t1); margin-bottom:12px; font-family:'Baloo Bhaijaan 2', sans-serif;">كارت غير مسجل</h2>
+            <h2 style="font-size:1.4rem; font-weight:800; color:var(--t1); margin-bottom:12px; font-family:var(--font-main);">كارت غير مسجل</h2>
             <p style="font-size:0.95rem; color:var(--t3); line-height:1.6; margin-bottom:24px;">هذا الكود (ID: <strong>${esc(tempid)}</strong>) غير مرتبط بأي طفل حالياً. يرجى تسجيل الدخول كخادم للتمكن من ربطه بطفل.</p>
             <a href="/login/?redirect=${encodeURIComponent(location.href)}" class="btn" style="display:inline-flex; align-items:center; gap:8px; width:100%; justify-content:center; padding:12px; background:var(--brand); color:#fff; border-radius:10px; text-decoration:none; font-weight:700; box-shadow:var(--sh-brand); font-family:inherit;">
               <i class="fas fa-sign-in-alt"></i> تسجيل دخول الخادم
@@ -9083,7 +9190,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'logou
         const roleLbl = { admin: 'مشرف', developer: 'مطوّر', uncle: 'مدرّس' };
         ul.innerHTML = unclesWithPhone.map(u => `
       <button onclick="sendRowReport(${u.id})"
-        style="width:100%;display:flex;align-items:center;gap:11px;padding:10px 12px;border-radius:var(--r-md);border:1.5px solid var(--bdr);background:var(--surf);cursor:pointer;font-family:'Baloo Bhaijaan 2',sans-serif;transition:var(--fast);"
+        style="width:100%;display:flex;align-items:center;gap:11px;padding:10px 12px;border-radius:var(--r-md);border:1.5px solid var(--bdr);background:var(--surf);cursor:pointer;font-family:var(--font-main);transition:var(--fast);"
         onmouseover="this.style.borderColor='#d97706';this.style.background='#fef3c7'"
         onmouseout="this.style.borderColor='var(--bdr)';this.style.background='var(--surf)'">
         <div style="width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,var(--brand-bg),#c7d2fe);color:var(--brand);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:.88rem;flex-shrink:0;overflow:hidden;">
@@ -9187,7 +9294,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'logou
           <i class="fas fa-star" style="color:var(--cou-l);font-size:.75rem;"></i>
           <strong style="color:var(--cou);font-size:.82rem;">${sub.coupons_awarded}</strong>
           <span style="font-size:.7rem;color:var(--t3);margin-left:5px;">كوبون</span>
-          ${t.show_answers ? `<button onclick="event.stopPropagation();viewMyAnswers(${t.id})" style="margin-right:5px;background:var(--s2);border:1px solid var(--brand-l);color:var(--brand);border-radius:5px;padding:3px 8px;font-size:.7rem;font-family:'Baloo Bhaijaan 2',sans-serif;font-weight:700;cursor:pointer;"><i class="fas fa-eye"></i> الإجابات</button>` : ''}
+          ${t.show_answers ? `<button onclick="event.stopPropagation();viewMyAnswers(${t.id})" style="margin-right:5px;background:var(--s2);border:1px solid var(--brand-l);color:var(--brand);border-radius:5px;padding:3px 8px;font-size:.7rem;font-family:var(--font-main);font-weight:700;cursor:pointer;"><i class="fas fa-eye"></i> الإجابات</button>` : ''}
         </span>
       </div>`;
           } else {
@@ -9195,7 +9302,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'logou
         <i class="fas fa-clock" style="color:#d97706;"></i>
         <span style="font-weight:700;">بانتظار التقييم (لم يتم التقييم بعد)</span>
         <span style="margin-right:auto;display:flex;align-items:center;">
-          ${t.show_answers ? `<button onclick="event.stopPropagation();viewMyAnswers(${t.id})" style="background:var(--s2);border:1px solid var(--brand-l);color:var(--brand);border-radius:5px;padding:3px 8px;font-size:.7rem;font-family:'Baloo Bhaijaan 2',sans-serif;font-weight:700;cursor:pointer;"><i class="fas fa-eye"></i> الإجابات</button>` : ''}
+          ${t.show_answers ? `<button onclick="event.stopPropagation();viewMyAnswers(${t.id})" style="background:var(--s2);border:1px solid var(--brand-l);color:var(--brand);border-radius:5px;padding:3px 8px;font-size:.7rem;font-family:var(--font-main);font-weight:700;cursor:pointer;"><i class="fas fa-eye"></i> الإجابات</button>` : ''}
         </span>
       </div>`;
           }
@@ -11358,7 +11465,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'logou
           mainPage.style.padding = '0';
           mainPage.style.maxWidth = 'none';
         } else {
-          mainPage.style.padding = '0 14px 90px';
+          mainPage.style.padding = '0 12px 90px';
           mainPage.style.maxWidth = '860px';
         }
       }
