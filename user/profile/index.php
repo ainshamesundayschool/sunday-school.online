@@ -10775,13 +10775,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'logou
       fd.append('studentId', student.id); fd.append('studentName', student.name);
       fd.append('studentPhone', student.phone); fd.append('studentClass', student.class); fd.append('churchId', student.church_id || 1);
       try {
-        const uploadUrl = (window.location.pathname.indexOf('/testing/') !== -1) ? '/testing/upload.php' : '/upload.php';
+        const uploadUrl = '/upload.php';
         const r = await fetch(uploadUrl, { method: 'POST', body: fd, credentials: 'include', headers: { Accept: 'application/json' } });
+        const rawTxt = await r.text();
         let up;
         try {
-          up = await r.json();
+          up = JSON.parse(rawTxt);
         } catch (jsonErr) {
-          const rawTxt = await r.text().catch(() => '');
           throw new Error(rawTxt || 'استجابة غير صالحة من السيرفر');
         }
         if (!up.success) throw new Error(up.message || 'فشل رفع الملف');

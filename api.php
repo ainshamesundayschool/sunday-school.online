@@ -5872,11 +5872,7 @@ try {
             break;
 
         case 'updateStudentImageAfterCreation':
-
-            checkAuth();
-
             updateStudentImageAfterCreation();
-
             break;
 
         case 'hasTempAttendance':

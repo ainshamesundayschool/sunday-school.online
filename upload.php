@@ -64,9 +64,14 @@ if (file_exists($rootPath . '/config.php')) {
     require_once $rootPath . '/config.php';
 }
 
-function sendJson($data) {
-    echo json_encode($data, JSON_UNESCAPED_UNICODE);
-    exit;
+if (!function_exists('sendJson')) {
+    function sendJson($data) {
+        if (!headers_sent()) {
+            header('Content-Type: application/json; charset=utf-8');
+        }
+        echo json_encode($data, JSON_UNESCAPED_UNICODE);
+        exit;
+    }
 }
 
 // ── Check Authentication ──────────────────────────────────────

@@ -27795,9 +27795,18 @@ $showSettings = $hasChurchId || $isDevOrAdmin;
                     const stPhone = currentStudentForEdit['الموبايل'] || currentStudentForEdit['تليفون'] || currentStudentForEdit['الهاتف'] || '';
                     if (stPhone) fd.append('studentPhone', stPhone);
 
-                    const uploadUrl = (window.location.pathname.indexOf('/testing/') !== -1) ? '/testing/upload.php' : '/upload.php';
+                    const uploadUrl = '/upload.php';
                     fetch(uploadUrl, { method: 'POST', body: fd, credentials: 'include' })
-                        .then(r => r.json().catch(() => r.text().then(t => { throw new Error(t || 'استجابة غير صالحة'); })))
+                        .then(async r => {
+                            const text = await r.text();
+                            let d;
+                            try {
+                                d = JSON.parse(text);
+                            } catch (e) {
+                                throw new Error(text || 'استجابة غير صالحة من السيرفر');
+                            }
+                            return d;
+                        })
                         .then(d => {
                             if (d.success) {
                                 const isUncle = !!currentStudentForEdit._isUncle;
@@ -27840,9 +27849,18 @@ $showSettings = $hasChurchId || $isDevOrAdmin;
             const stPhone = currentStudentForEdit['الموبايل'] || currentStudentForEdit['تليفون'] || currentStudentForEdit['الهاتف'] || '';
             if (stPhone) fd.append('studentPhone', stPhone);
 
-            const uploadUrl = (window.location.pathname.indexOf('/testing/') !== -1) ? '/testing/upload.php' : '/upload.php';
+            const uploadUrl = '/upload.php';
             fetch(uploadUrl, { method: 'POST', body: fd, credentials: 'include' })
-                .then(r => r.json().catch(() => r.text().then(t => { throw new Error(t || 'استجابة غير صالحة'); })))
+                .then(async r => {
+                    const text = await r.text();
+                    let d;
+                    try {
+                        d = JSON.parse(text);
+                    } catch (e) {
+                        throw new Error(text || 'استجابة غير صالحة من السيرفر');
+                    }
+                    return d;
+                })
                 .then(d => {
                     if (d.success) {
                         const isUncle = !!currentStudentForEdit._isUncle;
@@ -27990,7 +28008,17 @@ $showSettings = $hasChurchId || $isDevOrAdmin;
             fd.append('photo', new File([blob], `uncle_${Date.now()}.jpg`, { type: 'image/jpeg' }));
             fd.append('username', window.currentUncle?.username || 'user');
             if (window.currentUncle?.id) fd.append('uncle_id', window.currentUncle.id);
-            fetch('/upload_uncle.php', { method: 'POST', body: fd, credentials: 'include' }).then(r => r.json()).then(d => {
+            fetch('/upload_uncle.php', { method: 'POST', body: fd, credentials: 'include' })
+                .then(async r => {
+                    const text = await r.text();
+                    let d;
+                    try {
+                        d = JSON.parse(text);
+                    } catch (e) {
+                        throw new Error(text || 'استجابة غير صالحة من السيرفر');
+                    }
+                    return d;
+                }).then(d => {
                 if (d.success) {
                     makeApiCall({ action: 'updateUncleImage', imageUrl: d.imageUrl }, () => {
                         showToast('تم التحديث', 'success');
