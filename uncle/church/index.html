@@ -195,7 +195,7 @@
             --border-focus: var(--primary);
             --border-sidebar: #e4e6f0;
 
-            /* Dimensions */
+            /* Dimensions & Radius — Uncle Dashboard Design System */
             --sidebar-w: 235px;
             --sidebar-collapsed: 70px;
             --topbar-h: 60px;
@@ -207,6 +207,24 @@
             --radius-2xl: 32px;
             --radius-pill: 9999px;
 
+            /* Design System Standard Radius Tokens */
+            --r-xs: 6px;
+            --r-sm: 10px;
+            --r-md: 14px;
+            --r-lg: 18px;
+            --r-xl: 24px;
+            --r-2xl: 32px;
+            --r-full: 9999px;
+
+            /* Semantic backgrounds */
+            --success-bg: #d1fae5;
+            --danger-bg: #fee2e2;
+            --warning-bg: #fef3c7;
+            --coupon: #8b5cf6;
+            --coupon-dark: #7c3aed;
+            --coupon-bg: #ede9fe;
+            --coupon-grad: linear-gradient(135deg, #8b5cf6, #7c3aed);
+
             /* Shadow */
             --shadow-xs: 0 2px 8px -2px rgba(0, 0, 0, .07);
             --shadow-sm: 0 4px 12px -2px rgba(0, 0, 0, .08);
@@ -215,12 +233,14 @@
             --shadow-xl: 0 32px 64px -12px rgba(0, 0, 0, .18);
             --shadow-glow: 0 0 0 4px var(--primary-glow);
 
-            /* Motion */
+            /* Motion & Timing */
             --ease: cubic-bezier(.4, 0, .2, 1);
             --ease-out: cubic-bezier(0, 0, .2, 1);
             --ease-spring: cubic-bezier(.16, 1, .3, 1);
+            --spring: cubic-bezier(.16, 1, .3, 1);
             --t-fast: 0.15s;
             --t-base: 0.22s;
+            --t: 0.22s;
             --t-slow: 0.35s;
             --transition: var(--t-base) var(--ease);
         }
@@ -258,6 +278,10 @@
             --danger-light: rgba(239, 68, 68, .15);
             --warning-light: rgba(245, 158, 11, .15);
             --info-light: rgba(2, 132, 199, .15);
+            --success-bg: rgba(16, 185, 129, .15);
+            --danger-bg: rgba(239, 68, 68, .15);
+            --warning-bg: rgba(245, 158, 11, .15);
+            --coupon-bg: rgba(139, 92, 246, .15);
         }
 
         /* ── BASE ───────────────────────────────────────────────────────── */
@@ -2266,35 +2290,37 @@
         .att-record-card {
             display: flex;
             align-items: stretch;
-            background: var(--card);
-            border-radius: var(--radius-xl);
-            border: 2px solid transparent;
+            background: var(--surface);
+            border-radius: var(--r-xl);
+            border: none;
             overflow: hidden;
             min-height: 118px;
             cursor: pointer;
-            transition: box-shadow var(--t-base) var(--ease), transform var(--t-fast) var(--ease-spring);
+            box-shadow: var(--shadow-sm);
+            transition: transform var(--t) var(--spring), box-shadow var(--t) var(--ease);
         }
 
         .att-record-card:hover {
             box-shadow: var(--shadow-md);
+            transform: translateY(-2px);
         }
 
         .att-record-card.present {
-            border-color: rgba(16, 185, 129, .28);
-            background: linear-gradient(135deg, rgba(236, 253, 245, .95), rgba(209, 250, 229, .88));
+            border: none;
+            background: var(--success-bg);
         }
 
         .att-record-card.absent {
-            border-color: rgba(239, 68, 68, .24);
-            background: linear-gradient(135deg, rgba(254, 242, 242, .95), rgba(254, 226, 226, .88));
+            border: none;
+            background: var(--danger-bg);
         }
 
         [data-theme="dark"] .att-record-card.present {
-            background: linear-gradient(135deg, rgba(6, 78, 59, .28), rgba(5, 95, 75, .22));
+            background: var(--success-bg);
         }
 
         [data-theme="dark"] .att-record-card.absent {
-            background: linear-gradient(135deg, rgba(127, 29, 29, .28), rgba(153, 27, 27, .22));
+            background: var(--danger-bg);
         }
 
         .att-record-info {
@@ -3264,13 +3290,14 @@
 
         .modal-box {
             background: var(--surface, #ffffff);
-            border-radius: var(--radius-xl);
+            border-radius: var(--r-xl);
             width: 100%;
             max-width: 540px;
             max-height: 92vh;
             overflow-y: auto;
-            box-shadow: var(--shadow-xl), 0 0 0 1px rgba(255, 255, 255, 0.08);
-            animation: popIn 0.3s var(--ease-);
+            box-shadow: var(--shadow-xl);
+            border: none;
+            animation: popIn 0.28s var(--spring);
         }
 
         .modal-box.wide {
@@ -3283,7 +3310,7 @@
 
         @keyframes popIn {
             from {
-                transform: scale(0.94) translateY(16px);
+                transform: scale(0.96) translateY(12px);
                 opacity: 0;
             }
 
@@ -4487,7 +4514,7 @@
             border-radius: var(--r-xl);
             padding: 18px 20px;
             cursor: pointer;
-            transition: all var(--t) var(--spring);
+            transition: transform var(--t) var(--spring), box-shadow var(--t) var(--ease), background var(--t) var(--ease);
             display: flex;
             flex-direction: column;
             gap: 14px;
@@ -4497,7 +4524,7 @@
         }
 
         .friday-card:hover {
-            transform: translateY(-3px);
+            transform: translateY(-2px);
             box-shadow: var(--shadow-md);
         }
 
@@ -5404,7 +5431,7 @@
             font-size: 0.8rem;
             font-weight: 700;
             font-family: 'Cairo', sans-serif;
-            transition: all var(--t-fast) var(--ease);
+            transition: background var(--t) var(--ease), color var(--t) var(--ease), box-shadow var(--t) var(--ease);
             background: transparent !important;
             color: var(--text-2);
             user-select: none;
@@ -5945,7 +5972,7 @@
             display: flex;
             align-items: center;
             gap: 14px;
-            transition: all .2s var(--ease);
+            transition: transform var(--t) var(--spring), box-shadow var(--t) var(--ease), background var(--t) var(--ease);
             position: relative;
             box-shadow: var(--shadow-sm);
         }
@@ -6028,7 +6055,7 @@
             font-weight: 800;
             cursor: pointer;
             color: var(--text-2);
-            transition: all .2s var(--spring);
+            transition: background var(--t) var(--ease), color var(--t) var(--ease), box-shadow var(--t) var(--ease);
             display: inline-flex;
             align-items: center;
             gap: 5px;
@@ -6675,9 +6702,10 @@
                 width: 100% !important;
                 max-width: 100% !important;
                 min-height: 280px;
-                max-height: 90vh;
-                border-radius: var(--radius-xl) var(--radius-xl) 0 0;
-                animation: slideUp 0.3s var(--ease-out);
+                max-height: 85vh;
+                border-radius: var(--r-2xl) var(--r-2xl) 0 0;
+                animation: sheetUp 0.35s var(--spring);
+                border: none !important;
             }
 
             .modal.app-dialog .modal-box {
@@ -6735,6 +6763,15 @@
             #churchesBulkUploadSection,
             #bulkAddModal .modal-body>div[style*="grid-template-columns"] {
                 grid-template-columns: 1fr !important;
+            }
+
+            @keyframes sheetUp {
+                from {
+                    transform: translateY(100%);
+                }
+                to {
+                    transform: translateY(0);
+                }
             }
 
             @keyframes slideUp {
@@ -10034,13 +10071,13 @@
                     <div class="card-header">
                         <div class="card-title" id="kidsAttTabTitle"><i class="fas fa-calendar-check"></i> سجل الحضور - أيام الجُمعة</div>
                         <div class="export-row">
-                            <select id="attClassFilter" class="form-select" onchange="filterAttendanceDisplay()">
+                            <select id="attClassFilter" class="form-select" onchange="filterAttendanceDisplay()" style="border-radius:var(--r-md);border:none;background:var(--surface-2);font-weight:700;font-family:'Cairo',sans-serif;height:38px;padding:0 12px;box-shadow:var(--shadow-sm);">
                                 <option value="">جميع الفصول</option>
                             </select>
-                            <button class="btn btn-primary btn-sm" onclick="showAddAttendanceModal()" title="إضافة حضور"><i
-                                    class="fas fa-plus"></i> <span class="btn-text">إضافة حضور</span></button>
+                            <button class="btn btn-primary btn-sm" onclick="showAddAttendanceModal()" title="إضافة حضور" style="border-radius:var(--r-md);border:none;font-weight:700;padding:9px 18px;"><i
+                                    class="fas fa-plus"></i> <span class="btn-text">تسجيل حضور الأطفال</span></button>
                             <button type="button" class="btn btn-outline btn-sm"
-                                onclick="openTabCustomExport('attendance')" title="تصدير مخصص">
+                                onclick="openTabCustomExport('attendance')" title="تصدير مخصص" style="border-radius:var(--r-md);border:none;background:var(--surface-2);color:var(--text);font-weight:700;padding:9px 14px;">
                                 <i class="fas fa-sliders-h"></i>
                                 <span class="btn-text">تصدير مخصص</span>
                             </button>
@@ -10049,11 +10086,11 @@
                     <div class="card-body">
                         <!-- KIDS ATTENDANCE ONLY -->
                         <div class="year-selector">
-                            <button class="btn btn-outline btn-sm" onclick="changeYear(-1)"><i
+                            <button class="btn btn-outline btn-sm" onclick="changeYear(-1)" style="border-radius:var(--r-md);border:none;background:var(--surface-2);"><i
                                     class="fas fa-chevron-right"></i></button>
                             <span id="attendanceYearDisplay"
-                                style="font-weight:700;font-size:1.1rem;min-width:60px;text-align:center;"></span>
-                            <button class="btn btn-outline btn-sm" onclick="changeYear(1)"><i
+                                style="font-weight:800;font-size:1.1rem;min-width:60px;text-align:center;font-family:'Cairo',sans-serif;"></span>
+                            <button class="btn btn-outline btn-sm" onclick="changeYear(1)" style="border-radius:var(--r-md);border:none;background:var(--surface-2);"><i
                                     class="fas fa-chevron-left"></i></button>
                         </div>
                         <div class="month-tabs" id="monthTabs"></div>
@@ -10061,28 +10098,28 @@
                         <div id="attendanceDetail" style="display:none;margin-top:20px;">
                             <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:16px;flex-wrap:wrap;">
                                 <div style="display:flex;align-items:center;gap:12px;">
-                                    <button class="btn btn-outline btn-sm" onclick="closeAttendanceDetail()" style="border-radius:var(--r-md);"><i
+                                    <button class="btn btn-outline btn-sm" onclick="closeAttendanceDetail()" style="border-radius:var(--r-md);border:none;background:var(--surface-2);color:var(--text);font-weight:700;padding:8px 14px;"><i
                                             class="fas fa-arrow-right"></i> رجوع للأيام</button>
-                                    <h3 id="attDetailTitle" style="font-size:1.1rem;font-weight:800;color:var(--text);margin:0;display:flex;align-items:center;gap:8px;"></h3>
+                                    <h3 id="attDetailTitle" style="font-size:1.15rem;font-weight:800;color:var(--text);margin:0;display:flex;align-items:center;gap:8px;"></h3>
                                 </div>
                                 <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
-                                    <button type="button" class="btn btn-success btn-sm" onclick="bulkSetKidAttendance('present')" style="border-radius:var(--r-md);font-weight:700;"><i class="fas fa-check-double"></i> تحضير الكل</button>
-                                    <button type="button" class="btn btn-danger btn-sm" onclick="bulkSetKidAttendance('absent')" style="border-radius:var(--r-md);font-weight:700;"><i class="fas fa-user-times"></i> غياب الكل</button>
-                                    <button type="button" class="btn btn-outline btn-sm" onclick="deleteCurrentDayAttendance()" style="border-radius:var(--r-md);color:var(--danger);border-color:rgba(239,68,68,.3);font-weight:700;"><i class="fas fa-trash"></i> حذف الكشف</button>
+                                    <button type="button" class="btn btn-sm" onclick="bulkSetKidAttendance('present')" style="border-radius:var(--r-md);font-weight:700;background:var(--success);color:#ffffff;border:none;padding:8px 16px;box-shadow:var(--shadow-sm);"><i class="fas fa-check-double"></i> تحضير الكل</button>
+                                    <button type="button" class="btn btn-sm" onclick="bulkSetKidAttendance('absent')" style="border-radius:var(--r-md);font-weight:700;background:var(--danger);color:#ffffff;border:none;padding:8px 16px;box-shadow:var(--shadow-sm);"><i class="fas fa-user-times"></i> غياب الكل</button>
+                                    <button type="button" class="btn btn-sm" onclick="deleteCurrentDayAttendance()" style="border-radius:var(--r-md);color:var(--danger);background:var(--danger-bg);border:none;padding:8px 14px;font-weight:700;"><i class="fas fa-trash"></i> حذف الكشف</button>
                                 </div>
                             </div>
                             <div class="summary-box" id="attSummaryBoxes"></div>
                             
                             <!-- Search & Status Filter Toolbar -->
-                            <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;margin:16px 0;flex-wrap:wrap;background:var(--surface-2);padding:10px 14px;border-radius:var(--r-lg);border:1px solid var(--border-solid);">
+                            <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;margin:16px 0;flex-wrap:wrap;background:var(--surface-2);padding:12px 16px;border-radius:var(--r-xl);border:none;box-shadow:var(--shadow-sm);">
                                 <div style="position:relative;flex:1;min-width:200px;max-width:360px;">
-                                    <i class="fas fa-search" style="position:absolute;right:12px;top:50%;transform:translateY(-50%);color:var(--text-3);font-size:0.85rem;"></i>
-                                    <input type="text" id="attDetailSearch" placeholder="بحث بالاسم أو الفصل..." class="form-control" style="padding-right:34px;height:36px;border-radius:var(--r-md);font-size:0.85rem;" oninput="filterKidAttendanceDetailView(this.value)">
+                                    <i class="fas fa-search" style="position:absolute;right:14px;top:50%;transform:translateY(-50%);color:var(--text-3);font-size:0.85rem;"></i>
+                                    <input type="text" id="attDetailSearch" placeholder="بحث باسم الطفل أو الفصل..." class="form-control" style="padding-right:36px;height:38px;border-radius:var(--r-md);border:none;background:var(--surface);font-size:0.85rem;font-family:'Cairo',sans-serif;width:100%;box-shadow:var(--shadow-sm);" oninput="filterKidAttendanceDetailView(this.value)">
                                 </div>
                                 <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;">
-                                    <button type="button" class="btn btn-sm btn-outline active" id="attFilterBtn_all" onclick="filterKidAttStatus('all')" style="border-radius:var(--r-full);font-size:0.78rem;padding:4px 12px;">الكل <span id="attCount_all" style="font-weight:800;">(0)</span></button>
-                                    <button type="button" class="btn btn-sm btn-outline" id="attFilterBtn_present" onclick="filterKidAttStatus('present')" style="border-radius:var(--r-full);font-size:0.78rem;padding:4px 12px;color:var(--success);">حاضر <span id="attCount_present" style="font-weight:800;">(0)</span></button>
-                                    <button type="button" class="btn btn-sm btn-outline" id="attFilterBtn_absent" onclick="filterKidAttStatus('absent')" style="border-radius:var(--r-full);font-size:0.78rem;padding:4px 12px;color:var(--danger);">غائب <span id="attCount_absent" style="font-weight:800;">(0)</span></button>
+                                    <button type="button" class="btn btn-sm btn-outline active" id="attFilterBtn_all" onclick="filterKidAttStatus('all')" style="border-radius:var(--r-full);font-size:0.8rem;padding:6px 14px;border:none;background:var(--surface);font-weight:700;">الكل <span id="attCount_all" style="font-weight:800;">(0)</span></button>
+                                    <button type="button" class="btn btn-sm btn-outline" id="attFilterBtn_present" onclick="filterKidAttStatus('present')" style="border-radius:var(--r-full);font-size:0.8rem;padding:6px 14px;border:none;background:var(--surface);font-weight:700;color:var(--success);">حاضر <span id="attCount_present" style="font-weight:800;">(0)</span></button>
+                                    <button type="button" class="btn btn-sm btn-outline" id="attFilterBtn_absent" onclick="filterKidAttStatus('absent')" style="border-radius:var(--r-full);font-size:0.8rem;padding:6px 14px;border:none;background:var(--surface);font-weight:700;color:var(--danger);">غائب <span id="attCount_absent" style="font-weight:800;">(0)</span></button>
                                 </div>
                             </div>
 
@@ -12864,28 +12901,65 @@
     </div>
 
 
-    <!-- Add Attendance -->
+    <!-- Add Kids Attendance Modal -->
     <div id="addAttendanceModal" class="modal">
-        <div class="modal-box wide">
-            <div class="modal-head">
-                <h2><i class="fas fa-calendar-plus"></i> إضافة حضور يدوي</h2><button class="modal-close"
-                    onclick="closeModal('addAttendanceModal')"><i class="fas fa-times"></i></button>
+        <div class="modal-box" style="max-width:640px;border-radius:var(--r-2xl);overflow:hidden;box-shadow:var(--shadow-xl);border:none;">
+            <div class="modal-head" style="border-bottom:none;padding:20px 24px 16px 24px;background:var(--surface);">
+                <h2 style="font-size:1.15rem;font-weight:800;color:var(--text);display:flex;align-items:center;gap:10px;margin:0;">
+                    <i class="fas fa-calendar-plus" style="color:var(--brand);"></i> تسجيل حضور الأطفال
+                </h2>
+                <button class="modal-close close-btn" onclick="closeModal('addAttendanceModal')">&times;</button>
             </div>
-            <div class="modal-body">
-                <div class="form-grid" style="margin-bottom:16px;">
-                    <div class="form-group"><label class="form-label">التاريخ *</label><input type="date"
-                            id="manualAttDate" class="form-input" required></div>
-                    <div class="form-group"><label class="form-label">الفصل</label><select id="manualAttClass"
-                            class="form-select" style="width:100%;" onchange="loadManualAttStudents()">
-                            <option value="">اختر فصلاً</option>
-                        </select></div>
+            <div class="modal-body" style="padding:0 24px 24px 24px;">
+                <!-- Date, Class selector & Bulk Actions -->
+                <div style="background:var(--surface-2);padding:14px 16px;border-radius:var(--r-xl);margin-bottom:16px;display:flex;flex-direction:column;gap:12px;">
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+                        <div style="display:flex;flex-direction:column;gap:5px;">
+                            <label class="form-label" style="margin:0;font-weight:700;font-size:0.82rem;color:var(--text-2);">
+                                <i class="fas fa-calendar-alt" style="color:var(--brand);"></i> تاريخ الحضور *
+                            </label>
+                            <input type="date" id="manualAttDate" class="form-input" style="height:38px;border-radius:var(--r-md);border:none;background:var(--surface);font-family:'Cairo',sans-serif;font-weight:700;box-shadow:var(--shadow-sm);width:100%;" required>
+                        </div>
+                        <div style="display:flex;flex-direction:column;gap:5px;">
+                            <label class="form-label" style="margin:0;font-weight:700;font-size:0.82rem;color:var(--text-2);">
+                                <i class="fas fa-layer-group" style="color:var(--brand);"></i> الفصل *
+                            </label>
+                            <select id="manualAttClass" class="form-select" style="height:38px;border-radius:var(--r-md);border:none;background:var(--surface);font-family:'Cairo',sans-serif;font-weight:700;box-shadow:var(--shadow-sm);width:100%;" onchange="loadManualAttStudents()">
+                                <option value="">اختر فصلاً</option>
+                            </select>
+                        </div>
+                    </div>
+                    <!-- Quick Bulk Actions & Live Search -->
+                    <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;border-top:1px solid var(--border-solid);padding-top:12px;">
+                        <div style="position:relative;flex:1;min-width:180px;">
+                            <i class="fas fa-search" style="position:absolute;right:12px;top:50%;transform:translateY(-50%);color:var(--text-3);font-size:0.82rem;"></i>
+                            <input type="text" id="modalKidSearch" placeholder="بحث باسم الطفل..." class="form-input" style="padding-right:34px;height:36px;border-radius:var(--r-md);border:none;background:var(--surface);font-size:0.84rem;font-family:'Cairo',sans-serif;width:100%;box-shadow:var(--shadow-sm);" oninput="filterModalKids(this.value)">
+                        </div>
+                        <div style="display:flex;align-items:center;gap:6px;">
+                            <button type="button" class="btn btn-sm" onclick="setAllManualAtt('present')" style="background:var(--success);color:#ffffff;border:none;border-radius:var(--r-md);font-weight:700;padding:6px 12px;box-shadow:var(--shadow-sm);font-size:0.78rem;">
+                                <i class="fas fa-check-double"></i> تحضير الكل
+                            </button>
+                            <button type="button" class="btn btn-sm" onclick="setAllManualAtt('absent')" style="background:var(--danger);color:#ffffff;border:none;border-radius:var(--r-md);font-weight:700;padding:6px 12px;box-shadow:var(--shadow-sm);font-size:0.78rem;">
+                                <i class="fas fa-user-times"></i> تغييب الكل
+                            </button>
+                        </div>
+                    </div>
+                    <!-- Counts -->
+                    <div style="display:flex;align-items:center;justify-content:flex-end;gap:8px;font-size:0.78rem;font-weight:700;">
+                        <span style="background:var(--success-bg);color:var(--success-dark);padding:3px 9px;border-radius:var(--r-full);" id="modalKidCountPresent">حاضر: 0</span>
+                        <span style="background:var(--danger-bg);color:var(--danger-dark);padding:3px 9px;border-radius:var(--r-full);" id="modalKidCountAbsent">غائب: 0</span>
+                    </div>
                 </div>
-                <div id="manualAttStudentList"></div>
-                <div style="display:flex;gap:10px;margin-top:16px;">
-                    <button class="btn btn-primary" style="flex:2;" onclick="saveManualAttendance()"><i
-                            class="fas fa-save"></i> حفظ الحضور</button>
-                    <button class="btn btn-outline" style="flex:1;"
-                        onclick="closeModal('addAttendanceModal')">إلغاء</button>
+
+                <div id="manualAttStudentList" style="max-height:360px;overflow-y:auto;padding-right:4px;display:flex;flex-direction:column;gap:8px;"></div>
+
+                <div style="display:flex;gap:10px;margin-top:18px;">
+                    <button class="btn btn-primary" style="flex:2;height:42px;border-radius:var(--r-md);border:none;font-weight:700;font-size:0.92rem;background:var(--brand);box-shadow:0 4px 14px var(--brand-glow);" onclick="saveManualAttendance()">
+                        <i class="fas fa-save"></i> حفظ الحضور
+                    </button>
+                    <button class="btn btn-outline" style="flex:1;height:42px;border-radius:var(--r-md);border:none;background:var(--surface-2);color:var(--text-2);font-weight:700;font-size:0.92rem;" onclick="closeModal('addAttendanceModal')">
+                        إلغاء
+                    </button>
                 </div>
             </div>
         </div>
@@ -21424,15 +21498,48 @@
             c.innerHTML = `<div class="friday-grid">${fridays.map(f => {
                 const y = f.getFullYear(), mo = String(f.getMonth() + 1).padStart(2, '0'), d = String(f.getDate()).padStart(2, '0');
                 const iso = `${y}-${mo}-${d}`;
-                const ds = f.toLocaleDateString('ar-EG', { weekday: 'long', day: 'numeric', month: 'long' });
+                const dayNum = f.getDate();
+                const monthName = f.toLocaleDateString('ar-EG', { month: 'short' });
+                const weekdayName = f.toLocaleDateString('ar-EG', { weekday: 'long' });
+                const ds = f.toLocaleDateString('ar-EG', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
                 const cachedAtt = _readLocalCache(`att_stats_${iso}`);
-                const pText = cachedAtt ? `حاضر: ${cachedAtt.p}` : '---';
-                const aText = cachedAtt ? `غائب: ${cachedAtt.a}` : '---';
+                const pCount = cachedAtt ? cachedAtt.p : 0;
+                const aCount = cachedAtt ? cachedAtt.a : 0;
+                const total = pCount + aCount;
+                const rate = total > 0 ? Math.round(pCount / total * 100) : 0;
+                const hasData = cachedAtt && total > 0;
 
                 return `<div class="friday-card" onclick="loadAttendanceForDate('${iso}')">
-            <div class="date"><i class="fas fa-calendar-day" style="color:var(--primary);margin-left:6px;"></i>${ds}</div>
-            <div class="stats"><span style="background:var(--success-light);color:#065f46;" id="p_${iso}">${pText}</span><span style="background:var(--danger-light);color:#991b1b;" id="a_${iso}">${aText}</span></div>
-        </div>`;
+                    <div class="att-card-top">
+                        <div class="att-date-badge">
+                            <span class="day-num">${dayNum}</span>
+                            <span class="day-month">${monthName}</span>
+                        </div>
+                        <div class="att-card-title-wrap">
+                            <div class="att-weekday-name">${weekdayName}</div>
+                            <div class="att-full-date">${ds}</div>
+                        </div>
+                        <span class="att-status-badge ${hasData ? 'recorded' : 'pending'}" id="kid_status_${iso}">
+                            <i class="fas ${hasData ? 'fa-check-circle' : 'fa-clock'}"></i> ${hasData ? 'تم التسجيل' : 'لم يُسجَّل'}
+                        </span>
+                    </div>
+
+                    <div class="att-progress-track">
+                        <div class="att-progress-fill" id="kid_fill_${iso}" style="width:${rate}%;background:var(--success);"></div>
+                    </div>
+                    <div class="att-progress-meta">
+                        <span>نسبة الحضور: <strong id="kid_rate_${iso}">${rate}%</strong></span>
+                        <span>إجمالي: <strong id="kid_tot_${iso}">${total}</strong></span>
+                    </div>
+
+                    <div class="att-card-bottom">
+                        <div class="att-pills-row">
+                            <span class="att-pill present" id="p_${iso}"><i class="fas fa-check"></i> حاضر: ${pCount}</span>
+                            <span class="att-pill absent" id="a_${iso}"><i class="fas fa-times"></i> غائب: ${aCount}</span>
+                        </div>
+                        <div class="att-open-arrow"><i class="fas fa-chevron-left"></i></div>
+                    </div>
+                </div>`;
             }).join('')}</div>`;
 
             fridays.forEach(f => {
@@ -21448,12 +21555,27 @@
                         const att = d.attendance || [];
                         const pCount = att.filter(a => a.status === 'present').length;
                         const aCount = att.filter(a => a.status === 'absent').length;
+                        const total = pCount + aCount;
+                        const rate = total > 0 ? Math.round(pCount / total * 100) : 0;
                         _saveLocalCache(`att_stats_${iso}`, { p: pCount, a: aCount });
 
                         const ep = document.getElementById(`p_${iso}`);
                         const ea = document.getElementById(`a_${iso}`);
-                        if (ep) ep.textContent = `حاضر: ${pCount}`;
-                        if (ea) ea.textContent = `غائب: ${aCount}`;
+                        const efill = document.getElementById(`kid_fill_${iso}`);
+                        const erate = document.getElementById(`kid_rate_${iso}`);
+                        const etot = document.getElementById(`kid_tot_${iso}`);
+                        const estatus = document.getElementById(`kid_status_${iso}`);
+
+                        if (ep) ep.innerHTML = `<i class="fas fa-check"></i> حاضر: ${pCount}`;
+                        if (ea) ea.innerHTML = `<i class="fas fa-times"></i> غائب: ${aCount}`;
+                        if (efill) efill.style.width = `${rate}%`;
+                        if (erate) erate.textContent = `${rate}%`;
+                        if (etot) etot.textContent = total;
+                        if (estatus) {
+                            const hasData = total > 0;
+                            estatus.className = `att-status-badge ${hasData ? 'recorded' : 'pending'}`;
+                            estatus.innerHTML = `<i class="fas ${hasData ? 'fa-check-circle' : 'fa-clock'}"></i> ${hasData ? 'تم التسجيل' : 'لم يُسجَّل'}`;
+                        }
                     })
                     .catch(err => console.error('Error loading attendance for date:', iso, err));
             });
@@ -21690,11 +21812,27 @@
                 // Update stats cache
                 const pCount = currentKidAttendanceList.filter(a => a.status === 'present').length;
                 const aCount = currentKidAttendanceList.filter(a => a.status === 'absent').length;
+                const total = pCount + aCount;
+                const rate = total > 0 ? Math.round(pCount / total * 100) : 0;
                 _saveLocalCache(`att_stats_${date}`, { p: pCount, a: aCount });
+
                 const ep = document.getElementById(`p_${date}`);
                 const ea = document.getElementById(`a_${date}`);
-                if (ep) ep.textContent = `حاضر: ${pCount}`;
-                if (ea) ea.textContent = `غائب: ${aCount}`;
+                const efill = document.getElementById(`kid_fill_${date}`);
+                const erate = document.getElementById(`kid_rate_${date}`);
+                const etot = document.getElementById(`kid_tot_${date}`);
+                const estatus = document.getElementById(`kid_status_${date}`);
+
+                if (ep) ep.innerHTML = `<i class="fas fa-check"></i> حاضر: ${pCount}`;
+                if (ea) ea.innerHTML = `<i class="fas fa-times"></i> غائب: ${aCount}`;
+                if (efill) efill.style.width = `${rate}%`;
+                if (erate) erate.textContent = `${rate}%`;
+                if (etot) etot.textContent = total;
+                if (estatus) {
+                    const hasData = total > 0;
+                    estatus.className = `att-status-badge ${hasData ? 'recorded' : 'pending'}`;
+                    estatus.innerHTML = `<i class="fas ${hasData ? 'fa-check-circle' : 'fa-clock'}"></i> ${hasData ? 'تم التسجيل' : 'لم يُسجَّل'}`;
+                }
             } else {
                 showToast(d.message || 'فشل التحديث', 'error');
                 loadAttendanceForDate(date);
@@ -21783,32 +21921,154 @@
             }
         }
         window.deleteAttendanceRecord = deleteAttendanceRecord;
-        // Manual attendance
+        // Modern Kids Manual Attendance
+        let modalKidFilterQuery = '';
+        let modalCachedKids = [];
+
         function showAddAttendanceModal() {
-            document.getElementById('manualAttDate').value = new Date().toISOString().split('T')[0];
-            document.getElementById('manualAttStudentList').innerHTML = '';
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('manualAttDate').value = today;
+            modalKidFilterQuery = '';
+            const searchInput = document.getElementById('modalKidSearch');
+            if (searchInput) searchInput.value = '';
+
+            const currentFilterClass = document.getElementById('attClassFilter')?.value;
+            const classSelect = document.getElementById('manualAttClass');
+            if (currentFilterClass && classSelect) {
+                classSelect.value = currentFilterClass;
+            }
+
+            loadManualAttStudents();
             openModal('addAttendanceModal');
         }
+        window.showAddAttendanceModal = showAddAttendanceModal;
+
         function loadManualAttStudents() {
-            const cls = document.getElementById('manualAttClass').value;
-            const students = cls ? allStudents.filter(s => s['الفصل'] === cls) : [];
+            const cls = document.getElementById('manualAttClass')?.value;
+            modalCachedKids = cls ? allStudents.filter(s => s['الفصل'] === cls) : [];
             manualAttStudents = {};
-            students.forEach(s => { manualAttStudents[s['_studentId']] = 'present'; });
-            if (!students.length) { document.getElementById('manualAttStudentList').innerHTML = `<p style="color:var(--muted);text-align:center;padding:16px;">اختر فصلاً لعرض الأطفال</p>`; return; }
-            document.getElementById('manualAttStudentList').innerHTML = `
-        <div style="display:flex;gap:8px;margin-bottom:12px;">
-            <button class="btn btn-success btn-sm" onclick="setAllAtt('present')"><i class="fas fa-check-double"></i> تحضير الكل</button>
-            <button class="btn btn-danger btn-sm" onclick="setAllAtt('absent')"><i class="fas fa-times"></i> تغييب الكل</button>
-        </div>
-        <div class="table-wrap"><table><thead><tr><th>الاسم</th><th>حاضر</th><th>غائب</th></tr></thead><tbody>
-        ${students.map(s => `<tr><td><strong>${s['الاسم']}</strong></td>
-            <td><input type="radio" name="att_${s['_studentId']}" value="present" checked onchange="manualAttStudents[${s['_studentId']}]='present'"></td>
-            <td><input type="radio" name="att_${s['_studentId']}" value="absent" onchange="manualAttStudents[${s['_studentId']}]='absent'"></td>
-        </tr>`).join('')}</tbody></table></div>`;
+            modalCachedKids.forEach(s => { manualAttStudents[s['_studentId']] = 'present'; });
+            renderModalKidsList();
         }
+        window.loadManualAttStudents = loadManualAttStudents;
+
+        function renderModalKidsList() {
+            const listEl = document.getElementById('manualAttStudentList');
+            if (!listEl) return;
+            const cls = document.getElementById('manualAttClass')?.value;
+            if (!cls) {
+                listEl.innerHTML = `<div class="empty-state" style="padding:28px;text-align:center;"><i class="fas fa-layer-group" style="font-size:2rem;color:var(--text-3);margin-bottom:8px;"></i><h4 style="color:var(--text-2);font-weight:700;">يرجى اختيار الفصل لعرض قائمة الأطفال</h4></div>`;
+                updateModalKidAttCounts();
+                return;
+            }
+            if (!modalCachedKids.length) {
+                listEl.innerHTML = `<div class="empty-state" style="padding:28px;text-align:center;"><i class="fas fa-child" style="font-size:2rem;color:var(--text-3);margin-bottom:8px;"></i><h4 style="color:var(--text-2);font-weight:700;">لا يوجد أطفال مسجلون في هذا الفصل</h4></div>`;
+                updateModalKidAttCounts();
+                return;
+            }
+
+            let kids = modalCachedKids;
+            if (modalKidFilterQuery) {
+                kids = kids.filter(s => (s['الاسم'] || '').toLowerCase().includes(modalKidFilterQuery));
+            }
+
+            if (!kids.length) {
+                listEl.innerHTML = `<div class="empty-state" style="padding:24px;text-align:center;"><i class="fas fa-search" style="font-size:1.8rem;color:var(--text-3);margin-bottom:8px;"></i><h4 style="color:var(--text-2);font-weight:700;">لا يوجد أطفال مطابقون للبحث</h4></div>`;
+                updateModalKidAttCounts();
+                return;
+            }
+
+            listEl.innerHTML = kids.map(s => {
+                const sId = s['_studentId'];
+                const sName = s['الاسم'] || '';
+                const sImg = s['صورة'] || s.image_url || '';
+                const status = manualAttStudents[sId] || 'present';
+                const isPres = status === 'present';
+                const isAbs = status === 'absent';
+
+                return `<div class="modal-uncle-item" id="kattItem_${sId}" style="display:flex;align-items:center;gap:12px;background:var(--surface-2);padding:10px 14px;border-radius:var(--r-xl);transition:all .2s var(--ease);">
+                    ${buildAttPersonAvatar(sName, sImg)}
+                    <div style="flex:1;min-width:0;">
+                        <div style="font-weight:800;font-size:0.9rem;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" title="${escHtml(sName)}">
+                            ${escHtml(sName)}
+                        </div>
+                        <div style="font-size:0.72rem;color:var(--text-3);margin-top:2px;">
+                            <span style="background:var(--surface-3);color:var(--text-2);padding:2px 7px;border-radius:var(--r-sm);font-weight:600;">
+                                <i class="fas fa-layer-group" style="font-size:0.65rem;"></i> ${escHtml(cls)}
+                            </span>
+                        </div>
+                    </div>
+                    <div class="att-segmented-control">
+                        <button type="button" class="att-segment-btn ${isPres ? 'present-active' : ''}" id="kattP_${sId}" onclick="setKidManualAttStatus(${sId},'present')">
+                            <i class="fas fa-check"></i> حاضر
+                        </button>
+                        <button type="button" class="att-segment-btn ${isAbs ? 'absent-active' : ''}" id="kattA_${sId}" onclick="setKidManualAttStatus(${sId},'absent')">
+                            <i class="fas fa-times"></i> غائب
+                        </button>
+                    </div>
+                </div>`;
+            }).join('');
+            updateModalKidAttCounts();
+        }
+
+        function filterModalKids(query) {
+            modalKidFilterQuery = (query || '').trim().toLowerCase();
+            renderModalKidsList();
+        }
+        window.filterModalKids = filterModalKids;
+
+        function setKidManualAttStatus(kidId, status) {
+            manualAttStudents[kidId] = status;
+            const pBtn = document.getElementById(`kattP_${kidId}`);
+            const aBtn = document.getElementById(`kattA_${kidId}`);
+            if (pBtn && aBtn) {
+                if (status === 'present') {
+                    pBtn.classList.add('present-active');
+                    aBtn.classList.remove('absent-active');
+                } else {
+                    pBtn.classList.remove('present-active');
+                    aBtn.classList.add('absent-active');
+                }
+            }
+            updateModalKidAttCounts();
+        }
+        window.setKidManualAttStatus = setKidManualAttStatus;
+
+        function setAllManualAtt(status) {
+            Object.keys(manualAttStudents).forEach(id => {
+                manualAttStudents[id] = status;
+                const pBtn = document.getElementById(`kattP_${id}`);
+                const aBtn = document.getElementById(`kattA_${id}`);
+                if (pBtn && aBtn) {
+                    if (status === 'present') {
+                        pBtn.classList.add('present-active');
+                        aBtn.classList.remove('absent-active');
+                    } else {
+                        pBtn.classList.remove('present-active');
+                        aBtn.classList.add('absent-active');
+                    }
+                }
+            });
+            updateModalKidAttCounts();
+        }
+        window.setAllManualAtt = setAllManualAtt;
+
+        // Backward compatibility
         function setAllAtt(status) {
-            Object.keys(manualAttStudents).forEach(id => { manualAttStudents[id] = status; const r = document.querySelector(`input[name="att_${id}"][value="${status}"]`); if (r) r.checked = true; });
+            setAllManualAtt(status);
         }
+        window.setAllAtt = setAllAtt;
+
+        function updateModalKidAttCounts() {
+            const presEl = document.getElementById('modalKidCountPresent');
+            const absEl = document.getElementById('modalKidCountAbsent');
+            const vals = Object.values(manualAttStudents);
+            const pres = vals.filter(s => s === 'present').length;
+            const abs = vals.filter(s => s === 'absent').length;
+            if (presEl) presEl.textContent = `حاضر: ${pres}`;
+            if (absEl) absEl.textContent = `غائب: ${abs}`;
+        }
+
         async function saveManualAttendance() {
             const date = document.getElementById('manualAttDate').value;
             if (!date) { showToast('اختر تاريخاً', 'warning'); return; }
