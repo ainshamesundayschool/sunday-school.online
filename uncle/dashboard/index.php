@@ -124,6 +124,17 @@ if (!$hasSession && !$isLoginPage) { ?>
                         if (d.church_id) {
                             try { localStorage.setItem('churchId', d.church_id); localStorage.setItem('church_id', d.church_id); } catch (e) { }
                         }
+                        if (d.auth_token || d.access_token) {
+                            var t = d.access_token || d.auth_token;
+                            try {
+                                localStorage.setItem('authToken', t);
+                                localStorage.setItem('ss_access_token', t);
+                                sessionStorage.setItem('ss_access_token', t);
+                                var exp = Date.now() + ((d.expires_in || 900) * 1000);
+                                localStorage.setItem('ss_token_expires_at', String(exp));
+                                sessionStorage.setItem('ss_token_expires_at', String(exp));
+                            } catch (e) { }
+                        }
                         var isMismatch = (d.uncle_id && prevUncleId && String(d.uncle_id) !== String(prevUncleId)) ||
                                          (d.church_id && prevChurchId && String(d.church_id) !== String(prevChurchId));
                         if (isMismatch) {

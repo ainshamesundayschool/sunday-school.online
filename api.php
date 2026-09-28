@@ -3688,6 +3688,10 @@ function verifyAccessToken(string $token): ?array
     return $payload;
 }
 
+if (!defined('REFRESH_TOKEN_GRACE_PERIOD')) {
+    define('REFRESH_TOKEN_GRACE_PERIOD', 60); // 60s grace window for concurrent requests, mobile latency, and waking background tabs
+}
+
 function getCookieSecuritySettings(): array
 {
     $isSecure = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on') ||
@@ -3697,7 +3701,7 @@ function getCookieSecuritySettings(): array
     return [
         'secure' => $isSecure,
         'httponly' => true,
-        'samesite' => 'Strict',
+        'samesite' => 'Lax',
         'path' => '/'
     ];
 }
@@ -3945,6 +3949,7 @@ function rotateRefreshToken(?string $plainToken = null): array
         $userId = intval($tokenRow['user_id']);
         $absExpiryTs = strtotime($tokenRow['absolute_expires_at']);
         $now = time();
+        $graceSeconds = defined('REFRESH_TOKEN_GRACE_PERIOD') ? REFRESH_TOKEN_GRACE_PERIOD : 60;
 
         // 1. Check Absolute Expiry (30 days max lifetime from initial login)
         if ($now >= $absExpiryTs) {
@@ -3962,10 +3967,11 @@ function rotateRefreshToken(?string $plainToken = null): array
 
         // 2. Token is REVOKED
         if ($tokenRow['status'] === 'revoked') {
-            $graceUntil = !empty($tokenRow['grace_until']) ? strtotime($tokenRow['grace_until']) : 0;
+            $revokedAt = !empty($tokenRow['revoked_at']) ? strtotime($tokenRow['revoked_at']) : 0;
+            $graceUntil = !empty($tokenRow['grace_until']) ? strtotime($tokenRow['grace_until']) : ($revokedAt + $graceSeconds);
 
-            // 2A. Within 5-second Grace Period -> Race Condition Handled Gracefully
-            if ($graceUntil >= $now) {
+            // 2A. Within Grace Period -> Race Condition & Multi-Tab Handled Gracefully
+            if ($now <= $graceUntil || ($revokedAt > 0 && ($now - $revokedAt) <= $graceSeconds)) {
                 // Return fresh access token for the active family session
                 $newAccessToken = generateAccessToken($userType, $userId, $familyId, $userClaims);
                 return [
@@ -3979,8 +3985,26 @@ function rotateRefreshToken(?string $plainToken = null): array
                 ];
             }
 
-            // 2B. Past Grace Period -> ATTACK / REUSE DETECTED!
-            // Revoke entire family
+            // 2B. Past Grace Period:
+            // Check if this was a normal rotation and the request is from the same client (same IP or same UA)
+            // e.g. an idle or background tab waking up from sleep after the grace period.
+            $clientIp = function_exists('getClientIp') ? getClientIp() : ($_SERVER['REMOTE_ADDR'] ?? '');
+            $clientUa = $_SERVER['HTTP_USER_AGENT'] ?? '';
+            $isSameClient = (!empty($clientIp) && $clientIp === $tokenRow['ip_address']) || 
+                            (!empty($clientUa) && $clientUa === $tokenRow['user_agent']);
+
+            if ($tokenRow['revocation_reason'] === 'rotated' && $isSameClient) {
+                // Stale tab waking up from sleep on the same device. Clean up cookie and gracefully notify to log in
+                // without destroying other active sessions or triggering false positive theft alarms!
+                clearRefreshTokenCookie();
+                return [
+                    'success' => false,
+                    'error' => 'SESSION_EXPIRED',
+                    'message' => 'انتهت الجلسة، الرجاء تسجيل الدخول مجدداً'
+                ];
+            }
+
+            // Genuine Token Theft / Attack (different IP/client attempting replay):
             $stmtRevokeAll = $conn->prepare("
                 UPDATE auth_refresh_tokens 
                 SET status = 'revoked', 
@@ -3999,8 +4023,6 @@ function rotateRefreshToken(?string $plainToken = null): array
             @session_destroy();
 
             // Log security incident in audit_logs
-            $clientIp = function_exists('getClientIp') ? getClientIp() : ($_SERVER['REMOTE_ADDR'] ?? '');
-            $clientUa = $_SERVER['HTTP_USER_AGENT'] ?? '';
             if (function_exists('writeAuditLog')) {
                 writeAuditLog(
                     'security_token_theft_detected',
@@ -4013,16 +4035,10 @@ function rotateRefreshToken(?string $plainToken = null): array
                 );
             }
 
-            // Send Security Push Alert to User / Church / Developer (standard, no emojis)
+            // Send Security Push Alert to Developer only on genuine external mismatch
             $alertTitle = 'تنبيه أمني';
-            $alertBody = 'تم تسجيل الخروج لجميع الجلسات، يرجى تسجيل الدخول مجددا.';
-            if ($userType === 'church' && function_exists('_sendWebPushToChurch')) {
-                _sendWebPushToChurch($conn, $userId, $alertTitle, $alertBody);
-            } elseif ($userType === 'uncle' && function_exists('_sendWebPushToUncles')) {
-                _sendWebPushToUncles($conn, intval($userClaims['church_id'] ?? 0), $alertTitle, $alertBody);
-            }
             if (function_exists('_sendWebPushToDeveloper')) {
-                _sendWebPushToDeveloper($conn, $alertTitle, "Theft detected for $userType #$userId (IP: $clientIp). Family: $familyId");
+                _sendWebPushToDeveloper($conn, $alertTitle, "Suspicious token reuse for $userType #$userId (IP: $clientIp vs orig {$tokenRow['ip_address']}). Family: $familyId");
             }
 
             return [
@@ -4033,7 +4049,7 @@ function rotateRefreshToken(?string $plainToken = null): array
         }
 
         // 3. Token is ACTIVE -> Normal Rotation
-        $graceSeconds = defined('REFRESH_TOKEN_GRACE_PERIOD') ? REFRESH_TOKEN_GRACE_PERIOD : 5;
+        $graceSeconds = defined('REFRESH_TOKEN_GRACE_PERIOD') ? REFRESH_TOKEN_GRACE_PERIOD : 60;
         $stmtRevoke = $conn->prepare("
             UPDATE auth_refresh_tokens 
             SET status = 'revoked', 
@@ -4162,9 +4178,10 @@ function revokeSessionFamily(?string $familyId = null, ?string $plainToken = nul
     }
 }
 
-function issueAuthToken(string $userType, int $userId): string
+function issueAuthToken(string $userType, int $userId, ?string $familyId = null): string
 {
-    $tokens = issueSessionTokens($userType, $userId);
+    $family = !empty($familyId) ? $familyId : ($_SESSION['family_id'] ?? null);
+    $tokens = issueSessionTokens($userType, $userId, $family);
     return $tokens['access_token'] ?? '';
 }
 
@@ -4507,7 +4524,7 @@ function handleRestoreSession(): void
     syncCurrentSessionRoleFromDB();
 
     if (!empty($_SESSION['uncle_id'])) {
-        $authToken = issueAuthToken('uncle', intval($_SESSION['uncle_id']));
+        $authToken = issueAuthToken('uncle', intval($_SESSION['uncle_id']), $_SESSION['family_id'] ?? null);
         sendJSON([
             'success' => true,
             'uncle_id' => $_SESSION['uncle_id'],
@@ -4525,13 +4542,15 @@ function handleRestoreSession(): void
             ],
             'role' => $_SESSION['uncle_role'] ?? 'uncle',
             'login_type' => 'uncle',
-            'auth_token' => $authToken
+            'auth_token' => $authToken,
+            'access_token' => $authToken,
+            'expires_in' => defined('ACCESS_TOKEN_LIFETIME') ? ACCESS_TOKEN_LIFETIME : 900
         ]);
         return;
     }
 
     if (!empty($_SESSION['church_id'])) {
-        $authToken = issueAuthToken('church', intval($_SESSION['church_id']));
+        $authToken = issueAuthToken('church', intval($_SESSION['church_id']), $_SESSION['family_id'] ?? null);
         sendJSON([
             'success' => true,
             'church_id' => $_SESSION['church_id'],
@@ -4542,7 +4561,9 @@ function handleRestoreSession(): void
             'uncle_role' => 'admin',
             'role' => 'admin',
             'login_type' => 'church',
-            'auth_token' => $authToken
+            'auth_token' => $authToken,
+            'access_token' => $authToken,
+            'expires_in' => defined('ACCESS_TOKEN_LIFETIME') ? ACCESS_TOKEN_LIFETIME : 900
         ]);
         return;
     }

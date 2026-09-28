@@ -110,11 +110,12 @@ assertEq($oldRow['status'], 'revoked', "Old token status marked as 'revoked'");
 assertEq($oldRow['revocation_reason'], 'rotated', "Old token revocation_reason set to 'rotated'");
 assertTrue(!empty($oldRow['grace_until']), "Grace window (grace_until) set on rotated token");
 $graceSecondsLeft = strtotime($oldRow['grace_until']) - time();
-assertTrue($graceSecondsLeft >= 1 && $graceSecondsLeft <= 5, "Grace window is active for 5 seconds (left: $graceSecondsLeft s)");
+$expectedGrace = defined('REFRESH_TOKEN_GRACE_PERIOD') ? REFRESH_TOKEN_GRACE_PERIOD : 60;
+assertTrue($graceSecondsLeft >= 1 && $graceSecondsLeft <= $expectedGrace, "Grace window is active for up to $expectedGrace seconds (left: $graceSecondsLeft s)");
 
-// 5. Race Condition / Concurrent Requests within Grace Period (<= 5s)
-echo "\n--- Test 4: Race Condition Tolerance (5s Grace Period) ---\n";
-// Re-using $plainRefresh1 while still within 5 seconds grace period
+// 5. Race Condition / Concurrent Requests within Grace Period
+echo "\n--- Test 4: Race Condition Tolerance (Grace Period) ---\n";
+// Re-using $plainRefresh1 while still within grace period
 $raceResult = rotateRefreshToken($plainRefresh1);
 assertTrue($raceResult['success'], "Old token during grace window accepted for concurrent request");
 assertTrue(!empty($raceResult['grace_period']) && $raceResult['grace_period'] === true, "Identified as grace period concurrent request");
@@ -128,10 +129,10 @@ $cntRow = $stmt->get_result()->fetch_assoc();
 $stmt->close();
 assertTrue($cntRow['active_cnt'] >= 1, "Session family remains ACTIVE during grace window");
 
-// 6. Token Theft Detection (> 5s Grace Period)
+// 6. Token Theft Detection (> Grace Period from external client)
 echo "\n--- Test 5: Token Theft Detection & Full Family Revocation ---\n";
-// Manually expire grace window on old token to simulate request arriving after 5 seconds
-$conn->query("UPDATE auth_refresh_tokens SET grace_until = NOW() - INTERVAL 1 SECOND WHERE token_hash = '$tokenHash1'");
+// Manually expire grace window and simulate external IP to test real replay attack
+$conn->query("UPDATE auth_refresh_tokens SET grace_until = NOW() - INTERVAL 1 SECOND, ip_address = '1.2.3.4' WHERE token_hash = '$tokenHash1'");
 
 // Presenting the revoked token after grace window expired
 $theftResult = rotateRefreshToken($plainRefresh1);

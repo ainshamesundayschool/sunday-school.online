@@ -38,6 +38,21 @@
                     this.clearSession(false);
                 }
             });
+
+            // Listen for BroadcastChannel messages across tabs
+            if (typeof BroadcastChannel !== 'undefined') {
+                try {
+                    const bc = new BroadcastChannel('ss_auth_channel');
+                    bc.onmessage = (e) => {
+                        if (e.data && e.data.type === 'token_refreshed' && e.data.token) {
+                            inMemoryToken = e.data.token;
+                            this.scheduleProactiveRefresh();
+                        } else if (e.data && e.data.type === 'logout') {
+                            this.clearSession(false);
+                        }
+                    };
+                } catch (e) {}
+            }
         },
 
         /**
@@ -66,6 +81,15 @@
                 localStorage.setItem(EXPIRES_AT_KEY, String(expiresAt));
             } catch (e) {
                 // Storage full or restricted in private mode
+            }
+
+            // Broadcast to other open tabs
+            if (typeof BroadcastChannel !== 'undefined') {
+                try {
+                    const bc = new BroadcastChannel('ss_auth_channel');
+                    bc.postMessage({ type: 'token_refreshed', token: token, expiresAt: expiresAt });
+                    bc.close();
+                } catch (e) {}
             }
 
             this.scheduleProactiveRefresh();
@@ -100,15 +124,52 @@
 
         /**
          * Request a new Access Token & Refresh Token pair via Refresh Token Rotation.
-         * Thread-safe with Mutex / Promise queuing for concurrent requests.
+         * Thread-safe with Mutex / Promise queuing and Cross-Tab Lock.
          */
         async refreshToken() {
-            // If already refreshing, return the in-flight Promise (Concurrency Mutex)
+            // 1. Check if another tab has already refreshed the token recently
+            const currentExp = parseInt(localStorage.getItem(EXPIRES_AT_KEY) || '0', 10);
+            if (currentExp && (currentExp - Date.now()) > PROACTIVE_REFRESH_WINDOW) {
+                const freshToken = localStorage.getItem(ACCESS_TOKEN_KEY);
+                if (freshToken) {
+                    inMemoryToken = freshToken;
+                    try {
+                        sessionStorage.setItem(ACCESS_TOKEN_KEY, freshToken);
+                        sessionStorage.setItem(EXPIRES_AT_KEY, String(currentExp));
+                    } catch (e) {}
+                    this.scheduleProactiveRefresh();
+                    return freshToken;
+                }
+            }
+
+            // 2. If already refreshing in this tab, return the in-flight Promise (Concurrency Mutex)
             if (refreshPromise) {
                 return refreshPromise;
             }
 
+            // 3. Cross-Tab Concurrency Lock (Wait if another tab is actively refreshing)
+            const REFRESH_LOCK_KEY = 'ss_refresh_lock';
+            const lockTime = parseInt(localStorage.getItem(REFRESH_LOCK_KEY) || '0', 10);
+            if (lockTime && (Date.now() - lockTime) < 10000) {
+                await new Promise(r => setTimeout(r, 1500));
+                const updatedExp = parseInt(localStorage.getItem(EXPIRES_AT_KEY) || '0', 10);
+                const updatedToken = localStorage.getItem(ACCESS_TOKEN_KEY);
+                if (updatedToken && (updatedExp - Date.now()) > PROACTIVE_REFRESH_WINDOW) {
+                    inMemoryToken = updatedToken;
+                    try {
+                        sessionStorage.setItem(ACCESS_TOKEN_KEY, updatedToken);
+                        sessionStorage.setItem(EXPIRES_AT_KEY, String(updatedExp));
+                    } catch (e) {}
+                    this.scheduleProactiveRefresh();
+                    return updatedToken;
+                }
+            }
+
             refreshPromise = (async () => {
+                try {
+                    localStorage.setItem(REFRESH_LOCK_KEY, String(Date.now()));
+                } catch (e) {}
+
                 try {
                     const fd = new FormData();
                     fd.append('action', 'refresh_token');
@@ -116,7 +177,7 @@
                     const response = await fetch(API_ENDPOINT, {
                         method: 'POST',
                         body: fd,
-                        credentials: 'include' // Sends the HttpOnly, Secure ss_refresh_token Cookie
+                        credentials: 'include' // Sends the HttpOnly ss_refresh_token Cookie
                     });
 
                     const data = await response.json();
@@ -135,6 +196,9 @@
                     throw new Error(data?.message || 'Token refresh failed');
                 } finally {
                     refreshPromise = null;
+                    try {
+                        localStorage.removeItem(REFRESH_LOCK_KEY);
+                    } catch (e) {}
                 }
             })();
 
@@ -207,9 +271,14 @@
          */
         handleSessionEnded(message) {
             this.clearSession(true);
+            const isLogin = window.location.pathname.indexOf('/login') !== -1;
+            if (isLogin) {
+                return;
+            }
             const msg = message || 'انتهت الجلسة، الرجاء تسجيل الدخول مجددا';
             alert(msg);
-            window.location.href = '/login/';
+            const prefix = window.location.pathname.indexOf('/testing/') !== -1 ? '/testing' : '';
+            window.location.href = prefix + '/login/';
         },
 
         /**
