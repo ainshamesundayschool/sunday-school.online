@@ -10395,7 +10395,7 @@ $showSettings = $hasChurchId || $isDevOrAdmin;
 
         .nps-mark-all {
             background: var(--brand-bg);
-            border: 1.5px solid rgba(91, 108, 245, .25);
+            border: none;
             color: var(--brand);
             padding: 7px 12px;
             border-radius: var(--r-md);
@@ -10413,7 +10413,7 @@ $showSettings = $hasChurchId || $isDevOrAdmin;
         .nps-mark-all:hover {
             background: var(--brand);
             color: #fff;
-            border-color: var(--brand);
+            border: none;
         }
 
         .nps-close {
@@ -10421,7 +10421,7 @@ $showSettings = $hasChurchId || $isDevOrAdmin;
             height: 36px;
             border-radius: var(--r-md);
             background: var(--surface-3);
-            border: 1.5px solid var(--border-solid);
+            border: none;
             color: var(--text-3);
             cursor: pointer;
             font-size: .9rem;
@@ -10434,7 +10434,14 @@ $showSettings = $hasChurchId || $isDevOrAdmin;
         .nps-close:hover {
             background: var(--danger-bg);
             color: var(--danger);
-            border-color: var(--danger);
+            border: none;
+        }
+
+        #panelNotifToggleBtn,
+        #panelNotifToggleBtn:hover,
+        #panelNotifToggleBtn:focus,
+        #panelNotifToggleBtn:active {
+            box-shadow: none !important;
         }
 
         /* ── Body ── */
@@ -11730,7 +11737,7 @@ $showSettings = $hasChurchId || $isDevOrAdmin;
                 </span>
                 <button class="btn btn-secondary btn-sm" id="panelNotifToggleBtn"
                     onclick="toggleNotificationsFromModal()"
-                    style="height: 32px; font-size: 0.75rem; padding: 0 12px; font-weight: 700; display: flex; align-items: center; gap: 6px;">
+                    style="height: 32px; font-size: 0.75rem; padding: 0 12px; font-weight: 700; display: flex; align-items: center; gap: 6px; box-shadow: none !important;">
                     <i class="fas fa-bell"></i> <span>تفعيل الإشعارات</span>
                 </button>
             </div>
