@@ -4483,27 +4483,26 @@
 
         .friday-card {
             background: var(--surface);
-            border: 1px solid var(--border);
+            border: none;
             border-radius: var(--r-xl);
-            padding: 16px 18px;
+            padding: 18px 20px;
             cursor: pointer;
             transition: all var(--t) var(--spring);
             display: flex;
             flex-direction: column;
-            gap: 12px;
+            gap: 14px;
             position: relative;
             overflow: hidden;
             box-shadow: var(--shadow-sm);
         }
 
         .friday-card:hover {
-            border-color: var(--brand);
             transform: translateY(-3px);
             box-shadow: var(--shadow-md);
         }
 
         .friday-card.selected {
-            border-color: var(--brand);
+            box-shadow: 0 0 0 2px var(--brand);
             background: var(--brand-bg);
         }
 
@@ -4520,12 +4519,12 @@
             justify-content: center;
             background: var(--brand-bg);
             color: var(--brand);
-            border-radius: var(--r-md);
+            border-radius: var(--r-lg);
             min-width: 52px;
             height: 52px;
             padding: 4px;
             flex-shrink: 0;
-            border: 1px solid var(--border);
+            border: none;
         }
 
         .friday-card .att-date-badge .day-num {
@@ -4564,15 +4563,16 @@
         }
 
         .friday-card .att-status-badge {
-            font-size: 0.7rem;
+            font-size: 0.72rem;
             font-weight: 700;
-            padding: 3px 8px;
+            padding: 4px 10px;
             border-radius: var(--r-full);
             white-space: nowrap;
             display: inline-flex;
             align-items: center;
-            gap: 4px;
+            gap: 5px;
             font-family: 'Cairo', sans-serif;
+            border: none;
         }
 
         .friday-card .att-status-badge.recorded {
@@ -4586,7 +4586,7 @@
         }
 
         .friday-card .att-progress-track {
-            height: 6px;
+            height: 7px;
             background: var(--surface-3);
             border-radius: var(--r-full);
             overflow: hidden;
@@ -4596,7 +4596,7 @@
 
         .friday-card .att-progress-fill {
             height: 100%;
-            background: linear-gradient(90deg, var(--success), #34d399);
+            background: var(--success);
             border-radius: var(--r-full);
             transition: width 0.35s var(--ease);
         }
@@ -4605,22 +4605,23 @@
             display: flex;
             align-items: center;
             justify-content: space-between;
-            font-size: 0.76rem;
-            color: var(--text-3);
+            font-size: 0.78rem;
+            color: var(--text-2);
             font-family: 'Cairo', sans-serif;
             font-weight: 600;
-            margin-top: 4px;
+            margin-top: 2px;
         }
 
         .friday-card .att-progress-meta strong {
             font-weight: 800;
+            color: var(--text);
         }
 
         .friday-card .att-card-bottom {
             display: flex;
             align-items: center;
             justify-content: space-between;
-            padding-top: 10px;
+            padding-top: 12px;
             border-top: 1px solid var(--border-solid);
             margin-top: auto;
         }
@@ -4632,14 +4633,15 @@
         }
 
         .friday-card .att-pill {
-            font-size: 0.74rem;
-            padding: 3px 8px;
+            font-size: 0.76rem;
+            padding: 4px 10px;
             border-radius: var(--r-full);
             font-weight: 700;
             font-family: 'Cairo', sans-serif;
             display: inline-flex;
             align-items: center;
-            gap: 4px;
+            gap: 5px;
+            border: none;
         }
 
         .friday-card .att-pill.present {
@@ -4653,8 +4655,8 @@
         }
 
         .friday-card .att-open-arrow {
-            width: 28px;
-            height: 28px;
+            width: 32px;
+            height: 32px;
             border-radius: 50%;
             background: var(--surface-2);
             color: var(--text-3);
@@ -4663,11 +4665,12 @@
             justify-content: center;
             font-size: 0.75rem;
             transition: all var(--t) var(--ease);
+            border: none;
         }
 
         .friday-card:hover .att-open-arrow {
-            background: var(--brand-bg);
-            color: var(--brand);
+            background: var(--brand);
+            color: #ffffff;
             transform: translateX(-3px);
         }
 
@@ -5386,23 +5389,24 @@
             gap: 6px;
             flex-wrap: wrap;
             margin-bottom: 20px;
-            padding: 4px;
-            background: var(--bg-alpha, rgba(241, 245, 249, 0.6));
-            border: 1px solid var(--border-solid, #e2e8f0);
-            border-radius: 14px;
+            padding: 5px;
+            background: var(--surface-2);
+            border: none;
+            border-radius: var(--r-xl);
             width: fit-content;
         }
 
         .month-tab {
-            padding: 6px 16px;
+            padding: 7px 16px;
             border: none !important;
-            border-radius: 10px !important;
+            border-radius: var(--r-md) !important;
             cursor: pointer;
-            font-size: 0.78rem;
+            font-size: 0.8rem;
             font-weight: 700;
+            font-family: 'Cairo', sans-serif;
             transition: all var(--t-fast) var(--ease);
             background: transparent !important;
-            color: var(--text-2, #4b5563);
+            color: var(--text-2);
             user-select: none;
             display: inline-flex;
             align-items: center;
@@ -5410,46 +5414,55 @@
         }
 
         .month-tab:hover {
-            color: var(--primary, #4f46e5);
-            background: rgba(99, 102, 241, 0.06) !important;
+            color: var(--brand);
+            background: var(--brand-bg) !important;
         }
 
         .month-tab.active {
-            background: var(--primary, #4f46e5) !important;
-            color: white !important;
-            box-shadow: 0 4px 12px rgba(99, 102, 241, 0.2);
+            background: var(--brand) !important;
+            color: #ffffff !important;
+            box-shadow: 0 4px 12px var(--brand-glow);
         }
 
         /* ═══════════════════════════════════════════════════════════════════
    SUMMARY BOXES
-═══════════════════════════════════════════════════════════════════ */
+   ═══════════════════════════════════════════════════════════════════ */
         .summary-box {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
-            gap: 10px;
-            margin-bottom: 18px;
+            gap: 12px;
+            margin-bottom: 20px;
         }
 
         .sbox {
-            background: white;
-            border-radius: var(--radius-lg);
-            padding: 14px 12px;
-            border: 1px solid var(--border-solid);
+            background: var(--surface);
+            border-radius: var(--r-xl);
+            padding: 16px 14px;
+            border: none;
             text-align: center;
-            box-shadow: var(--shadow-xs);
+            box-shadow: var(--shadow-sm);
+            transition: all var(--t) var(--ease);
+        }
+
+        .sbox:hover {
+            box-shadow: var(--shadow-md);
+            transform: translateY(-2px);
         }
 
         .sbox .sv {
-            font-size: 1.7rem;
+            font-size: 1.75rem;
             font-weight: 900;
             letter-spacing: -0.03em;
+            font-family: 'Cairo', sans-serif;
+            line-height: 1.2;
         }
 
         .sbox .sl {
-            font-size: 0.7rem;
-            color: var(--muted);
-            margin-top: 3px;
-            font-weight: 600;
+            font-size: 0.76rem;
+            color: var(--text-3);
+            margin-top: 4px;
+            font-weight: 700;
+            font-family: 'Cairo', sans-serif;
         }
 
         /* ═══════════════════════════════════════════════════════════════════
@@ -5620,40 +5633,43 @@
    UNCLE ATTENDANCE TABS
 ═══════════════════════════════════════════════════════════════════ */
         .att-tabs {
-            display: flex;
-            gap: 0;
-            border-bottom: 1.5px solid var(--border);
-            margin-bottom: 18px;
+            display: inline-flex;
+            gap: 6px;
+            background: var(--surface-2);
+            padding: 5px;
+            border-radius: var(--r-xl);
+            border: none;
+            margin-bottom: 20px;
             overflow-x: auto;
         }
 
         .att-tab {
-            padding: 10px 18px;
+            padding: 8px 18px;
             font-size: .84rem;
             font-weight: 700;
-            color: var(--muted);
+            color: var(--text-2);
             cursor: pointer;
-            border-bottom: 2px solid transparent;
-            margin-bottom: -1.5px;
+            border: none !important;
+            border-radius: var(--r-md);
+            margin-bottom: 0;
             transition: all var(--t-fast) var(--ease);
             white-space: nowrap;
             display: flex;
             align-items: center;
-            gap: 7px;
-            background: none;
-            border-top: none;
-            border-left: none;
-            border-right: none;
+            gap: 8px;
+            background: transparent;
             font-family: 'Cairo', sans-serif;
         }
 
         .att-tab:hover {
-            color: var(--primary);
+            color: var(--brand);
+            background: var(--brand-bg);
         }
 
         .att-tab.active {
-            color: var(--primary);
-            border-bottom-color: var(--primary);
+            color: #ffffff !important;
+            background: var(--brand) !important;
+            box-shadow: 0 4px 12px var(--brand-glow);
         }
 
         .att-tab-panel {
@@ -5668,71 +5684,70 @@
         .uncle-report-row {
             display: flex;
             align-items: center;
-            gap: 12px;
-            padding: 12px 14px;
-            background: white;
-            border-radius: var(--radius);
-            border: 1px solid var(--border);
-            margin-bottom: 8px;
+            gap: 14px;
+            padding: 14px 18px;
+            background: var(--surface);
+            border-radius: var(--r-xl);
+            border: none;
+            margin-bottom: 10px;
             transition: all var(--t-fast) var(--ease);
+            box-shadow: var(--shadow-sm);
         }
 
         .uncle-report-row:hover {
-            border-color: var(--primary);
-            box-shadow: var(--shadow-xs);
-            transform: translateX(-2px);
+            box-shadow: var(--shadow-md);
+            transform: translateY(-2px);
         }
 
         .uncle-rank-badge {
-            width: 26px;
-            height: 26px;
-            border-radius: 50%;
+            width: 32px;
+            height: 32px;
+            border-radius: var(--r-md);
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: .68rem;
+            font-size: .82rem;
             font-weight: 900;
             flex-shrink: 0;
+            border: none;
+            font-family: 'Cairo', sans-serif;
         }
 
         .uncle-rank-badge.gold {
-            background: #fef3c7;
-            color: #92400e;
-            border: 1.5px solid #f59e0b;
+            background: var(--warning-bg);
+            color: var(--warning-dark);
         }
 
         .uncle-rank-badge.silver {
-            background: #f1f5f9;
-            color: #475569;
-            border: 1.5px solid #94a3b8;
+            background: var(--surface-3);
+            color: var(--text-2);
         }
 
         .uncle-rank-badge.bronze {
-            background: #fef6ee;
-            color: #9a3412;
-            border: 1.5px solid #f97316;
+            background: #ffedd5;
+            color: #c2410c;
         }
 
         .uncle-rank-badge.other {
-            background: var(--bg);
-            color: var(--muted);
-            border: 1px solid var(--border);
+            background: var(--surface-2);
+            color: var(--text-3);
         }
 
         .uncle-att-ava {
-            width: 40px;
-            height: 40px;
+            width: 44px;
+            height: 44px;
             border-radius: 50%;
             overflow: hidden;
-            background: var(--primary-bg);
+            background: var(--brand-bg);
             display: flex;
             align-items: center;
             justify-content: center;
             font-weight: 800;
-            color: var(--primary);
-            font-size: .86rem;
+            color: var(--brand);
+            font-size: .92rem;
             flex-shrink: 0;
             border: none;
+            font-family: 'Cairo', sans-serif;
         }
 
         .uncle-att-ava img {
@@ -5747,33 +5762,36 @@
         }
 
         .uncle-report-name {
-            font-size: .86rem;
+            font-size: .92rem;
             font-weight: 800;
             color: var(--text);
+            font-family: 'Cairo', sans-serif;
         }
 
         .uncle-report-meta {
-            font-size: .7rem;
-            color: var(--muted);
-            margin-top: 1px;
+            font-size: .74rem;
+            color: var(--text-3);
+            margin-top: 3px;
+            font-weight: 600;
+            font-family: 'Cairo', sans-serif;
         }
 
         .uncle-progress-wrap {
             flex: 1;
-            max-width: 150px;
+            max-width: 160px;
         }
 
         .uncle-progress-bar {
-            height: 5px;
-            background: var(--bg-2);
-            border-radius: var(--radius-pill);
+            height: 6px;
+            background: var(--surface-3);
+            border-radius: var(--r-full);
             overflow: hidden;
-            margin-top: 4px;
+            margin-top: 6px;
         }
 
         .uncle-progress-fill {
             height: 100%;
-            border-radius: var(--radius-pill);
+            border-radius: var(--r-full);
             transition: width .6s ease;
         }
 
@@ -5785,32 +5803,38 @@
         }
 
         .uncle-stat-box {
-            padding: 5px 10px;
-            border-radius: var(--radius-xs);
-            font-size: .72rem;
+            padding: 6px 12px;
+            border-radius: var(--r-md);
+            font-size: .78rem;
             font-weight: 800;
+            border: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            font-family: 'Cairo', sans-serif;
         }
 
         .uncle-stat-box.present {
-            background: var(--success-light);
-            color: #065f46;
+            background: var(--success-bg);
+            color: var(--success-dark);
         }
 
         .uncle-stat-box.absent {
-            background: var(--danger-light);
-            color: #991b1b;
+            background: var(--danger-bg);
+            color: var(--danger-dark);
         }
 
         /* Day ranking */
         .day-rank-row {
             display: flex;
             align-items: center;
-            gap: 12px;
-            padding: 10px 14px;
-            background: white;
-            border-radius: var(--radius-sm);
-            border: 1px solid var(--border);
-            margin-bottom: 7px;
+            gap: 14px;
+            padding: 12px 18px;
+            background: var(--surface);
+            border-radius: var(--r-xl);
+            border: none;
+            margin-bottom: 10px;
+            box-shadow: var(--shadow-sm);
         }
 
         .day-rank-bar-wrap {
@@ -5818,40 +5842,41 @@
         }
 
         .day-rank-label {
-            font-size: .74rem;
+            font-size: .78rem;
             font-weight: 700;
-            margin-bottom: 4px;
+            margin-bottom: 5px;
             color: var(--text);
             display: flex;
             justify-content: space-between;
             flex-wrap: wrap;
-            gap: 3px;
+            gap: 4px;
+            font-family: 'Cairo', sans-serif;
         }
 
         .day-rank-bar {
-            height: 7px;
-            background: var(--bg-2);
-            border-radius: var(--radius-pill);
+            height: 8px;
+            background: var(--surface-3);
+            border-radius: var(--r-full);
             overflow: hidden;
         }
 
         .day-rank-fill {
             height: 100%;
-            border-radius: var(--radius-pill);
-            background: linear-gradient(90deg, var(--primary), var(--indigo-400));
+            border-radius: var(--r-full);
+            background: var(--brand);
         }
 
         /* Uncle attendance modal items */
         .uncle-att-item {
             display: flex;
             align-items: center;
-            gap: 10px;
-            padding: 10px 12px;
-            border: 1px solid var(--border-solid);
-            border-radius: var(--radius-lg);
-            margin-bottom: 7px;
-            transition: border-color var(--t-fast) var(--ease);
-            background: var(--card);
+            gap: 14px;
+            padding: 12px 16px;
+            border: none;
+            border-radius: var(--r-xl);
+            margin-bottom: 8px;
+            transition: all var(--t-fast) var(--ease);
+            background: var(--surface-2);
         }
 
         /* ═══════════════════════════════════════════════════════════════════
@@ -5908,18 +5933,18 @@
         .att-detail-list {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-            gap: 12px;
-            margin-top: 14px;
+            gap: 14px;
+            margin-top: 16px;
         }
 
         .uncle-att-item.att-detail-item {
             background: var(--surface);
-            border: 1.5px solid var(--border);
+            border: none;
             border-radius: var(--r-xl);
-            padding: 12px 14px;
+            padding: 14px 16px;
             display: flex;
             align-items: center;
-            gap: 12px;
+            gap: 14px;
             transition: all .2s var(--ease);
             position: relative;
             box-shadow: var(--shadow-sm);
@@ -5931,23 +5956,19 @@
         }
 
         .uncle-att-item.att-detail-item.present {
-            border-color: rgba(16, 185, 129, .38);
-            background: linear-gradient(135deg, rgba(236, 253, 245, .92), rgba(209, 250, 229, .68));
+            background: var(--success-bg);
         }
 
         [data-theme="dark"] .uncle-att-item.att-detail-item.present {
-            background: linear-gradient(135deg, rgba(6, 78, 59, .3), rgba(5, 95, 75, .22));
-            border-color: rgba(16, 185, 129, .45);
+            background: var(--success-bg);
         }
 
         .uncle-att-item.att-detail-item.absent {
-            border-color: rgba(239, 68, 68, .32);
-            background: linear-gradient(135deg, rgba(254, 242, 242, .92), rgba(254, 226, 226, .68));
+            background: var(--danger-bg);
         }
 
         [data-theme="dark"] .uncle-att-item.att-detail-item.absent {
-            background: linear-gradient(135deg, rgba(127, 29, 29, .3), rgba(153, 27, 27, .22));
-            border-color: rgba(239, 68, 68, .38);
+            background: var(--danger-bg);
         }
 
         .att-person-info {
@@ -5969,14 +5990,14 @@
             display: flex;
             align-items: center;
             gap: 6px;
-            margin-top: 3px;
+            margin-top: 4px;
             flex-wrap: wrap;
         }
 
         .att-person-meta-tag {
             font-size: 0.72rem;
             font-weight: 600;
-            padding: 2px 7px;
+            padding: 2px 8px;
             border-radius: var(--r-sm);
             background: var(--surface-3);
             color: var(--text-2);
@@ -5991,26 +6012,26 @@
             align-items: center;
             background: var(--surface-3);
             border-radius: var(--r-full);
-            padding: 3px;
-            gap: 3px;
-            border: 1px solid var(--border-solid);
+            padding: 4px;
+            gap: 4px;
+            border: none;
             flex-shrink: 0;
         }
 
         .att-segment-btn {
             border: none;
             background: transparent;
-            padding: 6px 13px;
+            padding: 7px 16px;
             border-radius: var(--r-full);
             font-family: 'Cairo', sans-serif;
-            font-size: 0.78rem;
+            font-size: 0.8rem;
             font-weight: 800;
             cursor: pointer;
             color: var(--text-2);
             transition: all .2s var(--spring);
             display: inline-flex;
             align-items: center;
-            gap: 4px;
+            gap: 5px;
             line-height: 1.2;
         }
 
@@ -6020,23 +6041,23 @@
         }
 
         .att-segment-btn.present-active {
-            background: linear-gradient(135deg, var(--success), var(--success-dark));
-            color: #fff;
-            box-shadow: 0 2px 8px rgba(16, 185, 129, .32);
+            background: var(--success);
+            color: #ffffff;
+            box-shadow: 0 4px 12px rgba(16, 185, 129, .28);
         }
 
         .att-segment-btn.absent-active {
-            background: linear-gradient(135deg, var(--danger), var(--danger-dark));
-            color: #fff;
-            box-shadow: 0 2px 8px rgba(239, 68, 68, .32);
+            background: var(--danger);
+            color: #ffffff;
+            box-shadow: 0 4px 12px rgba(239, 68, 68, .28);
         }
 
         .att-del-btn {
-            width: 32px;
-            height: 32px;
+            width: 34px;
+            height: 34px;
             border-radius: 50%;
             border: none;
-            background: transparent;
+            background: var(--surface-2);
             color: var(--text-3);
             display: flex;
             align-items: center;
@@ -6044,7 +6065,7 @@
             cursor: pointer;
             transition: all .18s var(--ease);
             flex-shrink: 0;
-            font-size: 0.8rem;
+            font-size: 0.82rem;
         }
 
         .att-del-btn:hover {
@@ -6065,37 +6086,38 @@
 
         .uncle-att-item .toggle-btns {
             display: flex;
-            gap: 5px;
+            gap: 6px;
             margin-right: auto;
         }
 
         .att-toggle-btn {
-            padding: 4px 12px;
-            border: 1px solid var(--border);
-            border-radius: var(--radius-xs);
+            padding: 6px 14px;
+            border: none;
+            border-radius: var(--r-full);
             cursor: pointer;
             font-family: 'Cairo', sans-serif;
-            font-size: .74rem;
+            font-size: .78rem;
             font-weight: 700;
             transition: all var(--t-fast) var(--ease);
-            background: white;
+            background: var(--surface-3);
+            color: var(--text-2);
         }
 
         .att-toggle-btn.present {
-            border-color: var(--success);
-            color: var(--success);
-            background: var(--success-light);
+            color: #ffffff;
+            background: var(--success);
+            box-shadow: 0 2px 8px rgba(16, 185, 129, .25);
         }
 
         .att-toggle-btn.absent {
-            border-color: var(--danger);
-            color: var(--danger);
-            background: var(--danger-light);
+            color: #ffffff;
+            background: var(--danger);
+            box-shadow: 0 2px 8px rgba(239, 68, 68, .25);
         }
 
         .att-toggle-btn:not(.present):not(.absent):hover {
-            border-color: var(--primary);
-            color: var(--primary);
+            color: var(--text);
+            background: var(--border-solid);
         }
 
         /* ═══════════════════════════════════════════════════════════════════
@@ -10097,44 +10119,44 @@
 
                         <!-- CALENDAR TAB -->
                         <div id="uncleAttTabCalendar" class="att-tab-panel active">
-                            <div class="year-selector" style="margin-bottom:12px;">
-                                <button class="btn btn-outline btn-sm" onclick="changeUncleAttYear(-1)"><i
-                                        class="fas fa-chevron-right"></i></button>
-                                <span id="uncleAttYearDisplay2"
-                                    style="font-weight:700;font-size:1.1rem;min-width:60px;text-align:center;"></span>
-                                <button class="btn btn-outline btn-sm" onclick="changeUncleAttYear(1)"><i
-                                        class="fas fa-chevron-left"></i></button>
-                            </div>
-                            <div class="month-tabs" id="uncleAttMonthTabs2"></div>
-                            <div style="display:flex;justify-content:flex-end;margin-bottom:14px;">
-                                <button class="btn btn-primary btn-sm" onclick="showAddUncleAttendanceModal()"><i
+                            <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:16px;flex-wrap:wrap;">
+                                <div class="year-selector" style="margin-bottom:0;">
+                                    <button class="btn btn-outline btn-sm" onclick="changeUncleAttYear(-1)"><i
+                                            class="fas fa-chevron-right"></i></button>
+                                    <span id="uncleAttYearDisplay2"
+                                        style="font-weight:800;font-size:1.1rem;min-width:60px;text-align:center;font-family:'Cairo',sans-serif;"></span>
+                                    <button class="btn btn-outline btn-sm" onclick="changeUncleAttYear(1)"><i
+                                            class="fas fa-chevron-left"></i></button>
+                                </div>
+                                <button class="btn btn-primary btn-sm" onclick="showAddUncleAttendanceModal()" style="border-radius:var(--r-md);font-weight:700;border:none;padding:9px 18px;"><i
                                         class="fas fa-plus"></i> تسجيل حضور الخُدام</button>
                             </div>
+                            <div class="month-tabs" id="uncleAttMonthTabs2"></div>
                             <div id="uncleFridaysList2"></div>
                             <div id="uncleAttendanceDetail2" style="display:none;margin-top:20px;">
                                 <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:16px;flex-wrap:wrap;">
                                     <div style="display:flex;align-items:center;gap:12px;">
-                                        <button class="btn btn-outline btn-sm" onclick="closeUncleAttendanceDetail2()" style="border-radius:var(--r-md);"><i
+                                        <button class="btn btn-outline btn-sm" onclick="closeUncleAttendanceDetail2()" style="border-radius:var(--r-md);border:none;background:var(--surface-2);color:var(--text);font-weight:700;padding:8px 14px;"><i
                                                 class="fas fa-arrow-right"></i> رجوع للأيام</button>
-                                        <h3 id="uncleAttDetailTitle2" style="font-size:1.1rem;font-weight:800;color:var(--text);margin:0;display:flex;align-items:center;gap:8px;"></h3>
+                                        <h3 id="uncleAttDetailTitle2" style="font-size:1.15rem;font-weight:800;color:var(--text);margin:0;display:flex;align-items:center;gap:8px;"></h3>
                                     </div>
                                     <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
-                                        <button type="button" class="btn btn-success btn-sm" onclick="bulkSetUncleAttendance('present')" style="border-radius:var(--r-md);font-weight:700;"><i class="fas fa-check-double"></i> تحضير الكل</button>
-                                        <button type="button" class="btn btn-danger btn-sm" onclick="bulkSetUncleAttendance('absent')" style="border-radius:var(--r-md);font-weight:700;"><i class="fas fa-user-times"></i> غياب الكل</button>
+                                        <button type="button" class="btn btn-sm" onclick="bulkSetUncleAttendance('present')" style="border-radius:var(--r-md);font-weight:700;background:var(--success);color:#ffffff;border:none;padding:8px 16px;box-shadow:var(--shadow-sm);"><i class="fas fa-check-double"></i> تحضير الكل</button>
+                                        <button type="button" class="btn btn-sm" onclick="bulkSetUncleAttendance('absent')" style="border-radius:var(--r-md);font-weight:700;background:var(--danger);color:#ffffff;border:none;padding:8px 16px;box-shadow:var(--shadow-sm);"><i class="fas fa-user-times"></i> غياب الكل</button>
                                     </div>
                                 </div>
                                 <div class="summary-box" id="uncleAttSummaryBoxes2"></div>
 
                                 <!-- Search & Status Filter Toolbar for Uncles -->
-                                <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;margin:16px 0;flex-wrap:wrap;background:var(--surface-2);padding:10px 14px;border-radius:var(--r-lg);border:1px solid var(--border-solid);">
+                                <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;margin:16px 0;flex-wrap:wrap;background:var(--surface-2);padding:12px 16px;border-radius:var(--r-xl);border:none;box-shadow:var(--shadow-sm);">
                                     <div style="position:relative;flex:1;min-width:200px;max-width:360px;">
-                                        <i class="fas fa-search" style="position:absolute;right:12px;top:50%;transform:translateY(-50%);color:var(--text-3);font-size:0.85rem;"></i>
-                                        <input type="text" id="uncleAttDetailSearch" placeholder="بحث باسم الخادم..." class="form-control" style="padding-right:34px;height:36px;border-radius:var(--r-md);font-size:0.85rem;" oninput="filterUncleAttendanceDetailView(this.value)">
+                                        <i class="fas fa-search" style="position:absolute;right:14px;top:50%;transform:translateY(-50%);color:var(--text-3);font-size:0.85rem;"></i>
+                                        <input type="text" id="uncleAttDetailSearch" placeholder="بحث باسم الخادم..." class="form-control" style="padding-right:36px;height:38px;border-radius:var(--r-md);border:none;background:var(--surface);font-size:0.85rem;font-family:'Cairo',sans-serif;width:100%;box-shadow:var(--shadow-sm);" oninput="filterUncleAttendanceDetailView(this.value)">
                                     </div>
                                     <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;">
-                                        <button type="button" class="btn btn-sm btn-outline active" id="uaFilterBtn_all" onclick="filterUncleAttStatus('all')" style="border-radius:var(--r-full);font-size:0.78rem;padding:4px 12px;">الكل <span id="uaCount_all" style="font-weight:800;">(0)</span></button>
-                                        <button type="button" class="btn btn-sm btn-outline" id="uaFilterBtn_present" onclick="filterUncleAttStatus('present')" style="border-radius:var(--r-full);font-size:0.78rem;padding:4px 12px;color:var(--success);">حاضر <span id="uaCount_present" style="font-weight:800;">(0)</span></button>
-                                        <button type="button" class="btn btn-sm btn-outline" id="uaFilterBtn_absent" onclick="filterUncleAttStatus('absent')" style="border-radius:var(--r-full);font-size:0.78rem;padding:4px 12px;color:var(--danger);">غائب <span id="uaCount_absent" style="font-weight:800;">(0)</span></button>
+                                        <button type="button" class="btn btn-sm btn-outline active" id="uncleAttFilterBtn_all" onclick="filterUncleAttStatus('all')" style="border-radius:var(--r-full);font-size:0.8rem;padding:6px 14px;border:none;background:var(--surface);font-weight:700;">الكل <span id="uncleAttCount_all" style="font-weight:800;">(0)</span></button>
+                                        <button type="button" class="btn btn-sm btn-outline" id="uncleAttFilterBtn_present" onclick="filterUncleAttStatus('present')" style="border-radius:var(--r-full);font-size:0.8rem;padding:6px 14px;border:none;background:var(--surface);font-weight:700;color:var(--success);">حاضر <span id="uncleAttCount_present" style="font-weight:800;">(0)</span></button>
+                                        <button type="button" class="btn btn-sm btn-outline" id="uncleAttFilterBtn_absent" onclick="filterUncleAttStatus('absent')" style="border-radius:var(--r-full);font-size:0.8rem;padding:6px 14px;border:none;background:var(--surface);font-weight:700;color:var(--danger);">غائب <span id="uncleAttCount_absent" style="font-weight:800;">(0)</span></button>
                                     </div>
                                 </div>
 
@@ -28148,18 +28170,48 @@
             c.innerHTML = `<div class="friday-grid">${fridays.map(f => {
                 const y = f.getFullYear(), mo = String(f.getMonth() + 1).padStart(2, '0'), d = String(f.getDate()).padStart(2, '0');
                 const iso = `${y}-${mo}-${d}`;
-                const ds = f.toLocaleDateString('ar-EG', { weekday: 'long', day: 'numeric', month: 'long' });
+                const dayNum = f.getDate();
+                const monthName = f.toLocaleDateString('ar-EG', { month: 'short' });
+                const weekdayName = f.toLocaleDateString('ar-EG', { weekday: 'long' });
+                const ds = f.toLocaleDateString('ar-EG', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
                 const cachedAtt = _readLocalCache(`ua2_att_stats_${iso}`);
-                const pText = cachedAtt ? `حاضر: ${cachedAtt.p}` : '---';
-                const aText = cachedAtt ? `غائب: ${cachedAtt.a}` : '---';
+                const pCount = cachedAtt ? cachedAtt.p : 0;
+                const aCount = cachedAtt ? cachedAtt.a : 0;
+                const total = pCount + aCount;
+                const rate = total > 0 ? Math.round(pCount / total * 100) : 0;
+                const hasData = cachedAtt && total > 0;
 
                 return `<div class="friday-card" onclick="ua2LoadDate('${iso}')">
-                <div class="date"><i class="fas fa-calendar-day" style="color:var(--primary);margin-left:6px;"></i>${ds}</div>
-                <div class="stats">
-                    <span style="background:var(--success-light);color:#065f46;" id="ua2p_${iso}">${pText}</span>
-                    <span style="background:var(--danger-light);color:#991b1b;" id="ua2a_${iso}">${aText}</span>
-                </div>
-            </div>`;
+                    <div class="att-card-top">
+                        <div class="att-date-badge">
+                            <span class="day-num">${dayNum}</span>
+                            <span class="day-month">${monthName}</span>
+                        </div>
+                        <div class="att-card-title-wrap">
+                            <div class="att-weekday-name">${weekdayName}</div>
+                            <div class="att-full-date">${ds}</div>
+                        </div>
+                        <span class="att-status-badge ${hasData ? 'recorded' : 'pending'}" id="ua2status_${iso}">
+                            <i class="fas ${hasData ? 'fa-check-circle' : 'fa-clock'}"></i> ${hasData ? 'تم التسجيل' : 'لم يُسجَّل'}
+                        </span>
+                    </div>
+
+                    <div class="att-progress-track">
+                        <div class="att-progress-fill" id="ua2fill_${iso}" style="width:${rate}%;background:var(--success);"></div>
+                    </div>
+                    <div class="att-progress-meta">
+                        <span>نسبة الحضور: <strong id="ua2rate_${iso}">${rate}%</strong></span>
+                        <span>إجمالي: <strong id="ua2tot_${iso}">${total}</strong></span>
+                    </div>
+
+                    <div class="att-card-bottom">
+                        <div class="att-pills-row">
+                            <span class="att-pill present" id="ua2p_${iso}"><i class="fas fa-check"></i> حاضر: ${pCount}</span>
+                            <span class="att-pill absent" id="ua2a_${iso}"><i class="fas fa-times"></i> غائب: ${aCount}</span>
+                        </div>
+                        <div class="att-open-arrow"><i class="fas fa-chevron-left"></i></div>
+                    </div>
+                </div>`;
             }).join('')}</div>`;
 
             fridays.forEach(f => {
@@ -28172,12 +28224,27 @@
                     const att = data.attendance || [];
                     const pCount = att.filter(a => a.status === 'present').length;
                     const aCount = att.filter(a => a.status === 'absent').length;
+                    const total = pCount + aCount;
+                    const rate = total > 0 ? Math.round(pCount / total * 100) : 0;
                     _saveLocalCache(`ua2_att_stats_${iso}`, { p: pCount, a: aCount });
 
                     const ep = document.getElementById(`ua2p_${iso}`);
                     const ea = document.getElementById(`ua2a_${iso}`);
-                    if (ep) ep.textContent = `حاضر: ${pCount}`;
-                    if (ea) ea.textContent = `غائب: ${aCount}`;
+                    const efill = document.getElementById(`ua2fill_${iso}`);
+                    const erate = document.getElementById(`ua2rate_${iso}`);
+                    const etot = document.getElementById(`ua2tot_${iso}`);
+                    const estatus = document.getElementById(`ua2status_${iso}`);
+
+                    if (ep) ep.innerHTML = `<i class="fas fa-check"></i> حاضر: ${pCount}`;
+                    if (ea) ea.innerHTML = `<i class="fas fa-times"></i> غائب: ${aCount}`;
+                    if (efill) efill.style.width = `${rate}%`;
+                    if (erate) erate.textContent = `${rate}%`;
+                    if (etot) etot.textContent = total;
+                    if (estatus) {
+                        const hasData = total > 0;
+                        estatus.className = `att-status-badge ${hasData ? 'recorded' : 'pending'}`;
+                        estatus.innerHTML = `<i class="fas ${hasData ? 'fa-check-circle' : 'fa-clock'}"></i> ${hasData ? 'تم التسجيل' : 'لم يُسجَّل'}`;
+                    }
                 }).catch(() => { });
             });
             return Promise.resolve();
@@ -28211,7 +28278,7 @@
             
             document.getElementById('uncleAttDetailTitle2').innerHTML = `<i class="fas fa-calendar-day" style="color:var(--brand);"></i> ${escHtml(dateStr)}`;
             document.getElementById('uncleAttSummaryBoxes2').innerHTML = `
-            <div class="sbox"><div class="sv">${total}</div><div class="sl">إجمالي</div></div>
+            <div class="sbox"><div class="sv">${total}</div><div class="sl">إجمالي الخُدام</div></div>
             <div class="sbox"><div class="sv" style="color:var(--success);">${present}</div><div class="sl">حاضر</div></div>
             <div class="sbox"><div class="sv" style="color:var(--danger);">${absent}</div><div class="sl">غائب</div></div>
             <div class="sbox"><div class="sv" style="color:${rate >= 70 ? 'var(--success)' : 'var(--danger)'};">${rate}%</div><div class="sl">نسبة الحضور</div></div>`;
@@ -28354,11 +28421,33 @@
                 // Update stats cache
                 const pCount = currentUncleAttendanceList.filter(a => a.status === 'present').length;
                 const aCount = currentUncleAttendanceList.filter(a => a.status === 'absent').length;
+                const total = currentUncleAttendanceList.length;
+                const rate = total > 0 ? Math.round(pCount / total * 100) : 0;
                 _saveLocalCache(`ua2_att_stats_${date}`, { p: pCount, a: aCount });
                 const ep = document.getElementById(`ua2p_${date}`);
                 const ea = document.getElementById(`ua2a_${date}`);
-                if (ep) ep.textContent = `حاضر: ${pCount}`;
-                if (ea) ea.textContent = `غائب: ${aCount}`;
+                const efill = document.getElementById(`ua2fill_${date}`);
+                const erate = document.getElementById(`ua2rate_${date}`);
+                const etot = document.getElementById(`ua2tot_${date}`);
+                const estatus = document.getElementById(`ua2status_${date}`);
+                if (ep) ep.innerHTML = `<i class="fas fa-check"></i> حاضر: ${pCount}`;
+                if (ea) ea.innerHTML = `<i class="fas fa-times"></i> غائب: ${aCount}`;
+                if (efill) efill.style.width = `${rate}%`;
+                if (erate) erate.textContent = `${rate}%`;
+                if (etot) etot.textContent = total;
+                if (estatus) {
+                    const hasData = total > 0;
+                    estatus.className = `att-status-badge ${hasData ? 'recorded' : 'pending'}`;
+                    estatus.innerHTML = `<i class="fas ${hasData ? 'fa-check-circle' : 'fa-clock'}"></i> ${hasData ? 'تم التسجيل' : 'لم يُسجَّل'}`;
+                }
+                const eSummary = document.getElementById('uncleAttSummaryBoxes2');
+                if (eSummary) {
+                    eSummary.innerHTML = `
+                    <div class="sbox"><div class="sv">${total}</div><div class="sl">إجمالي الخُدام</div></div>
+                    <div class="sbox"><div class="sv" style="color:var(--success);">${pCount}</div><div class="sl">حاضر</div></div>
+                    <div class="sbox"><div class="sv" style="color:var(--danger);">${aCount}</div><div class="sl">غائب</div></div>
+                    <div class="sbox"><div class="sv" style="color:${rate >= 70 ? 'var(--success)' : 'var(--danger)'};">${rate}%</div><div class="sl">نسبة الحضور</div></div>`;
+                }
             } else {
                 showToast('فشل التحديث', 'error');
                 ua2LoadDate(date);
@@ -28449,7 +28538,7 @@
             <div class="sbox"><div class="sv">${totalDays}</div><div class="sl">أيام مُسجَّلة</div></div>
             <div class="sbox"><div class="sv">${report.length}</div><div class="sl">إجمالي الخُدام</div></div>
             <div class="sbox"><div class="sv" style="color:${avgPct >= 70 ? 'var(--success)' : 'var(--danger)'};">${avgPct}%</div><div class="sl">متوسط الحضور</div></div>
-            <div class="sbox"><div class="sv" style="color:var(--primary);font-size:1rem;">${topUncle ? escHtml(topUncle.uncle_name.split(' ')[0]) : '—'}</div><div class="sl">🏆 الأكثر حضوراً</div></div>`;
+            <div class="sbox"><div class="sv" style="color:var(--brand);font-size:1.15rem;font-weight:900;">${topUncle ? escHtml(topUncle.uncle_name.split(' ')[0]) : '—'}</div><div class="sl">🏆 الأكثر حضوراً</div></div>`;
 
             rankEl.innerHTML = !report.length
                 ? '<div class="empty-state"><i class="fas fa-user-slash"></i><h3>لا يوجد خُدام أو لا توجد سجلات حضور لهذه السنة</h3><p style="color:var(--muted);font-size:0.82rem;">سجّل حضور الخُدام من تبويب «سجل الحضور» ثم ارجع للتقرير</p></div>'
@@ -28475,7 +28564,7 @@
                     <div class="uncle-report-stats">
                         <div class="uncle-stat-box present"><i class="fas fa-check"></i> ${r.present_count}</div>
                         <div class="uncle-stat-box absent"><i class="fas fa-times"></i> ${r.absent_count}</div>
-                        <div class="uncle-stat-box" style="background:var(--primary-light);color:var(--primary);">${r.percentage}%</div>
+                        <div class="uncle-stat-box" style="background:var(--brand-bg);color:var(--brand);">${r.percentage}%</div>
                     </div>
                 </div>`;
                 }).join('');
@@ -28489,15 +28578,15 @@
                     const pct = Math.round(day.present_count / maxCount * 100);
                     const attendPct = day.total_uncles > 0 ? Math.round(day.present_count / day.total_uncles * 100) : '--';
                     const barColor = day.total_uncles > 0 && day.present_count / day.total_uncles >= .8 ? 'var(--success)'
-                        : day.total_uncles > 0 && day.present_count / day.total_uncles >= .5 ? 'var(--primary)'
+                        : day.total_uncles > 0 && day.present_count / day.total_uncles >= .5 ? 'var(--brand)'
                             : 'var(--warning)';
                     return `<div class="day-rank-row">
-                    <div style="width:28px;height:28px;border-radius:50%;background:${i < 3 ? 'var(--primary)' : 'var(--border)'};color:${i < 3 ? 'white' : 'var(--muted)'};display:flex;align-items:center;justify-content:center;font-size:.72rem;font-weight:900;flex-shrink:0;">${i + 1}</div>
+                    <div style="width:32px;height:32px;border-radius:var(--r-md);background:${i < 3 ? 'var(--brand)' : 'var(--surface-3)'};color:${i < 3 ? '#ffffff' : 'var(--text-3)'};display:flex;align-items:center;justify-content:center;font-size:.82rem;font-weight:900;flex-shrink:0;font-family:'Cairo',sans-serif;">${i + 1}</div>
                     <div class="day-rank-bar-wrap">
-                        <div class="day-rank-label"><span>${ds}</span><span style="color:var(--success);"><i class="fas fa-check"></i> ${day.present_count} حاضر</span></div>
+                        <div class="day-rank-label"><span>${ds}</span><span style="color:var(--success);font-weight:800;"><i class="fas fa-check"></i> ${day.present_count} حاضر</span></div>
                         <div class="day-rank-bar"><div class="day-rank-fill" style="width:${pct}%;background:${barColor};"></div></div>
                     </div>
-                    <div style="font-size:.75rem;font-weight:800;color:var(--muted);flex-shrink:0;min-width:40px;text-align:center;">${attendPct}%</div>
+                    <div style="font-size:.8rem;font-weight:800;color:var(--text);flex-shrink:0;min-width:44px;text-align:center;background:var(--surface-2);padding:4px 8px;border-radius:var(--r-md);">${attendPct}%</div>
                 </div>`;
                 }).join('');
         }
@@ -28561,37 +28650,120 @@
             currentUncleAttTab = 'kids';
         }
 
+        let modalCachedUncles = [];
+        let modalUncleFilterQuery = '';
+
         async function showAddUncleAttendanceModal() {
             document.getElementById('uncleAttDate').value = new Date().toISOString().split('T')[0];
             uncleAttData = {};
+            modalUncleFilterQuery = '';
+            const searchInput = document.getElementById('modalUncleSearch');
+            if (searchInput) searchInput.value = '';
+
             const listEl = document.getElementById('uncleAttList');
             listEl.innerHTML = panelInlineSkeleton(5);
             openModal('addUncleAttendanceModal');
             const fd = mkFd('getAllUncles');
             const d = await fetch(API_URL, { method: 'POST', body: fd }).then(r => r.json()).catch(() => ({ success: false }));
             if (!d.success) { listEl.innerHTML = '<p style="color:var(--danger);text-align:center;padding:16px;">خطأ في تحميل الخُدام</p>'; return; }
-            const uncles = (d.uncles || []).filter(u => u.is_active != '0');
-            uncles.forEach(u => { uncleAttData[u.id] = 'present'; });
-            listEl.innerHTML = uncles.length ? uncles.map(u => {
-                const initials = (u.name || '؟').split(' ').map(w => w[0]).slice(0, 2).join('');
-                const imgHtml = u.image_url ? `<img src="${escHtml(u.image_url)}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;" onerror="this.style.display='none'">` : '';
-                return `<div class="uncle-att-item" id="uattItem_${u.id}">
-                <div class="uncle-att-ava">${imgHtml}${u.image_url ? '' : initials}</div>
-                <div style="flex:1;min-width:0;"><div style="font-weight:700;font-size:.88rem;">${escHtml(u.name)}</div><div style="font-size:.72rem;color:var(--muted);">${u.role === 'admin' ? 'مسؤول' : 'خادم'}</div></div>
-                <div class="toggle-btns">
-                    <button class="att-toggle-btn present" id="uattP_${u.id}" onclick="setUncleAttStatus(${u.id},'present',this)"><i class="fas fa-check"></i> حاضر</button>
-                    <button class="att-toggle-btn" id="uattA_${u.id}" onclick="setUncleAttStatus(${u.id},'absent',this)"><i class="fas fa-times"></i> غائب</button>
-                </div>
-            </div>`;
-            }).join('') : '<p style="color:var(--muted);text-align:center;padding:16px;">لا يوجد خُدام</p>';
+            modalCachedUncles = (d.uncles || []).filter(u => u.is_active != '0');
+            modalCachedUncles.forEach(u => { uncleAttData[u.id] = 'present'; });
+            renderModalUnclesList();
         }
+        window.showAddUncleAttendanceModal = showAddUncleAttendanceModal;
+
+        function renderModalUnclesList() {
+            const listEl = document.getElementById('uncleAttList');
+            if (!listEl) return;
+            let uncles = modalCachedUncles;
+            if (modalUncleFilterQuery) {
+                uncles = uncles.filter(u => (u.name || '').toLowerCase().includes(modalUncleFilterQuery) || (u.role || '').toLowerCase().includes(modalUncleFilterQuery));
+            }
+            if (!uncles.length) {
+                listEl.innerHTML = '<div class="empty-state" style="padding:24px;text-align:center;"><i class="fas fa-user-slash" style="font-size:1.8rem;color:var(--text-3);margin-bottom:8px;"></i><h4 style="color:var(--text-2);font-weight:700;">لا يوجد خُدام مطابقون للبحث</h4></div>';
+                updateModalAttCounts();
+                return;
+            }
+            listEl.innerHTML = uncles.map(u => {
+                const status = uncleAttData[u.id] || 'present';
+                const isPres = status === 'present';
+                const isAbs = status === 'absent';
+                const roleText = u.role === 'admin' ? 'مسؤول' : 'خادم';
+                return `<div class="modal-uncle-item" id="uattItem_${u.id}" style="display:flex;align-items:center;gap:12px;background:var(--surface-2);padding:10px 14px;border-radius:var(--r-xl);transition:all .2s var(--ease);">
+                    ${buildAttPersonAvatar(u.name, u.image_url || '')}
+                    <div style="flex:1;min-width:0;">
+                        <div style="font-weight:800;font-size:0.9rem;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" title="${escHtml(u.name)}">
+                            ${escHtml(u.name)}
+                        </div>
+                        <div style="font-size:0.72rem;color:var(--text-3);margin-top:2px;">
+                            <span style="background:var(--surface-3);color:var(--text-2);padding:2px 7px;border-radius:var(--r-sm);font-weight:600;">
+                                <i class="fas fa-shield-alt" style="font-size:0.65rem;"></i> ${roleText}
+                            </span>
+                        </div>
+                    </div>
+                    <div class="att-segmented-control">
+                        <button type="button" class="att-segment-btn ${isPres ? 'present-active' : ''}" id="uattP_${u.id}" onclick="setUncleAttStatus(${u.id},'present')">
+                            <i class="fas fa-check"></i> حاضر
+                        </button>
+                        <button type="button" class="att-segment-btn ${isAbs ? 'absent-active' : ''}" id="uattA_${u.id}" onclick="setUncleAttStatus(${u.id},'absent')">
+                            <i class="fas fa-times"></i> غائب
+                        </button>
+                    </div>
+                </div>`;
+            }).join('');
+            updateModalAttCounts();
+        }
+
+        function filterModalUncles(query) {
+            modalUncleFilterQuery = (query || '').trim().toLowerCase();
+            renderModalUnclesList();
+        }
+        window.filterModalUncles = filterModalUncles;
+
         function setUncleAttStatus(uncleId, status) {
             uncleAttData[uncleId] = status;
             const pBtn = document.getElementById(`uattP_${uncleId}`), aBtn = document.getElementById(`uattA_${uncleId}`);
-            if (pBtn) pBtn.className = 'att-toggle-btn' + (status === 'present' ? ' present' : '');
-            if (aBtn) aBtn.className = 'att-toggle-btn' + (status === 'absent' ? ' absent' : '');
+            if (pBtn && aBtn) {
+                if (status === 'present') {
+                    pBtn.classList.add('present-active');
+                    aBtn.classList.remove('absent-active');
+                } else {
+                    pBtn.classList.remove('present-active');
+                    aBtn.classList.add('absent-active');
+                }
+            }
+            updateModalAttCounts();
         }
-        function setAllUncleAtt(status) { Object.keys(uncleAttData).forEach(id => setUncleAttStatus(id, status)); }
+        window.setUncleAttStatus = setUncleAttStatus;
+
+        function updateModalAttCounts() {
+            const presEl = document.getElementById('modalAttCountPresent');
+            const absEl = document.getElementById('modalAttCountAbsent');
+            const vals = Object.values(uncleAttData);
+            const pres = vals.filter(s => s === 'present').length;
+            const abs = vals.filter(s => s === 'absent').length;
+            if (presEl) presEl.textContent = `حاضر: ${pres}`;
+            if (absEl) absEl.textContent = `غائب: ${abs}`;
+        }
+
+        function setAllUncleAtt(status) {
+            Object.keys(uncleAttData).forEach(id => {
+                uncleAttData[id] = status;
+                const pBtn = document.getElementById(`uattP_${id}`), aBtn = document.getElementById(`uattA_${id}`);
+                if (pBtn && aBtn) {
+                    if (status === 'present') {
+                        pBtn.classList.add('present-active');
+                        aBtn.classList.remove('absent-active');
+                    } else {
+                        pBtn.classList.remove('present-active');
+                        aBtn.classList.add('absent-active');
+                    }
+                }
+            });
+            updateModalAttCounts();
+        }
+        window.setAllUncleAtt = setAllUncleAtt;
+
         async function saveUncleAttendance() {
             const date = document.getElementById('uncleAttDate').value;
             if (!date) { showToast('اختر تاريخاً', 'warning'); return; }
@@ -28602,6 +28774,7 @@
             if (d.success) { showToast('تم حفظ حضور الخُدام ✓', 'success'); closeModal('addUncleAttendanceModal'); renderUa2FridayCards(); }
             else showToast(d.message || 'فشل الحفظ', 'error');
         }
+        window.saveUncleAttendance = saveUncleAttendance;
         // Auto-init year display for standalone uncle attendance tab
         (function () {
             const rd = document.getElementById('reportYearDisplay2');
@@ -32049,33 +32222,54 @@
 
     <!-- Uncle Attendance Modal -->
     <div id="addUncleAttendanceModal" class="modal">
-        <div class="modal-box" style="max-width:600px;">
-            <div class="modal-head">
-                <h2><i class="fas fa-user-tie"></i> تسجيل حضور الخُدام</h2>
-                <button class="modal-close" onclick="closeModal('addUncleAttendanceModal')"><i
-                        class="fas fa-times"></i></button>
+        <div class="modal-box" style="max-width:640px;border-radius:var(--r-2xl);overflow:hidden;box-shadow:var(--shadow-xl);border:none;">
+            <div class="modal-head" style="border-bottom:none;padding:20px 24px 16px 24px;background:var(--surface);">
+                <h2 style="font-size:1.15rem;font-weight:800;color:var(--text);display:flex;align-items:center;gap:10px;margin:0;">
+                    <i class="fas fa-user-tie" style="color:var(--brand);"></i> تسجيل حضور الخُدام
+                </h2>
+                <button class="modal-close close-btn" onclick="closeModal('addUncleAttendanceModal')">&times;</button>
             </div>
-            <div class="modal-body">
-                <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px;">
-                    <div class="form-group">
-                        <label class="form-label"><i class="fas fa-calendar"></i> التاريخ *</label>
-                        <input type="date" id="uncleAttDate" class="form-input">
+            <div class="modal-body" style="padding:0 24px 24px 24px;">
+                <!-- Date selector & Bulk Actions -->
+                <div style="background:var(--surface-2);padding:14px 16px;border-radius:var(--r-xl);margin-bottom:16px;display:flex;flex-direction:column;gap:12px;">
+                    <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;">
+                        <div style="display:flex;align-items:center;gap:8px;flex:1;min-width:200px;">
+                            <label class="form-label" style="margin:0;font-weight:700;white-space:nowrap;font-size:0.85rem;color:var(--text-2);">
+                                <i class="fas fa-calendar-alt" style="color:var(--brand);"></i> تاريخ الحضور:
+                            </label>
+                            <input type="date" id="uncleAttDate" class="form-input" style="height:38px;border-radius:var(--r-md);border:none;background:var(--surface);font-family:'Cairo',sans-serif;font-weight:700;box-shadow:var(--shadow-sm);flex:1;">
+                        </div>
+                        <div style="display:flex;align-items:center;gap:8px;">
+                            <button type="button" class="btn btn-sm" onclick="setAllUncleAtt('present')" style="background:var(--success);color:#ffffff;border:none;border-radius:var(--r-md);font-weight:700;padding:8px 14px;box-shadow:var(--shadow-sm);">
+                                <i class="fas fa-check-double"></i> تحضير الكل
+                            </button>
+                            <button type="button" class="btn btn-sm" onclick="setAllUncleAtt('absent')" style="background:var(--danger);color:#ffffff;border:none;border-radius:var(--r-md);font-weight:700;padding:8px 14px;box-shadow:var(--shadow-sm);">
+                                <i class="fas fa-user-times"></i> تغييب الكل
+                            </button>
+                        </div>
                     </div>
-                    <div class="form-group" style="display:flex;flex-direction:column;justify-content:flex-end;">
-                        <div style="display:flex;gap:8px;">
-                            <button class="btn btn-success btn-sm" onclick="setAllUncleAtt('present')"
-                                style="flex:1;"><i class="fas fa-check-double"></i> تحضير الكل</button>
-                            <button class="btn btn-danger btn-sm" onclick="setAllUncleAtt('absent')" style="flex:1;"><i
-                                    class="fas fa-times"></i> تغييب الكل</button>
+                    <!-- Search & Quick Stats -->
+                    <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;border-top:1px solid var(--border-solid);padding-top:12px;">
+                        <div style="position:relative;flex:1;min-width:180px;">
+                            <i class="fas fa-search" style="position:absolute;right:12px;top:50%;transform:translateY(-50%);color:var(--text-3);font-size:0.82rem;"></i>
+                            <input type="text" id="modalUncleSearch" placeholder="بحث باسم الخادم..." class="form-input" style="padding-right:34px;height:36px;border-radius:var(--r-md);border:none;background:var(--surface);font-size:0.84rem;font-family:'Cairo',sans-serif;width:100%;box-shadow:var(--shadow-sm);" oninput="filterModalUncles(this.value)">
+                        </div>
+                        <div style="display:flex;align-items:center;gap:8px;font-size:0.78rem;font-weight:700;">
+                            <span style="background:var(--success-bg);color:var(--success-dark);padding:4px 10px;border-radius:var(--r-full);" id="modalAttCountPresent">حاضر: 0</span>
+                            <span style="background:var(--danger-bg);color:var(--danger-dark);padding:4px 10px;border-radius:var(--r-full);" id="modalAttCountAbsent">غائب: 0</span>
                         </div>
                     </div>
                 </div>
-                <div id="uncleAttList" style="max-height:360px;overflow-y:auto;padding-right:4px;"></div>
-                <div style="display:flex;gap:10px;margin-top:16px;">
-                    <button class="btn btn-primary" style="flex:2;" onclick="saveUncleAttendance()"><i
-                            class="fas fa-save"></i> حفظ حضور الخُدام</button>
-                    <button class="btn btn-outline" style="flex:1;"
-                        onclick="closeModal('addUncleAttendanceModal')">إلغاء</button>
+
+                <div id="uncleAttList" style="max-height:380px;overflow-y:auto;padding-right:4px;display:flex;flex-direction:column;gap:8px;"></div>
+
+                <div style="display:flex;gap:10px;margin-top:18px;">
+                    <button class="btn btn-primary" style="flex:2;height:42px;border-radius:var(--r-md);border:none;font-weight:700;font-size:0.92rem;background:var(--brand);box-shadow:0 4px 14px var(--brand-glow);" onclick="saveUncleAttendance()">
+                        <i class="fas fa-save"></i> حفظ حضور الخُدام
+                    </button>
+                    <button class="btn btn-outline" style="flex:1;height:42px;border-radius:var(--r-md);border:none;background:var(--surface-2);color:var(--text-2);font-weight:700;font-size:0.92rem;" onclick="closeModal('addUncleAttendanceModal')">
+                        إلغاء
+                    </button>
                 </div>
             </div>
         </div>
