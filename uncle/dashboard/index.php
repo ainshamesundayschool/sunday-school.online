@@ -27786,18 +27786,30 @@ $showSettings = $hasChurchId || $isDevOrAdmin;
                     fd.append('studentName', currentStudentForEdit['الاسم']);
                     fd.append('studentClass', currentStudentForEdit['الفصل']);
                     fd.append('enhanceImage', 'false');
-                    fetch('/upload.php', { method: 'POST', body: fd, credentials: 'include' }).then(r => r.json()).then(d => {
-                        if (d.success) {
-                            const isUncle = !!currentStudentForEdit._isUncle;
-                            const isGuest = !!currentStudentForEdit._isGuest;
-                            const updatePayload = isUncle
-                                ? { action: 'updateUncleImage', uncle_id: getStudentDbId(currentStudentForEdit), imageUrl: d.imageUrl }
-                                : (isGuest
-                                    ? { action: 'updateGuestImage', guest_id: getStudentDbId(currentStudentForEdit), imageUrl: d.imageUrl }
-                                    : { action: 'updateStudentImage', studentId: getStudentDbId(currentStudentForEdit), studentName: currentStudentForEdit['الاسم'], imageUrl: d.imageUrl });
-                            makeApiCall(updatePayload, () => { showToast('تم حفظ الصورة', 'success'); const deleteBtn = document.getElementById('deleteStudentPhotoBtn'); if (deleteBtn) deleteBtn.style.display = 'flex'; setTimeout(loadData, 500); }, () => showToast('رُفعت ولكن فشل التحديث', 'warning'));
-                        } else showToast('فشل الرفع: ' + (d.message || ''), 'error');
-                    }).catch(() => showToast('خطأ في الاتصال', 'error'));
+                    const un = localStorage.getItem('uncleUsername') || window.currentUncle?.username || '';
+                    const uid = localStorage.getItem('uncleId') || window.currentUncle?.id || 0;
+                    if (un) fd.append('username', un);
+                    if (uid) fd.append('uncle_id', uid);
+                    const stId = getStudentDbId(currentStudentForEdit);
+                    if (stId) fd.append('studentId', stId);
+                    const stPhone = currentStudentForEdit['الموبايل'] || currentStudentForEdit['تليفون'] || currentStudentForEdit['الهاتف'] || '';
+                    if (stPhone) fd.append('studentPhone', stPhone);
+
+                    const uploadUrl = (window.location.pathname.indexOf('/testing/') !== -1) ? '/testing/upload.php' : '/upload.php';
+                    fetch(uploadUrl, { method: 'POST', body: fd, credentials: 'include' })
+                        .then(r => r.json().catch(() => r.text().then(t => { throw new Error(t || 'استجابة غير صالحة'); })))
+                        .then(d => {
+                            if (d.success) {
+                                const isUncle = !!currentStudentForEdit._isUncle;
+                                const isGuest = !!currentStudentForEdit._isGuest;
+                                const updatePayload = isUncle
+                                    ? { action: 'updateUncleImage', uncle_id: getStudentDbId(currentStudentForEdit), imageUrl: d.imageUrl }
+                                    : (isGuest
+                                        ? { action: 'updateGuestImage', guest_id: getStudentDbId(currentStudentForEdit), imageUrl: d.imageUrl }
+                                        : { action: 'updateStudentImage', studentId: getStudentDbId(currentStudentForEdit), studentName: currentStudentForEdit['الاسم'], imageUrl: d.imageUrl });
+                                makeApiCall(updatePayload, () => { showToast('تم حفظ الصورة', 'success'); const deleteBtn = document.getElementById('deleteStudentPhotoBtn'); if (deleteBtn) deleteBtn.style.display = 'flex'; setTimeout(loadData, 500); }, () => showToast('رُفعت ولكن فشل التحديث', 'warning'));
+                            } else showToast('فشل الرفع: ' + (d.message || ''), 'error');
+                        }).catch(e => showToast('خطأ في الاتصال: ' + (e.message || ''), 'error'));
                 }, 'image/jpeg', .9);
             } else {
                 // new student — still stage the blob for later submission
@@ -27814,20 +27826,35 @@ $showSettings = $hasChurchId || $isDevOrAdmin;
         function uploadStudentPhoto() {
             if (!currentCroppedBlob || !currentStudentForEdit) { showToast('اختر صورة أولاً', 'error'); return; }
             showLoading('جاري الرفع...');
-            const fd = new FormData(); fd.append('photo', new File([currentCroppedBlob], `profile_${Date.now()}.jpg`, { type: 'image/jpeg' })); fd.append('studentName', currentStudentForEdit['الاسم']); fd.append('studentClass', currentStudentForEdit['الفصل']);
+            const fd = new FormData();
+            fd.append('photo', new File([currentCroppedBlob], `profile_${Date.now()}.jpg`, { type: 'image/jpeg' }));
+            fd.append('studentName', currentStudentForEdit['الاسم']);
+            fd.append('studentClass', currentStudentForEdit['الفصل']);
             fd.append('enhanceImage', 'false');
-            fetch('/upload.php', { method: 'POST', body: fd, credentials: 'include' }).then(r => r.json()).then(d => {
-                if (d.success) {
-                    const isUncle = !!currentStudentForEdit._isUncle;
-                    const isGuest = !!currentStudentForEdit._isGuest;
-                    const updatePayload = isUncle
-                        ? { action: 'updateUncleImage', uncle_id: getStudentDbId(currentStudentForEdit), imageUrl: d.imageUrl }
-                        : (isGuest
-                            ? { action: 'updateGuestImage', guest_id: getStudentDbId(currentStudentForEdit), imageUrl: d.imageUrl }
-                            : { action: 'updateStudentImage', studentId: getStudentDbId(currentStudentForEdit), studentName: currentStudentForEdit['الاسم'], imageUrl: d.imageUrl });
-                    makeApiCall(updatePayload, () => { showToast('تم الرفع', 'success'); const deleteBtn = document.getElementById('deleteStudentPhotoBtn'); if (deleteBtn) deleteBtn.style.display = 'flex'; cancelPhotoUpload(); setTimeout(loadData, 500); }, () => showToast('رُفعت ولكن فشل التحديث', 'warning'));
-                } else showToast('فشل الرفع: ' + (d.message || ''), 'error');
-            }).catch(() => showToast('خطأ في الاتصال', 'error'));
+            const un = localStorage.getItem('uncleUsername') || window.currentUncle?.username || '';
+            const uid = localStorage.getItem('uncleId') || window.currentUncle?.id || 0;
+            if (un) fd.append('username', un);
+            if (uid) fd.append('uncle_id', uid);
+            const stId = getStudentDbId(currentStudentForEdit);
+            if (stId) fd.append('studentId', stId);
+            const stPhone = currentStudentForEdit['الموبايل'] || currentStudentForEdit['تليفون'] || currentStudentForEdit['الهاتف'] || '';
+            if (stPhone) fd.append('studentPhone', stPhone);
+
+            const uploadUrl = (window.location.pathname.indexOf('/testing/') !== -1) ? '/testing/upload.php' : '/upload.php';
+            fetch(uploadUrl, { method: 'POST', body: fd, credentials: 'include' })
+                .then(r => r.json().catch(() => r.text().then(t => { throw new Error(t || 'استجابة غير صالحة'); })))
+                .then(d => {
+                    if (d.success) {
+                        const isUncle = !!currentStudentForEdit._isUncle;
+                        const isGuest = !!currentStudentForEdit._isGuest;
+                        const updatePayload = isUncle
+                            ? { action: 'updateUncleImage', uncle_id: getStudentDbId(currentStudentForEdit), imageUrl: d.imageUrl }
+                            : (isGuest
+                                ? { action: 'updateGuestImage', guest_id: getStudentDbId(currentStudentForEdit), imageUrl: d.imageUrl }
+                                : { action: 'updateStudentImage', studentId: getStudentDbId(currentStudentForEdit), studentName: currentStudentForEdit['الاسم'], imageUrl: d.imageUrl });
+                        makeApiCall(updatePayload, () => { showToast('تم الرفع', 'success'); const deleteBtn = document.getElementById('deleteStudentPhotoBtn'); if (deleteBtn) deleteBtn.style.display = 'flex'; cancelPhotoUpload(); setTimeout(loadData, 500); }, () => showToast('رُفعت ولكن فشل التحديث', 'warning'));
+                    } else showToast('فشل الرفع: ' + (d.message || ''), 'error');
+                }).catch(e => showToast('خطأ في الاتصال: ' + (e.message || ''), 'error'));
         }
         function cancelPhotoUpload() {
             const p = document.getElementById('uploadPreview'), c = document.getElementById('uploadControls'), i = document.getElementById('photoInput');

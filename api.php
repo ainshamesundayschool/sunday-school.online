@@ -22233,11 +22233,15 @@ function studentGoogleLogin(): void
             $candidates[$student['id']] = $student;
         }
 
+        $defaultHash = '8d969eef6ecad3c29a3a629280e686cf0c3f5d5a86aff3ca12020c923adc6c92';
         $authenticated = [];
         foreach ($candidates as $st) {
             $st['birthday'] = formatDateFromDB($st['birthday'] ?? '');
             $st['class'] = $st['class'] ?? '---';
-            $st['has_password'] = !empty($st['password_hash']);
+            $storedHash = $st['password_hash'] ?? '';
+            $isDefPass = ($storedHash === $defaultHash);
+            $st['is_default_password'] = $isDefPass;
+            $st['has_password'] = (!empty($storedHash) && !$isDefPass);
             unset($st['password_hash']);
             $authenticated[] = $st;
         }
@@ -22285,11 +22289,12 @@ function linkStudentGoogleAccount(): void
         $resetToken = trim(sanitize($_POST['reset_token'] ?? ''));
         $identifier = trim(sanitize($_POST['identifier'] ?? $_POST['phone'] ?? $_POST['username'] ?? ''));
         $password = $_POST['password'] ?? '';
+        $confirmReplace = !empty($_POST['confirm_replace']) && (in_array(strval($_POST['confirm_replace']), ['1', 'true', 'yes'], true) || $_POST['confirm_replace'] === true);
 
         $targetStudent = null;
 
         if ($studentId > 0 && !empty($resetToken)) {
-            $stmt = $conn->prepare("SELECT id, name FROM students WHERE id = ? AND email_reset_token = ? AND email_reset_token_expires >= NOW() LIMIT 1");
+            $stmt = $conn->prepare("SELECT id, name, google_id, google_email FROM students WHERE id = ? AND email_reset_token = ? AND email_reset_token_expires >= NOW() LIMIT 1");
             $stmt->bind_param("is", $studentId, $resetToken);
             $stmt->execute();
             $targetStudent = $stmt->get_result()->fetch_assoc();
@@ -22304,7 +22309,7 @@ function linkStudentGoogleAccount(): void
         if (!$targetStudent && !empty($identifier) && !empty($password)) {
             $candidates = findStudentsByPhoneOrSiblings($conn, $identifier, true);
             if (empty($candidates)) {
-                $uStmt = $conn->prepare("SELECT id, name, password_hash FROM students WHERE JSON_UNQUOTE(JSON_EXTRACT(custom_info, '$.username')) = ? LIMIT 1");
+                $uStmt = $conn->prepare("SELECT id, name, password_hash, google_id, google_email, class FROM students WHERE JSON_UNQUOTE(JSON_EXTRACT(custom_info, '$.username')) = ? LIMIT 1");
                 $uStmt->bind_param("s", $identifier);
                 $uStmt->execute();
                 $res = $uStmt->get_result();
@@ -22312,12 +22317,48 @@ function linkStudentGoogleAccount(): void
                 $uStmt->close();
             }
             $sha256 = hash('sha256', $password);
+            $authedCandidates = [];
             foreach ($candidates as $cand) {
                 $hash = $cand['password_hash'] ?? '';
                 if (hash_equals($hash, $sha256) || password_verify($password, $hash)) {
-                    $targetStudent = ['id' => (int)$cand['id'], 'name' => $cand['name'] ?? ''];
-                    break;
+                    $cand['is_linked'] = !empty($cand['google_id']) || !empty($cand['google_email']);
+                    $authedCandidates[] = [
+                        'id' => (int)$cand['id'],
+                        'name' => $cand['name'] ?? '',
+                        'class' => $cand['class'] ?? '',
+                        'google_id' => $cand['google_id'] ?? '',
+                        'google_email' => $cand['google_email'] ?? '',
+                        'is_linked' => $cand['is_linked']
+                    ];
                 }
+            }
+
+            if (empty($authedCandidates)) {
+                sendJSON(['success' => false, 'message' => 'بيانات الدخول غير صحيحة أو كلمة المرور غير مطابقة']);
+                return;
+            }
+
+            if ($studentId > 0) {
+                foreach ($authedCandidates as $ac) {
+                    if ($ac['id'] === $studentId) {
+                        $targetStudent = $ac;
+                        break;
+                    }
+                }
+                if (!$targetStudent) {
+                    sendJSON(['success' => false, 'message' => 'الحساب المحدد غير صالح لهذا الرقم أو كلمة المرور']);
+                    return;
+                }
+            } elseif (count($authedCandidates) > 1) {
+                sendJSON([
+                    'success' => false,
+                    'code' => 'MULTIPLE_ACCOUNTS_FOUND',
+                    'message' => 'تم العثور على أكثر من حساب مرتبط بهذا الرقم، يرجى اختيار الحساب المطلوب ربطه.',
+                    'accounts' => $authedCandidates
+                ]);
+                return;
+            } else {
+                $targetStudent = $authedCandidates[0];
             }
         }
 
@@ -22327,6 +22368,39 @@ function linkStudentGoogleAccount(): void
         }
 
         $targetId = (int)$targetStudent['id'];
+
+        // Fetch current target student details to check existing Google link
+        $currStmt = $conn->prepare("SELECT id, name, google_id, google_email FROM students WHERE id = ? LIMIT 1");
+        $currStmt->bind_param("i", $targetId);
+        $currStmt->execute();
+        $currRow = $currStmt->get_result()->fetch_assoc();
+        $currStmt->close();
+
+        if (!$currRow) {
+            sendJSON(['success' => false, 'message' => 'لم يتم العثور على الحساب المراد ربطه']);
+            return;
+        }
+
+        $existingGoogleId = trim($currRow['google_id'] ?? '');
+        $existingGoogleEmail = trim($currRow['google_email'] ?? '');
+        $hasExistingGoogle = !empty($existingGoogleId) || !empty($existingGoogleEmail);
+        $isSameGoogle = ($existingGoogleId === $googleId) || (!empty($existingGoogleEmail) && strtolower($existingGoogleEmail) === strtolower($email));
+
+        // If target account already has a Google account linked, do not replace silently!
+        if ($hasExistingGoogle && !$isSameGoogle && !$confirmReplace) {
+            $displayExistingEmail = $existingGoogleEmail ?: 'حساب Google آخر';
+            sendJSON([
+                'success' => false,
+                'code' => 'ALREADY_LINKED_TO_GOOGLE',
+                'already_linked' => true,
+                'student_id' => $targetId,
+                'student_name' => $currRow['name'] ?? '',
+                'existing_google_email' => $displayExistingEmail,
+                'new_google_email' => $email,
+                'message' => 'هذا الحساب (' . ($currRow['name'] ?? '') . ') مرتبط بالفعل بحساب Google وهو: ' . $displayExistingEmail . '. هل تريد استبداله؟'
+            ]);
+            return;
+        }
 
         // Ensure this Google account isn't already linked to another distinct student
         $checkStmt = $conn->prepare("SELECT id, name FROM students WHERE google_id = ? AND id != ? LIMIT 1");
@@ -22360,7 +22434,8 @@ function linkStudentGoogleAccount(): void
             'message' => 'تم ربط حساب Google بنجاح بالبريد: ' . $email,
             'google_email' => $email,
             'google_id' => $googleId,
-            'student_id' => $targetId
+            'student_id' => $targetId,
+            'student_name' => $currRow['name'] ?? ''
         ]);
     } catch (Throwable $e) {
         sendJSON(['success' => false, 'message' => 'خطأ في ربط الحساب: ' . $e->getMessage()]);
@@ -23633,7 +23708,9 @@ function checkKidPasswordByPhone() {
         }
 
         if (!empty($candidates)) {
+            $defaultHash = '8d969eef6ecad3c29a3a629280e686cf0c3f5d5a86aff3ca12020c923adc6c92';
             $hasPassword = false;
+            $hasDefaultPassword = false;
             $primaryStudentId = null;
             $hasEmail = false;
             $isEmailVerified = false;
@@ -23642,9 +23719,14 @@ function checkKidPasswordByPhone() {
                 if ($primaryStudentId === null) {
                     $primaryStudentId = (int)$cand['id'];
                 }
-                if (!empty($cand['password_hash'])) {
-                    $hasPassword = true;
-                    $primaryStudentId = (int)$cand['id'];
+                $storedHash = $cand['password_hash'] ?? '';
+                if (!empty($storedHash)) {
+                    if ($storedHash === $defaultHash) {
+                        $hasDefaultPassword = true;
+                    } else {
+                        $hasPassword = true;
+                        $primaryStudentId = (int)$cand['id'];
+                    }
                 }
                 if (!empty($cand['email'])) {
                     $hasEmail = true;
@@ -23657,12 +23739,13 @@ function checkKidPasswordByPhone() {
             sendJSON([
                 'success' => true,
                 'has_password' => $hasPassword,
+                'is_default_password' => $hasDefaultPassword,
                 'has_email' => $hasEmail,
                 'is_email_verified' => $isEmailVerified,
                 'student_id' => $primaryStudentId,
                 'total_accounts' => count($candidates),
                 'is_email' => $isEmail,
-                'message' => $hasPassword ? 'يوجد كلمة مرور مسجلة لهذا الحساب' : 'لا توجد كلمة مرور مسجلة'
+                'message' => $hasPassword ? 'يوجد كلمة مرور مسجلة لهذا الحساب' : ($hasDefaultPassword ? 'الحساب يستخدم كلمة مرور افتراضية' : 'لا توجد كلمة مرور مسجلة')
             ]);
         } else {
             sendJSON([
@@ -23810,44 +23893,29 @@ function changeStudentPassword()
 
         $row = $stmt->get_result()->fetch_assoc();
 
+        $defaultHash = '8d969eef6ecad3c29a3a629280e686cf0c3f5d5a86aff3ca12020c923adc6c92';
         $currentHash = $row['password_hash'] ?? '';
+        $isDefaultPassword = ($currentHash === $defaultHash);
 
-
-
-        if (!$isAdd) {
-
+        if (!$isAdd && !$isDefaultPassword) {
             // Verify old password
-
             if (empty($oldPass)) {
-
                 sendJSON(['success' => false, 'message' => 'يرجى إدخال كلمة المرور الحالية']);
-
                 return;
-
             }
-
             $oldHash = hash('sha256', $oldPass);
-
             if ($oldHash !== $currentHash && !password_verify($oldPass, $currentHash)) {
-
                 sendJSON(['success' => false, 'message' => 'كلمة المرور الحالية غير صحيحة']);
-
                 return;
-
             }
-
         } else {
-
-            // isAdd mode — only allowed if account actually has no password yet
-
-            if (!empty($currentHash)) {
-
-                sendJSON(['success' => false, 'message' => 'الحساب لديه كلمة مرور بالفعل. استخدم تغيير كلمة المرور.']);
-
-                return;
-
+            // isAdd mode or isDefaultPassword — only reject if account has custom non-default password
+            if (!empty($currentHash) && !$isDefaultPassword && $isAdd) {
+                if (empty($oldPass) || (hash('sha256', $oldPass) !== $currentHash && !password_verify($oldPass, $currentHash))) {
+                    sendJSON(['success' => false, 'message' => 'الحساب لديه كلمة مرور بالفعل. استخدم تغيير كلمة المرور.']);
+                    return;
+                }
             }
-
         }
 
 
@@ -24220,9 +24288,12 @@ function kidLoginByPhoneWithPassword() {
             if (empty($storedHash) || password_verify($password, $storedHash)) {
                 @$conn->query("UPDATE students SET password_hash = '" . $conn->real_escape_string($sha256Hash) . "' WHERE id = {$cId}");
             }
+            $defaultHash = '8d969eef6ecad3c29a3a629280e686cf0c3f5d5a86aff3ca12020c923adc6c92';
+            $isDefPass = ($storedHash === $defaultHash || $sha256Hash === $defaultHash);
             $cand['birthday'] = formatDateFromDB($cand['birthday'] ?? '');
             $cand['class'] = $cand['class'] ?? '---';
-            $cand['has_password'] = true;
+            $cand['is_default_password'] = $isDefPass;
+            $cand['has_password'] = !$isDefPass;
             $hasEmail = !empty($cand['email']) && filter_var($cand['email'], FILTER_VALIDATE_EMAIL);
             $cand['has_email'] = $hasEmail;
             $cand['is_email_verified'] = !empty($cand['is_email_verified']);
@@ -24409,6 +24480,7 @@ function kidLogin()
 
         // Synchronize and format authenticated students
         $authenticated = [];
+        $defaultHash = '8d969eef6ecad3c29a3a629280e686cf0c3f5d5a86aff3ca12020c923adc6c92';
         foreach ($candidates as $student) {
             $sId = (int)$student['id'];
             $storedHash = $student['password_hash'] ?? '';
@@ -24417,7 +24489,9 @@ function kidLogin()
             }
             $student['birthday'] = formatDateFromDB($student['birthday'] ?? '');
             $student['class'] = $student['class'] ?? '---';
-            $student['has_password'] = true;
+            $isDefPass = ($storedHash === $defaultHash || $sha256Hash === $defaultHash);
+            $student['is_default_password'] = $isDefPass;
+            $student['has_password'] = !$isDefPass;
             unset($student['password_hash']);
             $authenticated[] = $student;
         }
@@ -24554,6 +24628,7 @@ function getStudentProfile()
                 s.coupons, s.attendance_coupons, s.commitment_coupons,
                 s.task_coupons, s.image_url, s.church_id, s.class_id,
                 s.custom_info, s.trip_points, s.gender, s.emergency_phone, s.parent_phones, s.medical_notes,
+                s.google_id, s.google_email, s.password_hash,
                 c.church_name,
                 COALESCE(cc.arabic_name, cl.arabic_name, s.class) AS class
             FROM students s
@@ -24812,6 +24887,13 @@ function getStudentProfile()
             }
             $tasksStmt->close();
             $row['tasks'] = $studentTasks;
+
+            $defaultHash = '8d969eef6ecad3c29a3a629280e686cf0c3f5d5a86aff3ca12020c923adc6c92';
+            $storedHash = $row['password_hash'] ?? '';
+            $isDefPass = ($storedHash === $defaultHash);
+            $row['is_default_password'] = $isDefPass;
+            $row['has_password'] = (!empty($storedHash) && !$isDefPass);
+            unset($row['password_hash']);
 
             sendJSON([
 

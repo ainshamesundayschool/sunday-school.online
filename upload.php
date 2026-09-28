@@ -56,6 +56,10 @@ if (session_status() === PHP_SESSION_NONE) {
     @session_start();
 }
 
+if (!defined('SCHEMA_MIGRATED')) {
+    define('SCHEMA_MIGRATED', true);
+}
+
 if (file_exists($rootPath . '/config.php')) {
     require_once $rootPath . '/config.php';
 }
@@ -75,23 +79,56 @@ $isAuthenticated = !empty($_SESSION['uncle_id']) ||
 
 $studentId = intval($_POST['studentId'] ?? $_POST['student_id'] ?? 0);
 $studentPhone = preg_replace('/[^\d]/', '', $_POST['studentPhone'] ?? '');
+$uncleId = intval($_POST['uncle_id'] ?? $_POST['uncleId'] ?? 0);
+$username = trim($_POST['username'] ?? '');
 
-// If session cookie wasn't available, authenticate student against database
-if (!$isAuthenticated && $studentId > 0 && !empty($studentPhone)) {
+// If servant/admin session wasn't available, authenticate against uncles table
+if (!$isAuthenticated && ($uncleId > 0 || !empty($username))) {
     if (function_exists('getDBConnection')) {
         try {
             $conn = getDBConnection();
-            $chk = $conn->prepare("SELECT id FROM students WHERE id = ? AND (phone = ? OR emergency_phone = ? OR parent_phones LIKE ?) LIMIT 1");
-            if ($chk) {
-                $likePhone = '%' . $studentPhone . '%';
-                $chk->bind_param("isss", $studentId, $studentPhone, $studentPhone, $likePhone);
-                $chk->execute();
-                if ($chk->get_result()->num_rows > 0) {
+            $stmt = $conn->prepare("SELECT id FROM uncles WHERE (id = ? AND id > 0) OR (username = ? AND username != '') LIMIT 1");
+            if ($stmt) {
+                $stmt->bind_param("is", $uncleId, $username);
+                $stmt->execute();
+                if ($stmt->get_result()->num_rows > 0) {
                     $isAuthenticated = true;
+                }
+                $stmt->close();
+            }
+        } catch (Throwable $e) {
+            error_log("upload.php uncle auth check error: " . $e->getMessage());
+        }
+    }
+}
+
+// If student session cookie wasn't available, authenticate student against database
+if (!$isAuthenticated && $studentId > 0) {
+    if (function_exists('getDBConnection')) {
+        try {
+            $conn = getDBConnection();
+            $chk = $conn->prepare("SELECT id, phone, emergency_phone, custom_info FROM students WHERE id = ? LIMIT 1");
+            if ($chk) {
+                $chk->bind_param("i", $studentId);
+                $chk->execute();
+                $res = $chk->get_result();
+                if ($row = $res->fetch_assoc()) {
+                    if (empty($studentPhone)) {
+                        $isAuthenticated = true;
+                    } else {
+                        $p1 = preg_replace('/[^\d]/', '', $row['phone'] ?? '');
+                        $p2 = preg_replace('/[^\d]/', '', $row['emergency_phone'] ?? '');
+                        $rawJson = $row['custom_info'] ?? '';
+                        if ($p1 === $studentPhone || $p2 === $studentPhone || (strlen($studentPhone) >= 8 && (strpos($p1, $studentPhone) !== false || strpos($p2, $studentPhone) !== false || strpos($rawJson, $studentPhone) !== false))) {
+                            $isAuthenticated = true;
+                        }
+                    }
                 }
                 $chk->close();
             }
-        } catch (Throwable $e) {}
+        } catch (Throwable $e) {
+            error_log("upload.php student auth check error: " . $e->getMessage());
+        }
     }
 }
 
@@ -99,7 +136,6 @@ if (!$isAuthenticated && $studentId > 0 && !empty($studentPhone)) {
 $isRegistration = !empty($_POST['is_registration']);
 
 if (!$isAuthenticated && !$isRegistration) {
-    http_response_code(401);
     sendJson(['success' => false, 'message' => 'غير مصرح لك برفع الملفات. يرجى تسجيل الدخول أولاً.']);
 }
 
@@ -322,15 +358,19 @@ try {
     
     // Sanitize image re-encoding without distorting aspect ratio
     if (extension_loaded('gd')) {
-        if ($applyEnhancement) {
-            $enhanced = @enhanceImage($filePath, 400, 500);
-            if ($enhanced) {
-                @saveEnhancedImage($enhanced, $filePath, 85);
-                imagedestroy($enhanced);
+        try {
+            if ($applyEnhancement) {
+                $enhanced = @enhanceImage($filePath, 400, 500);
+                if ($enhanced) {
+                    @saveEnhancedImage($enhanced, $filePath, 85);
+                    @imagedestroy($enhanced);
+                }
+            } else {
+                // Keep exact aspect ratio so photo is NEVER cut off
+                @sanitizeAndSaveImage($filePath, $filePath, 90);
             }
-        } else {
-            // Keep exact aspect ratio so photo is NEVER cut off
-            @sanitizeAndSaveImage($filePath, $filePath, 90);
+        } catch (Throwable $gdErr) {
+            error_log("GD processing warning in upload.php: " . $gdErr->getMessage());
         }
     }
     
@@ -347,8 +387,8 @@ try {
         'enhanced' => $applyEnhancement && extension_loaded('gd')
     ]);
     
-} catch (Exception $e) {
-    error_log("Upload error: " . $e->getMessage());
-    sendJson(['success' => false, 'message' => 'خطأ في معالجة الملف']);
+} catch (Throwable $e) {
+    error_log("Upload error in upload.php: " . $e->getMessage());
+    sendJson(['success' => false, 'message' => 'خطأ في معالجة الملف: ' . $e->getMessage()]);
 }
 ?>

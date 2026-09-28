@@ -5990,6 +5990,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'logou
       </button>
     </div>
 
+    <!-- Pinned Default Password Warning Banner -->
+    <div id="pinnedDefaultPassBanner" class="pinned-email-security-banner" style="display:none; background:linear-gradient(135deg, rgba(245, 158, 11, 0.12), rgba(217, 119, 6, 0.18)); border-color:rgba(245, 158, 11, 0.35);">
+      <div class="pes-content">
+        <div class="pes-icon" style="background:#fef3c7; color:#d97706;"><i class="fas fa-key"></i></div>
+        <div class="pes-text" style="color:var(--text, #1e293b);">
+          <strong style="color:#d97706;">تنبيه أمني هام:</strong> كلمة المرور الحالية لحسابك هي كلمة المرور الافتراضية! يرجى تعيين كلمة مرور خاصة بك لحماية وتأمين حسابك.
+        </div>
+      </div>
+      <button type="button" class="pes-btn" style="background:linear-gradient(135deg, #f59e0b, #d97706); box-shadow:0 4px 12px rgba(245, 158, 11, 0.25);" onclick="openOv('passOv')">
+        <i class="fas fa-lock"></i>
+        <span>تعيين كلمة المرور الآن</span>
+      </button>
+    </div>
+
     <!-- Converted bottom-nav placed inside main-content-desktop -->
     <nav class="bottom-nav" id="bottomNavBar" style="display:none;">
       <div class="bottom-nav-item active" data-tab="home" onclick="switchTab('home')">
@@ -7976,7 +7990,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'logou
         church_id: s.church_id || 0,
         church_type: s.church_type || localStorage.getItem('churchType') || 'kids',
         gender: s.gender || '',
-        has_password: s.has_password === true || s.has_password === 1 || s.has_password === '1',
+        is_default_password: s.is_default_password === true || s.is_default_password === 1 || s.is_default_password === '1',
+        has_password: (s.has_password === true || s.has_password === 1 || s.has_password === '1') && !(s.is_default_password === true || s.is_default_password === 1 || s.is_default_password === '1'),
         custom_info: s.custom_info ? (typeof s.custom_info === 'string' ? JSON.parse(s.custom_info) : s.custom_info) : null,
         trip_points: (function () { try { if (!s.trip_points) return {}; return (typeof s.trip_points === 'string' ? JSON.parse(s.trip_points) : s.trip_points) || {} } catch (e) { return {} } })(),
         paper_exams: s.paper_exams || [],
@@ -8049,7 +8064,27 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'logou
       renderPaperExams(s);
       showMain();
       syncViewMode();
+      checkStudentPasswordSecurity(s);
       checkStudentEmailSecurity(s);
+    }
+
+    // ── Password Security Alert / Default Password Banner ────────────
+    function checkStudentPasswordSecurity(s = student) {
+      if (!s) return;
+      const banner = document.getElementById('pinnedDefaultPassBanner');
+      if (!s.is_default_password) {
+        if (banner) banner.style.display = 'none';
+        return;
+      }
+      if (banner) banner.style.display = 'flex';
+
+      const dismissedKey = 'passPromptDismissed_' + s.id;
+      if (!sessionStorage.getItem(dismissedKey)) {
+        setTimeout(() => {
+          sessionStorage.setItem(dismissedKey, '1');
+          openOv('passOv');
+        }, 600);
+      }
     }
 
     // ── Email Security & Verification Alert / Pinned Banner ──────────
@@ -8069,9 +8104,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'logou
       // Missing or unverified email -> ALWAYS show the pinned banner
       if (banner) banner.style.display = 'flex';
 
-      // Show critical security modal on login once per session if not dismissed yet
+      // Show critical security modal on login once per session if not dismissed yet and password prompt is not open
       const dismissedKey = 'emailPromptDismissed_' + s.id;
-      if (!sessionStorage.getItem(dismissedKey)) {
+      if (!sessionStorage.getItem(dismissedKey) && !s.is_default_password) {
         setTimeout(() => {
           openEmailSecurityModal();
         }, 800);
@@ -8368,6 +8403,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'logou
           syncSettingsSheet(student);
           openGoogleSettingsOv();
           toast('تم ربط حساب Google بنجاح!', 'ok');
+        } else if (d.code === 'ALREADY_LINKED_TO_GOOGLE') {
+          const existing = d.existing_google_email || student.google_email || 'حساب Google آخر';
+          if (confirm(`هذا الحساب مرتبط بالفعل بحساب Google وهو:\n(${existing})\n\nهل تريد استبداله بحساب Google الجديد؟`)) {
+            saveProfileGoogleLink({ ...params, confirm_replace: 1 });
+          }
         } else {
           toast(d.message || 'فشل في ربط حساب Google', 'err');
         }
@@ -10622,17 +10662,25 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'logou
     // ── Sync passOv between "add" and "change" modes ─────────────────────
     function syncPassOverlay() {
       if (!student) return;
-      const isAdd = !student.has_password;
+      const isDefault = Boolean(student.is_default_password);
+      const isAdd = !student.has_password || isDefault;
       const title = document.getElementById('passOvTitle');
       const btnLbl = document.getElementById('passOvBtn');
       const menuLbl = document.getElementById('passMenuLabel');
       const note = document.getElementById('passAddNote');
       const oldWrap = document.getElementById('passOldWrap');
-      if (title) title.textContent = isAdd ? 'إضافة كلمة مرور' : 'تغيير كلمة المرور';
-      if (btnLbl) btnLbl.textContent = isAdd ? 'إضافة كلمة المرور' : 'تغيير كلمة المرور';
-      if (menuLbl) menuLbl.textContent = isAdd ? 'إضافة كلمة مرور' : 'تغيير كلمة المرور';
-      if (note) note.style.display = isAdd ? 'block' : 'none';
-      if (oldWrap) oldWrap.style.display = isAdd ? 'none' : 'block';
+      if (title) title.textContent = isDefault ? 'تعيين كلمة مرور جديدة' : (isAdd ? 'إضافة كلمة مرور' : 'تغيير كلمة المرور');
+      if (btnLbl) btnLbl.textContent = isDefault ? 'حفظ كلمة المرور' : (isAdd ? 'إضافة كلمة المرور' : 'تغيير كلمة المرور');
+      if (menuLbl) menuLbl.textContent = isDefault ? 'تعيين كلمة المرور' : (isAdd ? 'إضافة كلمة مرور' : 'تغيير كلمة المرور');
+      if (note) {
+        note.style.display = isAdd ? 'block' : 'none';
+        if (isDefault) {
+          note.innerHTML = '<i class="fas fa-exclamation-triangle" style="margin-left:6px; color:#d97706;"></i> كلمة المرور الحالية لحسابك هي كلمة المرور الافتراضية. يرجى تعيين كلمة مرور جديدة خاصة بك لتأمين حسابك وبياناتك.';
+        } else {
+          note.innerHTML = '<i class="fas fa-info-circle" style="margin-left:6px;"></i> لا توجد كلمة مرور لحسابك بعد. أضف كلمة مرور الآن لتتمكن من إرسال الكوبونات والمزيد.';
+        }
+      }
+      if (oldWrap) oldWrap.style.display = isDefault ? 'none' : (isAdd ? 'none' : 'block');
     }
 
     async function changePass() {
@@ -10640,7 +10688,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'logou
         toast('غير مسموح في وضع المعاينة', 'err');
         return;
       }
-      const isAdd = !student.has_password;
+      const isDefault = Boolean(student.is_default_password);
+      const isAdd = !student.has_password || isDefault;
       const o = document.getElementById('po').value.trim();
       const n = document.getElementById('pn').value.trim();
       const c = document.getElementById('pc').value.trim();
@@ -10660,15 +10709,30 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'logou
         if (d.success) {
           // Update localStorage password so next auto-login works
           localStorage.setItem('savedPassword', n);
-          // Mark student as having a password now
+          // Mark student as having a password now and no longer default
           student.has_password = true;
+          student.is_default_password = false;
           // Update all account copies
           const accRef = allAccounts.find(a => a.id === student.id);
-          if (accRef) accRef.has_password = true;
+          if (accRef) {
+            accRef.has_password = true;
+            accRef.is_default_password = false;
+          }
+          const pBanner = document.getElementById('pinnedDefaultPassBanner');
+          if (pBanner) pBanner.style.display = 'none';
+
           closeOv('passOv');
           syncPassOverlay();
           toast(d.message || 'تم ✓', 'ok');
           ['po', 'pn', 'pc'].forEach(id => document.getElementById(id).value = '');
+
+          // If email is still unverified, check if email modal should be opened next
+          if (student && (!student.email || !student.is_email_verified)) {
+            const dismissedEmailKey = 'emailPromptDismissed_' + student.id;
+            if (!sessionStorage.getItem(dismissedEmailKey)) {
+              setTimeout(() => openEmailSecurityModal(), 1200);
+            }
+          }
         } else toast(d.message || 'فشل', 'err');
       } catch (e) { toast('خطأ في الاتصال', 'err'); }
     }
@@ -10711,8 +10775,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'logou
       fd.append('studentId', student.id); fd.append('studentName', student.name);
       fd.append('studentPhone', student.phone); fd.append('studentClass', student.class); fd.append('churchId', student.church_id || 1);
       try {
-        const r = await fetch('/upload.php', { method: 'POST', body: fd, credentials: 'include', headers: { Accept: 'application/json' } });
-        const up = await r.json();
+        const uploadUrl = (window.location.pathname.indexOf('/testing/') !== -1) ? '/testing/upload.php' : '/upload.php';
+        const r = await fetch(uploadUrl, { method: 'POST', body: fd, credentials: 'include', headers: { Accept: 'application/json' } });
+        let up;
+        try {
+          up = await r.json();
+        } catch (jsonErr) {
+          const rawTxt = await r.text().catch(() => '');
+          throw new Error(rawTxt || 'استجابة غير صالحة من السيرفر');
+        }
         if (!up.success) throw new Error(up.message || 'فشل رفع الملف');
         const d = await api({ action: 'updateStudentImageAfterCreation', studentId: student.id, imageUrl: up.imageUrl });
         if (!d.success) throw new Error(d.message || 'فشل حفظ الرابط');
@@ -11295,6 +11366,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'logou
       if (id === 'firstTimeMultiAccModal') {
         const phoneOrUser = student?.phone || localStorage.getItem('savedUsername') || (student ? String(student.id) : '');
         localStorage.setItem('multiAccModalSeen_' + phoneOrUser, 'true');
+      }
+      if (id === 'passOv' && student && student.is_default_password) {
+        sessionStorage.setItem('passPromptDismissed_' + student.id, '1');
+        const pBanner = document.getElementById('pinnedDefaultPassBanner');
+        if (pBanner) pBanner.style.display = 'flex';
       }
       const ov = document.getElementById(id);
       if (!ov) return;
