@@ -8588,18 +8588,22 @@
         }
 
         .tab-export-panel.tab-export-fields-panel {
-            flex: 1;
+            flex: none;
             display: flex;
             flex-direction: column;
-            min-height: 260px;
+            height: auto;
+            min-height: auto;
+            overflow: visible;
         }
 
         .tab-export-panel.tab-export-fields-panel .tab-export-field-list,
         .tab-export-fields-panel .tab-export-field-list {
-            flex: 1;
-            max-height: none;
-            min-height: 200px;
-            overflow-y: auto;
+            flex: none;
+            max-height: none !important;
+            min-height: auto !important;
+            height: auto !important;
+            overflow: visible !important;
+            overflow-y: visible !important;
         }
 
         .tab-export-field-row {
@@ -8657,8 +8661,6 @@
             display: flex;
             gap: 6px;
             align-items: center;
-            background: var(--surface);
-            border: 1px solid var(--border-solid);
             border-radius: var(--r-md);
             padding: 6px 8px;
         }
@@ -10081,6 +10083,7 @@
                                     <h3 id="attDetailTitle" style="font-size:1.15rem;font-weight:800;color:var(--text);margin:0;display:flex;align-items:center;gap:8px;"></h3>
                                 </div>
                                 <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+                                    <button type="button" class="btn btn-outline btn-sm" onclick="openTabCustomExport('attendance')" title="تصدير مخصص" style="border-radius:var(--r-md);border:none;background:var(--surface-2);color:var(--text);font-weight:700;padding:8px 14px;"><i class="fas fa-sliders-h"></i> تصدير مخصص</button>
                                     <button type="button" class="btn btn-sm" onclick="bulkSetKidAttendance('present')" style="border-radius:var(--r-md);font-weight:700;background:var(--success);color:#ffffff;border:none;padding:8px 16px;box-shadow:var(--shadow-sm);"><i class="fas fa-check-double"></i> تحضير الكل</button>
                                     <button type="button" class="btn btn-sm" onclick="bulkSetKidAttendance('absent')" style="border-radius:var(--r-md);font-weight:700;background:var(--danger);color:#ffffff;border:none;padding:8px 16px;box-shadow:var(--shadow-sm);"><i class="fas fa-user-times"></i> غياب الكل</button>
                                     <button type="button" class="btn btn-sm" onclick="deleteCurrentDayAttendance()" style="border-radius:var(--r-md);color:var(--danger);background:var(--danger-bg);border:none;padding:8px 14px;font-weight:700;"><i class="fas fa-trash"></i> حذف الكشف</button>
@@ -10156,6 +10159,7 @@
                                         <h3 id="uncleAttDetailTitle2" style="font-size:1.15rem;font-weight:800;color:var(--text);margin:0;display:flex;align-items:center;gap:8px;"></h3>
                                     </div>
                                     <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+                                        <button type="button" class="btn btn-outline btn-sm" onclick="openTabCustomExport('uncleAttendance')" title="تصدير مخصص" style="border-radius:var(--r-md);border:none;background:var(--surface-2);color:var(--text);font-weight:700;padding:8px 14px;"><i class="fas fa-sliders-h"></i> تصدير مخصص</button>
                                         <button type="button" class="btn btn-sm" onclick="bulkSetUncleAttendance('present')" style="border-radius:var(--r-md);font-weight:700;background:var(--success);color:#ffffff;border:none;padding:8px 16px;box-shadow:var(--shadow-sm);"><i class="fas fa-check-double"></i> تحضير الكل</button>
                                         <button type="button" class="btn btn-sm" onclick="bulkSetUncleAttendance('absent')" style="border-radius:var(--r-md);font-weight:700;background:var(--danger);color:#ffffff;border:none;padding:8px 16px;box-shadow:var(--shadow-sm);"><i class="fas fa-user-times"></i> غياب الكل</button>
                                     </div>
@@ -18140,6 +18144,7 @@
             const fd = mkFd('getChurchClasses');
             const d = await fetch(API_URL, { method: 'POST', body: fd }).then(r => r.json()).catch(() => ({ success: false }));
             if (d.success) {
+                if (Array.isArray(d.classes)) classes = d.classes;
                 _saveLocalCache('classes', { classes: d.classes, has_custom: d.has_custom });
                 renderClassSettings(d.classes, d.has_custom);
             }
@@ -33618,7 +33623,7 @@
                 attendance: [
                     { key: 'index', label: '#', selected: true },
                     { key: 'name', label: 'اسم الطفل', selected: true },
-                    { key: 'username', label: 'اسم المستخدم', selected: false },
+                    { key: 'username', label: 'اسم المستخدم', selected: true },
                     { key: 'class', label: 'الفصل', selected: true },
                     { key: 'church', label: 'الكنيسة', selected: false },
                     { key: 'status', label: 'حالة الحضور', selected: true },
@@ -33630,7 +33635,7 @@
                 uncleAttendance: [
                     { key: 'index', label: '#', selected: true },
                     { key: 'name', label: 'اسم الخادم', selected: true },
-                    { key: 'username', label: 'اسم المستخدم', selected: false },
+                    { key: 'username', label: 'اسم المستخدم', selected: true },
                     { key: 'role', label: 'الدور', selected: true },
                     { key: 'church', label: 'الكنيسة', selected: false },
                     { key: 'status', label: 'حالة الحضور', selected: true },
@@ -33654,7 +33659,7 @@
                 classes: [
                     { key: 'index', label: '#', selected: true },
                     { key: 'class_name', label: 'اسم الفصل', selected: true },
-                    { key: 'stage', label: 'المرحلة', selected: true },
+                    { key: 'stage', label: 'المرحلة / الصف', selected: true },
                     { key: 'church', label: 'الكنيسة', selected: false },
                     { key: 'students_count', label: 'عدد الأطفال', selected: true },
                     { key: 'uncles_count', label: 'عدد الخدام', selected: true },
@@ -33701,7 +33706,7 @@
 
             function getItemUniqueId(item, index) {
                 if (!item) return 'item_' + index;
-                const val = item['_studentId'] || item.id || item.student_id || item.username || item.title || item.metric || item.church_code;
+                const val = item['_studentId'] || item.id || item.student_id || item.uncle_id || item.username || item.title || item.arabic_name || item.class_name || item.name || item.metric || item.church_code;
                 return val !== undefined && val !== null ? String(val) : ('key_' + index);
             }
 
@@ -33723,6 +33728,19 @@
                     devChurches: 'قائمة الكنائس المسجلة للنظام'
                 };
 
+                if (currentExportTab === 'attendance') {
+                    const isSpecificDate = (typeof currentAttendanceDate !== 'undefined' && currentAttendanceDate && typeof currentKidAttendanceList !== 'undefined' && currentKidAttendanceList && currentKidAttendanceList.length && document.getElementById('attendanceDetail')?.style.display !== 'none');
+                    if (isSpecificDate) {
+                        titlesMap.attendance = 'سجل حضور الأطفال — ' + currentAttendanceDate;
+                    }
+                }
+                if (currentExportTab === 'uncleAttendance') {
+                    const isSpecificDate = (typeof ua2Date !== 'undefined' && ua2Date && typeof currentUncleAttendanceList !== 'undefined' && currentUncleAttendanceList && currentUncleAttendanceList.length && document.getElementById('uncleAttendanceDetail2')?.style.display !== 'none');
+                    if (isSpecificDate) {
+                        titlesMap.uncleAttendance = 'سجل حضور الخُدام — ' + ua2Date;
+                    }
+                }
+
                 const modalTitleEl = document.getElementById('tabCustomExportModalTabTitle');
                 if (modalTitleEl) modalTitleEl.textContent = titlesMap[currentExportTab] || 'تقرير مخصص';
 
@@ -33739,6 +33757,28 @@
                 if (currentExportTab === 'pending' && (!pendingRegistrations || !pendingRegistrations.length) && typeof loadPendingRegistrations === 'function') await loadPendingRegistrations();
                 if (currentExportTab === 'trips' && (!currentTrips || !currentTrips.length) && typeof loadTrips === 'function') await loadTrips();
                 if (currentExportTab === 'devChurches' && (!allChurchesCache || !allChurchesCache.length) && typeof loadAllChurches === 'function') await loadAllChurches();
+                if (currentExportTab === 'classes') {
+                    if ((!allStudents || !allStudents.length) && typeof loadStudents === 'function') await loadStudents();
+                    if ((!allUncles || !allUncles.length) && typeof loadUncles === 'function') await loadUncles();
+                    if ((!classes || !classes.length) && typeof loadClassSettings === 'function') await loadClassSettings();
+                }
+                if (currentExportTab === 'attendance') {
+                    if ((!allStudents || !allStudents.length) && typeof loadStudents === 'function') await loadStudents();
+                }
+                if (currentExportTab === 'uncleAttendance') {
+                    if ((!allUncles || !allUncles.length) && typeof loadUncles === 'function') await loadUncles();
+                    try {
+                        const y = typeof ua2Report !== 'undefined' ? ua2Report : (typeof ua2Year !== 'undefined' ? ua2Year : new Date().getFullYear());
+                        const fd = mkFd('getUncleAttendanceReport');
+                        fd.append('year', String(y));
+                        const res = await fetch(API_URL, { method: 'POST', body: fd }).then(r => r.json());
+                        if (res && res.success && Array.isArray(res.uncle_report)) {
+                            window._uncleReportCache = res.uncle_report;
+                        }
+                    } catch (e) {
+                        console.warn('Could not load uncle report for export', e);
+                    }
+                }
 
                 // Init fields & sort layers
                 initTabCustomExportFields(true);
@@ -33785,7 +33825,7 @@
                     case 'trips':
                         return (Array.isArray(currentTrips) && currentTrips.length) ? currentTrips : (Array.isArray(allTripsCache) ? allTripsCache : []);
                     case 'classes':
-                        return Array.isArray(classes) ? classes : [];
+                        return getClassesExportData();
                     case 'pending':
                         return Array.isArray(pendingRegistrations) ? pendingRegistrations : [];
                     case 'history':
@@ -33800,49 +33840,218 @@
                 }
             }
 
+            function getClassesExportData() {
+                let rawClasses = Array.isArray(classes) && classes.length ? classes : [];
+                if (!rawClasses.length && Array.isArray(allStudents) && allStudents.length) {
+                    const uniqueNames = [...new Set(allStudents.map(s => s['الفصل'] || s.class).filter(Boolean))];
+                    rawClasses = uniqueNames.map((name, idx) => ({ id: idx + 1, arabic_name: name, code: 'cls_' + idx }));
+                }
+                return rawClasses.map((c, idx) => {
+                    const clsName = c.arabic_name || c.class_name || c.name || c['الفصل'] || c.class || '';
+                    const clsId = c.id;
+
+                    const unclesInClass = (Array.isArray(allUncles) ? allUncles : []).filter(u => {
+                        if (!u.classes) return false;
+                        if (Array.isArray(u.classes)) {
+                            return u.classes.some(uc => {
+                                if (typeof uc === 'object' && uc !== null) {
+                                    return (clsId && (uc.id == clsId || uc.class_id == clsId)) ||
+                                        (clsName && (uc.class_name === clsName || uc.arabic_name === clsName || uc.name === clsName));
+                                }
+                                return String(uc) === String(clsName) || (clsId && String(uc) === String(clsId));
+                            });
+                        }
+                        if (typeof u.classes === 'string') {
+                            return u.classes.includes(clsName);
+                        }
+                        return false;
+                    });
+
+                    const studentsInClass = (Array.isArray(allStudents) ? allStudents : []).filter(s => {
+                        return (clsName && (s['الفصل'] === clsName || s.class === clsName)) || (clsId && (s.class_id == clsId || s['class_id'] == clsId));
+                    });
+
+                    let stage = c.stage || c['المرحلة'] || c.grade || '';
+                    if (!stage && typeof _currentCombinedGroups !== 'undefined' && Array.isArray(_currentCombinedGroups)) {
+                        const grp = _currentCombinedGroups.find(g => Array.isArray(g.classes) && g.classes.includes(clsName));
+                        if (grp && grp.label) stage = grp.label;
+                    }
+                    if (!stage && studentsInClass.length) {
+                        const stWithStage = studentsInClass.find(s => s.stage || s['المرحلة']);
+                        if (stWithStage) stage = stWithStage.stage || stWithStage['المرحلة'];
+                    }
+                    if (!stage) {
+                        const lowerName = clsName.toLowerCase();
+                        const lowerCode = (c.code || '').toLowerCase();
+                        if (lowerName.includes('حضانة') || lowerName.includes('كي جي') || lowerName.includes('kg') || lowerName.includes('تمهيدي') || lowerName.includes('بيبي') || lowerCode.startsWith('kg')) {
+                            stage = 'حضانة';
+                        } else if (lowerName.includes('ابتدائي') || lowerName.includes('ابتدائى') || lowerCode.startsWith('primary') || lowerCode.startsWith('grade_')) {
+                            stage = 'ابتدائي';
+                        } else if (lowerName.includes('إعدادي') || lowerName.includes('اعدادي') || lowerName.includes('إعدادى') || lowerName.includes('اعدادى') || lowerCode.startsWith('prep')) {
+                            stage = 'إعدادي';
+                        } else if (lowerName.includes('ثانوي') || lowerName.includes('ثانوى') || lowerCode.startsWith('sec')) {
+                            stage = 'ثانوي';
+                        } else if (lowerName.includes('جامع') || lowerName.includes('خريج')) {
+                            stage = 'جامعيين وخريجين';
+                        } else {
+                            stage = 'عام';
+                        }
+                    }
+
+                    return {
+                        ...c,
+                        id: clsId || ('cls_' + idx),
+                        class_name: clsName,
+                        arabic_name: clsName,
+                        name: clsName,
+                        stage: stage,
+                        students_count: (c.student_count !== undefined && c.student_count > 0) ? c.student_count : studentsInClass.length,
+                        uncles_count: unclesInClass.length,
+                        uncles_list: unclesInClass.map(u => u.name).filter(Boolean).join(', ') || 'لا يوجد خدام موكلون'
+                    };
+                });
+            }
+
             function getAttendanceExportData() {
-                if (typeof manualAttStudents !== 'undefined' && Object.keys(manualAttStudents).length) {
-                    return Object.entries(manualAttStudents).map(([id, st], idx) => {
-                        const student = Array.isArray(allStudents) ? allStudents.find(x => x['_studentId'] == id || x.id == id) : null;
+                const isSpecificDate = (typeof currentAttendanceDate !== 'undefined' && currentAttendanceDate && typeof currentKidAttendanceList !== 'undefined' && currentKidAttendanceList && currentKidAttendanceList.length && document.getElementById('attendanceDetail')?.style.display !== 'none');
+
+                if (isSpecificDate) {
+                    return currentKidAttendanceList.map((item, idx) => {
+                        const sid = item.student_id || item.id;
+                        const student = Array.isArray(allStudents) ? allStudents.find(x => x['_studentId'] == sid || x.id == sid) : null;
+
+                        let total_p = 0;
+                        let total_a = 0;
+                        if (student && student._allAttendance && typeof student._allAttendance === 'object') {
+                            const vals = Object.values(student._allAttendance);
+                            total_p = vals.filter(x => x === 'ح' || x === 'present' || x === 'P').length;
+                            total_a = vals.filter(x => x === 'غ' || x === 'absent' || x === 'A').length;
+                        } else if (student) {
+                            total_p = student.att_p || student.attendance_count || 0;
+                            total_a = student.att_a || 0;
+                        }
+                        const isPres = (item.status === 'present' || item.status === 'ح' || item.status === 'P');
+                        if (total_p === 0 && total_a === 0) {
+                            if (isPres) total_p = 1; else total_a = 1;
+                        }
+                        const tot = total_p + total_a;
+                        const rateStr = tot > 0 ? (Math.round(total_p / tot * 100) + '%') : '0%';
+
+                        let uName = (student && (student.username || student._customInfo?.username || student['اسم المستخدم'] || student.code)) || (item.username || item.code);
+                        if (!uName && student && student.email && student.email.includes('@')) {
+                            uName = student.email.split('@')[0];
+                        }
+
                         return {
-                            id: id,
-                            name: student ? (student['الاسم'] || student.name) : ('طفل ' + id),
-                            class: student ? (student['الفصل'] || student.class) : '-',
-                            status: st === 'P' ? 'حاضر' : (st === 'A' ? 'غائب' : (st === 'E' ? 'بعذر' : st)),
-                            total_p: student ? (student.att_p || '-') : '-',
-                            total_a: student ? (student.att_a || '-') : '-',
-                            attendance_rate: student ? (student.att_rate ? student.att_rate + '%' : '-') : '-',
-                            phone: student ? (student['الهاتف'] || student.phone) : '-'
+                            id: sid,
+                            _studentId: sid,
+                            name: item.student_name || item.name || (student ? (student['الاسم'] || student.name) : ('طفل ' + sid)),
+                            username: uName || '-',
+                            class: item.class || (student ? (student['الفصل'] || student.class) : '-'),
+                            status: isPres ? 'حاضر' : 'غائب',
+                            total_p: total_p,
+                            total_a: total_a,
+                            attendance_rate: rateStr,
+                            phone: (student && (student['الهاتف'] || student.phone)) || item.phone || '-'
                         };
                     });
                 }
-                if (Array.isArray(allStudents)) {
-                    return allStudents.map(s => ({
-                        id: s['_studentId'] || s.id,
-                        name: s['الاسم'] || s.name,
-                        class: s['الفصل'] || s.class,
-                        status: 'مسجل',
-                        total_p: s.att_p || s.attendance_count || '-',
-                        total_a: s.att_a || '-',
-                        attendance_rate: s.att_rate ? s.att_rate + '%' : '-',
-                        phone: s['الهاتف'] || s.phone
-                    }));
+
+                if (Array.isArray(allStudents) && allStudents.length) {
+                    return allStudents.map((s, idx) => {
+                        const sid = s['_studentId'] || s.id;
+                        let total_p = 0;
+                        let total_a = 0;
+                        if (s._allAttendance && typeof s._allAttendance === 'object') {
+                            const vals = Object.values(s._allAttendance);
+                            total_p = vals.filter(x => x === 'ح' || x === 'present' || x === 'P').length;
+                            total_a = vals.filter(x => x === 'غ' || x === 'absent' || x === 'A').length;
+                        } else {
+                            total_p = s.att_p || s.attendance_count || 0;
+                            total_a = s.att_a || 0;
+                        }
+                        const tot = total_p + total_a;
+                        const rateStr = tot > 0 ? (Math.round(total_p / tot * 100) + '%') : '0%';
+                        let uName = s.username || s._customInfo?.username || s['اسم المستخدم'] || s.code;
+                        if (!uName && s.email && s.email.includes('@')) {
+                            uName = s.email.split('@')[0];
+                        }
+
+                        return {
+                            id: sid,
+                            _studentId: sid,
+                            name: s['الاسم'] || s.name,
+                            username: uName || '-',
+                            class: s['الفصل'] || s.class || '-',
+                            status: tot > 0 ? (total_p > 0 ? 'منتظم' : 'متغيب') : 'مسجل',
+                            total_p: total_p,
+                            total_a: total_a,
+                            attendance_rate: rateStr,
+                            phone: s['الهاتف'] || s.phone || '-'
+                        };
+                    });
                 }
                 return [];
             }
 
             function getUncleAttendanceExportData() {
-                if (Array.isArray(allUncles)) {
-                    return allUncles.map(u => ({
-                        id: u.id,
-                        name: u.name,
-                        role: u.role === 'admin' ? 'مسؤول' : 'خادم',
-                        status: u.att_status || 'مسجل',
-                        total_p: u.att_p || '-',
-                        total_a: u.att_a || '-',
-                        attendance_rate: u.att_rate ? u.att_rate + '%' : '-',
-                        phone: u.phone || '-'
-                    }));
+                const isSpecificDate = (typeof ua2Date !== 'undefined' && ua2Date && typeof currentUncleAttendanceList !== 'undefined' && currentUncleAttendanceList && currentUncleAttendanceList.length && document.getElementById('uncleAttendanceDetail2')?.style.display !== 'none');
+                const reportMap = new Map();
+                if (window._uncleReportCache && Array.isArray(window._uncleReportCache)) {
+                    window._uncleReportCache.forEach(r => reportMap.set(String(r.uncle_id), r));
+                }
+
+                if (isSpecificDate) {
+                    return currentUncleAttendanceList.map((item, idx) => {
+                        const uid = item.uncle_id || item.id;
+                        const uncle = Array.isArray(allUncles) ? allUncles.find(x => x.id == uid) : null;
+                        const rep = reportMap.get(String(uid));
+
+                        let total_p = rep ? rep.present_count : (uncle?.att_p || 0);
+                        let total_a = rep ? rep.absent_count : (uncle?.att_a || 0);
+                        const isPres = (item.status === 'present' || item.status === 'حاضر');
+                        if (total_p === 0 && total_a === 0) {
+                            if (isPres) total_p = 1; else total_a = 1;
+                        }
+                        const tot = total_p + total_a;
+                        const rateStr = rep ? (rep.percentage + '%') : (tot > 0 ? (Math.round(total_p / tot * 100) + '%') : '0%');
+                        const uName = (uncle && (uncle.username || uncle.user_name || uncle['اسم المستخدم'])) || (item.username || '-');
+
+                        return {
+                            id: uid,
+                            name: item.uncle_name || item.name || (uncle ? uncle.name : ('خادم ' + uid)),
+                            username: uName,
+                            role: (uncle ? uncle.role : item.role) === 'admin' ? 'مسؤول' : 'خادم',
+                            status: isPres ? 'حاضر' : 'غائب',
+                            total_p: total_p,
+                            total_a: total_a,
+                            attendance_rate: rateStr,
+                            phone: (uncle && uncle.phone) || item.phone || '-'
+                        };
+                    });
+                }
+
+                if (Array.isArray(allUncles) && allUncles.length) {
+                    return allUncles.map(u => {
+                        const rep = reportMap.get(String(u.id));
+                        const total_p = rep ? rep.present_count : (u.att_p || 0);
+                        const total_a = rep ? rep.absent_count : (u.att_a || 0);
+                        const tot = total_p + total_a;
+                        const rateStr = rep ? (rep.percentage + '%') : (tot > 0 ? (Math.round(total_p / tot * 100) + '%') : '0%');
+                        const uName = u.username || u.user_name || u['اسم المستخدم'] || '-';
+
+                        return {
+                            id: u.id,
+                            name: u.name,
+                            username: uName,
+                            role: u.role === 'admin' ? 'مسؤول' : 'خادم',
+                            status: u.att_status || ((total_p + total_a > 0) ? (total_p > 0 ? 'منتظم' : 'متغيب') : 'مسجل'),
+                            total_p: total_p,
+                            total_a: total_a,
+                            attendance_rate: rateStr,
+                            phone: u.phone || '-'
+                        };
+                    });
                 }
                 return [];
             }
@@ -34176,9 +34385,9 @@
                 const q = tabExportSearchQuery;
                 const searchResults = candidates.filter((item, idx) => {
                     if (!q) return true;
-                    const name = (item['الاسم'] || item.name || item.church_name || item.title || item.user_name || item.metric || '').toLowerCase();
+                    const name = (item['الاسم'] || item.name || item.arabic_name || item.class_name || item.church_name || item.title || item.user_name || item.metric || '').toLowerCase();
                     const phone = (item['الهاتف'] || item.phone || item.tel || '').toLowerCase();
-                    const cls = (item['الفصل'] || item.class || item.church_code || item.target_class || '').toLowerCase();
+                    const cls = (item['الفصل'] || item.class || item.stage || item.church_code || item.target_class || '').toLowerCase();
                     return name.includes(q) || phone.includes(q) || cls.includes(q);
                 });
 
@@ -34188,9 +34397,9 @@
                 listEl.innerHTML = searchResults.map((item, idx) => {
                     const key = getItemUniqueId(item, idx);
                     const isChecked = tabExportSelectedKeys.has(key);
-                    const name = item['الاسم'] || item.name || item.church_name || item.title || item.user_name || item.metric || ('عنصر ' + (idx + 1));
+                    const name = item['الاسم'] || item.name || item.arabic_name || item.class_name || item.church_name || item.title || item.user_name || item.metric || ('عنصر ' + (idx + 1));
                     const typeText = item.church_type === 'youth' ? 'شباب' : (item.church_type === 'kids' ? 'أطفال' : (item.church_type || ''));
-                    const sub = item['الفصل'] || item.class || item.role || (item.church_code ? `[${typeText}] ${item.church_code}` : '') || item.value || '';
+                    const sub = item['الفصل'] || item.class || item.stage || item.role || (item.church_code ? `[${typeText}] ${item.church_code}` : '') || item.value || '';
 
                     return `
                     <label style="display:flex; align-items:center; gap:6px; font-size:0.75rem; padding:4px 6px; border-radius:6px; cursor:pointer; background:var(--surface-2); border:1px solid var(--border-solid);">
@@ -34284,11 +34493,32 @@
                     case 'index':
                         return ''; // Handled dynamically in loop
                     case 'name':
-                        val = item['الاسم'] || item.name || item.title || item.user_name || item.metric || '-';
+                        val = item['الاسم'] || item.name || item.arabic_name || item.class_name || item.title || item.user_name || item.metric || '-';
                         break;
-                    case 'username':
-                        val = item.username || item.user_name || '-';
+                    case 'username': {
+                        let un = item.username || item.user_name || item['اسم المستخدم'];
+                        if (!un && item._customInfo && typeof item._customInfo === 'object') {
+                            un = item._customInfo.username || item._customInfo['اسم المستخدم'];
+                        }
+                        if (!un && item.custom_info) {
+                            if (typeof item.custom_info === 'object') {
+                                un = item.custom_info.username || item.custom_info['اسم المستخدم'];
+                            } else if (typeof item.custom_info === 'string') {
+                                try {
+                                    const parsed = JSON.parse(item.custom_info);
+                                    un = parsed.username || parsed['اسم المستخدم'];
+                                } catch (e) {
+                                    const match = item.custom_info.match(/"username"\s*:\s*"([^"]+)"/);
+                                    if (match) un = match[1];
+                                }
+                            }
+                        }
+                        if (!un && item.email && typeof item.email === 'string' && item.email.includes('@')) {
+                            un = item.email.split('@')[0];
+                        }
+                        val = un || '-';
                         break;
+                    }
                     case 'role':
                         val = item.role === 'admin' ? 'مسؤول' : (item.role === 'uncle' ? 'خادم' : (item.role || '-'));
                         break;
@@ -34327,33 +34557,71 @@
                     case 'last_class':
                     case 'class_or_role':
                     case 'class_name':
-                        val = item['الفصل'] || item.class || item.class_name || item.target_class || item.last_class || item.class_or_role || '-';
+                        val = item.class_name || item.arabic_name || item['الفصل'] || item.class || item.name || item.target_class || item.last_class || item.class_or_role || '-';
                         break;
                     case 'classes':
                     case 'uncles_list': {
-                        const rawVal = item['classes'] || item['assigned_classes'] || item['uncles_list'] || item['uncles'] || item['الفصول الموكلة'] || item['الخدام الموكلون'];
+                        const rawVal = item['classes'] || item['assigned_classes'] || item['uncles_list'] || item['uncles'] || item['الخدام الموكلون'] || item['الفصول الموكلة'];
                         if (Array.isArray(rawVal)) {
                             const names = rawVal.map(c => {
                                 if (typeof c === 'object' && c !== null) {
                                     if (c instanceof HTMLElement || c instanceof Element) return c.textContent || c.innerText || '';
-                                    return c.class_name || c.name || c.title || c.arabic_name || c.label || '';
+                                    return c.name || c.uncle_name || c.class_name || c.title || c.arabic_name || c.label || '';
                                 }
                                 return String(c || '');
                             }).filter(Boolean);
-                            val = names.length ? names.join(', ') : (item['class'] || '-');
+                            val = names.length ? names.join(', ') : (item['class'] || 'لا يوجد');
                         } else if (typeof rawVal === 'object' && rawVal !== null) {
-                            val = rawVal.class_name || rawVal.name || rawVal.title || rawVal.arabic_name || '-';
+                            val = rawVal.name || rawVal.uncle_name || rawVal.class_name || rawVal.title || rawVal.arabic_name || 'لا يوجد';
                         } else {
-                            val = rawVal || item['class'] || '-';
+                            val = rawVal || item['class'] || 'لا يوجد';
                         }
                         break;
                     }
                     case 'coupons':
                         val = item['كوبونات'] !== undefined ? item['كوبونات'] : (item.coupons !== undefined ? item.coupons : '-');
                         break;
-                    case 'attendance_rate':
-                        val = item.attendance_rate !== undefined ? item.attendance_rate : (item.att_rate ? item.att_rate + '%' : '-');
+                    case 'total_p': {
+                        let tp = item.total_p !== undefined ? item.total_p : (item.present_count !== undefined ? item.present_count : undefined);
+                        if (tp === undefined && item._allAttendance && typeof item._allAttendance === 'object') {
+                            const vals = Object.values(item._allAttendance);
+                            tp = vals.filter(x => x === 'ح' || x === 'present' || x === 'P').length;
+                        }
+                        if (tp === undefined) tp = item.att_p !== undefined ? item.att_p : (item.attendance_count !== undefined ? item.attendance_count : '-');
+                        val = tp;
                         break;
+                    }
+                    case 'total_a': {
+                        let ta = item.total_a !== undefined ? item.total_a : (item.absent_count !== undefined ? item.absent_count : undefined);
+                        if (ta === undefined && item._allAttendance && typeof item._allAttendance === 'object') {
+                            const vals = Object.values(item._allAttendance);
+                            ta = vals.filter(x => x === 'غ' || x === 'absent' || x === 'A').length;
+                        }
+                        if (ta === undefined) ta = item.att_a !== undefined ? item.att_a : '-';
+                        val = ta;
+                        break;
+                    }
+                    case 'attendance_rate': {
+                        let rate = item.attendance_rate !== undefined ? item.attendance_rate : (item.percentage !== undefined ? item.percentage + '%' : undefined);
+                        if (rate === undefined && item._allAttendance && typeof item._allAttendance === 'object') {
+                            const vals = Object.values(item._allAttendance);
+                            const p = vals.filter(x => x === 'ح' || x === 'present' || x === 'P').length;
+                            const a = vals.filter(x => x === 'غ' || x === 'absent' || x === 'A').length;
+                            const tot = p + a;
+                            rate = tot > 0 ? (Math.round(p / tot * 100) + '%') : '0%';
+                        }
+                        if (rate === undefined && item.att_rate !== undefined) {
+                            rate = item.att_rate + '%';
+                        }
+                        if (rate === undefined && item.total_p !== undefined && item.total_a !== undefined) {
+                            const p = parseInt(item.total_p) || 0;
+                            const a = parseInt(item.total_a) || 0;
+                            const tot = p + a;
+                            rate = tot > 0 ? (Math.round(p / tot * 100) + '%') : '0%';
+                        }
+                        val = rate !== undefined ? rate : '-';
+                        break;
+                    }
                     case 'medical_notes':
                     case 'notes':
                         val = item['ملاحظات طبية'] || item.medical_notes || item.notes || item.details || '-';
@@ -34408,13 +34676,13 @@
                         val = (item.is_approved !== undefined && parseInt(item.is_approved) === 0) ? 'غير مفعّلة' : 'مفعّلة (مضمونة)';
                         break;
                     case 'stage':
-                        val = item.stage || '-';
+                        val = item.stage || item['المرحلة'] || item.grade || '-';
                         break;
                     case 'students_count':
-                        val = item.student_count || item.students_count || (Array.isArray(item.students) ? item.students.length : 0);
+                        val = item.students_count !== undefined ? item.students_count : (item.student_count !== undefined ? item.student_count : (Array.isArray(item.students) ? item.students.length : 0));
                         break;
                     case 'uncles_count':
-                        val = item.uncle_count || item.uncles_count || (Array.isArray(item.uncles) ? item.uncles.length : 0);
+                        val = item.uncles_count !== undefined ? item.uncles_count : (item.uncle_count !== undefined ? item.uncle_count : (Array.isArray(item.uncles) ? item.uncles.length : 0));
                         break;
                     case 'metric':
                         val = item.metric || '-';

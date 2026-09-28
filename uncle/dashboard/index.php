@@ -2886,8 +2886,6 @@ $showSettings = $hasChurchId || $isDevOrAdmin;
             display: flex;
             gap: 6px;
             align-items: center;
-            background: var(--surface);
-            border: 1px solid var(--border-solid);
             border-radius: var(--r-md);
             padding: 6px 8px;
         }
