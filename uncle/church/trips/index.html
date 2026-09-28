@@ -227,8 +227,29 @@
       --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
       --t-fast: 0.15s;
       --t-base: 0.22s;
+      --t: 0.22s;
       --t-slow: 0.35s;
+      --spring: var(--ease-spring);
       --transition: var(--t-base) var(--ease);
+
+      /* Standard Design System Tokens & Aliases */
+      --brand: var(--primary);
+      --brand-dark: var(--primary-dark);
+      --brand-light: var(--indigo-400);
+      --brand-bg: var(--primary-light);
+      --brand-glow: var(--primary-glow);
+      --r-xs: var(--radius-xs);
+      --r-sm: var(--radius-sm);
+      --r-md: var(--radius);
+      --r-lg: var(--radius-lg);
+      --r-xl: var(--radius-xl);
+      --r-2xl: 32px;
+      --r-full: var(--radius-pill);
+      --coupon: var(--dev);
+      --coupon-bg: var(--dev-light);
+      --danger-bg: var(--danger-light);
+      --success-bg: var(--success-light);
+      --warning-bg: var(--warning-light);
     }
 
     /* ── BASE ───────────────────────────────────────────────────────── */
@@ -4469,16 +4490,6 @@
 
     /* CSV Export Modal Checkbox Styling */
     /* Custom Export Builder Styling */
-    #customExportModal {
-      --surface: var(--card, #ffffff);
-      --surface-2: var(--bg, #f5f5f8);
-      --border-solid: var(--border-2, rgba(15, 14, 26, 0.14));
-      --brand: var(--primary, #4f46e5);
-      --brand-bg: var(--primary-light, #eef0ff);
-      --r-lg: var(--radius-lg, 16px);
-      --r-md: var(--radius, 12px);
-      --coupon: var(--warning, #d97706);
-    }
 
     .export-builder {
       display: grid;
@@ -4589,7 +4600,7 @@
       padding-left: 30px !important;
       padding-right: 12px !important;
       border: 1px solid var(--border-solid) !important;
-      border-radius: var(--radius-sm) !important;
+      border-radius: var(--r-md) !important;
       background-color: var(--surface-2) !important;
       font-family: 'Cairo', sans-serif !important;
       font-size: 0.78rem !important;
@@ -4598,7 +4609,7 @@
       outline: none !important;
       cursor: pointer !important;
       height: 32px !important;
-      transition: all var(--t-fast) var(--ease) !important;
+      transition: all var(--t) var(--ease) !important;
       direction: rtl !important;
     }
 
@@ -4608,8 +4619,8 @@
     }
 
     .sort-layer-select:focus {
-      border-color: var(--primary) !important;
-      box-shadow: 0 0 0 2px var(--primary-glow) !important;
+      border-color: var(--brand) !important;
+      box-shadow: 0 0 0 2px var(--brand-glow) !important;
     }
 
     .sort-layer-delete-btn {
@@ -4619,16 +4630,16 @@
       min-height: 32px !important;
       max-width: 32px !important;
       max-height: 32px !important;
-      border-radius: 50% !important;
-      border: 1px solid rgba(239, 68, 68, 0.2) !important;
-      background: rgba(239, 68, 68, 0.08) !important;
+      border-radius: var(--r-full) !important;
+      border: none !important;
+      background: var(--danger-bg) !important;
       color: var(--danger) !important;
       cursor: pointer !important;
       display: inline-flex !important;
       align-items: center !important;
       justify-content: center !important;
       font-size: 0.8rem !important;
-      transition: all var(--t-fast) var(--ease) !important;
+      transition: all var(--t) var(--ease) !important;
       padding: 0 !important;
       margin: 0 !important;
       box-sizing: border-box !important;
@@ -4647,25 +4658,25 @@
       padding: 5px 12px !important;
       font-size: 0.75rem !important;
       font-weight: 700 !important;
-      border-radius: 8px !important;
-      background: var(--surface, #ffffff) !important;
-      color: var(--text, #1e293b) !important;
-      border: 1px solid var(--border-solid, #cbd5e1) !important;
+      border-radius: var(--r-sm) !important;
+      background: var(--surface) !important;
+      color: var(--text) !important;
+      border: 1px solid var(--border-solid) !important;
       cursor: pointer !important;
       font-family: inherit !important;
       display: inline-flex !important;
       align-items: center !important;
       gap: 6px !important;
-      transition: all 0.18s ease !important;
+      transition: all var(--t) var(--ease) !important;
       outline: none !important;
-      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04) !important;
+      box-shadow: var(--shadow-xs) !important;
     }
 
     .sort-layer-add-btn:hover {
-      background: var(--surface-2, #f8fafc) !important;
-      color: var(--primary, #0cafa0) !important;
-      border-color: var(--primary, #0cafa0) !important;
-      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.06) !important;
+      background: var(--brand-bg) !important;
+      color: var(--brand) !important;
+      border-color: var(--brand) !important;
+      box-shadow: none !important;
     }
 
     .export-date-options {

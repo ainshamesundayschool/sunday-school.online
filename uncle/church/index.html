@@ -8463,27 +8463,6 @@
         }
 
         /* ── UNIVERSAL TAB CUSTOM EXPORT BUILDER STYLES ── */
-        #tabCustomExportModal {
-            --surface: var(--surface, #ffffff);
-            --surface-2: var(--surface-2, #f5f5f8);
-            --surface-3: var(--surface-3, #eceef7);
-            --border-solid: var(--border-solid, #e4e6f0);
-            --brand: var(--brand, #5b6cf5);
-            --brand-bg: var(--brand-bg, #eef0ff);
-            --r-lg: var(--r-lg, 18px);
-            --r-md: var(--r-md, 14px);
-            --text: var(--text, #1a1d2e);
-            --text-2: var(--text-2, #4b5068);
-        }
-
-        [data-theme="dark"] #tabCustomExportModal {
-            --surface: var(--surface-2, #1e2132);
-            --surface-2: var(--surface-3, #252840);
-            --border-solid: var(--border-solid, #2a2d42);
-            --text: #e8eaf6;
-            --text-2: #9299be;
-        }
-
         /* High-contrast dropdown styling for export filters and sort layers */
         #tabCustomExportModal select,
         #tabCustomExportModal .form-select,
@@ -8496,7 +8475,7 @@
             border: 1.5px solid var(--border-solid) !important;
             border-radius: var(--r-md) !important;
             font-family: 'Cairo', sans-serif !important;
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05) !important;
+            box-shadow: var(--shadow-xs) !important;
         }
 
         [data-theme="dark"] #tabCustomExportModal select,
@@ -8505,20 +8484,20 @@
         [data-theme="dark"] #tabExportFiltersContainer .form-select,
         [data-theme="dark"] #tabExportFilterClass,
         [data-theme="dark"] #tabExportFilterRole {
-            background-color: var(--surface-2, #1e2132) !important;
-            color: #f1f5f9 !important;
-            border-color: var(--border-solid, #2a2d42) !important;
+            background-color: var(--surface-2) !important;
+            color: var(--text) !important;
+            border-color: var(--border-solid) !important;
         }
 
-        /* Native options contrast fix for all OS engines (including macOS Safari & Chrome) */
+        /* Native options contrast fix for all OS engines */
         #tabCustomExportModal select option,
         #tabCustomExportModal .form-select option,
         #tabCustomExportModal .sort-layer-select option,
         #tabExportFiltersContainer select option,
         #tabExportFilterClass option,
         #tabExportFilterRole option {
-            background-color: #ffffff !important;
-            color: #0f172a !important;
+            background-color: var(--surface) !important;
+            color: var(--text) !important;
             padding: 8px 12px !important;
             font-weight: 600 !important;
         }
@@ -8529,8 +8508,8 @@
         [data-theme="dark"] #tabExportFiltersContainer select option,
         [data-theme="dark"] #tabExportFilterClass option,
         [data-theme="dark"] #tabExportFilterRole option {
-            background-color: #1e2132 !important;
-            color: #f8fafc !important;
+            background-color: var(--surface-2) !important;
+            color: var(--text) !important;
             padding: 8px 12px !important;
             font-weight: 600 !important;
         }
@@ -8669,9 +8648,9 @@
         }
 
         .tab-export-mini-btn:hover {
-            border-color: transparent;
-            color: var(--primary);
-            background: var(--primary-light);
+            border-color: var(--brand);
+            color: var(--brand);
+            background: var(--brand-bg);
         }
 
         .sort-layer-row {
@@ -8695,7 +8674,7 @@
             padding-left: 28px !important;
             padding-right: 10px !important;
             border: 1px solid var(--border-solid) !important;
-            border-radius: var(--radius-sm, 8px) !important;
+            border-radius: var(--r-md) !important;
             background-color: var(--surface-2) !important;
             font-family: inherit !important;
             font-size: 0.78rem !important;
@@ -8704,14 +8683,14 @@
             outline: none !important;
             cursor: pointer !important;
             height: 32px !important;
-            transition: all 0.15s ease !important;
+            transition: all var(--t) var(--ease) !important;
             direction: rtl !important;
         }
 
         .sort-layer-select:hover {
-            border-color: transparent !important;
-            background-color: var(--primary-light) !important;
-            color: var(--primary) !important;
+            border-color: var(--brand) !important;
+            background-color: var(--brand-bg) !important;
+            color: var(--brand) !important;
         }
 
         .sort-layer-delete-btn {
@@ -8719,49 +8698,48 @@
             height: 28px !important;
             min-width: 28px !important;
             min-height: 28px !important;
-            border-radius: 6px !important;
-            border: 1px solid var(--border-solid) !important;
-            background: var(--surface) !important;
+            border-radius: var(--r-full) !important;
+            border: none !important;
+            background: var(--surface-2) !important;
             color: var(--text-3) !important;
             cursor: pointer !important;
             display: inline-flex !important;
             align-items: center !important;
             justify-content: center !important;
             font-size: 0.75rem !important;
-            transition: all 0.15s ease !important;
+            transition: all var(--t) var(--ease) !important;
             padding: 0 !important;
             margin: 0 !important;
             flex-shrink: 0 !important;
         }
 
         .sort-layer-delete-btn:hover {
-            background: var(--danger-light, #fee2e2) !important;
-            color: var(--danger, #ef4444) !important;
-            border-color: var(--danger, #ef4444) !important;
+            background: var(--danger-bg) !important;
+            color: var(--danger) !important;
         }
 
         .sort-layer-add-btn {
             padding: 5px 12px !important;
             font-size: 0.75rem !important;
             font-weight: 700 !important;
-            border-radius: 8px !important;
-            background: var(--surface, #ffffff) !important;
-            color: var(--text, #1e293b) !important;
-            border: 1px solid var(--border-solid, #cbd5e1) !important;
+            border-radius: var(--r-sm) !important;
+            background: var(--surface) !important;
+            color: var(--text) !important;
+            border: 1px solid var(--border-solid) !important;
             cursor: pointer !important;
             font-family: inherit !important;
             display: inline-flex !important;
             align-items: center !important;
             gap: 6px !important;
-            transition: all 0.18s ease !important;
+            transition: all var(--t) var(--ease) !important;
             outline: none !important;
-            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04) !important;
+            box-shadow: var(--shadow-xs) !important;
         }
 
         .sort-layer-add-btn:hover {
-            background: var(--primary-light) !important;
-            color: var(--primary) !important;
-            border-color: transparent !important;
+            background: var(--brand-bg) !important;
+            color: var(--brand) !important;
+            border-color: var(--brand) !important;
             box-shadow: none !important;
         }
 

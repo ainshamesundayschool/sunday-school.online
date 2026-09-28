@@ -1177,6 +1177,26 @@ $showSettings = $hasChurchId || $isDevOrAdmin;
             --ease: cubic-bezier(.4, 0, .2, 1);
             --spring: cubic-bezier(.16, 1, .3, 1);
             --t: .22s;
+
+            /* Compatibility & Aliases */
+            --primary: var(--brand);
+            --primary-dark: var(--brand-dark);
+            --primary-light: var(--brand-bg);
+            --primary-bg: var(--brand-bg);
+            --primary-glow: var(--brand-glow);
+            --card: var(--surface);
+            --card-hover: var(--surface-2);
+            --muted: var(--text-3);
+            --radius-xs: var(--r-xs);
+            --radius-sm: var(--r-sm);
+            --radius: var(--r-md);
+            --radius-lg: var(--r-lg);
+            --radius-xl: var(--r-xl);
+            --radius-2xl: var(--r-2xl);
+            --radius-pill: var(--r-full);
+            --t-fast: 0.15s;
+            --t-base: var(--t);
+            --ease-spring: var(--spring);
         }
 
         [data-theme="dark"] {
@@ -2883,7 +2903,7 @@ $showSettings = $hasChurchId || $isDevOrAdmin;
             padding-left: 30px !important;
             padding-right: 12px !important;
             border: 1px solid var(--border-solid) !important;
-            border-radius: var(--radius-sm) !important;
+            border-radius: var(--r-md) !important;
             background-color: var(--surface-2) !important;
             font-family: 'Cairo', sans-serif !important;
             font-size: 0.78rem !important;
@@ -2892,7 +2912,7 @@ $showSettings = $hasChurchId || $isDevOrAdmin;
             outline: none !important;
             cursor: pointer !important;
             height: 32px !important;
-            transition: all var(--t-fast) var(--ease) !important;
+            transition: all var(--t) var(--ease) !important;
             direction: rtl !important;
         }
 
@@ -2902,8 +2922,8 @@ $showSettings = $hasChurchId || $isDevOrAdmin;
         }
 
         .sort-layer-select:focus {
-            border-color: var(--primary) !important;
-            box-shadow: 0 0 0 2px var(--primary-glow) !important;
+            border-color: var(--brand) !important;
+            box-shadow: 0 0 0 2px var(--brand-glow) !important;
         }
 
         .sort-layer-delete-btn {
@@ -2913,16 +2933,16 @@ $showSettings = $hasChurchId || $isDevOrAdmin;
             min-height: 32px !important;
             max-width: 32px !important;
             max-height: 32px !important;
-            border-radius: 50% !important;
-            border: 1px solid rgba(239, 68, 68, 0.2) !important;
-            background: rgba(239, 68, 68, 0.08) !important;
+            border-radius: var(--r-full) !important;
+            border: none !important;
+            background: var(--danger-bg) !important;
             color: var(--danger) !important;
             cursor: pointer !important;
             display: inline-flex !important;
             align-items: center !important;
             justify-content: center !important;
             font-size: 0.8rem !important;
-            transition: all var(--t-fast) var(--ease) !important;
+            transition: all var(--t) var(--ease) !important;
             padding: 0 !important;
             margin: 0 !important;
             box-sizing: border-box !important;
@@ -2941,18 +2961,18 @@ $showSettings = $hasChurchId || $isDevOrAdmin;
             padding: 5px 12px !important;
             font-size: 0.75rem !important;
             font-weight: 700 !important;
-            border-radius: 8px !important;
-            background: var(--surface, #ffffff) !important;
-            color: var(--text, #1e293b) !important;
-            border: 1px solid var(--border-solid, #cbd5e1) !important;
+            border-radius: var(--r-sm) !important;
+            background: var(--surface) !important;
+            color: var(--text) !important;
+            border: 1px solid var(--border-solid) !important;
             cursor: pointer !important;
             font-family: inherit !important;
             display: inline-flex !important;
             align-items: center !important;
             gap: 6px !important;
-            transition: all 0.18s ease !important;
+            transition: all var(--t) var(--ease) !important;
             outline: none !important;
-            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04) !important;
+            box-shadow: var(--shadow-xs) !important;
         }
 
         .sort-layer-add-btn:hover {
