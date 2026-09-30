@@ -1086,6 +1086,12 @@ position: absolute;
         if (lt && text) lt.textContent = text;
     }
 
+    function hideLoading() {
+        const ld = document.getElementById('loading');
+        if (ld) ld.style.display = 'none';
+        showForms();
+    }
+
     function saveCredentials(loginType, data, churchCode, username) {
         const nextChurchCode = loginType === 'church' ? churchCode : (data.church_code || '');
         const prevChurchCode = localStorage.getItem('churchCode') || '';
@@ -1537,10 +1543,11 @@ position: absolute;
             const r = await fetch(API, { method: 'POST', body: fd, credentials: 'include' });
             const data = await r.json();
 
+            hideLoading();
+
             if (data.success) {
                 saveCredentials('uncle', data, data.uncle?.username || '', data.uncle?.username || '');
                 if (data.requires_security_setup) {
-                    showForms();
                     openUncleSecurityModal(data);
                     return;
                 }
@@ -1548,27 +1555,30 @@ position: absolute;
                 const role = data.uncle?.role || localStorage.getItem('uncleRole') || 'uncle';
                 setTimeout(() => redirectToDashboard('uncle', role), 500);
             } else if (data.not_linked) {
-                hideLoading();
-                showForms();
+                const msg = data.message || 'حساب Google هذا غير مرتبط بأي حساب خادم مسجل. يرجى تسجيل الدخول باسم المستخدم وكلمة المرور لربط الحساب.';
+                showError(msg);
                 pendingGoogleCredential = response.credential;
                 pendingGoogleId = data.google_id || '';
                 pendingGoogleEmail = data.email || '';
                 openUncleGoogleLinkModal(pendingGoogleEmail);
             } else {
-                hideLoading();
-                showForms();
                 showError(data.message || 'فشل تسجيل الدخول بواسطة Google');
             }
         } catch (e) {
+            console.error('handleUncleGoogleSignInResponse error:', e);
             hideLoading();
-            showForms();
-            showError('تعذر الاتصال بخدمات Google، يرجى المحاولة لاحقاً');
+            showError('تعذر تسجيل الدخول بواسطة Google، يرجى المحاولة لاحقاً');
         }
     }
 
     function openUncleGoogleLinkModal(email) {
         document.getElementById('linkGoogleEmailSpan').textContent = email || 'Google Account';
         document.getElementById('linkError').style.display = 'none';
+        const savedUn = document.getElementById('uncleUsername')?.value.trim() || localStorage.getItem('uncleUsername') || '';
+        if (savedUn) {
+            const linkUn = document.getElementById('linkUsername');
+            if (linkUn && !linkUn.value) linkUn.value = savedUn;
+        }
         document.getElementById('uncleGoogleLinkModal').classList.add('active');
     }
 
