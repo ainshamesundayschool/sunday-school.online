@@ -515,13 +515,7 @@ body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
           </div>
         </div>
 
-        <div class="fr full" id="kidEmailConfirmGroup" style="margin-bottom:0">
-          <div class="ff">
-            <label><i class="fas fa-check-double"></i> تأكيد البريد الإلكتروني <span class="req">*</span></label>
-            <input type="email" id="kidEmailConfirm" placeholder="أعد كتابة البريد الإلكتروني للتأكيد" autocomplete="email" style="direction:ltr;text-align:left;" />
-            <small>يرجى إعادة كتابة البريد للتأكد من عدم وجود أي خطأ إملائي</small>
-          </div>
-        </div>
+        <div class="fr full" id="kidEmailConfirmGroup" style="margin-bottom:0"></div>
       </div>
 
       <!-- Custom church fields injected here by renderCustomFields() -->
@@ -1398,17 +1392,6 @@ function v3() {
       focusErr('kidEmail');
       return false;
     }
-    const emConf = val('kidEmailConfirm');
-    if (!emConf) {
-      showErr(3, 'يرجى تأكيد البريد الإلكتروني لتفادي أي خطأ إملائي');
-      focusErr('kidEmailConfirm');
-      return false;
-    }
-    if (em.toLowerCase() !== emConf.toLowerCase()) {
-      showErr(3, 'البريد الإلكتروني وتأكيد البريد غير متطابقين');
-      focusErr('kidEmailConfirm');
-      return false;
-    }
   }
 
   for (const field of customFields) {
@@ -1640,6 +1623,9 @@ async function doSubmitRegistrationRequest() {
         if (gState.googleId) fd.append('google_id', gState.googleId);
         if (gState.googleCredential) fd.append('google_credential', gState.googleCredential);
       }
+      if (gState && gState.verifyToken) {
+        fd.append('email_verify_token', gState.verifyToken);
+      }
     }
     if (parentPhones.length > 0) {
       fd.append('parent_phones', JSON.stringify(parentPhones));
@@ -1765,10 +1751,11 @@ function initGoogleAndSecurity() {
   if (window.GoogleRegHelper && !googleRegInstance) {
     googleRegInstance = GoogleRegHelper.setup({
       emailInputId: 'kidEmail',
-      confirmInputId: 'kidEmailConfirm',
       confirmGroupId: 'kidEmailConfirmGroup',
       badgeContainerId: 'kidGoogleBadge',
       googleBtnId: 'btnGoogleRegStudent',
+      type: 'student',
+      nameInputId: 'kidName',
       optional: false,
       onError: function(msg) {
         showErr(3, msg);

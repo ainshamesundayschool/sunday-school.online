@@ -5118,6 +5118,22 @@ try {
 
 
 
+        case 'sendRegistrationEmailOTP':
+
+            sendRegistrationEmailOTP();
+
+            break;
+
+
+
+        case 'verifyRegistrationEmailOTP':
+
+            verifyRegistrationEmailOTP();
+
+            break;
+
+
+
         // ── Uncle Registration (plain church code link) ─────────────
 
         case 'registerUncleWithChurchCode':
@@ -15639,6 +15655,7 @@ function submitRegistrationRequest()
 
         $gender = sanitize($_POST['gender'] ?? '');
         $googleId = sanitize($_POST['google_id'] ?? '');
+        $emailVerifyToken = sanitize($_POST['email_verify_token'] ?? $_POST['email_otp_token'] ?? '');
 
         if ($churchId === 0 || empty($name) || empty($class)) {
             sendJSON(['success' => false, 'message' => 'البيانات المطلوبة ناقصة']);
@@ -15959,11 +15976,14 @@ function submitRegistrationRequest()
             $pendStmt->execute();
             $registrationId = $conn->insert_id;
 
+            $isVerifiedEmail = (!empty($googleId) || (!empty($emailVerifyToken) && checkRegistrationEmailToken($conn, $email, $emailVerifyToken)));
             if (!empty($newStudentId)) {
-                $conn->query("UPDATE students SET email = '" . $conn->real_escape_string($email) . "'" . (!empty($googleId) ? ", google_id = '" . $conn->real_escape_string($googleId) . "', google_email = '" . $conn->real_escape_string($email) . "', is_email_verified = 1" : "") . " WHERE id = " . intval($newStudentId));
+                $conn->query("UPDATE students SET email = '" . $conn->real_escape_string($email) . "'" . (!empty($googleId) ? ", google_id = '" . $conn->real_escape_string($googleId) . "', google_email = '" . $conn->real_escape_string($email) . "'" : "") . ($isVerifiedEmail ? ", is_email_verified = 1" : "") . " WHERE id = " . intval($newStudentId));
             }
-            if (!empty($googleId) && !empty($registrationId)) {
-                @$conn->query("UPDATE pending_registrations SET google_id = '" . $conn->real_escape_string($googleId) . "' WHERE id = " . intval($registrationId));
+            if (!empty($registrationId)) {
+                if (!empty($googleId)) {
+                    @$conn->query("UPDATE pending_registrations SET google_id = '" . $conn->real_escape_string($googleId) . "' WHERE id = " . intval($registrationId));
+                }
             }
 
             $conn->commit();
@@ -21494,6 +21514,273 @@ function sendSundaySchoolEmail(string $toEmail, string $subject, string $htmlBod
     @mail($toEmail, '=?UTF-8?B?' . base64_encode($subject) . '?=', $htmlBody, implode("\r\n", $headers));
 
     return true;
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+// UNIVERSAL REGISTRATION EMAIL OTP VERIFICATION SYSTEM
+// ══════════════════════════════════════════════════════════════════════════════
+
+function ensureRegistrationEmailVerificationTable(mysqli $conn): void
+{
+    static $done = false;
+    if ($done) return;
+    $done = true;
+
+    $sql = "CREATE TABLE IF NOT EXISTS `registration_email_verifications` (
+      `id` int(11) NOT NULL AUTO_INCREMENT,
+      `email` varchar(255) NOT NULL,
+      `otp_hash` varchar(64) NOT NULL,
+      `verify_token` varchar(64) DEFAULT NULL,
+      `is_verified` tinyint(1) NOT NULL DEFAULT 0,
+      `expires_at` datetime NOT NULL,
+      `verified_at` datetime DEFAULT NULL,
+      `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      PRIMARY KEY (`id`),
+      KEY `idx_reg_email` (`email`),
+      KEY `idx_reg_verify_token` (`verify_token`),
+      KEY `idx_reg_expires_at` (`expires_at`)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci";
+    @$conn->query($sql);
+}
+
+function sendRegistrationEmailOTP(): void
+{
+    try {
+        $email = trim(sanitize($_POST['email'] ?? ''));
+        $type = sanitize($_POST['type'] ?? 'student'); // student, uncle, church, church_admin
+        $name = trim(sanitize($_POST['name'] ?? ''));
+
+        if (empty($email) || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
+            sendJSON(['success' => false, 'message' => 'يرجى إدخال بريد إلكتروني صحيح']);
+            return;
+        }
+
+        $conn = getDBConnection();
+        ensureRegistrationEmailVerificationTable($conn);
+
+        $normEmail = strtolower($email);
+
+        // Cooldown: prevent sending more than once every 30 seconds
+        $chk = $conn->prepare("
+            SELECT created_at, TIMESTAMPDIFF(SECOND, created_at, NOW()) AS sec_diff 
+            FROM registration_email_verifications 
+            WHERE LOWER(email) = ? AND created_at >= DATE_SUB(NOW(), INTERVAL 30 SECOND) 
+            ORDER BY id DESC LIMIT 1
+        ");
+        if ($chk) {
+            $chk->bind_param("s", $normEmail);
+            $chk->execute();
+            $lastRow = $chk->get_result()->fetch_assoc();
+            $chk->close();
+            if ($lastRow && intval($lastRow['sec_diff']) < 30) {
+                $rem = 30 - intval($lastRow['sec_diff']);
+                sendJSON(['success' => false, 'message' => "يرجى الانتظار {$rem} ثانية قبل إعادة إرسال الكود"]);
+                return;
+            }
+        }
+
+        $otp = sprintf("%06d", mt_rand(100000, 999999));
+        $otpHashed = hash('sha256', $otp);
+
+        // Delete unverified OTPs for this email to prevent stale codes
+        $del = $conn->prepare("DELETE FROM registration_email_verifications WHERE LOWER(email) = ? AND is_verified = 0");
+        if ($del) {
+            $del->bind_param("s", $normEmail);
+            $del->execute();
+            $del->close();
+        }
+
+        $ins = $conn->prepare("
+            INSERT INTO registration_email_verifications (email, otp_hash, is_verified, expires_at, created_at)
+            VALUES (?, ?, 0, DATE_ADD(NOW(), INTERVAL 15 MINUTE), NOW())
+        ");
+        if (!$ins) {
+            sendJSON(['success' => false, 'message' => 'فشل إعداد كود التحقق: ' . $conn->error]);
+            return;
+        }
+        $ins->bind_param("ss", $normEmail, $otpHashed);
+        $ins->execute();
+        $ins->close();
+
+        // Session fallback
+        if (session_status() === PHP_SESSION_NONE) {
+            @session_start();
+        }
+        $_SESSION['reg_email_otp_' . md5($normEmail)] = [
+            'hash' => $otpHashed,
+            'expires' => time() + 900
+        ];
+
+        // Customized Arabic copy depending on registration role
+        $greeting = !empty($name) ? "أهلاً يا <strong>" . htmlspecialchars($name, ENT_QUOTES, 'UTF-8') . "</strong>،" : "أهلاً بك،";
+        $roleText = "لتأكيد بريدك الإلكتروني وإتمام تسجيلك في منصة مدارس الأحد";
+        if ($type === 'uncle') {
+            $roleText = "لتأكيد بريدك الإلكتروني وتفعيل حساب الخادم في منصة مدارس الأحد";
+        } elseif ($type === 'church') {
+            $roleText = "لتأكيد البريد الإلكتروني الرسمي للكنيسة في منصة مدارس الأحد";
+        } elseif ($type === 'church_admin') {
+            $roleText = "لتأكيد بريد المسؤول المعتمد لتسجيل كنيسة جديدة في منصة مدارس الأحد";
+        }
+
+        $subject = "Sunday School Online - كود تأكيد البريد الإلكتروني: {$otp}";
+        $htmlBody = "
+            <div dir='rtl' style='font-family:\"Cairo\", Tahoma, Arial, sans-serif; max-width:600px; margin:auto; background:#ffffff; border-radius:18px; padding:32px 28px; border:1px solid #e2e8f0; color:#1e293b; box-shadow:0 8px 30px rgba(0,0,0,0.06);'>
+                <div style='text-align:center; margin-bottom:24px;'>
+                    <h2 style='color:#5b6cf5; margin:0 0 6px 0; font-size:24px; font-weight:800;'>Sunday School Online</h2>
+                    <p style='color:#64748b; font-size:14px; margin:0; font-weight:600;'>تأكيد البريد الإلكتروني والتحقق من المستخدم</p>
+                </div>
+                <p style='font-size:16px; margin-bottom:12px;'>{$greeting}</p>
+                <p style='color:#475569; font-size:15px; line-height:1.7; margin-bottom:20px;'>
+                    {$roleText}. يرجى استخدام كود التحقق التالي لإثبات ملكيتك للبريد الإلكتروني:
+                </p>
+                <div style='text-align:center; margin:28px 0;'>
+                    <span style='display:inline-block; font-size:36px; font-weight:800; letter-spacing:8px; color:#5b6cf5; background:#eef0ff; padding:14px 34px; border-radius:14px; border:2px dashed #a5b0ff;'>
+                        {$otp}
+                    </span>
+                </div>
+                <p style='color:#64748b; font-size:13px; text-align:center; line-height:1.6;'>
+                    هذا الكود صالح لمدة 15 دقيقة فقط للاستخدام لمرة واحدة.
+                    <br>إذا لم تقم بطلب هذا الكود، يمكنك تجاهل هذه الرسالة بأمان.
+                </p>
+            </div>
+        ";
+
+        sendSundaySchoolEmail($normEmail, $subject, $htmlBody);
+
+        sendJSON([
+            'success' => true,
+            'message' => 'تم إرسال كود التحقق المكون من 6 أرقام إلى بريدك الإلكتروني بنجاح',
+            'masked_email' => maskEmail($normEmail)
+        ]);
+    } catch (Throwable $e) {
+        sendJSON(['success' => false, 'message' => 'خطأ في إرسال كود التحقق: ' . $e->getMessage()]);
+    }
+}
+
+function verifyRegistrationEmailOTP(): void
+{
+    try {
+        $email = trim(sanitize($_POST['email'] ?? ''));
+        $code = trim(sanitize($_POST['code'] ?? $_POST['otp'] ?? ''));
+
+        if (empty($email) || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
+            sendJSON(['success' => false, 'message' => 'يرجى إدخال بريد إلكتروني صحيح']);
+            return;
+        }
+
+        if (empty($code) || strlen($code) !== 6 || !ctype_digit($code)) {
+            sendJSON(['success' => false, 'message' => 'يرجى إدخال كود التحقق المكون من 6 أرقام']);
+            return;
+        }
+
+        $normEmail = strtolower($email);
+        $otpHashed = hash('sha256', $code);
+
+        $conn = getDBConnection();
+        ensureRegistrationEmailVerificationTable($conn);
+
+        $stmt = $conn->prepare("
+            SELECT id, email, expires_at 
+            FROM registration_email_verifications 
+            WHERE LOWER(email) = ? AND otp_hash = ? AND expires_at >= NOW() 
+            ORDER BY id DESC LIMIT 1
+        ");
+        $matched = false;
+        $rowId = 0;
+        if ($stmt) {
+            $stmt->bind_param("ss", $normEmail, $otpHashed);
+            $stmt->execute();
+            $res = $stmt->get_result();
+            if ($row = $res->fetch_assoc()) {
+                $matched = true;
+                $rowId = intval($row['id']);
+            }
+            $stmt->close();
+        }
+
+        // Check session fallback if DB query didn't match
+        if (!$matched) {
+            if (session_status() === PHP_SESSION_NONE) {
+                @session_start();
+            }
+            $sess = $_SESSION['reg_email_otp_' . md5($normEmail)] ?? null;
+            if ($sess && is_array($sess) && ($sess['hash'] ?? '') === $otpHashed && ($sess['expires'] ?? 0) >= time()) {
+                $matched = true;
+            }
+        }
+
+        if (!$matched) {
+            sendJSON(['success' => false, 'message' => 'كود التحقق غير صحيح أو انتهت صلاحيته (صلاحية الكود 15 دقيقة)']);
+            return;
+        }
+
+        $verifyToken = bin2hex(random_bytes(24));
+
+        if ($rowId > 0) {
+            $up = $conn->prepare("UPDATE registration_email_verifications SET is_verified = 1, verify_token = ?, verified_at = NOW() WHERE id = ?");
+            if ($up) {
+                $up->bind_param("si", $verifyToken, $rowId);
+                $up->execute();
+                $up->close();
+            }
+        } else {
+            $ins = $conn->prepare("INSERT INTO registration_email_verifications (email, otp_hash, verify_token, is_verified, expires_at, verified_at, created_at) VALUES (?, ?, ?, 1, DATE_ADD(NOW(), INTERVAL 2 HOUR), NOW(), NOW())");
+            if ($ins) {
+                $ins->bind_param("sss", $normEmail, $otpHashed, $verifyToken);
+                $ins->execute();
+                $ins->close();
+            }
+        }
+
+        if (session_status() === PHP_SESSION_NONE) {
+            @session_start();
+        }
+        $_SESSION['reg_verified_' . md5($normEmail)] = $verifyToken;
+
+        sendJSON([
+            'success' => true,
+            'message' => 'تم تأكيد ملكية البريد الإلكتروني بنجاح!',
+            'token' => $verifyToken,
+            'email' => $normEmail
+        ]);
+    } catch (Throwable $e) {
+        sendJSON(['success' => false, 'message' => 'خطأ في التحقق من الكود: ' . $e->getMessage()]);
+    }
+}
+
+function checkRegistrationEmailToken(mysqli $conn, string $email, string $token): bool
+{
+    $email = strtolower(trim($email));
+    $token = trim($token);
+    if (empty($email) || empty($token)) return false;
+
+    // Check session
+    if (session_status() === PHP_SESSION_NONE) {
+        @session_start();
+    }
+    if (!empty($_SESSION['reg_verified_' . md5($email)]) && hash_equals($_SESSION['reg_verified_' . md5($email)], $token)) {
+        return true;
+    }
+
+    // Check DB
+    try {
+        ensureRegistrationEmailVerificationTable($conn);
+        $stmt = $conn->prepare("
+            SELECT id FROM registration_email_verifications 
+            WHERE LOWER(email) = ? AND verify_token = ? AND is_verified = 1 
+              AND verified_at >= DATE_SUB(NOW(), INTERVAL 24 HOUR) 
+            LIMIT 1
+        ");
+        if ($stmt) {
+            $stmt->bind_param("ss", $email, $token);
+            $stmt->execute();
+            $found = (bool)$stmt->get_result()->fetch_assoc();
+            $stmt->close();
+            return $found;
+        }
+    } catch (Throwable $e) {}
+
+    return false;
 }
 
 function getStudentAssignedUncle(mysqli $conn, int $churchId, ?string $className = null): ?array
@@ -44083,6 +44370,8 @@ function registerUncleWithChurchCode()
 
     $googleId = sanitize($_POST['google_id'] ?? '');
 
+    $emailVerifyToken = sanitize($_POST['email_verify_token'] ?? $_POST['email_otp_token'] ?? '');
+
     $classes = $_POST['classes'] ?? '[]';
 
     if ((!$churchCode && !$churchIdDirect) || !$name || !$username || strlen($password) < 6) {
@@ -44180,6 +44469,11 @@ function registerUncleWithChurchCode()
 
             saveUncleClasses($uncleId, $churchId, $classArr);
 
+        }
+
+        $isVerifiedEmail = (!empty($googleId) || (!empty($emailVerifyToken) && checkRegistrationEmailToken($conn, $email, $emailVerifyToken)));
+        if ($isVerifiedEmail) {
+            @$conn->query("UPDATE uncles SET is_email_verified = 1 WHERE id = " . intval($uncleId));
         }
 
         _sendUncleRegistrationEmail($church['admin_email'] ?? '', $church['church_name'] ?? '', $name, $username);

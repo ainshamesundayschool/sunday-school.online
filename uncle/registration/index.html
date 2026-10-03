@@ -412,13 +412,7 @@ body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
           </div>
         </div>
 
-        <div class="fr full" id="uncleEmailConfirmGroup" style="margin-bottom:0">
-          <div class="ff">
-            <label><i class="fas fa-check-double"></i> تأكيد البريد الإلكتروني <span class="req">*</span></label>
-            <input type="email" id="uncleEmailConfirm" placeholder="أعد كتابة البريد الإلكتروني للتأكيد" autocomplete="email" style="direction:ltr;text-align:left;" />
-            <small>يرجى إعادة كتابة البريد للتأكد من عدم وجود أي خطأ إملائي</small>
-          </div>
-        </div>
+        <div class="fr full" id="uncleEmailConfirmGroup" style="margin-bottom:0"></div>
       </div>
       <div class="alert alert-err" id="err1"><i class="fas fa-circle-exclamation"></i><span id="errTxt1"></span></div>
       <div class="act-bar">
@@ -759,10 +753,11 @@ function initGoogleAndSecurity() {
   if (window.GoogleRegHelper && !googleRegInstance) {
     googleRegInstance = GoogleRegHelper.setup({
       emailInputId: 'uncleEmail',
-      confirmInputId: 'uncleEmailConfirm',
       confirmGroupId: 'uncleEmailConfirmGroup',
       badgeContainerId: 'uncleGoogleBadge',
       googleBtnId: 'btnGoogleRegUncle',
+      type: 'uncle',
+      nameInputId: 'uncleName',
       optional: false,
       onError: function(msg) {
         showErr(1, msg);
@@ -827,17 +822,6 @@ function v1() {
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(em)) {
       showErr(1, 'صيغة البريد الإلكتروني غير صحيحة (مثال: example@gmail.com)');
       focusErr('uncleEmail');
-      return false;
-    }
-    const emConf = val('uncleEmailConfirm');
-    if (!emConf) {
-      showErr(1, 'يرجى تأكيد البريد الإلكتروني لتفادي أي خطأ إملائي');
-      focusErr('uncleEmailConfirm');
-      return false;
-    }
-    if (em.toLowerCase() !== emConf.toLowerCase()) {
-      showErr(1, 'البريد الإلكتروني وتأكيد البريد غير متطابقين');
-      focusErr('uncleEmailConfirm');
       return false;
     }
   }
@@ -969,6 +953,9 @@ async function submitForm() {
       if (gState && gState.isGoogleVerified) {
         if (gState.googleId) postData.google_id = gState.googleId;
         if (gState.googleCredential) postData.google_credential = gState.googleCredential;
+      }
+      if (gState && gState.verifyToken) {
+        postData.email_verify_token = gState.verifyToken;
       }
     }
 

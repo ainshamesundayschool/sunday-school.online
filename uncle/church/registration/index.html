@@ -359,13 +359,7 @@ body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
         </div>
 
         <!-- Church Email Confirm -->
-        <div class="fr full" id="churchEmailConfirmGroup" style="margin-bottom:0">
-          <div class="ff">
-            <label><i class="fas fa-check-double"></i> تأكيد البريد الإلكتروني للكنيسة <span class="req">*</span></label>
-            <input type="email" id="churchEmailConfirm" placeholder="أعد كتابة البريد الإلكتروني للكنيسة للتأكيد" autocomplete="email" style="direction:ltr;text-align:left;" />
-            <small>يرجى إعادة كتابة البريد للتأكد من عدم وجود أي خطأ إملائي</small>
-          </div>
-        </div>
+        <div class="fr full" id="churchEmailConfirmGroup" style="margin-bottom:0"></div>
 
         <!-- Church Type -->
         <div class="ff" style="margin-bottom:0">
@@ -484,13 +478,7 @@ body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
           </div>
         </div>
 
-        <div class="fr full" id="adminEmailConfirmGroup" style="margin-bottom:0">
-          <div class="ff">
-            <label><i class="fas fa-check-double"></i> تأكيد بريد المسؤول <span class="req">*</span></label>
-            <input type="email" id="adminEmailConfirm" placeholder="أعد كتابة بريد المسؤول للتأكيد" autocomplete="email" style="direction:ltr;text-align:left;" />
-            <small>يرجى إعادة كتابة البريد للتأكد من عدم وجود أي خطأ إملائي</small>
-          </div>
-        </div>
+        <div class="fr full" id="adminEmailConfirmGroup" style="margin-bottom:0"></div>
       </div>
 
       <div class="alert alert-err" id="err2"><i class="fas fa-circle-exclamation"></i><span id="errTxt2"></span></div>
@@ -606,10 +594,11 @@ function initChurchSecurity() {
   if (window.GoogleRegHelper && !googleChurchRegInstance) {
     googleChurchRegInstance = GoogleRegHelper.setup({
       emailInputId: 'churchEmail',
-      confirmInputId: 'churchEmailConfirm',
       confirmGroupId: 'churchEmailConfirmGroup',
       badgeContainerId: 'churchGoogleBadge',
       googleBtnId: 'btnGoogleRegChurch',
+      type: 'church',
+      nameInputId: 'churchName',
       optional: false,
       onError: function(msg) {
         showErr(1, msg);
@@ -619,10 +608,11 @@ function initChurchSecurity() {
   if (window.GoogleRegHelper && !googleAdminRegInstance) {
     googleAdminRegInstance = GoogleRegHelper.setup({
       emailInputId: 'adminEmail',
-      confirmInputId: 'adminEmailConfirm',
       confirmGroupId: 'adminEmailConfirmGroup',
       badgeContainerId: 'adminGoogleBadge',
       googleBtnId: 'btnGoogleRegAdmin',
+      type: 'church_admin',
+      nameInputId: 'adminName',
       optional: false,
       onError: function(msg) {
         showErr(2, msg);
@@ -763,9 +753,6 @@ function v1() {
     const ce = val('churchEmail');
     if (!ce) { showErr(1, 'البريد الإلكتروني للكنيسة مطلوب لتأمين الحساب واستعادة كلمة المرور'); focusErr('churchEmail'); return false; }
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(ce)) { showErr(1, 'صيغة البريد الإلكتروني للكنيسة غير صحيحة'); focusErr('churchEmail'); return false; }
-    const cec = val('churchEmailConfirm');
-    if (!cec) { showErr(1, 'يرجى تأكيد البريد الإلكتروني للكنيسة لتفادي أي خطأ إملائي'); focusErr('churchEmailConfirm'); return false; }
-    if (ce.toLowerCase() !== cec.toLowerCase()) { showErr(1, 'البريد الإلكتروني للكنيسة وتأكيد البريد غير متطابقين'); focusErr('churchEmailConfirm'); return false; }
   }
 
   return true;
@@ -808,9 +795,6 @@ function v2() {
     const ae = val('adminEmail');
     if (!ae) { showErr(2, 'البريد الإلكتروني للمسؤول مطلوب لتأمين الحساب واستعادة كلمة المرور'); focusErr('adminEmail'); return false; }
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(ae)) { showErr(2, 'صيغة البريد الإلكتروني للمسؤول غير صحيحة'); focusErr('adminEmail'); return false; }
-    const aec = val('adminEmailConfirm');
-    if (!aec) { showErr(2, 'يرجى تأكيد بريد المسؤول لتفادي أي خطأ إملائي'); focusErr('adminEmailConfirm'); return false; }
-    if (ae.toLowerCase() !== aec.toLowerCase()) { showErr(2, 'بريد المسؤول وتأكيد البريد غير متطابقين'); focusErr('adminEmailConfirm'); return false; }
   }
 
   return true;
@@ -824,11 +808,12 @@ function fillReview() {
   
   const ceVal = val('churchEmail') || '—';
   const cgState = (googleChurchRegInstance && typeof googleChurchRegInstance.getState === 'function') ? googleChurchRegInstance.getState() : null;
-  const isCGVer = cgState && cgState.isGoogleVerified;
+  const isCGVer = cgState && cgState.isVerified;
   const rvChurchEmailEl = document.getElementById('rv-churchEmail');
   if (rvChurchEmailEl) {
+    const cgBadgeText = (cgState && cgState.isGoogleVerified) ? 'تم التحقق بـ Google' : 'تم تأكيد البريد';
     rvChurchEmailEl.innerHTML = ceVal !== '—'
-      ? `<span dir="ltr">${escapeHtml(ceVal)}</span> ${isCGVer ? '<span style="display:inline-flex; align-items:center; gap:4px; margin-right:6px; font-size:0.75rem; background:#dcfce7; color:#15803d; border-radius:12px; padding:2px 8px; font-weight:700;"><i class="fas fa-check-circle"></i> تم التحقق بـ Google</span>' : ''}`
+      ? `<span dir="ltr">${escapeHtml(ceVal)}</span> ${isCGVer ? `<span style="display:inline-flex; align-items:center; gap:4px; margin-right:6px; font-size:0.75rem; background:#dcfce7; color:#15803d; border-radius:12px; padding:2px 8px; font-weight:700;"><i class="fas fa-check-circle"></i> ${cgBadgeText}</span>` : ''}`
       : '—';
   }
 
@@ -839,11 +824,12 @@ function fillReview() {
 
   const aeVal = val('adminEmail') || '—';
   const agState = (googleAdminRegInstance && typeof googleAdminRegInstance.getState === 'function') ? googleAdminRegInstance.getState() : null;
-  const isAGVer = agState && agState.isGoogleVerified;
+  const isAGVer = agState && agState.isVerified;
   const rvAdminEmailEl = document.getElementById('rv-adminEmail');
   if (rvAdminEmailEl) {
+    const agBadgeText = (agState && agState.isGoogleVerified) ? 'تم التحقق بـ Google' : 'تم تأكيد البريد';
     rvAdminEmailEl.innerHTML = aeVal !== '—'
-      ? `<span dir="ltr">${escapeHtml(aeVal)}</span> ${isAGVer ? '<span style="display:inline-flex; align-items:center; gap:4px; margin-right:6px; font-size:0.75rem; background:#dcfce7; color:#15803d; border-radius:12px; padding:2px 8px; font-weight:700;"><i class="fas fa-check-circle"></i> تم التحقق بـ Google</span>' : ''}`
+      ? `<span dir="ltr">${escapeHtml(aeVal)}</span> ${isAGVer ? `<span style="display:inline-flex; align-items:center; gap:4px; margin-right:6px; font-size:0.75rem; background:#dcfce7; color:#15803d; border-radius:12px; padding:2px 8px; font-weight:700;"><i class="fas fa-check-circle"></i> ${agBadgeText}</span>` : ''}`
       : '—';
   }
 
@@ -921,6 +907,9 @@ async function submitForm() {
       if (cgState.googleId) fd.append('church_google_id', cgState.googleId);
       if (cgState.googleCredential) fd.append('church_google_credential', cgState.googleCredential);
     }
+    if (cgState && cgState.verifyToken) {
+      fd.append('church_email_verify_token', cgState.verifyToken);
+    }
   }
 
   if (googleAdminRegInstance && typeof googleAdminRegInstance.getState === 'function') {
@@ -928,6 +917,9 @@ async function submitForm() {
     if (gState && gState.isGoogleVerified) {
       if (gState.googleId) fd.append('admin_google_id', gState.googleId);
       if (gState.googleCredential) fd.append('admin_google_credential', gState.googleCredential);
+    }
+    if (gState && gState.verifyToken) {
+      fd.append('admin_email_verify_token', gState.verifyToken);
     }
   }
 
