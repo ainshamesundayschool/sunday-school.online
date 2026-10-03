@@ -792,55 +792,34 @@
 
         .ss-outer {
             position: relative;
-            margin: 0 -16px;
-            padding: 0 16px;
-        }
-
-        /* Subtle edge fades for modern showcase reel */
-        .ss-outer::before,
-        .ss-outer::after {
-            content: '';
-            position: absolute;
-            top: 0;
-            bottom: 30px;
-            width: 48px;
-            z-index: 5;
-            pointer-events: none;
-            transition: opacity 0.3s ease;
-        }
-
-        .ss-outer::before {
-            right: 0;
-            background: linear-gradient(to left, var(--bg, #f8fafc) 0%, rgba(248, 250, 252, 0) 100%);
-        }
-
-        .ss-outer::after {
-            left: 0;
-            background: linear-gradient(to right, var(--bg, #f8fafc) 0%, rgba(248, 250, 252, 0) 100%);
+            width: 100%;
+            overflow: hidden;
+            padding: 10px 0 20px;
         }
 
         .ss-track {
             display: flex;
-            gap: 22px;
+            gap: 24px;
             overflow-x: auto;
             scroll-snap-type: x mandatory;
+            scroll-behavior: smooth;
             -webkit-overflow-scrolling: touch;
-            padding: 20px 24px 32px;
+            padding: 16px 32px 36px;
             cursor: grab;
             user-select: none;
+            direction: rtl;
             scrollbar-width: thin;
             scrollbar-color: rgba(99, 102, 241, 0.3) transparent;
         }
 
         .ss-track::-webkit-scrollbar {
-            height: 7px;
-            display: block;
+            height: 6px;
         }
 
         .ss-track::-webkit-scrollbar-track {
             background: rgba(99, 102, 241, 0.05);
             border-radius: 999px;
-            margin: 0 40px;
+            margin: 0 60px;
         }
 
         .ss-track::-webkit-scrollbar-thumb {
@@ -855,20 +834,42 @@
 
         .ss-track.is-dragging {
             cursor: grabbing;
+            scroll-behavior: auto;
             scroll-snap-type: none;
         }
 
         /* Phone card */
         .ss-phone-card {
-            flex: 0 0 200px;
+            flex: 0 0 210px;
             scroll-snap-align: center;
             display: flex;
             flex-direction: column;
             align-items: center;
             gap: 12px;
             cursor: pointer;
-            transition: transform 0.35s cubic-bezier(.16, 1, .3, 1), filter 0.3s ease;
+            transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.4s ease, filter 0.4s ease;
             outline: none;
+            position: relative;
+        }
+
+        @media(min-width: 768px) {
+            .ss-phone-card {
+                flex: 0 0 230px;
+            }
+        }
+
+        @media(min-width: 1200px) {
+            .ss-phone-card {
+                flex: 0 0 250px;
+            }
+        }
+
+        .ss-phone-card:hover {
+            transform: translateY(-8px) scale(1.02);
+        }
+
+        .ss-phone-card.is-active {
+            transform: translateY(-4px) scale(1.03);
         }
 
         @media(min-width: 768px) {
@@ -2437,12 +2438,12 @@
                 <p class="ss-section-subtitle">لقطات حقيقية من شاشات الخدمة وحسابات المخدومين مصممة بعناية لتجربة استثنائية</p>
             </div>
             <div class="ss-outer">
-                <div class="ss-track" id="ssTrack" dir="ltr">
+                <div class="ss-track" id="ssTrack" dir="rtl">
 
                     <div class="ss-phone-card">
                         <div class="ss-phone">
-                            <div class="ss-screen"><img src="imgs/screenshots/class%20attendance%20view.PNG?v=20261004"
-                                    alt="عرض الفصل" loading="lazy"></div>
+                            <div class="ss-screen"><img src="imgs/screenshots/class attendance view.PNG"
+                                    alt="عرض الفصل" decoding="async"></div>
                         </div>
                         <div class="ss-phone-label">
                             <div class="ss-phone-badge" style="background:#eef2ff;color:#4f46e5"><i
@@ -2453,8 +2454,8 @@
 
                     <div class="ss-phone-card">
                         <div class="ss-phone">
-                            <div class="ss-screen"><img src="imgs/screenshots/attendance%20assigning.PNG?v=20261004"
-                                    alt="تسجيل الحضور" loading="lazy"></div>
+                            <div class="ss-screen"><img src="imgs/screenshots/attendance assigning.PNG"
+                                    alt="تسجيل الحضور" decoding="async"></div>
                         </div>
                         <div class="ss-phone-label">
                             <div class="ss-phone-badge" style="background:#ecfdf5;color:#059669"><i
@@ -2465,8 +2466,8 @@
 
                     <div class="ss-phone-card">
                         <div class="ss-phone">
-                            <div class="ss-screen"><img src="imgs/screenshots/attendance%20date.PNG?v=20261004" alt="تاريخ الحضور"
-                                    loading="lazy"></div>
+                            <div class="ss-screen"><img src="imgs/screenshots/attendance date.PNG" alt="تاريخ الحضور"
+                                    decoding="async"></div>
                         </div>
                         <div class="ss-phone-label">
                             <div class="ss-phone-badge" style="background:#eff6ff;color:#1d4ed8"><i
@@ -2477,8 +2478,8 @@
 
                     <div class="ss-phone-card">
                         <div class="ss-phone">
-                            <div class="ss-screen"><img src="imgs/screenshots/swipe%20attendance%20feature.png?v=20261004"
-                                    alt="سحب للحضور" loading="lazy"></div>
+                            <div class="ss-screen"><img src="imgs/screenshots/swipe attendance feature.png"
+                                    alt="سحب للحضور" decoding="async"></div>
                         </div>
                         <div class="ss-phone-label">
                             <div class="ss-phone-badge" style="background:#ecfdf5;color:#059669"><i
@@ -2489,8 +2490,8 @@
 
                     <div class="ss-phone-card">
                         <div class="ss-phone">
-                            <div class="ss-screen"><img src="imgs/screenshots/kid%20profile%20view.PNG?v=20261004" alt="ملف الطفل"
-                                    loading="lazy"></div>
+                            <div class="ss-screen"><img src="imgs/screenshots/kid profile view.PNG" alt="ملف الطفل"
+                                    decoding="async"></div>
                         </div>
                         <div class="ss-phone-label">
                             <div class="ss-phone-badge" style="background:#fdf4ff;color:#7c3aed"><i
@@ -2501,8 +2502,8 @@
 
                     <div class="ss-phone-card">
                         <div class="ss-phone">
-                            <div class="ss-screen"><img src="imgs/screenshots/kid%20profile%20view%202.PNG?v=20261004" alt="ملف الطفل 2"
-                                    loading="lazy"></div>
+                            <div class="ss-screen"><img src="imgs/screenshots/kid profile view 2.PNG" alt="ملف الطفل 2"
+                                    decoding="async"></div>
                         </div>
                         <div class="ss-phone-label">
                             <div class="ss-phone-badge" style="background:#fdf4ff;color:#7c3aed"><i
@@ -2513,8 +2514,8 @@
 
                     <div class="ss-phone-card">
                         <div class="ss-phone">
-                            <div class="ss-screen"><img src="imgs/screenshots/kid%20info.PNG?v=20261004" alt="معلومات الطفل"
-                                    loading="lazy"></div>
+                            <div class="ss-screen"><img src="imgs/screenshots/kid info.PNG" alt="معلومات الطفل"
+                                    decoding="async"></div>
                         </div>
                         <div class="ss-phone-label">
                             <div class="ss-phone-badge" style="background:#fff7ed;color:#c2410c"><i
@@ -2525,8 +2526,8 @@
 
                     <div class="ss-phone-card">
                         <div class="ss-phone">
-                            <div class="ss-screen"><img src="imgs/screenshots/withdraw%20couons%20feature.png?v=20261004"
-                                    alt="سحب كوبونات" loading="lazy"></div>
+                            <div class="ss-screen"><img src="imgs/screenshots/withdraw couons feature.png"
+                                    alt="سحب كوبونات" decoding="async"></div>
                         </div>
                         <div class="ss-phone-label">
                             <div class="ss-phone-badge" style="background:#fef9c3;color:#a16207"><i
@@ -2537,8 +2538,8 @@
 
                     <div class="ss-phone-card">
                         <div class="ss-phone">
-                            <div class="ss-screen"><img src="imgs/screenshots/bulk%20add%20kids%20feature.png?v=20261004"
-                                    alt="إضافة جماعية" loading="lazy"></div>
+                            <div class="ss-screen"><img src="imgs/screenshots/bulk add kids feature.png"
+                                    alt="إضافة جماعية" decoding="async"></div>
                         </div>
                         <div class="ss-phone-label">
                             <div class="ss-phone-badge" style="background:#eef2ff;color:#4f46e5"><i
@@ -2549,8 +2550,8 @@
 
                     <div class="ss-phone-card">
                         <div class="ss-phone">
-                            <div class="ss-screen"><img src="imgs/screenshots/uncle%20class%20view.PNG?v=20261004" alt="عرض الانكل"
-                                    loading="lazy"></div>
+                            <div class="ss-screen"><img src="imgs/screenshots/uncle class view.PNG" alt="عرض الانكل"
+                                    decoding="async"></div>
                         </div>
                         <div class="ss-phone-label">
                             <div class="ss-phone-badge" style="background:#ecfdf5;color:#059669"><i
@@ -2561,8 +2562,8 @@
 
                     <div class="ss-phone-card">
                         <div class="ss-phone">
-                            <div class="ss-screen"><img src="imgs/screenshots/task%20exams.png?v=20261004" alt="التاسكات"
-                                    loading="lazy"></div>
+                            <div class="ss-screen"><img src="imgs/screenshots/task exams.png" alt="التاسكات"
+                                    decoding="async"></div>
                         </div>
                         <div class="ss-phone-label">
                             <div class="ss-phone-badge" style="background:#fff1f2;color:#be123c"><i
@@ -2573,8 +2574,8 @@
 
                     <div class="ss-phone-card">
                         <div class="ss-phone">
-                            <div class="ss-screen"><img src="imgs/screenshots/qr%20code%20game%20points.png?v=20261004" alt="نقاط QR"
-                                    loading="lazy"></div>
+                            <div class="ss-screen"><img src="imgs/screenshots/qr code game points.png" alt="نقاط QR"
+                                    decoding="async"></div>
                         </div>
                         <div class="ss-phone-label">
                             <div class="ss-phone-badge" style="background:#eff6ff;color:#1d4ed8"><i
@@ -2585,8 +2586,8 @@
 
                     <div class="ss-phone-card">
                         <div class="ss-phone">
-                            <div class="ss-screen"><img src="imgs/screenshots/game%20qr%20codes%20customization%20print.PNG?v=20261004"
-                                    alt="طباعة QR" loading="lazy"></div>
+                            <div class="ss-screen"><img src="imgs/screenshots/game qr codes customization print.PNG"
+                                    alt="طباعة QR" decoding="async"></div>
                         </div>
                         <div class="ss-phone-label">
                             <div class="ss-phone-badge" style="background:#eff6ff;color:#1d4ed8"><i
@@ -2804,7 +2805,7 @@
     </main>
 
     <script>
-        // ── SCREENSHOTS CAROUSEL + LIGHTBOX (PREMIUM REDESIGN) ─────────────
+        // ── SCREENSHOTS CAROUSEL + LIGHTBOX (SMOOTH MECHANISM) ─────────────
         (function () {
             const track = document.getElementById('ssTrack');
             const dotsRow = document.getElementById('ssDots2');
@@ -2812,7 +2813,6 @@
             const btnNext = document.getElementById('ssBtnNext');
             if (!track) return;
 
-            // Gather card data
             const cards = Array.from(track.querySelectorAll('.ss-phone-card'));
             const total = cards.length;
             let currentIdx = 0;
@@ -2843,7 +2843,7 @@
 
                 // Click opens lightbox
                 card.addEventListener('click', () => {
-                    if (track.classList.contains('is-dragging') || didDrag) return;
+                    if (didDrag) return;
                     openLightbox(i);
                 });
             });
@@ -2854,63 +2854,86 @@
                 cards.forEach((_, i) => {
                     const d = document.createElement('button');
                     d.className = 'ss-dot' + (i === 0 ? ' active' : '');
-                    d.setAttribute('aria-label', 'انتقل للقطة ' + (i + 1));
+                    d.setAttribute('aria-label', 'شاشة ' + (i + 1));
                     d.addEventListener('click', () => goTo(i));
                     dotsRow.appendChild(d);
                 });
             }
 
-            function getCardWidth() { return cards[0] ? cards[0].offsetWidth + 22 : 222; }
-
             function goTo(index) {
                 currentIdx = Math.max(0, Math.min(index, total - 1));
-                const cw = getCardWidth();
-                const trackW = track.offsetWidth;
-                const offset = (cw * currentIdx) - (trackW / 2) + (cards[currentIdx].offsetWidth / 2);
-                track.scrollTo({ left: -offset, behavior: 'smooth' });
-                updateCarouselUI();
+                const targetCard = cards[currentIdx];
+                if (targetCard) {
+                    targetCard.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+                }
+                updateCarouselUI(currentIdx);
             }
 
-            function updateCarouselUI() {
+            function updateCarouselUI(idx) {
+                cards.forEach((c, i) => c.classList.toggle('is-active', i === idx));
                 if (dotsRow) {
                     dotsRow.querySelectorAll('.ss-dot').forEach((d, i) =>
-                        d.classList.toggle('active', i === currentIdx));
+                        d.classList.toggle('active', i === idx));
                 }
-                if (btnPrev) btnPrev.disabled = currentIdx === 0;
-                if (btnNext) btnNext.disabled = currentIdx >= total - 1;
+                if (btnPrev) btnPrev.disabled = idx === 0;
+                if (btnNext) btnNext.disabled = idx >= total - 1;
             }
 
-            track.addEventListener('scroll', () => {
-                const cw = getCardWidth();
-                currentIdx = Math.min(total - 1, Math.max(0, Math.round(Math.abs(track.scrollLeft) / cw)));
-                updateCarouselUI();
-            }, { passive: true });
+            // High-precision IntersectionObserver for smooth active card detection
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        const idx = cards.indexOf(entry.target);
+                        if (idx !== -1) {
+                            currentIdx = idx;
+                            updateCarouselUI(idx);
+                        }
+                    }
+                });
+            }, {
+                root: track,
+                threshold: 0.65
+            });
 
+            cards.forEach(card => observer.observe(card));
+
+            // Buttons: in RTL
+            // btnPrev: right button -> previous index (currentIdx - 1)
+            // btnNext: left button -> next index (currentIdx + 1)
             if (btnPrev) btnPrev.addEventListener('click', () => goTo(currentIdx - 1));
             if (btnNext) btnNext.addEventListener('click', () => goTo(currentIdx + 1));
 
-            // Mouse drag
-            let isDown = false, startX = 0, startScroll = 0, didDrag = false;
+            // Smooth fluid drag for desktop mouse
+            let isDown = false;
+            let startX = 0;
+            let scrollStart = 0;
+            let didDrag = false;
+
             track.addEventListener('mousedown', e => {
-                isDown = true; didDrag = false;
+                isDown = true;
+                didDrag = false;
                 track.classList.add('is-dragging');
-                startX = e.pageX - track.offsetLeft;
-                startScroll = track.scrollLeft;
-            });
-            track.addEventListener('mouseleave', () => { isDown = false; track.classList.remove('is-dragging'); });
-            track.addEventListener('mouseup', () => {
-                isDown = false;
-                setTimeout(() => track.classList.remove('is-dragging'), 50);
-            });
-            track.addEventListener('mousemove', e => {
-                if (!isDown) return;
-                e.preventDefault();
-                const dx = e.pageX - track.offsetLeft - startX;
-                if (Math.abs(dx) > 4) didDrag = true;
-                track.scrollLeft = startScroll + dx * 1.4;
+                startX = e.pageX;
+                scrollStart = track.scrollLeft;
             });
 
-            updateCarouselUI();
+            window.addEventListener('mouseup', () => {
+                if (!isDown) return;
+                isDown = false;
+                track.classList.remove('is-dragging');
+                setTimeout(() => { didDrag = false; }, 60);
+            });
+
+            track.addEventListener('mousemove', e => {
+                if (!isDown) return;
+                const dist = e.pageX - startX;
+                if (Math.abs(dist) > 6) {
+                    didDrag = true;
+                }
+                track.scrollLeft = scrollStart - dist;
+            });
+
+            updateCarouselUI(0);
 
             // ── LIGHTBOX ────────────────────────────
             const lb = document.getElementById('ssLightbox');
@@ -2933,7 +2956,7 @@
                 data.forEach((item, i) => {
                     const thumb = document.createElement('div');
                     thumb.className = 'ss-lb-thumb' + (i === 0 ? ' active' : '');
-                    thumb.innerHTML = `<img src="${item.src}" alt="${item.alt}" loading="lazy">`;
+                    thumb.innerHTML = `<img src="${item.src}" alt="${item.alt}" decoding="async">`;
                     thumb.addEventListener('click', (e) => {
                         e.stopPropagation();
                         lbGoTo(i);
@@ -2951,10 +2974,7 @@
                 if (lbBadge) lbBadge.innerHTML = item.badgeHtml;
                 if (lbDesc) lbDesc.textContent = item.descText;
                 if (lbCount) lbCount.textContent = `${idx + 1} / ${total}`;
-                
-                // In RTL layout:
-                // lbPrev (right arrow): goes to previous index (idx - 1)
-                // lbNext (left arrow): goes to next index (idx + 1)
+
                 if (lbPrev) lbPrev.disabled = idx === 0;
                 if (lbNext) lbNext.disabled = idx >= total - 1;
 
@@ -2982,7 +3002,6 @@
                 lb.classList.remove('open');
                 lb.classList.remove('is-fullscreen');
                 document.body.style.overflow = '';
-                setTimeout(() => { if (lbImg) lbImg.src = ''; }, 320);
                 if (document.fullscreenElement) {
                     document.exitFullscreen().catch(() => { });
                 }
@@ -3023,12 +3042,12 @@
                 if (index < 0 || index >= total) return;
                 lbIdx = index;
                 lbImg.style.opacity = '0';
-                lbImg.style.transform = 'scale(0.96)';
+                lbImg.style.transform = 'scale(0.97)';
                 setTimeout(() => {
                     updateLightboxContent(lbIdx);
                     lbImg.style.opacity = '1';
                     lbImg.style.transform = 'scale(1)';
-                }, 160);
+                }, 140);
             }
 
             if (lbClose) lbClose.addEventListener('click', closeLightbox);
@@ -3048,7 +3067,6 @@
             document.addEventListener('keydown', e => {
                 if (!lb || !lb.classList.contains('open')) return;
                 if (e.key === 'Escape') closeLightbox();
-                // In RTL: ArrowRight goes to previous, ArrowLeft goes to next
                 if (e.key === 'ArrowRight') lbGoTo(lbIdx - 1);
                 if (e.key === 'ArrowLeft') lbGoTo(lbIdx + 1);
             });
@@ -3065,7 +3083,6 @@
                 const dx = e.changedTouches[0].clientX - touchStartX;
                 const dy = e.changedTouches[0].clientY - touchStartY;
                 if (Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > 40) {
-                    // Swipe left / right
                     if (dx > 0) {
                         lbGoTo(lbIdx - 1);
                     } else {
