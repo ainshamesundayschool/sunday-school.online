@@ -5491,6 +5491,32 @@ try {
 
             break;
 
+        case 'testHostingerMail':
+            $testTo = !empty($_GET['to']) ? trim($_GET['to']) : (!empty($_POST['to']) ? trim($_POST['to']) : 'peterfayez107@gmail.com');
+            $debugLog = [];
+            $res = sendHostingerSMTPEmail(
+                $testTo,
+                'Sunday School Online - Live SMTP Verification (' . date('H:i:s') . ')',
+                '<div style="font-family:Cairo,sans-serif;padding:24px;border-radius:14px;background:#f3f4f9;color:#1a1d2e;direction:rtl;text-align:right;">' .
+                    '<h2 style="color:#5b6cf5;margin-bottom:12px;">اختبار بريد الأحد الإلكتروني عبر Hostinger SMTP</h2>' .
+                    '<p style="font-size:15px;line-height:1.6;">تم إرسال هذا البريد بنجاح من خادم Sunday School Online مباشرة عبر بروتوكول Hostinger SMTP الموثق.</p>' .
+                    '<div style="margin-top:16px;padding:12px;background:#ffffff;border-radius:8px;border:1px solid #e4e6f0;font-size:13px;color:#4b5068;">' .
+                        '<strong>المستلم:</strong> ' . htmlspecialchars($testTo) . '<br>' .
+                        '<strong>المرسل:</strong> admin@sunday-school.online<br>' .
+                        '<strong>الوقت:</strong> ' . date('Y-m-d H:i:s') .
+                    '</div>' .
+                '</div>',
+                'اختبار بريد الأحد الإلكتروني عبر Hostinger SMTP. الوقت: ' . date('Y-m-d H:i:s'),
+                $debugLog
+            );
+            sendJSON([
+                'success' => $res,
+                'recipient' => $testTo,
+                'timestamp' => date('Y-m-d H:i:s'),
+                'debug' => $debugLog
+            ]);
+            break;
+
 
 
         case 'getStudentByPhone':
@@ -21335,137 +21361,203 @@ function maskEmail(string $email): string
     return $maskedName . '@' . $domain;
 }
 
-function sendHostingerSMTPEmail(string $toEmail, string $subject, string $htmlBody, string $plainText = ''): bool
+function sendHostingerSMTPEmail(string $toEmail, string $subject, string $htmlBody, string $plainText = '', ?array &$debugLog = null): bool
 {
-    $host = defined('HOSTINGER_SMTP_HOST') ? HOSTINGER_SMTP_HOST : 'smtp.hostinger.com';
-    $port = defined('HOSTINGER_SMTP_PORT') ? intval(HOSTINGER_SMTP_PORT) : 465;
-    $user = defined('HOSTINGER_SMTP_USER') ? trim(HOSTINGER_SMTP_USER) : '';
-    $pass = defined('HOSTINGER_SMTP_PASS') ? trim(HOSTINGER_SMTP_PASS) : '';
-    $fromName = defined('HOSTINGER_SMTP_FROM_NAME') ? HOSTINGER_SMTP_FROM_NAME : 'Sunday School Online';
+    $host = defined('HOSTINGER_SMTP_HOST') && !empty(HOSTINGER_SMTP_HOST) ? HOSTINGER_SMTP_HOST : 'smtp.hostinger.com';
+    $configuredPort = defined('HOSTINGER_SMTP_PORT') && !empty(HOSTINGER_SMTP_PORT) ? intval(HOSTINGER_SMTP_PORT) : 465;
+    $user = defined('HOSTINGER_SMTP_USER') && !empty(HOSTINGER_SMTP_USER) ? trim(HOSTINGER_SMTP_USER) : 'admin@sunday-school.online';
+    $pass = defined('HOSTINGER_SMTP_PASS') && !empty(HOSTINGER_SMTP_PASS) ? trim(HOSTINGER_SMTP_PASS) : 'PFYM24997017#ss';
+    $fromName = defined('HOSTINGER_SMTP_FROM_NAME') && !empty(HOSTINGER_SMTP_FROM_NAME) ? HOSTINGER_SMTP_FROM_NAME : 'Sunday School Online';
+
+    $log = function(string $msg) use (&$debugLog) {
+        if ($debugLog !== null) {
+            $debugLog[] = $msg;
+        }
+    };
+
+    $log("HostingerSMTP init: Host={$host}, User={$user}, To={$toEmail}");
 
     if (empty($user) || empty($pass)) {
+        $log("Error: User or Pass empty");
         return false;
     }
 
-    $transport = ($port === 465) ? "ssl://{$host}:{$port}" : "tcp://{$host}:{$port}";
-    $context = stream_context_create([
-        'ssl' => [
-            'verify_peer' => false,
-            'verify_peer_name' => false,
-            'allow_self_signed' => true
-        ]
-    ]);
+    $portsToTry = ($configuredPort === 587) ? [587, 465] : [465, 587];
+    $lastError = '';
 
-    $socket = @stream_socket_client($transport, $errno, $errstr, 8, STREAM_CLIENT_CONNECT, $context);
-    if (!$socket) {
-        error_log("[HostingerSMTP] Connection failed: {$errstr} ({$errno})");
-        return false;
-    }
+    foreach ($portsToTry as $port) {
+        $log("Attempting connection on port {$port}...");
+        $isSSL = ($port === 465);
+        $transport = $isSSL ? "ssl://{$host}:{$port}" : "tcp://{$host}:{$port}";
 
-    stream_set_timeout($socket, 8);
+        $context = stream_context_create([
+            'ssl' => [
+                'verify_peer' => false,
+                'verify_peer_name' => false,
+                'allow_self_signed' => true
+            ]
+        ]);
 
-    $read = function() use ($socket) {
-        $response = '';
-        while ($line = fgets($socket, 515)) {
-            $response .= $line;
-            if (isset($line[3]) && $line[3] === ' ') break;
+        $errno = 0;
+        $errstr = '';
+        $socket = @stream_socket_client($transport, $errno, $errstr, 8, STREAM_CLIENT_CONNECT, $context);
+        if (!$socket) {
+            $lastError = "Connection to {$transport} failed: {$errstr} ({$errno})";
+            $log($lastError);
+            continue;
         }
-        return $response;
-    };
 
-    $send = function($cmd) use ($socket, $read) {
-        fputs($socket, $cmd . "\r\n");
-        return $read();
-    };
+        stream_set_timeout($socket, 10);
 
-    $greeting = $read();
-    if (substr($greeting, 0, 3) !== '220') {
-        @fclose($socket);
-        return false;
-    }
-
-    $ehlo = $send("EHLO " . (gethostname() ?: 'localhost'));
-    if (substr($ehlo, 0, 3) !== '250') {
-        @fclose($socket);
-        return false;
-    }
-
-    if ($port !== 465 && stripos($ehlo, 'STARTTLS') !== false) {
-        $starttls = $send("STARTTLS");
-        if (substr($starttls, 0, 3) === '220') {
-            if (!stream_socket_enable_crypto($socket, true, STREAM_CRYPTO_METHOD_TLS_CLIENT)) {
-                @fclose($socket);
-                return false;
+        $read = function() use ($socket, $log) {
+            $response = '';
+            while (!feof($socket)) {
+                $line = fgets($socket, 515);
+                if ($line === false) break;
+                $response .= $line;
+                if (preg_match('/^\d{3}\s/', $line)) {
+                    break;
+                }
             }
-            $ehlo = $send("EHLO " . (gethostname() ?: 'localhost'));
+            return trim($response);
+        };
+
+        $send = function($cmd) use ($socket, $read) {
+            fputs($socket, $cmd . "\r\n");
+            return $read();
+        };
+
+        $greeting = $read();
+        $log("Greeting: " . substr($greeting, 0, 80));
+        if (substr($greeting, 0, 3) !== '220') {
+            @fclose($socket);
+            continue;
+        }
+
+        $ehlo = $send("EHLO sunday-school.online");
+        $log("EHLO: " . substr($ehlo, 0, 80));
+        if (substr($ehlo, 0, 3) !== '250') {
+            @fclose($socket);
+            continue;
+        }
+
+        if (!$isSSL && stripos($ehlo, 'STARTTLS') !== false) {
+            $starttls = $send("STARTTLS");
+            $log("STARTTLS: {$starttls}");
+            if (substr($starttls, 0, 3) === '220') {
+                if (!stream_socket_enable_crypto($socket, true, STREAM_CRYPTO_METHOD_TLS_CLIENT)) {
+                    $log("Crypto negotiation failed");
+                    @fclose($socket);
+                    continue;
+                }
+                $ehlo = $send("EHLO sunday-school.online");
+                $log("EHLO after TLS: " . substr($ehlo, 0, 80));
+            }
+        }
+
+        $auth = $send("AUTH LOGIN");
+        $log("AUTH LOGIN: {$auth}");
+        if (substr($auth, 0, 3) !== '334') {
+            @fclose($socket);
+            continue;
+        }
+
+        $userResp = $send(base64_encode($user));
+        $log("User response: {$userResp}");
+        if (substr($userResp, 0, 3) !== '334') {
+            @fclose($socket);
+            continue;
+        }
+
+        $passResp = $send(base64_encode($pass));
+        $log("Pass response: {$passResp}");
+        if (substr($passResp, 0, 3) !== '235') {
+            $log("Auth failed: {$passResp}");
+            @fclose($socket);
+            continue;
+        }
+
+        $fromResp = $send("MAIL FROM: <{$user}>");
+        $log("MAIL FROM: {$fromResp}");
+        if (substr($fromResp, 0, 3) !== '250') {
+            @fclose($socket);
+            continue;
+        }
+
+        $rcptResp = $send("RCPT TO: <{$toEmail}>");
+        $log("RCPT TO: {$rcptResp}");
+        if (substr($rcptResp, 0, 3) !== '250') {
+            @fclose($socket);
+            continue;
+        }
+
+        $dataResp = $send("DATA");
+        $log("DATA: {$dataResp}");
+        if (substr($dataResp, 0, 3) !== '354') {
+            @fclose($socket);
+            continue;
+        }
+
+        $encodedSubject = '=?UTF-8?B?' . base64_encode($subject) . '?=';
+        $encodedFromName = '=?UTF-8?B?' . base64_encode($fromName) . '?=';
+        $boundary = "----=_Part_" . md5(uniqid(strval(time()), true));
+
+        $headers = "From: {$encodedFromName} <{$user}>\r\n";
+        $headers .= "To: <{$toEmail}>\r\n";
+        $headers .= "Subject: {$encodedSubject}\r\n";
+        $headers .= "MIME-Version: 1.0\r\n";
+        $headers .= "Content-Type: multipart/alternative; boundary=\"{$boundary}\"\r\n";
+        $headers .= "X-Mailer: SundaySchool-Platform/1.0\r\n\r\n";
+
+        $plain = !empty($plainText) ? $plainText : trim(strip_tags($htmlBody));
+        $body = "--{$boundary}\r\n";
+        $body .= "Content-Type: text/plain; charset=UTF-8\r\n";
+        $body .= "Content-Transfer-Encoding: base64\r\n\r\n";
+        $body .= chunk_split(base64_encode($plain)) . "\r\n";
+
+        $body .= "--{$boundary}\r\n";
+        $body .= "Content-Type: text/html; charset=UTF-8\r\n";
+        $body .= "Content-Transfer-Encoding: base64\r\n\r\n";
+        $body .= chunk_split(base64_encode($htmlBody)) . "\r\n";
+        $body .= "--{$boundary}--\r\n";
+
+        $fullPayload = $headers . $body . "\r\n.";
+
+        $len = strlen($fullPayload);
+        $offset = 0;
+        $writeFailed = false;
+        while ($offset < $len) {
+            $written = @fwrite($socket, substr($fullPayload, $offset, 8192));
+            if ($written === false || $written === 0) {
+                $writeFailed = true;
+                break;
+            }
+            $offset += $written;
+        }
+
+        if ($writeFailed) {
+            $log("Failed writing payload to socket");
+            @fclose($socket);
+            continue;
+        }
+
+        fputs($socket, "\r\n");
+        $dataFinish = $read();
+        $log("DATA Finish: {$dataFinish}");
+
+        $send("QUIT");
+        @fclose($socket);
+
+        if (substr($dataFinish, 0, 3) === '250') {
+            $log("Email sent successfully via Hostinger SMTP!");
+            return true;
         }
     }
 
-    $auth = $send("AUTH LOGIN");
-    if (substr($auth, 0, 3) !== '334') {
-        @fclose($socket);
-        return false;
+    if (!empty($lastError)) {
+        error_log("[HostingerSMTP] " . $lastError);
     }
-
-    $userResp = $send(base64_encode($user));
-    if (substr($userResp, 0, 3) !== '334') {
-        @fclose($socket);
-        return false;
-    }
-
-    $passResp = $send(base64_encode($pass));
-    if (substr($passResp, 0, 3) !== '235') {
-        error_log("[HostingerSMTP] Authentication failed");
-        @fclose($socket);
-        return false;
-    }
-
-    $fromResp = $send("MAIL FROM: <{$user}>");
-    if (substr($fromResp, 0, 3) !== '250') {
-        @fclose($socket);
-        return false;
-    }
-
-    $rcptResp = $send("RCPT TO: <{$toEmail}>");
-    if (substr($rcptResp, 0, 3) !== '250') {
-        @fclose($socket);
-        return false;
-    }
-
-    $dataResp = $send("DATA");
-    if (substr($dataResp, 0, 3) !== '354') {
-        @fclose($socket);
-        return false;
-    }
-
-    $encodedSubject = '=?UTF-8?B?' . base64_encode($subject) . '?=';
-    $encodedFromName = '=?UTF-8?B?' . base64_encode($fromName) . '?=';
-    $boundary = "----=_Part_" . md5(uniqid(strval(time()), true));
-
-    $message = "From: {$encodedFromName} <{$user}>\r\n";
-    $message .= "To: <{$toEmail}>\r\n";
-    $message .= "Subject: {$encodedSubject}\r\n";
-    $message .= "MIME-Version: 1.0\r\n";
-    $message .= "Content-Type: multipart/alternative; boundary=\"{$boundary}\"\r\n";
-    $message .= "X-Mailer: SundaySchool-Platform/1.0\r\n\r\n";
-
-    $plain = !empty($plainText) ? $plainText : trim(strip_tags($htmlBody));
-    $message .= "--{$boundary}\r\n";
-    $message .= "Content-Type: text/plain; charset=UTF-8\r\n";
-    $message .= "Content-Transfer-Encoding: base64\r\n\r\n";
-    $message .= chunk_split(base64_encode($plain)) . "\r\n";
-
-    $message .= "--{$boundary}\r\n";
-    $message .= "Content-Type: text/html; charset=UTF-8\r\n";
-    $message .= "Content-Transfer-Encoding: base64\r\n\r\n";
-    $message .= chunk_split(base64_encode($htmlBody)) . "\r\n";
-    $message .= "--{$boundary}--\r\n";
-
-    $sendData = $send($message . "\r\n.");
-    $send("QUIT");
-    @fclose($socket);
-
-    return (substr($sendData, 0, 3) === '250');
+    return false;
 }
 
 function sendSundaySchoolEmail(string $toEmail, string $subject, string $htmlBody, string $plainText = ''): bool
@@ -21477,22 +21569,22 @@ function sendSundaySchoolEmail(string $toEmail, string $subject, string $htmlBod
 
     $emailTitle = defined('HOSTINGER_SMTP_FROM_NAME') ? HOSTINGER_SMTP_FROM_NAME : 'Sunday School Online';
 
-    // 1. Hostinger SMTP (Direct Authenticated Delivery if configured)
-    if (defined('HOSTINGER_SMTP_USER') && !empty(HOSTINGER_SMTP_USER) && defined('HOSTINGER_SMTP_PASS') && !empty(HOSTINGER_SMTP_PASS)) {
-        try {
-            $smtpOk = sendHostingerSMTPEmail($toEmail, $subject, $htmlBody, $plainText);
-            if ($smtpOk) {
-                return true;
-            }
-        } catch (Throwable $t) {
-            error_log("[HostingerSMTP] Error: " . $t->getMessage());
+    // 1. Hostinger SMTP (Direct Authenticated Delivery)
+    try {
+        $debugLog = [];
+        $smtpOk = sendHostingerSMTPEmail($toEmail, $subject, $htmlBody, $plainText, $debugLog);
+        if ($smtpOk) {
+            return true;
         }
+        error_log("[HostingerSMTP] Delivery failed: " . implode(" | ", $debugLog));
+    } catch (Throwable $t) {
+        error_log("[HostingerSMTP] Error: " . $t->getMessage());
     }
 
-    // 2. Google Apps Script Relay (Gmail infrastructure via Web App)
+    // 2. Google Apps Script Relay (Gmail infrastructure via Web App fallback)
     $appsScriptUrl = defined('GOOGLE_APPS_SCRIPT_URL') && !empty(GOOGLE_APPS_SCRIPT_URL)
         ? GOOGLE_APPS_SCRIPT_URL
-        : 'https://script.google.com/macros/s/AKfycbxsDA0veJTA3C_2Bw47coffOagRigWwaZnyxWuGb_gSVUCWM958V1bUcaZDwfIHVZ7b1g/exec';
+        : '';
 
     $postData = json_encode([
         'action' => 'sendCustomEmail',
@@ -21503,7 +21595,7 @@ function sendSundaySchoolEmail(string $toEmail, string $subject, string $htmlBod
         'senderName' => $emailTitle
     ]);
 
-    if (function_exists('curl_init') && !empty($appsScriptUrl)) {
+    if (!empty($appsScriptUrl) && function_exists('curl_init')) {
         $ch = curl_init($appsScriptUrl);
         curl_setopt_array($ch, [
             CURLOPT_POST => true,
@@ -21528,7 +21620,7 @@ function sendSundaySchoolEmail(string $toEmail, string $subject, string $htmlBod
     // 3. Fallback to PHP native mail()
     $fromAddr = defined('HOSTINGER_SMTP_USER') && !empty(HOSTINGER_SMTP_USER)
         ? HOSTINGER_SMTP_USER
-        : 'noreply@sunday-school.online';
+        : 'admin@sunday-school.online';
     $fromName = $emailTitle;
     $encodedFromName = '=?UTF-8?B?' . base64_encode($fromName) . '?=';
 
