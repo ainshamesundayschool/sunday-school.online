@@ -1,7 +1,7 @@
 // ╔══════════════════════════════════════════════════════════════╗
-// ║  Sunday School PWA — Service Worker v46                     ║
+// ║  Sunday School PWA — Service Worker v47                     ║
 // ╚══════════════════════════════════════════════════════════════╝
-const SW_VERSION        = new URL(self.location.href).searchParams.get('v') || 'v46';
+const SW_VERSION        = new URL(self.location.href).searchParams.get('v') || 'v47';
 const CACHE_NAME        = `sunday-school-${SW_VERSION}`;
 const SYNC_TAG          = 'sync-attendance';
 const PERIODIC_SYNC_TAG = 'check-registrations';
@@ -321,10 +321,8 @@ self.addEventListener('fetch', e => {
         e.respondWith(
             (async () => {
                 try {
-                    const networkResp = await fetch(e.request, { cache: 'no-store' });
+                    const networkResp = await fetch(e.request, { cache: 'reload' });
                     if (networkResp && networkResp.ok) {
-                        const copy = networkResp.clone();
-                        caches.open(CACHE_NAME).then(c => c.put(e.request, copy)).catch(() => {});
                         return networkResp;
                     }
                 } catch (netErr) {}
