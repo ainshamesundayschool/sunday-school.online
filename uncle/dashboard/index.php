@@ -7183,65 +7183,665 @@ $showSettings = $hasChurchId || $isDevOrAdmin;
             animation: fadeSlideDown .22s var(--ease)
         }
 
-        /* Announcement */
-        .announcement-form {
-            background: var(--brand-bg);
-            border-radius: var(--r-lg);
-            padding: 14px;
-            margin-bottom: 18px;
-            border: 1px solid rgba(91, 108, 245, .15)
+        /* ── ANNOUNCEMENTS MODERN DESIGN SYSTEM ── */
+        .ann-tabs-bar {
+            display: flex;
+            gap: 8px;
+            background: var(--surface-2);
+            padding: 5px;
+            border-radius: var(--r-xl);
+            border: 1px solid var(--border-solid);
+            margin-bottom: 16px;
         }
 
-        .announcement-class-picker {
+        .ann-tab-pill {
+            flex: 1;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 10px 16px;
+            border-radius: var(--r-lg);
+            border: none;
+            background: transparent;
+            color: var(--text-2);
+            font-family: 'Cairo', sans-serif;
+            font-size: .88rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all .2s var(--ease);
+            user-select: none;
+        }
+
+        .ann-tab-pill:hover {
+            color: var(--brand);
+            background: rgba(91, 108, 245, .06);
+        }
+
+        .ann-tab-pill.active {
+            background: var(--surface);
+            color: var(--brand);
+            box-shadow: var(--shadow-sm);
+            font-weight: 800;
+        }
+
+        .ann-count-badge {
+            background: var(--brand-bg);
+            color: var(--brand);
+            padding: 2px 8px;
+            border-radius: var(--r-full);
+            font-size: .75rem;
+            font-weight: 800;
+            transition: all .2s;
+        }
+
+        .ann-tab-pill.active .ann-count-badge {
+            background: var(--brand);
+            color: #fff;
+        }
+
+        .ann-list-toolbar {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 14px;
+        }
+
+        .ann-search-wrap {
+            flex: 1;
+            position: relative;
+            display: flex;
+            align-items: center;
+        }
+
+        .ann-search-wrap input {
+            width: 100%;
+            padding: 9px 12px 9px 34px;
+            border-radius: var(--r-md);
+            border: 1.5px solid var(--border-solid);
+            background: var(--surface-2);
+            font-family: 'Cairo', sans-serif;
+            font-size: .84rem;
+            color: var(--text);
+            outline: none;
+            transition: all .2s;
+        }
+
+        .ann-search-wrap input:focus {
+            border-color: var(--brand);
+            background: var(--surface);
+            box-shadow: 0 0 0 3px var(--brand-glow);
+        }
+
+        .ann-search-wrap i {
+            position: absolute;
+            right: 12px;
+            color: var(--text-3);
+            pointer-events: none;
+            font-size: .84rem;
+        }
+
+        .ann-new-btn-quick {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 9px 16px;
+            border-radius: var(--r-md);
+            font-family: 'Cairo', sans-serif;
+            font-weight: 700;
+            font-size: .84rem;
+            white-space: nowrap;
+        }
+
+        .announcements-cards-container {
+            display: grid;
+            gap: 12px;
+            grid-template-columns: 1fr;
+            max-height: 480px;
+            overflow-y: auto;
+            padding: 2px;
+        }
+
+        @media (min-width: 769px) {
+            .announcements-cards-container {
+                grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+            }
+        }
+
+        .ann-card {
+            background: var(--surface);
+            border: 1.5px solid var(--border-solid);
+            border-radius: var(--r-xl);
+            padding: 14px 16px;
+            transition: all .2s var(--ease);
+            box-shadow: var(--shadow-sm);
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .ann-card.is-inactive {
+            opacity: .75;
+            background: var(--surface-2);
+            border-style: dashed;
+        }
+
+        .ann-card:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-md);
+            border-color: rgba(91, 108, 245, .3);
+        }
+
+        .ann-card-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .ann-card-badges {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            flex-wrap: wrap;
+        }
+
+        .ann-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 3px 9px;
+            border-radius: var(--r-full);
+            font-size: .72rem;
+            font-weight: 700;
+            font-family: 'Cairo', sans-serif;
+        }
+
+        .ann-badge.type-message {
+            background: var(--brand-bg);
+            color: var(--brand);
+        }
+
+        .ann-badge.type-button {
+            background: var(--coupon-bg);
+            color: var(--coupon-dark);
+        }
+
+        .ann-badge.target-kids {
+            background: var(--success-bg);
+            color: var(--success-dark);
+        }
+
+        .ann-badge.target-uncles {
+            background: var(--warning-bg);
+            color: var(--warning-dark);
+        }
+
+        .ann-badge.target-both {
+            background: rgba(59, 130, 246, .12);
+            color: #2563eb;
+        }
+
+        .ann-badge.badge-class {
+            background: var(--surface-3);
+            color: var(--text-2);
+        }
+
+        .ann-card-actions {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .ann-toggle-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 4px 10px;
+            border-radius: var(--r-full);
+            font-size: .72rem;
+            font-weight: 700;
+            border: none;
+            cursor: pointer;
+            transition: all .2s;
+            font-family: 'Cairo', sans-serif;
+        }
+
+        .ann-toggle-pill.active {
+            background: var(--success-bg);
+            color: var(--success-dark);
+        }
+
+        .ann-toggle-pill.inactive {
+            background: var(--danger-bg);
+            color: var(--danger-dark);
+        }
+
+        .ann-status-dot {
+            width: 7px;
+            height: 7px;
+            border-radius: 50%;
+        }
+
+        .ann-toggle-pill.active .ann-status-dot {
+            background: var(--success);
+            box-shadow: 0 0 6px var(--success);
+        }
+
+        .ann-toggle-pill.inactive .ann-status-dot {
+            background: var(--danger);
+        }
+
+        .ann-del-btn {
+            width: 32px;
+            height: 32px;
+            border-radius: var(--r-md);
+            border: none;
+            background: rgba(239, 68, 68, .1);
+            color: var(--danger);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: .82rem;
+            transition: all .2s;
+        }
+
+        .ann-del-btn:hover {
+            background: var(--danger);
+            color: #fff;
+            transform: scale(1.06);
+        }
+
+        .ann-card-body {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            flex: 1;
+        }
+
+        .ann-card-title {
+            font-size: .95rem;
+            font-weight: 800;
+            color: var(--text);
+            line-height: 1.45;
+            word-break: break-word;
+            margin: 0;
+        }
+
+        .ann-card-desc {
+            font-size: .82rem;
+            color: var(--text-2);
+            background: var(--surface-2);
+            padding: 8px 12px;
+            border-radius: var(--r-md);
+            line-height: 1.6;
+            white-space: pre-wrap;
+            word-break: break-word;
+            border: 1px solid var(--border-solid);
+        }
+
+        .ann-card-img-wrap {
+            width: 100%;
+            max-height: 160px;
+            overflow: hidden;
+            border-radius: var(--r-md);
+            border: 1px solid var(--border-solid);
+            cursor: pointer;
+        }
+
+        .ann-card-img-wrap img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform .3s;
+        }
+
+        .ann-card-img-wrap:hover img {
+            transform: scale(1.02);
+        }
+
+        .ann-card-btn-wrap {
+            margin-top: 4px;
+        }
+
+        .ann-action-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            padding: 7px 16px;
+            border-radius: var(--r-md);
+            background: var(--coupon-grad);
+            color: #fff;
+            font-size: .78rem;
+            font-weight: 700;
+            text-decoration: none;
+            box-shadow: 0 4px 12px rgba(139, 92, 246, .2);
+            transition: all .2s;
+            width: fit-content;
+        }
+
+        .ann-action-btn:hover {
+            transform: translateY(-1px);
+            color: #fff;
+            box-shadow: 0 6px 16px rgba(139, 92, 246, .3);
+        }
+
+        .ann-card-footer {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 8px;
+            padding-top: 8px;
+            border-top: 1px solid var(--border-solid);
+            font-size: .72rem;
+            color: var(--text-3);
+            flex-wrap: wrap;
+        }
+
+        .ann-footer-kids {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            color: var(--brand);
+            background: var(--brand-bg);
+            padding: 2px 8px;
+            border-radius: var(--r-full);
+            font-weight: 600;
+            max-width: 220px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .ann-footer-time {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .ann-empty-state {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding: 40px 20px;
+            background: var(--surface-2);
+            border-radius: var(--r-xl);
+            border: 1.5px dashed var(--border-solid);
+            margin: 12px 0;
+        }
+
+        .ann-empty-icon {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: var(--brand-bg);
+            color: var(--brand);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            margin-bottom: 12px;
+        }
+
+        .ann-empty-title {
+            font-size: 1rem;
+            font-weight: 800;
+            color: var(--text);
+            margin-bottom: 4px;
+        }
+
+        .ann-empty-desc {
+            font-size: .82rem;
+            color: var(--text-3);
+            max-width: 320px;
+        }
+
+        /* ── CREATION FORM MODERN DESIGN ── */
+        .ann-create-form {
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+            max-height: 480px;
+            overflow-y: auto;
+            padding: 2px 4px;
+        }
+
+        .ann-form-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+
+        @media (max-width: 640px) {
+            .ann-form-grid {
+                grid-template-columns: 1fr;
+                gap: 10px;
+            }
+        }
+
+        .ann-class-chips {
             display: flex;
             flex-wrap: wrap;
             gap: 6px;
             margin-top: 6px;
         }
 
-        .announcement-class-chip {
+        .ann-class-chip {
             display: inline-flex;
             align-items: center;
             gap: 5px;
-            padding: 5px 12px;
+            padding: 6px 14px;
             border-radius: var(--r-full);
-            background: var(--surface);
-            border: 1.5px solid var(--border);
+            background: var(--surface-2);
+            border: 1.5px solid var(--border-solid);
             color: var(--text-2);
-            font-size: .76rem;
+            font-family: 'Cairo', sans-serif;
+            font-size: .78rem;
             font-weight: 700;
             cursor: pointer;
             transition: all .18s var(--ease);
             user-select: none;
         }
 
-        .announcement-class-chip:hover {
+        .ann-class-chip:hover {
             border-color: var(--brand);
-            background: rgba(255, 255, 255, .92);
+            background: var(--brand-bg);
+            color: var(--brand);
         }
 
-        .announcement-class-chip.selected {
+        .ann-class-chip.selected {
             background: var(--brand);
             border-color: var(--brand);
             color: #fff;
-            box-shadow: 0 4px 12px rgba(91, 108, 245, .2);
+            box-shadow: 0 4px 12px var(--brand-glow);
         }
 
-        .announcement-class-chip.all-chip.selected {
+        .ann-class-chip.all-chip.selected {
             background: linear-gradient(135deg, #6366f1, #8b5cf6);
+            border-color: transparent;
         }
 
+        .ann-collapsible-section {
+            border: 1px solid var(--border-solid);
+            border-radius: var(--r-lg);
+            background: var(--surface-2);
+            overflow: hidden;
+            transition: border-color .2s;
+        }
+
+        .ann-collapsible-section:focus-within {
+            border-color: var(--brand);
+        }
+
+        .ann-collapsible-toggle {
+            width: 100%;
+            padding: 12px 14px;
+            border: none;
+            background: transparent;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            font-family: 'Cairo', sans-serif;
+            font-size: .82rem;
+            font-weight: 700;
+            color: var(--text);
+            cursor: pointer;
+            text-align: right;
+            transition: background .18s;
+        }
+
+        .ann-collapsible-toggle:hover {
+            background: var(--surface-3);
+        }
+
+        .ann-collapsible-body {
+            padding: 12px 14px;
+            border-top: 1px solid var(--border-solid);
+            background: var(--surface);
+        }
+
+        .ann-chevron-icon {
+            transition: transform .25s var(--ease);
+            font-size: .76rem;
+            color: var(--text-3);
+        }
+
+        .ann-picked-count-pill {
+            background: var(--brand-bg);
+            color: var(--brand);
+            padding: 2px 8px;
+            border-radius: var(--r-full);
+            font-size: .72rem;
+            font-weight: 700;
+        }
+
+        /* ── EMAIL TOGGLE CARD ── */
+        .ann-email-toggle-card {
+            background: linear-gradient(135deg, rgba(91, 108, 245, .08), rgba(139, 92, 246, .08));
+            border: 1.5px solid rgba(91, 108, 245, .22);
+            border-radius: var(--r-lg);
+            padding: 12px 14px;
+            margin: 4px 0;
+            transition: all .2s var(--ease);
+        }
+
+        .ann-email-toggle-card:hover {
+            border-color: var(--brand);
+            box-shadow: 0 4px 14px var(--brand-glow);
+        }
+
+        .ann-email-switch-label {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            cursor: pointer;
+            user-select: none;
+            width: 100%;
+            margin: 0;
+        }
+
+        .ann-email-icon-box {
+            width: 38px;
+            height: 38px;
+            border-radius: var(--r-md);
+            background: linear-gradient(135deg, var(--brand), var(--coupon));
+            color: #fff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1rem;
+            flex-shrink: 0;
+            box-shadow: 0 4px 10px rgba(91, 108, 245, .25);
+        }
+
+        .ann-email-details {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+
+        .ann-email-question {
+            font-size: .86rem;
+            font-weight: 800;
+            color: var(--text);
+        }
+
+        .ann-email-hint {
+            font-size: .75rem;
+            color: var(--text-2);
+            line-height: 1.4;
+        }
+
+        .ann-switch-wrap {
+            position: relative;
+            width: 48px;
+            height: 26px;
+            flex-shrink: 0;
+        }
+
+        .ann-switch-input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+            position: absolute;
+        }
+
+        .ann-switch-slider {
+            position: absolute;
+            inset: 0;
+            background: var(--border-solid);
+            border-radius: var(--r-full);
+            transition: .25s var(--ease);
+            cursor: pointer;
+        }
+
+        .ann-switch-slider::before {
+            content: '';
+            position: absolute;
+            height: 20px;
+            width: 20px;
+            right: 3px;
+            bottom: 3px;
+            background: #fff;
+            border-radius: 50%;
+            transition: .25s var(--ease);
+            box-shadow: 0 2px 5px rgba(0, 0, 0, .2);
+        }
+
+        .ann-switch-input:checked + .ann-switch-slider {
+            background: linear-gradient(135deg, var(--brand), var(--brand-dark));
+        }
+
+        .ann-switch-input:checked + .ann-switch-slider::before {
+            transform: translateX(-22px);
+        }
+
+        .ann-form-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 6px;
+        }
+
+        /* Student Picker Items */
         .announcement-student-picker {
             display: grid;
             gap: 10px;
-            margin-top: 8px;
         }
 
         .announcement-student-search {
             width: 100%;
             padding: 8px 12px 8px 32px;
             border-radius: var(--r-md);
-            border: 1.5px solid var(--border);
+            border: 1.5px solid var(--border-solid);
             background: var(--surface);
             font-family: inherit;
             font-size: .8rem;
@@ -7284,9 +7884,7 @@ $showSettings = $hasChurchId || $isDevOrAdmin;
             background: var(--surface);
             color: var(--text);
             border: 1px solid rgba(91, 108, 245, .14);
-            box-shadow:
-                0 1px 0 rgba(255, 255, 255, .72) inset,
-                0 6px 14px rgba(15, 23, 42, .04);
+            box-shadow: 0 1px 0 rgba(255, 255, 255, .72) inset, 0 6px 14px rgba(15, 23, 42, .04);
             font-size: .76rem;
             font-weight: 700;
         }
@@ -7325,13 +7923,19 @@ $showSettings = $hasChurchId || $isDevOrAdmin;
             cursor: pointer;
             font-size: .68rem;
             flex-shrink: 0;
+            transition: all .18s;
+        }
+
+        .announcement-picked-card button:hover {
+            background: var(--danger);
+            color: #fff;
         }
 
         .announcement-student-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+            grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
             gap: 8px;
-            max-height: 260px;
+            max-height: 220px;
             overflow-y: auto;
             padding: 2px;
         }
@@ -7342,7 +7946,7 @@ $showSettings = $hasChurchId || $isDevOrAdmin;
             align-items: center;
             justify-content: center;
             text-align: center;
-            padding: 10px 6px 8px;
+            padding: 8px 6px 6px;
             border-radius: var(--r-md);
             background: var(--surface);
             border: 1.5px solid rgba(91, 108, 245, .1);
@@ -7351,18 +7955,18 @@ $showSettings = $hasChurchId || $isDevOrAdmin;
             font-weight: 700;
             cursor: pointer;
             transition: all .18s var(--ease);
-            gap: 5px;
+            gap: 4px;
         }
 
         .announcement-student-option .ann-stu-ava {
-            width: 36px;
-            height: 36px;
+            width: 32px;
+            height: 32px;
             border-radius: 50%;
             background: linear-gradient(135deg, #e0e7ff, #c7d2fe);
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: .82rem;
+            font-size: .78rem;
             color: #818cf8;
             font-weight: 700;
             overflow: hidden;
@@ -7388,7 +7992,7 @@ $showSettings = $hasChurchId || $isDevOrAdmin;
             background: var(--brand);
             border-color: var(--brand);
             color: #fff;
-            box-shadow: 0 8px 18px rgba(91, 108, 245, .18);
+            box-shadow: 0 6px 14px rgba(91, 108, 245, .22);
         }
 
         .announcement-student-option.selected .ann-stu-ava {
@@ -7399,12 +8003,6 @@ $showSettings = $hasChurchId || $isDevOrAdmin;
             font-size: .72rem;
             color: var(--text-3);
             font-weight: 600;
-        }
-
-        .announcements-table-wrap {
-            max-height: 340px;
-            overflow-y: auto;
-            border-radius: var(--r-lg)
         }
 
         /* Skeleton — shapes match real attendance-item cards */
@@ -15207,99 +15805,178 @@ $showSettings = $hasChurchId || $isDevOrAdmin;
     <div class="modal-overlay" id="announcementsModal">
         <div class="modal modal-lg">
             <div class="modal-header">
-                <h3><i class="fas fa-bullhorn"></i> إدارة الإعلانات</h3>
+                <h3><i class="fas fa-bullhorn"></i> إدارة وتنبيهات الإعلانات</h3>
                 <button class="close-btn" id="closeAnnouncementsModal">&times;</button>
             </div>
-            <div>
-                <div class="announcement-form">
-                    <h4 style="margin-bottom:12px;font-size:.9rem;color:var(--brand)"><i class="fas fa-plus-circle"></i>
-                        إضافة إعلان جديد</h4>
-                    <form id="addAnnouncementForm">
-                        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px">
-                            <div class="form-group" style="margin:0"><label class="form-label">النوع</label><select
-                                    class="form-input" id="announcementType">
-                                    <option value="message">رسالة نصية</option>
-                                    <option value="button">زر برابط</option>
-                                </select></div>
-                            <div class="form-group" style="margin:0"><label class="form-label">الجمهور
-                                    المستهدف</label><select class="form-input" id="announcementTargetType">
-                                    <option value="kids">الأطفال فقط (Kids Only)</option>
-                                    <option value="uncles">الخدام فقط (Uncles Only)</option>
-                                    <option value="both">الكل - خدام وأطفال (Both)</option>
-                                </select></div>
+            <div class="modal-body" style="padding:14px 18px 24px; overflow-y:auto; flex:1;">
+                <!-- Tab Bar -->
+                <div class="ann-tabs-bar">
+                    <button type="button" class="ann-tab-pill active" id="annTabListBtn" onclick="switchAnnouncementTab('list')">
+                        <i class="fas fa-bullhorn"></i> الإعلانات الحالية <span class="ann-count-badge" id="activeAnnouncementsCount">0</span>
+                    </button>
+                    <button type="button" class="ann-tab-pill" id="annTabNewBtn" onclick="switchAnnouncementTab('new')">
+                        <i class="fas fa-plus-circle"></i> إضافة إعلان جديد
+                    </button>
+                </div>
+
+                <!-- Tab 1: Current Announcements Cards List -->
+                <div id="announcementsListTab" class="ann-tab-content">
+                    <div class="ann-list-toolbar">
+                        <div class="ann-search-wrap">
+                            <i class="fas fa-search"></i>
+                            <input type="text" id="announcementsSearchInput" placeholder="بحث في الإعلانات..." oninput="filterAnnouncements()">
                         </div>
-                        <div style="display:grid;grid-template-columns:1fr;gap:12px;margin-bottom:12px">
-                            <div class="form-group" style="margin:0;grid-column:1/-1;"><label class="form-label">الفصل
-                                    (للأطفال/الكل)</label><select class="form-input" id="announcementClass" multiple
-                                    size="4" style="height:auto;">
-                                    <option value="الجميع">جميع الفصول</option>
-                                    <option value="حضانة">حضانة</option>
-                                    <option value="أولى">أولى</option>
-                                    <option value="تانية">تانية</option>
-                                    <option value="تالتة">تالتة</option>
-                                    <option value="رابعة">رابعة</option>
-                                    <option value="خامسة">خامسة</option>
-                                    <option value="سادسة">سادسة</option>
-                                </select></div>
-                        </div>
-                        <div class="form-group"><label class="form-label">النص الرئيسي (أو العنوان)</label><input
-                                type="text" class="form-input" id="announcementText" placeholder="مثال: رحلة ترفيهية 🎡"
-                                required></div>
-                        <div id="linkFieldContainer" style="display:none" class="form-group"><label
-                                class="form-label">الرابط</label><input type="url" class="form-input"
-                                id="announcementLink" placeholder="https://..."></div>
-                        <div class="form-group"><label class="form-label">نص زر التوجيه (اختياري)</label><input
-                                type="text" class="form-input" id="announcementButtonText"
-                                placeholder="مثال: فتح الرابط"></div>
-                        <div class="form-group"><label class="form-label">رابط الصورة (اختياري)</label><input type="url"
-                                class="form-input" id="announcementImageUrl"
-                                placeholder="https://example.com/image.png"></div>
-                        <div class="form-group"><label class="form-label">الوصف التفصيلي (اختياري)</label><textarea
-                                class="form-input" id="announcementDescription" placeholder="اكتب تفاصيل الإعلان هنا..."
-                                rows="3"></textarea></div>
-                        <div class="form-group"><label class="form-label">أطفال محددين <small
-                                    style="color:var(--text-3)">(اختياري)</small></label><input type="text"
-                                class="form-input" id="announcementStudents" placeholder="اتركه فارغاً للجميع" readonly>
-                            <div class="announcement-student-picker">
-                                <div class="announcement-student-search-wrap"><input type="text"
-                                        id="announcementStudentSearch" class="announcement-student-search"
-                                        placeholder="ابحث عن طفل أو رقم..."><i class="fas fa-search"></i></div>
-                                <div style="display:flex;align-items:center;gap:8px;margin-top:6px;"><label
-                                        style="font-size:.82rem;"><input type="checkbox" id="announcementHasPhotoOnly"
-                                            style="margin-left:6px"> الأطفال أصحاب صور فقط</label></div>
-                                <div class="announcement-picked-list" id="announcementPickedList"></div>
-                                <div class="announcement-student-helper" id="announcementStudentHelper">اختَر الأطفال
-                                    بالضغط عليهم من القائمة التالية</div>
-                                <div class="announcement-student-grid" id="announcementStudentGrid"></div>
+                        <button type="button" class="btn btn-primary btn-sm ann-new-btn-quick" onclick="switchAnnouncementTab('new')">
+                            <i class="fas fa-plus"></i> إعلان جديد
+                        </button>
+                    </div>
+
+                    <div class="announcements-cards-container" id="announcementsCardsList"></div>
+
+                    <div class="ann-empty-state" id="announcementsEmptyState" style="display:none;">
+                        <div class="ann-empty-icon"><i class="fas fa-bullhorn"></i></div>
+                        <div class="ann-empty-title">لا توجد إعلانات حالياً</div>
+                        <div class="ann-empty-desc">يمكنك إضافة إعلان جديد لنشره للخدام أو الأطفال مباشرة</div>
+                        <button type="button" class="btn btn-primary btn-sm" onclick="switchAnnouncementTab('new')" style="margin-top:12px;">
+                            <i class="fas fa-plus"></i> إضافة أول إعلان
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Tab 2: New Announcement Form -->
+                <div id="announcementsNewTab" class="ann-tab-content" style="display:none;">
+                    <form id="addAnnouncementForm" class="ann-create-form">
+                        <div class="ann-form-grid">
+                            <div class="form-group" style="margin:0">
+                                <label class="form-label"><i class="fas fa-tag"></i> نوع الإعلان</label>
+                                <select class="form-input" id="announcementType">
+                                    <option value="message">💬 رسالة نصية</option>
+                                    <option value="button">🔗 زر تفاعلي برابط</option>
+                                </select>
+                            </div>
+                            <div class="form-group" style="margin:0">
+                                <label class="form-label"><i class="fas fa-bullseye"></i> الجمهور المستهدف</label>
+                                <select class="form-input" id="announcementTargetType">
+                                    <option value="kids">👶 الأطفال فقط (Kids Only)</option>
+                                    <option value="uncles">🛡️ الخدام فقط (Uncles Only)</option>
+                                    <option value="both">👥 الكل - خدام وأطفال (Both)</option>
+                                </select>
                             </div>
                         </div>
-                        <div style="display:flex;gap:8px">
-                            <button type="submit" class="btn btn-success" style="flex:1"><i class="fas fa-plus"></i>
-                                إضافة</button>
-                            <button type="button" class="btn btn-danger" id="clearAnnouncementForm" style="flex:1"><i
-                                    class="fas fa-times"></i> مسح</button>
+
+                        <div class="form-group" style="margin:0">
+                            <label class="form-label"><i class="fas fa-school"></i> الفصول المستهدفة <small style="color:var(--text-3); font-weight:normal;">(اضغط للتحديد أو اختر الكل)</small></label>
+                            <div class="ann-class-chips" id="announcementClassChips">
+                                <button type="button" class="ann-class-chip selected all-chip" data-class="الجميع" onclick="selectAnnouncementClassChip(this)">جميع الفصول</button>
+                                <button type="button" class="ann-class-chip" data-class="حضانة" onclick="selectAnnouncementClassChip(this)">حضانة</button>
+                                <button type="button" class="ann-class-chip" data-class="أولى" onclick="selectAnnouncementClassChip(this)">أولى</button>
+                                <button type="button" class="ann-class-chip" data-class="تانية" onclick="selectAnnouncementClassChip(this)">تانية</button>
+                                <button type="button" class="ann-class-chip" data-class="تالتة" onclick="selectAnnouncementClassChip(this)">تالتة</button>
+                                <button type="button" class="ann-class-chip" data-class="رابعة" onclick="selectAnnouncementClassChip(this)">رابعة</button>
+                                <button type="button" class="ann-class-chip" data-class="خامسة" onclick="selectAnnouncementClassChip(this)">خامسة</button>
+                                <button type="button" class="ann-class-chip" data-class="سادسة" onclick="selectAnnouncementClassChip(this)">سادسة</button>
+                            </div>
+                            <select class="form-input" id="announcementClass" multiple style="display:none;">
+                                <option value="الجميع" selected>جميع الفصول</option>
+                                <option value="حضانة">حضانة</option>
+                                <option value="أولى">أولى</option>
+                                <option value="تانية">تانية</option>
+                                <option value="تالتة">تالتة</option>
+                                <option value="رابعة">رابعة</option>
+                                <option value="خامسة">خامسة</option>
+                                <option value="سادسة">سادسة</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group" style="margin:0">
+                            <label class="form-label"><i class="fas fa-heading"></i> النص الرئيسي / عنوان الإعلان <span style="color:var(--danger)">*</span></label>
+                            <input type="text" class="form-input" id="announcementText" placeholder="مثال: رحلة ترفيهية مميزة يوم الجمعة 🎡" required>
+                        </div>
+
+                        <div id="linkFieldContainer" style="display:none;" class="ann-form-grid">
+                            <div class="form-group" style="margin:0">
+                                <label class="form-label"><i class="fas fa-link"></i> الرابط (URL)</label>
+                                <input type="url" class="form-input" id="announcementLink" placeholder="https://example.com/...">
+                            </div>
+                            <div class="form-group" style="margin:0">
+                                <label class="form-label"><i class="fas fa-external-link-alt"></i> نص الزر</label>
+                                <input type="text" class="form-input" id="announcementButtonText" placeholder="مثال: تفاصيل الرحلة أو التسجيل">
+                            </div>
+                        </div>
+
+                        <div class="ann-form-grid">
+                            <div class="form-group" style="margin:0">
+                                <label class="form-label"><i class="fas fa-image"></i> رابط الصورة <small style="color:var(--text-3);">(اختياري)</small></label>
+                                <input type="url" class="form-input" id="announcementImageUrl" placeholder="https://example.com/image.png">
+                            </div>
+                            <div class="form-group" style="margin:0">
+                                <label class="form-label"><i class="fas fa-align-right"></i> الوصف التفصيلي <small style="color:var(--text-3);">(اختياري)</small></label>
+                                <textarea class="form-input" id="announcementDescription" placeholder="اكتب تفاصيل إضافية للإعلان..." rows="2" style="resize:vertical; min-height:42px;"></textarea>
+                            </div>
+                        </div>
+
+                        <!-- Collapsible Specific Students Picker -->
+                        <div class="ann-collapsible-section">
+                            <button type="button" class="ann-collapsible-toggle" id="annStudentPickerToggle" onclick="toggleAnnouncementStudentPickerSection()">
+                                <span style="display:flex; align-items:center; gap:8px;">
+                                    <i class="fas fa-user-friends" style="color:var(--brand)"></i>
+                                    <span>تحديد أطفال معينين بالاسم <small style="color:var(--text-3); font-weight:normal;">(اختياري - افتراضياً للجميع)</small></span>
+                                </span>
+                                <span style="display:flex; align-items:center; gap:8px;">
+                                    <span class="ann-picked-count-pill" id="annPickedCountPill" style="display:none;">0 تم اختيارهم</span>
+                                    <i class="fas fa-chevron-down ann-chevron-icon" id="annPickerChevron"></i>
+                                </span>
+                            </button>
+                            <div class="ann-collapsible-body" id="annStudentPickerBody" style="display:none;">
+                                <input type="text" class="form-input" id="announcementStudents" placeholder="اتركه فارغاً للجميع" readonly style="display:none;">
+                                <div class="announcement-student-picker">
+                                    <div class="announcement-student-search-wrap">
+                                        <input type="text" id="announcementStudentSearch" class="announcement-student-search" placeholder="ابحث بالاسم أو الرقم...">
+                                        <i class="fas fa-search"></i>
+                                    </div>
+                                    <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:8px;">
+                                        <label style="font-size:.82rem; cursor:pointer; display:inline-flex; align-items:center; gap:6px; color:var(--text-2);">
+                                            <input type="checkbox" id="announcementHasPhotoOnly"> أصحاب الصور فقط
+                                        </label>
+                                        <button type="button" class="btn btn-xs btn-secondary" onclick="resetAnnouncementStudentPicker()" style="font-size:.74rem;">إلغاء التحديد</button>
+                                    </div>
+                                    <div class="announcement-picked-list" id="announcementPickedList"></div>
+                                    <div class="announcement-student-helper" id="announcementStudentHelper">اضغط على الطفل لاختياره</div>
+                                    <div class="announcement-student-grid" id="announcementStudentGrid"></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Send Email Checkbox / Switch -->
+                        <div class="ann-email-toggle-card">
+                            <label class="ann-email-switch-label" for="announcementSendEmail">
+                                <div class="ann-email-icon-box">
+                                    <i class="fas fa-envelope-open-text"></i>
+                                </div>
+                                <div class="ann-email-details">
+                                    <span class="ann-email-question">هل تريد إرسال بريد إلكتروني للمستخدمين المحددين أيضاً؟</span>
+                                    <span class="ann-email-hint">سيتم إرسال نسخة من الإعلان بالبريد الإلكتروني لجميع المستهدفين المسجل لديهم بريد</span>
+                                </div>
+                                <div class="ann-switch-wrap">
+                                    <input type="checkbox" id="announcementSendEmail" class="ann-switch-input">
+                                    <span class="ann-switch-slider"></span>
+                                </div>
+                            </label>
+                        </div>
+
+                        <!-- Form Actions -->
+                        <div class="ann-form-actions">
+                            <button type="submit" class="btn btn-primary" id="saveAnnouncementBtn" style="flex:2;">
+                                <i class="fas fa-paper-plane"></i> نشر الإعلان
+                            </button>
+                            <button type="button" class="btn btn-secondary" id="clearAnnouncementForm" style="flex:1;">
+                                <i class="fas fa-redo"></i> إفراغ
+                            </button>
+                            <button type="button" class="btn btn-secondary" onclick="switchAnnouncementTab('list')" style="flex:1;">
+                                <i class="fas fa-arrow-right"></i> رجوع
+                            </button>
                         </div>
                     </form>
-                </div>
-                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
-                    <h4 style="font-size:.9rem;color:var(--text)"><i class="fas fa-list"></i> الإعلانات النشطة</h4>
-                    <span class="badge" id="activeAnnouncementsCount" style="background:var(--brand)">0</span>
-                </div>
-                <div class="announcements-table-wrap table-container">
-                    <table class="data-table" id="announcementsTable">
-                        <thead>
-                            <tr>
-                                <th>النوع</th>
-                                <th>النص</th>
-                                <th>الفصل</th>
-                                <th>الأطفال</th>
-                                <th>الحالة</th>
-                                <th>التاريخ</th>
-                                <th>إجراء</th>
-                            </tr>
-                        </thead>
-                        <tbody id="announcementsTableBody"></tbody>
-                    </table>
                 </div>
             </div>
         </div>
@@ -26047,7 +26724,16 @@ $showSettings = $hasChurchId || $isDevOrAdmin;
             }
         }
 
-        function showAnnouncementsModal() { document.getElementById('announcementsModal').classList.add('active'); loadAnnouncements(); renderAnnouncementStudentGrid(); renderAnnouncementSelectedCards(); stopAutoRefresh(); }
+        function showAnnouncementsModal() {
+            document.getElementById('announcementsModal').classList.add('active');
+            const searchInput = document.getElementById('announcementsSearchInput');
+            if (searchInput) searchInput.value = '';
+            if (typeof switchAnnouncementTab === 'function') switchAnnouncementTab('list');
+            loadAnnouncements();
+            renderAnnouncementStudentGrid();
+            renderAnnouncementSelectedCards();
+            stopAutoRefresh();
+        }
         function hideAnnouncementsModal() { document.getElementById('announcementsModal').classList.remove('active'); startAutoRefresh(); }
         function showImageModal(src, e) {
             if (!src) return;
@@ -28573,64 +29259,238 @@ $showSettings = $hasChurchId || $isDevOrAdmin;
         }
 
         // ── ANNOUNCEMENTS ─────────────────────────────────────────────
+        let currentAnnouncementsList = [];
+
+        function switchAnnouncementTab(tab) {
+            const listTab = document.getElementById('announcementsListTab');
+            const newTab = document.getElementById('announcementsNewTab');
+            const listBtn = document.getElementById('annTabListBtn');
+            const newBtn = document.getElementById('annTabNewBtn');
+            if (tab === 'new') {
+                if (listTab) listTab.style.display = 'none';
+                if (newTab) newTab.style.display = 'block';
+                if (listBtn) listBtn.classList.remove('active');
+                if (newBtn) newBtn.classList.add('active');
+                renderAnnouncementStudentGrid();
+                renderAnnouncementSelectedCards();
+            } else {
+                if (newTab) newTab.style.display = 'none';
+                if (listTab) listTab.style.display = 'block';
+                if (newBtn) newBtn.classList.remove('active');
+                if (listBtn) listBtn.classList.add('active');
+                loadAnnouncements();
+            }
+        }
+
         function loadAnnouncements() {
             showLoading('تحميل الإعلانات...');
-            makeApiCall({ action: 'getAllAnnouncements' }, r => { if (r.announcements) renderAnnouncementsTable(r.announcements); }, () => showToast('فشل التحميل', 'error'));
+            makeApiCall({ action: 'getAllAnnouncements' }, r => {
+                if (r.announcements) {
+                    renderAnnouncementsTable(r.announcements);
+                }
+            }, () => showToast('فشل تحميل الإعلانات', 'error'));
         }
+
         function renderAnnouncementsTable(anns) {
-            const body = document.getElementById('announcementsTableBody'), cnt = document.getElementById('activeAnnouncementsCount');
-            if (!anns?.length) { body.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:2rem;color:var(--text-3)">لا إعلانات</td></tr>'; if (cnt) cnt.textContent = '0'; return; }
-            let active = 0;
-            body.innerHTML = anns.map(a => {
-                const isActive = a['منشط'] === true || a['منشط'] === 'TRUE' || a['منشط'] === 'true' || a['منشط'] === 1 || a['منشط'] === '1'; if (isActive) active++;
+            currentAnnouncementsList = Array.isArray(anns) ? anns : [];
+            filterAnnouncements();
+        }
+
+        function filterAnnouncements() {
+            const q = (document.getElementById('announcementsSearchInput')?.value || '').toLowerCase().trim();
+            const listWrap = document.getElementById('announcementsCardsList');
+            const emptyState = document.getElementById('announcementsEmptyState');
+            const cnt = document.getElementById('activeAnnouncementsCount');
+
+            let pool = currentAnnouncementsList;
+            if (q) {
+                if (typeof getMatchScore === 'function') {
+                    pool = pool.map(a => ({
+                        ...a,
+                        _score: getMatchScore(a, q, [
+                            { val: a['النص'] || '', weight: 1.2 },
+                            { val: a['الوصف التفصيلي'] || '', weight: 0.9 },
+                            { val: a['الفصل'] || '', weight: 0.7 },
+                            { val: a['أسماء الأطفال'] || '', weight: 0.8 },
+                            { val: a['الجمهور المستهدف'] || '', weight: 0.5 }
+                        ])
+                    })).filter(a => a._score > 0).sort((a, b) => b._score - a._score);
+                } else {
+                    pool = pool.filter(a => {
+                        const haystack = `${a['النص'] || ''} ${a['الوصف التفصيلي'] || ''} ${a['الفصل'] || ''} ${a['أسماء الأطفال'] || ''}`.toLowerCase();
+                        return haystack.includes(q);
+                    });
+                }
+            }
+
+            let activeCount = currentAnnouncementsList.filter(a => a['منشط'] === true || a['منشط'] === 'TRUE' || a['منشط'] === 'true' || a['منشط'] === 1 || a['منشط'] === '1').length;
+            if (cnt) cnt.textContent = activeCount;
+
+            if (!listWrap) return;
+
+            if (!pool.length) {
+                listWrap.innerHTML = '';
+                if (emptyState) {
+                    emptyState.style.display = 'flex';
+                    const titleEl = emptyState.querySelector('.ann-empty-title');
+                    const descEl = emptyState.querySelector('.ann-empty-desc');
+                    if (q) {
+                        if (titleEl) titleEl.textContent = 'لا توجد نتائج مطابقة للبحث';
+                        if (descEl) descEl.textContent = 'جرّب البحث بكلمات أخرى أو امسح شريط البحث';
+                    } else {
+                        if (titleEl) titleEl.textContent = 'لا توجد إعلانات حالياً';
+                        if (descEl) descEl.textContent = 'يمكنك إضافة إعلان جديد لنشره للخدام أو الأطفال مباشرة';
+                    }
+                }
+                return;
+            }
+
+            if (emptyState) emptyState.style.display = 'none';
+
+            listWrap.innerHTML = pool.map(a => {
+                const annId = a.id || a.rowIndex;
+                const isActive = a['منشط'] === true || a['منشط'] === 'TRUE' || a['منشط'] === 'true' || a['منشط'] === 1 || a['منشط'] === '1';
 
                 let targetBadge = '';
                 const tgt = a['الجمهور المستهدف'] || 'kids';
-                if (tgt === 'uncles') targetBadge = `<span class="badge btn-secondary" style="font-size:.72rem;margin-top:4px;display:inline-block"><i class="fas fa-user-shield"></i> خدام</span>`;
-                else if (tgt === 'both') targetBadge = `<span class="badge btn-primary" style="font-size:.72rem;margin-top:4px;display:inline-block"><i class="fas fa-users"></i> الكل</span>`;
-                else targetBadge = `<span class="badge btn-dev" style="font-size:.72rem;margin-top:4px;display:inline-block"><i class="fas fa-child"></i> أطفال</span>`;
+                if (tgt === 'uncles') {
+                    targetBadge = `<span class="ann-badge target-uncles"><i class="fas fa-user-shield"></i> الخدام</span>`;
+                } else if (tgt === 'both') {
+                    targetBadge = `<span class="ann-badge target-both"><i class="fas fa-users"></i> الكل</span>`;
+                } else {
+                    targetBadge = `<span class="ann-badge target-kids"><i class="fas fa-child"></i> الأطفال</span>`;
+                }
+
+                const isButton = (a['النوع'] === 'button');
+                const typeBadge = isButton
+                    ? `<span class="ann-badge type-button"><i class="fas fa-link"></i> زر برابط</span>`
+                    : `<span class="ann-badge type-message"><i class="fas fa-comment-dots"></i> رسالة</span>`;
+
+                const classBadge = `<span class="ann-badge badge-class"><i class="fas fa-graduation-cap"></i> ${a['الفصل'] === 'الجميع' ? 'جميع الفصول' : (a['الفصل'] || 'الكل')}</span>`;
 
                 let detailsHtml = '';
                 if (a['الوصف التفصيلي']) {
-                    detailsHtml += `<div style="font-size:.76rem;color:var(--text-3);margin-top:4px;white-space:pre-wrap;">${a['الوصف التفصيلي']}</div>`;
-                }
-                if (a['رابط الصورة']) {
-                    detailsHtml += `<div style="margin-top:4px;"><img src="${a['رابط الصورة']}" style="max-height:60px;border-radius:4px;border:1px solid var(--border-solid);"/></div>`;
-                }
-                if (a['نص الزر'] || a['الرابط']) {
-                    const btnTxt = a['نص الزر'] || 'فتح الرابط';
-                    detailsHtml += `<div style="margin-top:4px;"><a href="${a['الرابط'] || '#'}" target="_blank" class="btn btn-xs btn-coupon" style="display:inline-flex;align-items:center;gap:4px;"><i class="fas fa-external-link-alt"></i> ${btnTxt}</a></div>`;
+                    detailsHtml += `<div class="ann-card-desc">${(a['الوصف التفصيلي'] || '').replace(/</g, '&lt;').replace(/>/g, '&gt;')}</div>`;
                 }
 
-                return `<tr>
-                    <td>
-                        <span class="badge ${a['النوع'] === 'button' ? 'btn-coupon' : 'btn-info'}" style="font-size:.72rem">
-                            ${a['النوع'] === 'button' ? '<i class="fas fa-link"></i> زر' : '<i class="fas fa-comment"></i> رسالة'}
-                        </span>
-                        <br>
-                        ${targetBadge}
-                    </td>
-                    <td style="max-width:180px;word-break:break-word;color:var(--text)">
-                        <div style="font-weight:700;">${a['النص'] || ''}</div>
+                let imageHtml = '';
+                if (a['رابط الصورة']) {
+                    imageHtml = `<div class="ann-card-img-wrap"><img src="${a['رابط الصورة']}" onclick="showImageModal('${a['رابط الصورة']}', event)" alt="مرفق الإعلان" loading="lazy"></div>`;
+                }
+
+                let linkHtml = '';
+                if (a['نص الزر'] || a['الرابط']) {
+                    const btnTxt = a['نص الزر'] || 'فتح الرابط';
+                    linkHtml = `<div class="ann-card-btn-wrap"><a href="${a['الرابط'] || '#'}" target="_blank" rel="noopener noreferrer" class="ann-action-btn"><i class="fas fa-external-link-alt"></i> ${(btnTxt || '').replace(/</g, '&lt;').replace(/>/g, '&gt;')}</a></div>`;
+                }
+
+                let kidsHtml = '';
+                if (a['أسماء الأطفال'] && a['أسماء الأطفال'] !== 'الجميع') {
+                    kidsHtml = `<div class="ann-footer-kids" title="${a['أسماء الأطفال']}"><i class="fas fa-user-check"></i> ${a['أسماء الأطفال']}</div>`;
+                }
+
+                const dateHtml = a['تاريخ الإضافة'] ? `<div class="ann-footer-time"><i class="far fa-clock"></i> ${a['تاريخ الإضافة']}</div>` : '';
+
+                const safeTxt = (a['النص'] || '').replace(/'/g, "\\'").replace(/"/g, '&quot;');
+
+                return `
+                <div class="ann-card ${isActive ? 'is-active' : 'is-inactive'}">
+                    <div class="ann-card-header">
+                        <div class="ann-card-badges">
+                            ${typeBadge}
+                            ${targetBadge}
+                            ${classBadge}
+                        </div>
+                        <div class="ann-card-actions">
+                            <button type="button" class="ann-toggle-pill ${isActive ? 'active' : 'inactive'}" onclick="toggleAnnouncementStatus(${annId}, ${!isActive})" title="${isActive ? 'اضغط للتعطيل' : 'اضغط للتفعيل'}">
+                                <span class="ann-status-dot"></span>
+                                <span class="ann-status-text">${isActive ? 'منشط' : 'معطل'}</span>
+                            </button>
+                            <button type="button" class="ann-del-btn" onclick="deleteAnnouncement(${annId}, '${safeTxt}')" title="حذف الإعلان">
+                                <i class="fas fa-trash-alt"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="ann-card-body">
+                        <h4 class="ann-card-title">${(a['النص'] || '').replace(/</g, '&lt;').replace(/>/g, '&gt;')}</h4>
                         ${detailsHtml}
-                    </td>
-                    <td style="color:var(--text)">${a['الفصل'] === 'الجميع' ? 'الكل' : (a['الفصل'] || 'الكل')}</td>
-                    <td style="font-size:.74rem;color:var(--text-3)">${a['أسماء الأطفال'] || 'الجميع'}</td>
-                    <td>
-                        <span class="badge ${isActive ? 'btn-success' : 'btn-danger'}" style="cursor:pointer;font-size:.72rem" onclick="toggleAnnouncementStatus(${a.rowIndex},${!isActive})">
-                            ${isActive ? '<i class="fas fa-check"></i> منشط' : '<i class="fas fa-times"></i> معطل'}
-                        </span>
-                    </td>
-                    <td style="font-size:.72rem;color:var(--text-3)">${a['تاريخ الإضافة'] || ''}</td>
-                    <td>
-                        <button class="btn btn-danger btn-xs" onclick="deleteAnnouncement(${a.rowIndex},'${(a['النص'] || '').replace(/'/g, "\\'")}')">
-                            <i class="fas fa-trash"></i>
-                        </button>
-                    </td>
-                </tr>`;
+                        ${imageHtml}
+                        ${linkHtml}
+                    </div>
+                    <div class="ann-card-footer">
+                        ${kidsHtml}
+                        ${dateHtml}
+                    </div>
+                </div>`;
             }).join('');
-            if (cnt) cnt.textContent = active;
         }
+
+        function selectAnnouncementClassChip(chipEl) {
+            const val = chipEl.getAttribute('data-class');
+            const allChips = document.querySelectorAll('.ann-class-chip');
+            const allChip = document.querySelector('.ann-class-chip.all-chip');
+            const selectEl = document.getElementById('announcementClass');
+            if (!selectEl) return;
+
+            if (val === 'الجميع') {
+                allChips.forEach(c => c.classList.remove('selected'));
+                if (allChip) allChip.classList.add('selected');
+                Array.from(selectEl.options).forEach(o => {
+                    o.selected = (o.value === 'الجميع');
+                });
+            } else {
+                if (allChip) allChip.classList.remove('selected');
+                chipEl.classList.toggle('selected');
+
+                const anySelected = Array.from(document.querySelectorAll('.ann-class-chip:not(.all-chip)')).some(c => c.classList.contains('selected'));
+                if (!anySelected) {
+                    if (allChip) allChip.classList.add('selected');
+                    Array.from(selectEl.options).forEach(o => {
+                        o.selected = (o.value === 'الجميع');
+                    });
+                } else {
+                    Array.from(selectEl.options).forEach(o => {
+                        if (o.value === 'الجميع') {
+                            o.selected = false;
+                        } else {
+                            const c = document.querySelector(`.ann-class-chip[data-class="${o.value}"]`);
+                            o.selected = c ? c.classList.contains('selected') : false;
+                        }
+                    });
+                }
+            }
+
+            selectEl.dispatchEvent(new Event('change'));
+        }
+
+        function resetAnnouncementClassChips() {
+            const allChips = document.querySelectorAll('.ann-class-chip');
+            const allChip = document.querySelector('.ann-class-chip.all-chip');
+            const selectEl = document.getElementById('announcementClass');
+            allChips.forEach(c => c.classList.remove('selected'));
+            if (allChip) allChip.classList.add('selected');
+            if (selectEl) {
+                Array.from(selectEl.options).forEach(o => {
+                    o.selected = (o.value === 'الجميع');
+                });
+            }
+        }
+
+        function toggleAnnouncementStudentPickerSection() {
+            const body = document.getElementById('annStudentPickerBody');
+            const chevron = document.getElementById('annPickerChevron');
+            if (!body) return;
+            const isHidden = body.style.display === 'none' || !body.style.display;
+            body.style.display = isHidden ? 'block' : 'none';
+            if (chevron) {
+                chevron.style.transform = isHidden ? 'rotate(180deg)' : 'rotate(0deg)';
+            }
+            if (isHidden) {
+                renderAnnouncementStudentGrid();
+                renderAnnouncementSelectedCards();
+            }
+        }
+
         function getAnnouncementPickerStudents() {
             const classEl = document.getElementById('announcementClass');
             let selected = [];
@@ -28657,13 +29517,24 @@ $showSettings = $hasChurchId || $isDevOrAdmin;
             }
             return pool;
         }
+
         function syncAnnouncementStudentsInput() {
             const input = document.getElementById('announcementStudents');
             if (input) input.value = selectedAnnouncementStudents.map(s => s.name).join(', ');
         }
+
         function renderAnnouncementSelectedCards() {
             const wrap = document.getElementById('announcementPickedList');
             const helper = document.getElementById('announcementStudentHelper');
+            const countPill = document.getElementById('annPickedCountPill');
+            if (countPill) {
+                if (selectedAnnouncementStudents.length > 0) {
+                    countPill.textContent = `${selectedAnnouncementStudents.length} تم اختيارهم`;
+                    countPill.style.display = 'inline-block';
+                } else {
+                    countPill.style.display = 'none';
+                }
+            }
             if (!wrap) return;
             if (!selectedAnnouncementStudents.length) {
                 wrap.innerHTML = '';
@@ -28680,6 +29551,7 @@ $showSettings = $hasChurchId || $isDevOrAdmin;
             if (helper) helper.textContent = `تم اختيار ${selectedAnnouncementStudents.length} طفل`;
             syncAnnouncementStudentsInput();
         }
+
         function renderAnnouncementStudentGrid() {
             const grid = document.getElementById('announcementStudentGrid');
             const helper = document.getElementById('announcementStudentHelper');
@@ -28705,6 +29577,7 @@ $showSettings = $hasChurchId || $isDevOrAdmin;
             if (!selectedAnnouncementStudents.length && helper) helper.textContent = 'اختَر الأطفال بالضغط عليهم من القائمة التالية';
             syncAnnouncementStudentsInput();
         }
+
         function toggleAnnouncementStudent(id) {
             const pool = getAnnouncementPickerStudents();
             const target = pool.find(s => String(getStudentId(s)) === String(id));
@@ -28715,18 +29588,69 @@ $showSettings = $hasChurchId || $isDevOrAdmin;
             renderAnnouncementSelectedCards();
             renderAnnouncementStudentGrid();
         }
+
         function removeAnnouncementStudent(id) {
             selectedAnnouncementStudents = selectedAnnouncementStudents.filter(s => s.id !== String(id));
             renderAnnouncementSelectedCards();
             renderAnnouncementStudentGrid();
         }
+
         function resetAnnouncementStudentPicker() {
             selectedAnnouncementStudents = [];
             renderAnnouncementSelectedCards();
             renderAnnouncementStudentGrid();
         }
-        function toggleAnnouncementStatus(idx, val) { if (confirm(`${val ? 'تفعيل' : 'تعطيل'} هذا الإعلان؟`)) { showLoading('...'); makeApiCall({ action: 'toggleAnnouncement', rowIndex: idx, active: val ? 'true' : 'false' }, r => { showToast(r.message, 'success'); loadAnnouncements(); }, () => showToast('فشل', 'error')); } }
-        function deleteAnnouncement(idx, txt) { if (confirm(`حذف "${txt}"؟`)) { showLoading('...'); makeApiCall({ action: 'deleteAnnouncement', rowIndex: idx }, r => { showToast(r.message, 'success'); loadAnnouncements(); }, () => showToast('فشل', 'error')); } }
+
+        function toggleAnnouncementStatus(idx, val) {
+            if (!idx) {
+                showToast('معرف الإعلان غير صالح', 'error');
+                return;
+            }
+            showLoading('جاري تحديث الحالة...');
+            makeApiCall({ action: 'toggleAnnouncement', rowIndex: idx, id: idx, active: val ? 'true' : 'false' }, r => {
+                if (r.success) {
+                    showToast(r.message || 'تم تحديث الحالة بنجاح', 'success');
+                    loadAnnouncements();
+                } else {
+                    showToast(r.message || 'فشل في تحديث الحالة', 'error');
+                }
+            }, () => showToast('حدث خطأ أثناء تحديث الحالة', 'error'));
+        }
+
+        function deleteAnnouncement(idx, txt) {
+            if (!idx) {
+                showToast('معرف الإعلان غير صالح', 'error');
+                return;
+            }
+            const executeDelete = () => {
+                showLoading('جاري حذف الإعلان...');
+                makeApiCall({ action: 'deleteAnnouncement', rowIndex: idx, id: idx }, r => {
+                    if (r.success) {
+                        showToast(r.message || 'تم حذف الإعلان بنجاح', 'success');
+                        loadAnnouncements();
+                    } else {
+                        showToast(r.message || 'فشل في حذف الإعلان', 'error');
+                    }
+                }, () => showToast('حدث خطأ أثناء حذف الإعلان', 'error'));
+            };
+
+            if (typeof showCustomConfirm === 'function') {
+                showCustomConfirm({
+                    title: 'حذف الإعلان',
+                    message: `هل أنت متأكد من رغبتك في حذف هذا الإعلان نهائياً؟\n"${txt || ''}"`,
+                    icon: '<i class="fas fa-trash-alt"></i>',
+                    iconColor: 'var(--danger)',
+                    btnText: 'نعم، حذف',
+                    btnClass: 'btn-danger',
+                    btnIconClass: 'fas fa-trash-alt',
+                    onConfirm: executeDelete
+                });
+            } else {
+                if (confirm(`هل أنت متأكد من حذف "${txt}"؟`)) {
+                    executeDelete();
+                }
+            }
+        }
 
         // ── AUTO REFRESH ──────────────────────────────────────────────
         function initAutoRefresh() { startAutoRefresh(); document.addEventListener('visibilitychange', () => { if (!document.hidden && autoRefreshEnabled) setTimeout(checkForUpdates, 1000); }); }
@@ -28975,8 +29899,10 @@ $showSettings = $hasChurchId || $isDevOrAdmin;
                     stds = pool.map(s => s['الاسم'] || s.name || '').filter(Boolean).join(', ');
                 }
                 const hasPhotoOnly = document.getElementById('announcementHasPhotoOnly')?.checked ? '1' : '0';
-                if (!text) { showToast('أدخل نص الإعلان', 'error'); return; } if (type === 'button' && !link) { showToast('أدخل رابطاً للزر', 'error'); return; }
-                showLoading('...');
+                const send_email = document.getElementById('announcementSendEmail')?.checked ? '1' : '0';
+                if (!text) { showToast('أدخل نص الإعلان', 'error'); return; }
+                if (type === 'button' && !link) { showToast('أدخل رابطاً للزر', 'error'); return; }
+                showLoading(send_email === '1' ? 'جاري نشر الإعلان وإرسال البريد الإلكتروني...' : 'جاري نشر الإعلان...');
                 makeApiCall({
                     action: 'addAnnouncement',
                     type,
@@ -28988,16 +29914,32 @@ $showSettings = $hasChurchId || $isDevOrAdmin;
                     target_type,
                     classes: cls,
                     students: stds,
-                    hasPhotoOnly
+                    hasPhotoOnly,
+                    send_email
                 }, r => {
-                    showToast(r.message, 'success');
+                    showToast(r.message || 'تم نشر الإعلان بنجاح', 'success');
                     document.getElementById('addAnnouncementForm').reset();
                     document.getElementById('linkFieldContainer').style.display = 'none';
+                    if (typeof resetAnnouncementClassChips === 'function') resetAnnouncementClassChips();
                     resetAnnouncementStudentPicker();
+                    const pBody = document.getElementById('annStudentPickerBody');
+                    if (pBody) pBody.style.display = 'none';
+                    const pChev = document.getElementById('annPickerChevron');
+                    if (pChev) pChev.style.transform = 'rotate(0deg)';
+                    if (typeof switchAnnouncementTab === 'function') switchAnnouncementTab('list');
                     loadAnnouncements();
-                }, () => showToast('فشل', 'error'));
+                }, err => showToast('فشل في نشر الإعلان: ' + (err || ''), 'error'));
             });
-            on('clearAnnouncementForm', 'click', () => { document.getElementById('addAnnouncementForm').reset(); document.getElementById('linkFieldContainer').style.display = 'none'; resetAnnouncementStudentPicker(); });
+            on('clearAnnouncementForm', 'click', () => {
+                document.getElementById('addAnnouncementForm').reset();
+                document.getElementById('linkFieldContainer').style.display = 'none';
+                if (typeof resetAnnouncementClassChips === 'function') resetAnnouncementClassChips();
+                resetAnnouncementStudentPicker();
+                const pBody = document.getElementById('annStudentPickerBody');
+                if (pBody) pBody.style.display = 'none';
+                const pChev = document.getElementById('annPickerChevron');
+                if (pChev) pChev.style.transform = 'rotate(0deg)';
+            });
             on('announcementType', 'change', () => { document.getElementById('linkFieldContainer').style.display = document.getElementById('announcementType').value === 'button' ? 'block' : 'none'; });
             on('announcementClass', 'change', () => {
                 const allowed = new Set(getAnnouncementPickerStudents().map(s => String(getStudentId(s))));

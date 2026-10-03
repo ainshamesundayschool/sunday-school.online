@@ -12254,69 +12254,202 @@ function updateStudentImage()
 // ===== GET ALL ANNOUNCEMENTS =====
 
 function getAllAnnouncements()
-
 {
-
     try {
-
         $churchId = getChurchId();
-
         $cairoTimeZone = '+02:00';
 
-
-
         $conn = getDBConnection();
-
         ensureAnnouncementsTable($conn);
 
         $stmt = $conn->prepare("
-            SELECT id, type, text as 'النص', link as 'الرابط', class as 'الفصل', student_names as 'أسماء الأطفال', is_active as 'منشط',
+            SELECT id, id as rowIndex, type, text as 'النص', link as 'الرابط', class as 'الفصل', student_names as 'أسماء الأطفال', is_active as 'منشط',
             button_text as 'نص الزر', image_url as 'رابط الصورة', description as 'الوصف التفصيلي', target_type as 'الجمهور المستهدف',
             DATE_FORMAT(CONVERT_TZ(created_at, '+00:00', ?), '%d/%m/%Y %h:%i %p') as 'تاريخ الإضافة'
             FROM announcements 
             WHERE church_id = ?
             ORDER BY created_at DESC
         ");
-
         $stmt->bind_param("si", $cairoTimeZone, $churchId);
-
         $stmt->execute();
-
         $result = $stmt->get_result();
 
-
-
         $announcements = [];
-
         while ($row = $result->fetch_assoc()) {
-
             if (!empty($row['تاريخ الإضافة'])) {
-
                 $row['تاريخ الإضافة'] = str_replace(['AM', 'PM'], ['صباحاً', 'مساءً'], $row['تاريخ الإضافة']);
-
             }
-
             $announcements[] = $row;
-
         }
-
-
 
         sendJSON(['success' => true, 'announcements' => $announcements]);
 
-
-
     } catch (Exception $e) {
-
         error_log("getAllAnnouncements error: " . $e->getMessage());
-
         sendJSON(['success' => false, 'message' => 'خطأ في جلب الإعلانات']);
-
     }
-
 }
 
+function _dispatchAnnouncementEmails($conn, $churchId, $targetType, $class, $students, $text, $description, $link, $buttonText, $imageUrl): int
+{
+    $emailSentCount = 0;
+    try {
+        $churchName = 'مدارس الأحد';
+        $cStmt = $conn->prepare("SELECT church_name FROM churches WHERE id = ? LIMIT 1");
+        if ($cStmt) {
+            $cStmt->bind_param("i", $churchId);
+            $cStmt->execute();
+            $cRes = $cStmt->get_result();
+            if ($cRow = $cRes->fetch_assoc()) {
+                if (!empty($cRow['church_name'])) {
+                    $churchName = $cRow['church_name'];
+                }
+            }
+        }
 
+        $recipientEmails = []; // [ email => name ]
+
+        $extractEmail = function($row) {
+            $e = trim($row['email'] ?? '');
+            if (!empty($e) && filter_var($e, FILTER_VALIDATE_EMAIL)) return strtolower($e);
+            $ge = trim($row['google_email'] ?? '');
+            if (!empty($ge) && filter_var($ge, FILTER_VALIDATE_EMAIL)) return strtolower($ge);
+            if (!empty($row['custom_info'])) {
+                $info = is_string($row['custom_info']) ? json_decode($row['custom_info'], true) : $row['custom_info'];
+                if (is_array($info) && !empty($info['email']) && filter_var(trim($info['email']), FILTER_VALIDATE_EMAIL)) {
+                    return strtolower(trim($info['email']));
+                }
+            }
+            return null;
+        };
+
+        // 1. Students / Kids
+        if ($targetType === 'kids' || $targetType === 'both') {
+            if (!empty($students)) {
+                $studentNames = array_values(array_filter(array_map('trim', explode(',', $students))));
+                if (!empty($studentNames)) {
+                    $placeholders = implode(',', array_fill(0, count($studentNames), '?'));
+                    $types = 'i' . str_repeat('s', count($studentNames));
+                    $sStmt = $conn->prepare("SELECT name, email, google_email, custom_info FROM students WHERE church_id = ? AND name IN ($placeholders)");
+                    if ($sStmt) {
+                        $sStmt->bind_param($types, $churchId, ...$studentNames);
+                        $sStmt->execute();
+                        $sRes = $sStmt->get_result();
+                        while ($sRow = $sRes->fetch_assoc()) {
+                            $em = $extractEmail($sRow);
+                            if ($em && !isset($recipientEmails[$em])) {
+                                $recipientEmails[$em] = $sRow['name'] ?? 'مخدومنا العزيز';
+                            }
+                        }
+                    }
+                }
+            } else {
+                if ($class === 'الجميع') {
+                    $sStmt = $conn->prepare("SELECT name, email, google_email, custom_info FROM students WHERE church_id = ? AND (is_guest IS NULL OR is_guest = 0)");
+                    if ($sStmt) {
+                        $sStmt->bind_param("i", $churchId);
+                        $sStmt->execute();
+                        $sRes = $sStmt->get_result();
+                        while ($sRow = $sRes->fetch_assoc()) {
+                            $em = $extractEmail($sRow);
+                            if ($em && !isset($recipientEmails[$em])) {
+                                $recipientEmails[$em] = $sRow['name'] ?? 'مخدومنا العزيز';
+                            }
+                        }
+                    }
+                } else {
+                    $classList = array_values(array_filter(array_map('trim', explode(',', $class))));
+                    if (!empty($classList)) {
+                        $placeholders = implode(',', array_fill(0, count($classList), '?'));
+                        $types = 'i' . str_repeat('s', count($classList));
+                        $sStmt = $conn->prepare("SELECT name, email, google_email, custom_info FROM students WHERE church_id = ? AND class IN ($placeholders) AND (is_guest IS NULL OR is_guest = 0)");
+                        if ($sStmt) {
+                            $sStmt->bind_param($types, $churchId, ...$classList);
+                            $sStmt->execute();
+                            $sRes = $sStmt->get_result();
+                            while ($sRow = $sRes->fetch_assoc()) {
+                                $em = $extractEmail($sRow);
+                                if ($em && !isset($recipientEmails[$em])) {
+                                    $recipientEmails[$em] = $sRow['name'] ?? 'مخدومنا العزيز';
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        // 2. Uncles
+        if ($targetType === 'uncles' || $targetType === 'both') {
+            $uStmt = $conn->prepare("SELECT name, email, google_email, custom_info FROM uncles WHERE church_id = ? AND (deleted IS NULL OR deleted = 0) AND role NOT IN ('developer', 'dev')");
+            if ($uStmt) {
+                $uStmt->bind_param("i", $churchId);
+                $uStmt->execute();
+                $uRes = $uStmt->get_result();
+                while ($uRow = $uRes->fetch_assoc()) {
+                    $em = $extractEmail($uRow);
+                    if ($em && !isset($recipientEmails[$em])) {
+                        $recipientEmails[$em] = $uRow['name'] ?? 'خادمنا العزيز';
+                    }
+                }
+            }
+        }
+
+        if (!empty($recipientEmails) && function_exists('sendSundaySchoolEmail')) {
+            $safeChurch = htmlspecialchars($churchName, ENT_QUOTES, 'UTF-8');
+            $safeText = htmlspecialchars($text, ENT_QUOTES, 'UTF-8');
+            $safeDesc = !empty($description) ? nl2br(htmlspecialchars($description, ENT_QUOTES, 'UTF-8')) : '';
+            $subject = "📢 إعلان جديد: " . mb_substr($text, 0, 45) . " - " . $safeChurch;
+            $btnLabel = !empty($buttonText) ? htmlspecialchars($buttonText, ENT_QUOTES, 'UTF-8') : 'فتح الرابط';
+
+            $imgHtml = '';
+            if (!empty($imageUrl) && filter_var($imageUrl, FILTER_VALIDATE_URL)) {
+                $safeImg = htmlspecialchars($imageUrl, ENT_QUOTES, 'UTF-8');
+                $imgHtml = "<div style='text-align:center;margin:18px 0;'><img src='{$safeImg}' style='max-width:100%;max-height:280px;border-radius:12px;border:1px solid #e4e6f0;' alt='صورة الإعلان'></div>";
+            }
+
+            $linkHtml = '';
+            if (!empty($link) && filter_var($link, FILTER_VALIDATE_URL)) {
+                $safeLink = htmlspecialchars($link, ENT_QUOTES, 'UTF-8');
+                $linkHtml = "<div style='text-align:center;margin:24px 0;'><a href='{$safeLink}' target='_blank' style='display:inline-block;background:linear-gradient(135deg,#8b5cf6,#7c3aed);color:#ffffff;text-decoration:none;padding:12px 28px;border-radius:12px;font-weight:bold;font-size:0.95rem;box-shadow:0 4px 14px rgba(139,92,246,0.3);'>{$btnLabel}</a></div>";
+            }
+
+            $descHtml = '';
+            if (!empty($safeDesc)) {
+                $descHtml = "<div style='background:#f7f8fc;border-radius:12px;padding:14px 16px;margin:14px 0;color:#4b5068;font-size:0.92rem;line-height:1.7;border:1px solid #e4e6f0;'>{$safeDesc}</div>";
+            }
+
+            foreach ($recipientEmails as $recipEmail => $recipName) {
+                $safeName = htmlspecialchars($recipName, ENT_QUOTES, 'UTF-8');
+                $htmlBody = "
+                <div dir='rtl' style='font-family:Cairo,Tahoma,sans-serif;max-width:580px;margin:0 auto;background:#ffffff;border:1px solid #e4e6f0;border-radius:16px;overflow:hidden;box-shadow:0 6px 24px rgba(0,0,0,0.06);'>
+                    <div style='background:linear-gradient(135deg,#5b6cf5,#4354e8);padding:24px 20px;text-align:center;color:#ffffff;'>
+                        <h2 style='margin:0;font-size:1.3rem;font-weight:800;'>{$safeChurch}</h2>
+                        <p style='margin:6px 0 0;font-size:0.9rem;opacity:0.95;'>إعلان هام وتنبيه جديد 📢</p>
+                    </div>
+                    <div style='padding:24px 22px;color:#1a1d2e;'>
+                        <p style='margin:0 0 14px;font-size:0.98rem;color:#4b5068;'>أهلاً يا <strong>{$safeName}</strong>،</p>
+                        <div style='font-size:1.15rem;font-weight:700;color:#1a1d2e;line-height:1.5;margin-bottom:12px;'>{$safeText}</div>
+                        {$imgHtml}
+                        {$descHtml}
+                        {$linkHtml}
+                        <div style='margin-top:24px;padding-top:16px;border-top:1px solid #eceef7;text-align:center;font-size:0.8rem;color:#8b90a8;'>
+                            تم إرسال هذا الإعلان عبر منصة كنيستي - مدارس الأحد.
+                        </div>
+                    </div>
+                </div>";
+
+                $plainText = "إعلان جديد من {$churchName}\n\n{$text}\n\n" . (!empty($description) ? "{$description}\n\n" : "") . (!empty($link) ? "الرابط: {$link}\n" : "");
+                if (sendSundaySchoolEmail($recipEmail, $subject, $htmlBody, $plainText)) {
+                    $emailSentCount++;
+                }
+            }
+        }
+    } catch (Exception $e) {
+        error_log("_dispatchAnnouncementEmails error: " . $e->getMessage());
+    }
+    return $emailSentCount;
+}
 
 function addAnnouncement()
 {
@@ -12330,6 +12463,7 @@ function addAnnouncement()
         $imageUrl = sanitize($_POST['image_url'] ?? '');
         $description = sanitize($_POST['description'] ?? '');
         $targetType = sanitize($_POST['target_type'] ?? 'kids');
+        $sendEmail = !empty($_POST['send_email']) && ($_POST['send_email'] === '1' || $_POST['send_email'] === 'true' || $_POST['send_email'] === true);
 
         // Accept either `classes` (array/JSON/comma-list) or legacy `class` single value.
         $classesRaw = $_POST['classes'] ?? $_POST['class'] ?? 'الجميع';
@@ -12420,11 +12554,26 @@ function addAnnouncement()
                 _sendWebPushToChurch($conn, $churchId, 'إعلان جديد 📢', $text, $extra);
             }
 
+            $emailCount = 0;
+            if ($sendEmail) {
+                $emailCount = _dispatchAnnouncementEmails($conn, $churchId, $targetType, $class, $students, $text, $description, $link, $buttonText, $imageUrl);
+            }
+
+            $respMessage = 'تم إضافة الإعلان بنجاح';
+            if ($sendEmail) {
+                if ($emailCount > 0) {
+                    $respMessage .= " وتم إرسال البريد الإلكتروني إلى {$emailCount} مستخدم";
+                } else {
+                    $respMessage .= " (لم يتم العثور على عناوين بريد إلكتروني مسجلة للمستهدفين)";
+                }
+            }
+
             sendJSON([
                 'success' => true,
-                'message' => 'تم إضافة الإعلان بنجاح',
+                'message' => $respMessage,
                 'added_at' => $addedTime,
-                'announcement_id' => $insertedId
+                'announcement_id' => $insertedId,
+                'emails_sent' => $emailCount
             ]);
         } else {
             sendJSON(['success' => false, 'message' => 'فشل في إضافة الإعلان: ' . $stmt->error]);
@@ -12437,111 +12586,67 @@ function addAnnouncement()
 }
 
 function toggleAnnouncement()
-
 {
-
     try {
-
         $churchId = getChurchId();
+        $rowIndex = intval($_POST['rowIndex'] ?? $_POST['id'] ?? 0);
+        $active = ($_POST['active'] === 'true' || $_POST['active'] === '1' || $_POST['active'] === 1) ? 1 : 0;
 
-        $rowIndex = intval($_POST['rowIndex'] ?? 0);
-
-        $active = $_POST['active'] === 'true' ? 1 : 0;
-
-
+        if ($rowIndex <= 0) {
+            sendJSON(['success' => false, 'message' => 'معرف الإعلان غير صالح']);
+            return;
+        }
 
         $conn = getDBConnection();
-
         $stmt = $conn->prepare("UPDATE announcements SET is_active = ? WHERE id = ? AND church_id = ?");
-
         $stmt->bind_param("iii", $active, $rowIndex, $churchId);
 
-
-
         if ($stmt->execute()) {
-
-            // ► AUDIT
-
             auditAnnouncementToggle($rowIndex, (bool) $active);
-
-
-
             sendJSON(['success' => true, 'message' => 'تم تحديث الحالة بنجاح']);
-
         } else {
-
             sendJSON(['success' => false, 'message' => 'فشل في تحديث الحالة']);
-
         }
 
-
-
     } catch (Exception $e) {
-
         error_log("toggleAnnouncement error: " . $e->getMessage());
-
         sendJSON(['success' => false, 'message' => 'خطأ في تحديث الإعلان']);
-
     }
-
 }
 
-
-
 function deleteAnnouncement()
-
 {
-
     try {
-
         $churchId = getChurchId();
+        $rowIndex = intval($_POST['rowIndex'] ?? $_POST['id'] ?? 0);
 
-        $rowIndex = intval($_POST['rowIndex'] ?? 0);
-
-
+        if ($rowIndex <= 0) {
+            sendJSON(['success' => false, 'message' => 'معرف الإعلان غير صالح']);
+            return;
+        }
 
         $conn = getDBConnection();
 
-
-
         // BEFORE delete, get old announcement data
-
-        $oldAnnouncement = getAnnouncementSnapshot($rowIndex);
-
-
+        $oldAnnouncement = function_exists('getAnnouncementSnapshot') ? getAnnouncementSnapshot($rowIndex) : null;
 
         $stmt = $conn->prepare("DELETE FROM announcements WHERE id = ? AND church_id = ?");
-
         $stmt->bind_param("ii", $rowIndex, $churchId);
 
-
-
-        if ($stmt->execute()) {
-
+        if ($stmt->execute() && $stmt->affected_rows > 0) {
             // ► AUDIT
-
-            auditAnnouncementDelete($rowIndex, $oldAnnouncement ?? ['id' => $rowIndex]);
-
-
-
+            if (function_exists('auditAnnouncementDelete')) {
+                auditAnnouncementDelete($rowIndex, $oldAnnouncement ?? ['id' => $rowIndex]);
+            }
             sendJSON(['success' => true, 'message' => 'تم حذف الإعلان بنجاح']);
-
         } else {
-
-            sendJSON(['success' => false, 'message' => 'فشل في حذف الإعلان']);
-
+            sendJSON(['success' => false, 'message' => 'لم يتم العثور على الإعلان أو تم حذفه مسبقاً']);
         }
 
-
-
     } catch (Exception $e) {
-
         error_log("deleteAnnouncement error: " . $e->getMessage());
-
         sendJSON(['success' => false, 'message' => 'خطأ في حذف الإعلان']);
-
     }
-
 }
 
 
