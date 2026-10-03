@@ -27421,6 +27421,21 @@ function ensureAttendanceHistorySchema($conn)
         if (!in_array('academic_year', $cols)) {
             $conn->query("ALTER TABLE attendance ADD COLUMN academic_year VARCHAR(50) NULL DEFAULT NULL AFTER class_name");
         }
+
+        // Backfill academic_year on records where it is missing
+        $conn->query("
+            UPDATE attendance
+            SET academic_year = IF(MONTH(attendance_date) >= 9, CONCAT(YEAR(attendance_date), ' - ', YEAR(attendance_date) + 1), CONCAT(YEAR(attendance_date) - 1, ' - ', YEAR(attendance_date)))
+            WHERE (academic_year IS NULL OR academic_year = '') AND attendance_date IS NOT NULL
+        ");
+
+        // Backfill class_name from classes table where class_id is known
+        $conn->query("
+            UPDATE attendance a
+            JOIN classes c ON a.class_id = c.id
+            SET a.class_name = c.name
+            WHERE (a.class_name IS NULL OR a.class_name = '') AND a.class_id IS NOT NULL AND a.class_id > 0
+        ");
     } catch (Exception $e) {
         error_log("ensureAttendanceHistorySchema error: " . $e->getMessage());
     }
@@ -27474,6 +27489,7 @@ function stampStudentPreviousAttendance($conn, $studentId, $oldClassId = null, $
                     $oldClassId = (int)$row['class_id'];
                 }
             }
+            $st->close();
         }
     }
 
@@ -27483,190 +27499,201 @@ function stampStudentPreviousAttendance($conn, $studentId, $oldClassId = null, $
             SET class_id = IF(class_id IS NULL OR class_id = 0, ?, class_id),
                 class_name = IF(class_name IS NULL OR class_name = '', ?, class_name),
                 academic_year = IF(academic_year IS NOT NULL AND academic_year != '', academic_year,
-                    IF(MONTH(date) >= 9, CONCAT(YEAR(date), ' - ', YEAR(date) + 1), CONCAT(YEAR(date) - 1, ' - ', YEAR(date)))
+                    IF(MONTH(attendance_date) >= 9, CONCAT(YEAR(attendance_date), ' - ', YEAR(attendance_date) + 1), CONCAT(YEAR(attendance_date) - 1, ' - ', YEAR(attendance_date)))
                 )
             WHERE student_id = ? AND (class_name IS NULL OR class_name = '')
         ");
         if ($upd) {
             $upd->bind_param("isi", $oldClassId, $oldClassName, $studentId);
             $upd->execute();
+            $upd->close();
         }
     }
 
     // Also populate any missing academic_year on older attendance records for this student
     $conn->query("
         UPDATE attendance
-        SET academic_year = IF(MONTH(date) >= 9, CONCAT(YEAR(date), ' - ', YEAR(date) + 1), CONCAT(YEAR(date) - 1, ' - ', YEAR(date)))
-        WHERE student_id = " . $studentId . " AND (academic_year IS NULL OR academic_year = '')
+        SET academic_year = IF(MONTH(attendance_date) >= 9, CONCAT(YEAR(attendance_date), ' - ', YEAR(attendance_date) + 1), CONCAT(YEAR(attendance_date) - 1, ' - ', YEAR(attendance_date)))
+        WHERE student_id = " . $studentId . " AND (academic_year IS NULL OR academic_year = '') AND attendance_date IS NOT NULL
     ");
 }
 
 function getStudentAttendanceHistoryData($conn, $studentId)
 {
+    $emptyResult = [
+        'groups' => [],
+        'total_records' => 0,
+        'current_class' => '',
+        'current_year' => getAcademicYearFromDate(date('Y-m-d'))
+    ];
+
     if (!$conn || empty($studentId)) {
-        return [
-            'groups' => [],
-            'total_records' => 0,
-            'current_class' => '',
-            'current_year' => getAcademicYearFromDate(date('Y-m-d'))
-        ];
+        return $emptyResult;
     }
 
-    ensureAttendanceHistorySchema($conn);
-    $studentId = (int)$studentId;
+    try {
+        ensureAttendanceHistorySchema($conn);
+        $studentId = (int)$studentId;
 
-    // Fetch current student info
-    $currentClassName = '';
-    $currentClassId = 0;
-    $st = $conn->prepare("SELECT id, name, class, class_id FROM students WHERE id = ? LIMIT 1");
-    if ($st) {
-        $st->bind_param("i", $studentId);
-        $st->execute();
-        $curr = $st->get_result()->fetch_assoc();
-        if ($curr) {
-            $currentClassName = trim($curr['class'] ?? '');
-            $currentClassId = !empty($curr['class_id']) ? (int)$curr['class_id'] : 0;
+        // Fetch current student info
+        $currentClassName = '';
+        $currentClassId = 0;
+        $st = $conn->prepare("SELECT id, name, class, class_id FROM students WHERE id = ? LIMIT 1");
+        if ($st) {
+            $st->bind_param("i", $studentId);
+            $st->execute();
+            $curr = $st->get_result()->fetch_assoc();
+            if ($curr) {
+                $currentClassName = trim($curr['class'] ?? '');
+                $currentClassId = !empty($curr['class_id']) ? (int)$curr['class_id'] : 0;
+            }
+            $st->close();
         }
-    }
 
-    $currentAcademicYear = getAcademicYearFromDate(date('Y-m-d'));
+        $currentAcademicYear = getAcademicYearFromDate(date('Y-m-d'));
 
-    // Fetch all attendance for student
-    $attStmt = $conn->prepare("
-        SELECT id, student_id, date, status, notes, recorded_by, class_id, class_name, academic_year, created_at
-        FROM attendance
-        WHERE student_id = ?
-        ORDER BY date DESC, id DESC
-    ");
-    if (!$attStmt) {
+        // Fetch all attendance for student with join on uncles and classes
+        $attStmt = $conn->prepare("
+            SELECT a.id, a.student_id, a.attendance_date, a.status, a.uncle_id, a.class_id, a.class_name, a.academic_year, a.created_at,
+                   u.name AS uncle_name,
+                   c.name AS lookup_class_name
+            FROM attendance a
+            LEFT JOIN uncles u ON a.uncle_id = u.id
+            LEFT JOIN classes c ON a.class_id = c.id
+            WHERE a.student_id = ?
+            ORDER BY a.attendance_date DESC, a.id DESC
+        ");
+        if (!$attStmt) {
+            return $emptyResult;
+        }
+
+        $attStmt->bind_param("i", $studentId);
+        $attStmt->execute();
+        $attResult = $attStmt->get_result();
+
+        $groupsMap = [];
+        $totalOldRecords = 0;
+
+        while ($row = $attResult->fetch_assoc()) {
+            $rowDate = $row['attendance_date'];
+            $rowYear = !empty($row['academic_year']) ? trim($row['academic_year']) : getAcademicYearFromDate($rowDate);
+            $rowClassName = !empty($row['class_name']) ? trim($row['class_name']) : (!empty($row['lookup_class_name']) ? trim($row['lookup_class_name']) : '');
+            $rowClassId = !empty($row['class_id']) ? (int)$row['class_id'] : 0;
+
+            // Determine if this is a previous attendance record:
+            // 1. If class_name is different from current class
+            // 2. OR academic_year is different from current academic year
+            // 3. OR class_id is different (and non-zero)
+            $isPrevious = false;
+            if (!empty($rowClassName) && $rowClassName !== $currentClassName) {
+                $isPrevious = true;
+            } elseif (!empty($rowYear) && $rowYear !== $currentAcademicYear) {
+                $isPrevious = true;
+            } elseif ($rowClassId > 0 && $currentClassId > 0 && $rowClassId !== $currentClassId) {
+                $isPrevious = true;
+            }
+
+            if (!$isPrevious) {
+                continue;
+            }
+
+            $displayClassName = !empty($rowClassName) ? $rowClassName : ($currentClassName ? ($currentClassName . ' (سابق)') : 'فصل سابق');
+            $groupKey = $rowYear . '___' . $displayClassName;
+
+            if (!isset($groupsMap[$groupKey])) {
+                $groupsMap[$groupKey] = [
+                    'group_key' => $groupKey,
+                    'academic_year' => $rowYear,
+                    'class_name' => $displayClassName,
+                    'class_id' => $rowClassId,
+                    'title' => 'العام الدراسي ' . $rowYear . ' — ' . $displayClassName,
+                    'total' => 0,
+                    'present' => 0,
+                    'absent' => 0,
+                    'excused' => 0,
+                    'rate' => 0,
+                    'records' => []
+                ];
+            }
+
+            $statusStr = strtolower(trim((string)$row['status']));
+            $groupsMap[$groupKey]['total']++;
+            $totalOldRecords++;
+
+            if (in_array($statusStr, ['present', 'حضور', '1', 'yes', 'true'])) {
+                $groupsMap[$groupKey]['present']++;
+                $statusLabel = 'حضور';
+                $statusType = 'present';
+            } elseif (in_array($statusStr, ['absent', 'غياب', '0', 'no', 'false'])) {
+                $groupsMap[$groupKey]['absent']++;
+                $statusLabel = 'غياب';
+                $statusType = 'absent';
+            } else {
+                $groupsMap[$groupKey]['excused']++;
+                $statusLabel = $row['status'] ?: 'معذور';
+                $statusType = 'excused';
+            }
+
+            $uncleName = trim($row['uncle_name'] ?? '');
+
+            $groupsMap[$groupKey]['records'][] = [
+                'id' => (int)$row['id'],
+                'date' => $rowDate,
+                'day_name' => getArabicDayName($rowDate),
+                'status' => $statusLabel,
+                'status_type' => $statusType,
+                'uncle_name' => $uncleName,
+                'recorded_by' => $uncleName
+            ];
+        }
+        $attStmt->close();
+
+        // Calculate rates and sort groups
+        $groupsList = array_values($groupsMap);
+        foreach ($groupsList as &$g) {
+            $g['rate'] = ($g['total'] > 0) ? round(($g['present'] / $g['total']) * 100) : 0;
+        }
+        unset($g);
+
+        usort($groupsList, function ($a, $b) {
+            return strcmp($b['academic_year'], $a['academic_year']);
+        });
+
         return [
-            'groups' => [],
-            'total_records' => 0,
+            'groups' => $groupsList,
+            'total_records' => $totalOldRecords,
             'current_class' => $currentClassName,
             'current_year' => $currentAcademicYear
         ];
+    } catch (Exception $e) {
+        error_log("getStudentAttendanceHistoryData error: " . $e->getMessage());
+        return $emptyResult;
     }
-
-    $attStmt->bind_param("i", $studentId);
-    $attStmt->execute();
-    $attResult = $attStmt->get_result();
-
-    $groupsMap = [];
-    $totalOldRecords = 0;
-
-    while ($row = $attResult->fetch_assoc()) {
-        $rowDate = $row['date'];
-        $rowYear = !empty($row['academic_year']) ? trim($row['academic_year']) : getAcademicYearFromDate($rowDate);
-        $rowClassName = !empty($row['class_name']) ? trim($row['class_name']) : '';
-        $rowClassId = !empty($row['class_id']) ? (int)$row['class_id'] : 0;
-
-        // Determine if this is a previous attendance record:
-        // 1. If class_name is different from current class
-        // 2. OR academic_year is different from current academic year
-        // 3. OR class_id is different (and non-zero)
-        $isPrevious = false;
-        if (!empty($rowClassName) && $rowClassName !== $currentClassName) {
-            $isPrevious = true;
-        } elseif (!empty($rowYear) && $rowYear !== $currentAcademicYear) {
-            $isPrevious = true;
-        } elseif ($rowClassId > 0 && $currentClassId > 0 && $rowClassId !== $currentClassId) {
-            $isPrevious = true;
-        }
-
-        if (!$isPrevious) {
-            continue;
-        }
-
-        $displayClassName = !empty($rowClassName) ? $rowClassName : ($currentClassName ?: 'فصل سابق');
-        $groupKey = $rowYear . '___' . $displayClassName;
-
-        if (!isset($groupsMap[$groupKey])) {
-            $groupsMap[$groupKey] = [
-                'group_key' => $groupKey,
-                'academic_year' => $rowYear,
-                'class_name' => $displayClassName,
-                'class_id' => $rowClassId,
-                'title' => 'العام الدراسي ' . $rowYear . ' — ' . $displayClassName,
-                'total' => 0,
-                'present' => 0,
-                'absent' => 0,
-                'excused' => 0,
-                'rate' => 0,
-                'records' => []
-            ];
-        }
-
-        $statusStr = strtolower(trim((string)$row['status']));
-        $groupsMap[$groupKey]['total']++;
-        $totalOldRecords++;
-
-        if (in_array($statusStr, ['present', 'حضور', '1', 'yes', 'true'])) {
-            $groupsMap[$groupKey]['present']++;
-            $statusLabel = 'حضور';
-            $statusType = 'present';
-        } elseif (in_array($statusStr, ['absent', 'غياب', '0', 'no', 'false'])) {
-            $groupsMap[$groupKey]['absent']++;
-            $statusLabel = 'غياب';
-            $statusType = 'absent';
-        } else {
-            $groupsMap[$groupKey]['excused']++;
-            $statusLabel = $row['status'] ?: 'معذور';
-            $statusType = 'excused';
-        }
-
-        $groupsMap[$groupKey]['records'][] = [
-            'id' => (int)$row['id'],
-            'date' => $rowDate,
-            'day_name' => getArabicDayName($rowDate),
-            'status' => $statusLabel,
-            'status_type' => $statusType,
-            'notes' => $row['notes'] ?? '',
-            'recorded_by' => $row['recorded_by'] ?? ''
-        ];
-    }
-
-    // Calculate rates and sort groups
-    $sortedGroups = [];
-    foreach ($groupsMap as $g) {
-        $tot = $g['total'];
-        $pres = $g['present'];
-        $g['rate'] = $tot > 0 ? round(($pres / $tot) * 100) : 0;
-        $sortedGroups[] = $g;
-    }
-
-    // Sort descending by academic year and date
-    usort($sortedGroups, function ($a, $b) {
-        return strcmp($b['academic_year'], $a['academic_year']);
-    });
-
-    return [
-        'groups' => $sortedGroups,
-        'total_records' => $totalOldRecords,
-        'current_class' => $currentClassName,
-        'current_year' => $currentAcademicYear
-    ];
 }
 
 function getStudentAttendanceHistory()
 {
-    global $conn;
+    try {
+        $conn = getDBConnection();
+        $studentId = isset($_POST['student_id']) ? (int)$_POST['student_id'] : (isset($_GET['student_id']) ? (int)$_GET['student_id'] : 0);
+        if ($studentId <= 0) {
+            sendJSON(['success' => false, 'message' => 'معرف الطالب غير صالح']);
+        }
 
-    $studentId = isset($_POST['student_id']) ? (int)$_POST['student_id'] : (isset($_GET['student_id']) ? (int)$_GET['student_id'] : 0);
-    if ($studentId <= 0) {
-        sendJSON(['success' => false, 'message' => 'معرف الطالب غير صالح']);
+        $data = getStudentAttendanceHistoryData($conn, $studentId);
+
+        sendJSON([
+            'success' => true,
+            'data' => $data,
+            'groups' => $data['groups'],
+            'history' => $data['groups'],
+            'total_records' => $data['total_records'],
+            'current_class' => $data['current_class'],
+            'current_year' => $data['current_year']
+        ]);
+    } catch (Exception $e) {
+        sendJSON(['success' => false, 'message' => 'خطأ في جلب سجل الحضور']);
     }
-
-    $data = getStudentAttendanceHistoryData($conn, $studentId);
-
-    sendJSON([
-        'success' => true,
-        'data' => $data,
-        'groups' => $data['groups'],
-        'history' => $data['groups'],
-        'total_records' => $data['total_records'],
-        'current_class' => $data['current_class'],
-        'current_year' => $data['current_year']
-    ]);
 }
 
 

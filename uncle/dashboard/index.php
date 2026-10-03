@@ -21715,7 +21715,8 @@ $showSettings = $hasChurchId || $isDevOrAdmin;
             if (!currentStudentForEdit) return;
             const id = getStudentDbId(currentStudentForEdit);
             if (!id) return;
-            const url = `${window.location.origin}/user/profile/?id=${encodeURIComponent(id)}`;
+            const pathPrefix = window.location.pathname.indexOf('/testing/') !== -1 ? '/testing' : '';
+            const url = `${window.location.origin}${pathPrefix}/user/profile/index.php?id=${encodeURIComponent(id)}&noredirect=true`;
             window.open(url, '_blank');
         }
 
@@ -22655,7 +22656,10 @@ $showSettings = $hasChurchId || $isDevOrAdmin;
                         <div>جاري تحميل سجل الحضور...</div>
                     </div>
                 `;
-                fetch(`/api.php?action=getStudentAttendanceHistory&student_id=${studentId}`)
+                const fd = new FormData();
+                fd.append('action', 'getStudentAttendanceHistory');
+                fd.append('student_id', studentId);
+                fetch(API_URL, { method: 'POST', body: fd, credentials: 'include' })
                     .then(r => r.json())
                     .then(data => {
                         if (data && data.success) {
@@ -23500,6 +23504,22 @@ $showSettings = $hasChurchId || $isDevOrAdmin;
                 ? `<div class="detail-avatar-wrap" onclick="showImageModal('${escJs(photoSrc)}', event)"> <img src="${photoSrc}" class="detail-avatar" onerror="this.style.display='none';var el=this.parentElement.querySelector('.detail-avatar-fallback');if(el)el.style.display='flex'"><div class="detail-avatar-fallback ${gender}" style="display:none"><i class="fas fa-user"></i></div><div class="detail-student-name">${detailNameStr}</div></div>`
                 : `<div class="detail-avatar-wrap"><div class="detail-avatar-fallback ${gender}"><i class="fas fa-user"></i></div><div class="detail-student-name">${detailNameStr}</div></div>`;
 
+            // Attendance History section inside modal details (cache)
+            const attHistoryData = s.attendance_history || { total_records: 0, groups: [] };
+            const attHistoryCount = attHistoryData.total_records || (Array.isArray(attHistoryData.groups) ? attHistoryData.groups.reduce((acc, g) => acc + (g.records ? g.records.length : 0), 0) : 0);
+            const attendanceHistoryHtml = `
+            <div class="navigation-row" onclick="showAttendanceHistorySubPage()">
+                <div style="display:flex; align-items:center; gap:10px;">
+                    <div class="navigation-icon teal"><i class="fas fa-history"></i></div>
+                    <div class="navigation-label">سجل الحضور في الفصول السابقة</div>
+                </div>
+                <div style="display:flex; align-items:center; gap:6px;">
+                    <span class="navigation-count">${attHistoryCount}</span>
+                    <i class="fas fa-chevron-left navigation-arrow"></i>
+                </div>
+            </div>
+            `;
+
             // Render Notes Section for Cache (Offline fallback)
             const notesList = info._notes || [];
             const notesHtml = `
@@ -23543,7 +23563,7 @@ $showSettings = $hasChurchId || $isDevOrAdmin;
             </div>
             ` : '';
 
-            document.getElementById('studentDetails').innerHTML = avatar + rows + parentContactsHtml + siblingHtml + notesHtml + publicProfileHtml + resetPasswordHtml;
+            document.getElementById('studentDetails').innerHTML = avatar + rows + parentContactsHtml + siblingHtml + attendanceHistoryHtml + notesHtml + publicProfileHtml + resetPasswordHtml;
         }
 
         function buildStudentDetailsFromProfile(full) {
