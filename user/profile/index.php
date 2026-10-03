@@ -5939,12 +5939,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'logou
         </div>
       </div>
       <div class="hero-body">
-        <div style="position:relative; display:inline-block;">
-          <div class="avatar-ring" id="avatarRing">
-            <div class="avatar-inner" id="avatarInner"><i class="fas fa-user"></i></div>
-            <div class="avatar-edit-fab" id="avatarEdit" onclick="openOv('photoOv')"><i class="fas fa-camera"></i></div>
-          </div>
-          <button type="button" id="deleteStudentPhotoBtn" onclick="deleteStudentPhoto(event)" style="display:none; position:absolute; top:-4px; right:-4px; background:var(--err); color:white; border:none; border-radius:50%; width:28px; height:28px; cursor:pointer; align-items:center; justify-content:center; box-shadow:0 2px 5px rgba(0,0,0,0.2); z-index:10;"><i class="fas fa-trash-alt" style="font-size:0.8rem;"></i></button>
+        <div class="avatar-ring" id="avatarRing">
+          <div class="avatar-inner" id="avatarInner"><i class="fas fa-user"></i></div>
+          <div class="avatar-edit-fab" id="avatarEdit" onclick="openOv('photoOv')"><i class="fas fa-camera"></i></div>
         </div>
         <div class="hero-name" id="heroName">—</div>
         <div class="hero-subtitle" id="heroClass">
@@ -6760,6 +6757,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'logou
             class="fas fa-crop-alt"></i> <span>قص الصورة</span></button>
         <button class="btn btn-p" id="uploadBtn" style="display:none;width:100%;padding:12px;"
           onclick="uploadPhoto()"><i class="fas fa-upload"></i> <span>رفع الصورة</span></button>
+      </div>
+      <div id="deletePhotoWrap" style="padding:10px 22px 0;display:none;">
+        <button type="button" class="btn" id="deleteStudentPhotoBtn" onclick="deleteStudentPhoto(event)"
+          style="width:100%;padding:11px 16px;background:var(--err-bg);color:var(--err);border:1px solid rgba(239, 68, 68, 0.25);border-radius:var(--r-md);font-family:'Cairo', sans-serif;font-weight:700;font-size:0.9rem;display:flex;align-items:center;justify-content:center;gap:8px;cursor:pointer;">
+          <i class="fas fa-trash-alt"></i> <span>حذف الصورة الحالية</span>
+        </button>
       </div>
       <button class="ss-close-btn" onclick="closeOv('photoOv');resetPhoto()">إغلاق</button>
     </div>
@@ -8460,10 +8463,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'logou
         document.getElementById('avatarEdit').style.display = 'none';
       } else {
         document.getElementById('avatarEdit').style.display = 'flex';
-      }
-      const deleteBtn = document.getElementById('deleteStudentPhotoBtn');
-      if (deleteBtn) {
-        deleteBtn.style.display = (s.image_url && isPrivate) ? 'flex' : 'none';
       }
       const banner = document.getElementById('profilePicSuggestionBanner');
       if (banner) {
@@ -10744,6 +10743,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'logou
         document.getElementById('dropZone').style.display = 'none';
         document.getElementById('cropWrap').style.display = 'block';
         document.getElementById('cropBtn').style.display = 'inline-flex';
+        const delWrap = document.getElementById('deletePhotoWrap');
+        if (delWrap) delWrap.style.display = 'none';
         const img = document.getElementById('cropImg'); img.src = ev.target.result;
         if (cropper) cropper.destroy();
         setTimeout(() => { cropper = new Cropper(img, { aspectRatio: 1, viewMode: 2, dragMode: 'move', autoCropArea: .85, guides: false }); }, 100);
@@ -10760,6 +10761,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'logou
         document.getElementById('cropWrap').style.display = 'none';
         document.getElementById('cropBtn').style.display = 'none';
         document.getElementById('uploadBtn').style.display = 'inline-flex';
+        const delWrap = document.getElementById('deletePhotoWrap');
+        if (delWrap) delWrap.style.display = 'none';
         cropper.destroy(); cropper = null; toast('تم القص ✓', 'ok');
       }, 'image/jpeg', .9);
     }
@@ -10793,12 +10796,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'logou
         if (fresh.success && (fresh.student || fresh.user)) student = norm(fresh.student || fresh.user);
         hideLoad();
         document.getElementById('avatarInner').innerHTML = `<img src="${savedUrl}?t=${Date.now()}" alt="">`;
-        const deleteBtn = document.getElementById('deleteStudentPhotoBtn');
-        if (deleteBtn) deleteBtn.style.display = 'flex';
         const banner = document.getElementById('profilePicSuggestionBanner');
         if (banner) banner.style.display = 'none';
         closeOv('photoOv'); resetPhoto(); toast('تم رفع الصورة ✓', 'ok');
       } catch (e) { hideLoad(); toast('خطأ: ' + e.message, 'err'); }
+    }
+    function syncPhotoOv() {
+      const wrap = document.getElementById('deletePhotoWrap');
+      if (!wrap) return;
+      if (student && student.image_url && !isViewingOther()) {
+        wrap.style.display = 'block';
+      } else {
+        wrap.style.display = 'none';
+      }
     }
     function resetPhoto() {
       document.getElementById('dropZone').style.display = 'block';
@@ -10808,6 +10818,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'logou
       document.getElementById('photoPrev').style.display = 'none';
       document.getElementById('photoIn').value = '';
       if (cropper) { cropper.destroy(); cropper = null; } croppedBlob = null;
+      syncPhotoOv();
     }
 
     async function deleteStudentPhoto(event) {
@@ -10824,8 +10835,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'logou
         student.image_url = '';
         hideLoad();
         document.getElementById('avatarInner').innerHTML = `<i class="fas fa-user"></i>`;
-        const deleteBtn = document.getElementById('deleteStudentPhotoBtn');
-        if (deleteBtn) deleteBtn.style.display = 'none';
+        syncPhotoOv();
+        closeOv('photoOv');
+        resetPhoto();
         const banner = document.getElementById('profilePicSuggestionBanner');
         if (banner && localStorage.getItem('dismissProfilePicSuggestion') !== 'true') {
           banner.style.display = 'flex';
