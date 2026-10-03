@@ -13761,7 +13761,7 @@ $showSettings = $hasChurchId || $isDevOrAdmin;
             style="max-width:380px; text-align: center; border-radius: 20px; box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.18);">
             <div class="modal-header" style="border-bottom: none; justify-content: center; padding-bottom: 5px;">
                 <h3
-                    style="font-size: 1.3rem; font-family: 'Baloo Bhaijaan 2', Cairo, sans-serif; font-weight: 700; color: var(--accent2);">
+                    style="font-size: 1.3rem; font-family: 'Cairo', sans-serif; font-weight: 700; color: var(--accent2);">
                     تسجيل الخروج</h3>
             </div>
             <div style="padding: 15px 20px; font-size: 1.05rem; color: var(--text-desc);">
@@ -13769,10 +13769,10 @@ $showSettings = $hasChurchId || $isDevOrAdmin;
             </div>
             <div class="modal-footer"
                 style="display: flex; gap: 12px; justify-content: center; padding: 10px 20px 20px 20px; border-top: none;">
-                <button class="btn btn-outline btn-sm" onclick="closeLogoutModal()"
-                    style="border-radius: 12px; min-width: 100px; padding: 8px 16px;">إلغاء</button>
                 <button class="btn btn-danger btn-sm" onclick="confirmLogout()"
                     style="border-radius: 12px; min-width: 100px; padding: 8px 16px;">تسجيل خروج</button>
+                <button class="btn btn-outline btn-sm" onclick="closeLogoutModal()"
+                    style="border-radius: 12px; min-width: 100px; padding: 8px 16px;">إلغاء</button>
             </div>
         </div>
     </div>
