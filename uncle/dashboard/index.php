@@ -31473,9 +31473,13 @@ $showSettings = $hasChurchId || $isDevOrAdmin;
                 const d = await fetch(API_URL, { method: 'POST', body: fd, credentials: 'include' }).then(r => r.json());
                 if (!d.success) return;
                 _notifData = d.notifications || [];
+                const isDev = typeof isUserDeveloper === 'function' && isUserDeveloper();
+                if (!isDev) {
+                    _notifData = _notifData.filter(n => n.type !== 'dev_password_request' && n.type !== 'whatsapp_otp' && (!n.title || (!n.title.includes('استعادة كلمة مرور') && !n.title.includes('تعيين كلمة مرور'))));
+                }
                 const unread = parseInt(d.unread_count !== undefined ? d.unread_count : (_notifData.filter(n => n.is_read == 0).length), 10) || 0;
                 // Update Developer Password Requests badge
-                if (typeof isUserDeveloper === 'function' && isUserDeveloper()) {
+                if (isDev) {
                     loadDevPasswordRequests();
                 }
                 // Update bell badge
@@ -31503,7 +31507,13 @@ $showSettings = $hasChurchId || $isDevOrAdmin;
         function renderNotifPanel() {
             const el = document.getElementById('notifPanelList');
             if (!el) return;
-            if (!_notifData.length) {
+            const isDev = typeof isUserDeveloper === 'function' && isUserDeveloper();
+            const list = _notifData.filter(n => {
+                if (n.type === 'dev_password_request' || n.type === 'whatsapp_otp') return isDev;
+                if (n.title && (n.title.includes('استعادة كلمة مرور') || n.title.includes('تعيين كلمة مرور'))) return isDev;
+                return true;
+            });
+            if (!list.length) {
                 el.innerHTML = `<div class="nps-empty">
             <div class="nps-empty-icon"><i class="fas fa-bell-slash"></i></div>
             <strong style="color:var(--text-2);font-size:.92rem;">لا توجد إشعارات</strong>
@@ -31548,7 +31558,7 @@ $showSettings = $hasChurchId || $isDevOrAdmin;
                 developer_message: '/uncle/dashboard/', // Fallback, will be overridden dynamically
                 announcement: '/uncle/dashboard/',
             };
-            el.innerHTML = _notifData.map(n => {
+            el.innerHTML = list.map(n => {
                 const icon = typeIcon[n.type] || 'fa-bell';
                 const label = typeLabel[n.type] || '';
                 const action = typeAction[n.type];
@@ -31591,6 +31601,9 @@ $showSettings = $hasChurchId || $isDevOrAdmin;
             toggleNotifPanel();
 
             if (type === 'dev_password_request') {
+                if (typeof isUserDeveloper === 'function' && !isUserDeveloper()) {
+                    return;
+                }
                 let studentId = null;
                 let reqEmail = '';
                 if (notif && notif.payload) {
@@ -32142,6 +32155,7 @@ $showSettings = $hasChurchId || $isDevOrAdmin;
         loadUnifiedNotifications();
         function checkDevPwdUrlParams() {
             try {
+                if (typeof isUserDeveloper === 'function' && !isUserDeveloper()) return;
                 const urlParams = new URLSearchParams(window.location.search);
                 if (urlParams.get('open_dev_pwd_requests') === '1' || urlParams.get('reset_student_id')) {
                     const sId = urlParams.get('reset_student_id');

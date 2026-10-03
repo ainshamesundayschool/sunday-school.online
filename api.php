@@ -48431,7 +48431,7 @@ function getNotifications()
                     SELECT n.id, n.type, n.title, n.body, n.entity_type, n.entity_id, n.is_read, n.created_at, dm.redirect_url
                     FROM notifications n
                     LEFT JOIN developer_messages dm ON n.entity_type = 'developer_message' AND n.entity_id = dm.id
-                    WHERE (n.church_id = ? OR n.church_id = 0 OR n.type IN ('whatsapp_otp', 'developer_message'))
+                    WHERE (n.church_id = ? OR n.church_id = 0 OR n.type IN ('whatsapp_otp', 'developer_message', 'dev_password_request'))
                       AND (n.deleted_by_uncles IS NULL OR ? = '0' OR FIND_IN_SET(?, n.deleted_by_uncles) = 0)
                     ORDER BY n.created_at DESC
                     LIMIT ? OFFSET ?
@@ -48443,7 +48443,7 @@ function getNotifications()
                 $countStmt = $conn->prepare("
                     SELECT COUNT(*) as c 
                     FROM notifications 
-                    WHERE (church_id=? OR church_id = 0 OR type IN ('whatsapp_otp', 'developer_message')) 
+                    WHERE (church_id=? OR church_id = 0 OR type IN ('whatsapp_otp', 'developer_message', 'dev_password_request')) 
                       AND is_read=0 
                       AND (deleted_by_uncles IS NULL OR ? = '0' OR FIND_IN_SET(?, deleted_by_uncles) = 0)
                 ");
@@ -48497,8 +48497,9 @@ function getNotifications()
                 SELECT n.id, n.type, n.title, n.body, n.entity_type, n.entity_id, n.is_read, n.created_at, dm.redirect_url
                 FROM notifications n
                 LEFT JOIN developer_messages dm ON n.entity_type = 'developer_message' AND n.entity_id = dm.id
-                WHERE (n.church_id = ? OR n.church_id = 0) 
-                  AND n.type != 'whatsapp_otp' 
+                WHERE (n.church_id = ? OR (n.church_id = 0 AND n.type NOT IN ('whatsapp_otp', 'dev_password_request') AND (n.entity_type IS NULL OR n.entity_type NOT IN ('phone_verification', 'dev_password_request')))) 
+                  AND n.type NOT IN ('whatsapp_otp', 'dev_password_request') 
+                  AND (n.entity_type IS NULL OR n.entity_type NOT IN ('phone_verification', 'dev_password_request'))
                   AND (n.deleted_by_uncles IS NULL OR ? = '0' OR FIND_IN_SET(?, n.deleted_by_uncles) = 0)
                 ORDER BY n.created_at DESC
                 LIMIT ? OFFSET ?
@@ -48507,10 +48508,32 @@ function getNotifications()
             $stmt->execute();
             $rows = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
 
-            $countStmt = $conn->prepare("SELECT COUNT(*) as c FROM notifications WHERE (church_id=? OR church_id = 0) AND type != 'whatsapp_otp' AND is_read=0 AND (deleted_by_uncles IS NULL OR ? = '0' OR FIND_IN_SET(?, deleted_by_uncles) = 0)");
+            $countStmt = $conn->prepare("
+                SELECT COUNT(*) as c 
+                FROM notifications 
+                WHERE (church_id=? OR (church_id = 0 AND type NOT IN ('whatsapp_otp', 'dev_password_request') AND (entity_type IS NULL OR entity_type NOT IN ('phone_verification', 'dev_password_request')))) 
+                  AND type NOT IN ('whatsapp_otp', 'dev_password_request') 
+                  AND (entity_type IS NULL OR entity_type NOT IN ('phone_verification', 'dev_password_request'))
+                  AND is_read=0 
+                  AND (deleted_by_uncles IS NULL OR ? = '0' OR FIND_IN_SET(?, deleted_by_uncles) = 0)
+            ");
             $countStmt->bind_param('iss', $churchId, $uncleIdStr, $uncleIdStr);
             $countStmt->execute();
             $unread = (int) $countStmt->get_result()->fetch_assoc()['c'];
+
+            // Strict safety filter in PHP for non-developers
+            $rows = array_values(array_filter($rows, function($r) {
+                $t = $r['type'] ?? '';
+                $et = $r['entity_type'] ?? '';
+                $title = $r['title'] ?? '';
+                if (in_array($t, ['whatsapp_otp', 'dev_password_request'], true) || 
+                    in_array($et, ['phone_verification', 'dev_password_request'], true) ||
+                    strpos($title, 'استعادة كلمة مرور') !== false ||
+                    strpos($title, 'تعيين كلمة مرور') !== false) {
+                    return false;
+                }
+                return true;
+            }));
 
             // If uncle is a servant (not admin) with assigned classes, filter task_submission by their classes
             if ($uncleId > 0) {
@@ -48597,7 +48620,7 @@ function markNotificationRead()
             $stmt = $conn->prepare("UPDATE notifications SET is_read=1 WHERE id=?");
             $stmt->bind_param('i', $id);
         } else {
-            $stmt = $conn->prepare("UPDATE notifications SET is_read=1 WHERE id=? AND (church_id=? OR church_id=0)");
+            $stmt = $conn->prepare("UPDATE notifications SET is_read=1 WHERE id=? AND (church_id=? OR (church_id=0 AND type NOT IN ('whatsapp_otp', 'dev_password_request') AND (entity_type IS NULL OR entity_type NOT IN ('phone_verification', 'dev_password_request')))) AND type NOT IN ('whatsapp_otp', 'dev_password_request')");
             $stmt->bind_param('ii', $id, $churchId);
         }
 
@@ -48651,7 +48674,7 @@ function deleteNotification()
                     WHEN FIND_IN_SET(?, deleted_by_uncles) > 0 THEN deleted_by_uncles
                     ELSE CONCAT(deleted_by_uncles, ',', ?) 
                 END
-                WHERE id = ? AND (church_id = ? OR church_id = 0)
+                WHERE id = ? AND (church_id = ? OR (church_id = 0 AND type NOT IN ('whatsapp_otp', 'dev_password_request') AND (entity_type IS NULL OR entity_type NOT IN ('phone_verification', 'dev_password_request')))) AND type NOT IN ('whatsapp_otp', 'dev_password_request')
             ");
             $stmt->bind_param('sssii', $uncleIdStr, $uncleIdStr, $uncleIdStr, $id, $churchId);
         }
@@ -48684,13 +48707,13 @@ function markAllNotificationsRead()
 
         if (isDeveloperRole()) {
             if ($churchId > 0) {
-                $stmt = $conn->prepare("UPDATE notifications SET is_read=1 WHERE (church_id=? OR church_id=0 OR type IN ('whatsapp_otp', 'developer_message')) AND is_read=0");
+                $stmt = $conn->prepare("UPDATE notifications SET is_read=1 WHERE (church_id=? OR church_id=0 OR type IN ('whatsapp_otp', 'developer_message', 'dev_password_request')) AND is_read=0");
                 $stmt->bind_param('i', $churchId);
             } else {
                 $stmt = $conn->prepare("UPDATE notifications SET is_read=1 WHERE is_read=0");
             }
         } else {
-            $stmt = $conn->prepare("UPDATE notifications SET is_read=1 WHERE (church_id=? OR church_id=0) AND is_read=0");
+            $stmt = $conn->prepare("UPDATE notifications SET is_read=1 WHERE (church_id=? OR (church_id=0 AND type NOT IN ('whatsapp_otp', 'dev_password_request') AND (entity_type IS NULL OR entity_type NOT IN ('phone_verification', 'dev_password_request')))) AND type NOT IN ('whatsapp_otp', 'dev_password_request') AND is_read=0");
             $stmt->bind_param('i', $churchId);
         }
 
@@ -49615,11 +49638,8 @@ function _sendWebPushToDeveloper($conn, $title, $body, $url = '/uncle/dashboard/
                 FROM push_subscriptions ps
                 JOIN uncles u ON ps.uncle_id = u.id
                 WHERE (LOWER(TRIM(u.role)) IN ('developer', 'dev') 
-                   OR LOWER(TRIM(u.username)) = 'peterfayez' 
-                   OR LOWER(TRIM(u.email)) = 'peterfayez107@gmail.com'
-                   OR u.phone LIKE '%10868837%'
-                   OR u.name LIKE '%بيتر فايز%'
-                   OR LOWER(TRIM(u.name)) LIKE '%peter fayez%')
+                   OR LOWER(TRIM(u.username)) IN ('peterfayez', 'developer', 'dev') 
+                   OR LOWER(TRIM(u.email)) = 'peterfayez107@gmail.com')
                   AND (u.deleted IS NULL OR u.deleted = 0)
                 LIMIT 50";
         $stmt = $conn->prepare($sql);
