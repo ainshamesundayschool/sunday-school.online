@@ -5088,6 +5088,11 @@ $showSettings = $hasChurchId || $isDevOrAdmin;
             color: var(--warning-dark);
         }
 
+        .navigation-icon.teal {
+            background: rgba(20, 184, 166, 0.12);
+            color: #0d9488;
+        }
+
         .navigation-label {
             font-size: 0.88rem;
             font-weight: 700;
@@ -22551,11 +22556,128 @@ $showSettings = $hasChurchId || $isDevOrAdmin;
             document.getElementById('studentDetails').innerHTML = notesHtml;
         }
 
+        function showAttendanceHistorySubPage() {
+            if (!currentStudentForEdit) return;
+            const full = currentStudentForEdit;
+            const studentId = full.id || full.student_id;
+
+            setModalHeader('سجل الحضور في الفصول السابقة', true);
+            hideDetailsFooter();
+            scrollToDetailsTop();
+
+            const renderSubPage = (historyData) => {
+                const groups = (historyData && Array.isArray(historyData.groups)) 
+                    ? historyData.groups 
+                    : ((historyData && Array.isArray(historyData.history)) ? historyData.history : []);
+
+                if (groups.length === 0) {
+                    document.getElementById('studentDetails').innerHTML = `
+                        <div style="text-align:center; padding:45px 20px; color:var(--text-3); font-family:'Cairo',sans-serif;">
+                            <div style="width:60px; height:60px; border-radius:50%; background:var(--surface-3); display:inline-flex; align-items:center; justify-content:center; margin-bottom:14px; font-size:1.5rem; color:var(--text-3);">
+                                <i class="fas fa-history"></i>
+                            </div>
+                            <div style="font-weight:700; font-size:0.95rem; color:var(--text); margin-bottom:6px;">لا يوجد سجل حضور سابق</div>
+                            <div style="font-size:0.8rem; color:var(--text-3); line-height:1.5;">لم يتم تسجيل أي حضور للطفل في فصول أو أعوام دراسية سابقة.</div>
+                        </div>
+                    `;
+                    return;
+                }
+
+                let groupsHtml = groups.map(group => {
+                    const records = group.records || [];
+                    const recordsHtml = records.length === 0 ? `
+                        <div style="padding:10px; text-align:center; color:var(--text-3); font-size:0.75rem;">لا توجد تفاصيل حضور</div>
+                    ` : records.map(rec => {
+                        const isPres = rec.status_type === 'present' || rec.status === 'حضور' || rec.status === 'present';
+                        const recorderName = rec.recorded_by || rec.uncle_name || '';
+                        return `
+                            <div style="display:flex; align-items:center; justify-content:space-between; padding:8px 12px; background:var(--surface-2); border-radius:var(--r-sm); font-size:0.8rem; border:1px solid var(--border);">
+                                <div style="display:flex; align-items:center; gap:8px;">
+                                    <span style="width:24px; height:24px; border-radius:50%; display:inline-flex; align-items:center; justify-content:center; background:${isPres ? 'var(--success-bg)' : 'var(--danger-bg)'}; color:${isPres ? 'var(--success)' : 'var(--danger)'}; font-size:0.7rem;">
+                                        <i class="fas ${isPres ? 'fa-check' : 'fa-times'}"></i>
+                                    </span>
+                                    <span style="font-weight:700; color:var(--text);">${escHtml(rec.day_name || '')} ${escHtml(rec.date || '')}</span>
+                                </div>
+                                <div style="display:flex; align-items:center; gap:8px;">
+                                    ${recorderName ? `<span style="font-size:0.72rem; color:var(--text-3);"><i class="fas fa-user-edit" style="font-size:0.65rem;"></i> ${escHtml(recorderName)}</span>` : ''}
+                                    <span style="font-size:0.72rem; font-weight:700; color:${isPres ? 'var(--success)' : 'var(--danger)'};">${isPres ? 'حاضر' : 'غائب'}</span>
+                                </div>
+                            </div>
+                        `;
+                    }).join('');
+
+                    return `
+                        <div class="glass-card" style="margin-bottom:14px; border:1px solid var(--border-solid); border-radius:var(--r-lg); padding:14px; background:var(--surface);">
+                            <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:12px; flex-wrap:wrap; gap:8px; border-bottom:1px solid var(--border); padding-bottom:10px;">
+                                <div style="display:flex; align-items:center; gap:10px;">
+                                    <span style="display:inline-flex; align-items:center; justify-content:center; width:36px; height:36px; border-radius:var(--r-sm); background:rgba(20, 184, 166, 0.12); color:#0d9488; font-size:1rem;">
+                                        <i class="fas fa-chalkboard-teacher"></i>
+                                    </span>
+                                    <div>
+                                        <div style="font-weight:800; font-size:0.95rem; color:var(--text);">${escHtml(group.class_name || 'فصل سابق')}</div>
+                                        <div style="font-size:0.75rem; color:var(--text-3); font-weight:600; display:flex; align-items:center; gap:4px; margin-top:2px;">
+                                            <i class="far fa-calendar-alt"></i> العام الدراسي: ${escHtml(group.academic_year || '---')}
+                                        </div>
+                                    </div>
+                                </div>
+                                <div style="display:flex; align-items:center; gap:6px; flex-wrap:wrap;">
+                                    <span style="font-size:0.72rem; font-weight:700; background:var(--success-bg); color:var(--success-dark); padding:3px 8px; border-radius:var(--r-full);">
+                                        <i class="fas fa-check" style="font-size:0.65rem;"></i> حضور: ${group.present}
+                                    </span>
+                                    <span style="font-size:0.72rem; font-weight:700; background:var(--danger-bg); color:var(--danger-dark); padding:3px 8px; border-radius:var(--r-full);">
+                                        <i class="fas fa-times" style="font-size:0.65rem;"></i> غياب: ${group.absent}
+                                    </span>
+                                    <span style="font-size:0.72rem; font-weight:800; background:var(--brand-bg); color:var(--brand-dark); padding:3px 8px; border-radius:var(--r-full);">
+                                        ${group.rate}%
+                                    </span>
+                                </div>
+                            </div>
+                            <div style="display:flex; flex-direction:column; gap:6px; max-height:280px; overflow-y:auto; padding-right:2px;">
+                                ${recordsHtml}
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+
+                document.getElementById('studentDetails').innerHTML = `
+                    <div class="attendance-history-subpage" style="margin-top:8px;">
+                        ${groupsHtml}
+                    </div>
+                `;
+            };
+
+            if (full.attendance_history) {
+                renderSubPage(full.attendance_history);
+            } else {
+                document.getElementById('studentDetails').innerHTML = `
+                    <div style="text-align:center; padding:40px 20px; color:var(--text-3);">
+                        <i class="fas fa-spinner fa-spin" style="font-size:1.5rem; color:var(--brand); margin-bottom:10px;"></i>
+                        <div>جاري تحميل سجل الحضور...</div>
+                    </div>
+                `;
+                fetch(`/api.php?action=getStudentAttendanceHistory&student_id=${studentId}`)
+                    .then(r => r.json())
+                    .then(data => {
+                        if (data && data.success) {
+                            const histPayload = data.data || data;
+                            full.attendance_history = histPayload;
+                            renderSubPage(histPayload);
+                        } else {
+                            renderSubPage({ groups: [] });
+                        }
+                    })
+                    .catch(() => {
+                        renderSubPage({ groups: [] });
+                    });
+            }
+        }
+
         function refreshStudentDetailsView(name) {
             const titleEl = document.getElementById('studentModalTitle');
             const isSiblingsPage = titleEl && (titleEl.textContent.includes('الإخوات') || titleEl.textContent.includes('الأخوات'));
             const isPaperExamsPage = titleEl && titleEl.textContent.includes('الورقية');
             const isNotesPage = titleEl && titleEl.textContent.includes('الملاحظات');
+            const isAttendanceHistoryPage = titleEl && titleEl.textContent.includes('سجل الحضور');
 
             showStudentDetails(name);
 
@@ -22565,6 +22687,8 @@ $showSettings = $hasChurchId || $isDevOrAdmin;
                 showPaperExamsSubPage();
             } else if (isNotesPage) {
                 showNotesSubPage();
+            } else if (isAttendanceHistoryPage) {
+                showAttendanceHistorySubPage();
             }
         }
 
@@ -23564,6 +23688,22 @@ $showSettings = $hasChurchId || $isDevOrAdmin;
             </div>
             `;
 
+            // Attendance History section inside modal details
+            const attHistoryData = full.attendance_history || { total_records: 0, groups: [] };
+            const attHistoryCount = attHistoryData.total_records || 0;
+            const attendanceHistoryHtml = `
+            <div class="navigation-row" onclick="showAttendanceHistorySubPage()">
+                <div style="display:flex; align-items:center; gap:10px;">
+                    <div class="navigation-icon teal"><i class="fas fa-history"></i></div>
+                    <div class="navigation-label">سجل الحضور في الفصول السابقة</div>
+                </div>
+                <div style="display:flex; align-items:center; gap:6px;">
+                    <span class="navigation-count">${attHistoryCount}</span>
+                    <i class="fas fa-chevron-left navigation-arrow"></i>
+                </div>
+            </div>
+            `;
+
             // Notes section inside modal details
             const notesList = (info && info._notes) ? info._notes : (parseStudentCustomInfo(full)._notes || []);
             const notesHtml = `
@@ -23607,7 +23747,7 @@ $showSettings = $hasChurchId || $isDevOrAdmin;
             </div>
             ` : '';
 
-            document.getElementById('studentDetails').innerHTML = img + rows + parentContactsHtml + tpHtml + siblingHtml + paperExamsHtml + tasksHtml + notesHtml + publicProfileHtml + resetPasswordHtml;
+            document.getElementById('studentDetails').innerHTML = img + rows + parentContactsHtml + tpHtml + siblingHtml + paperExamsHtml + tasksHtml + attendanceHistoryHtml + notesHtml + publicProfileHtml + resetPasswordHtml;
         }
 
         function buildUncleDetailsFromProfile(full) {

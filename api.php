@@ -5942,6 +5942,14 @@ try {
 
             break;
 
+        case 'getStudentAttendanceHistory':
+
+            checkAuth();
+
+            getStudentAttendanceHistory();
+
+            break;
+
         case 'updateCouponsWithReason':
 
             checkAuth();
@@ -8583,7 +8591,7 @@ function submitAttendance()
 
                 $s1 = $conn->prepare("
 
-                    SELECT id, name, attendance_coupons, commitment_coupons, task_coupons
+                    SELECT id, name, class_id, class, attendance_coupons, commitment_coupons, task_coupons
 
                     FROM students 
 
@@ -8607,7 +8615,7 @@ function submitAttendance()
 
                 $s2 = $conn->prepare("
 
-                    SELECT id, name, attendance_coupons, commitment_coupons, task_coupons
+                    SELECT id, name, class_id, class, attendance_coupons, commitment_coupons, task_coupons
 
                     FROM students 
 
@@ -8631,7 +8639,7 @@ function submitAttendance()
 
                 $s3 = $conn->prepare("
 
-                    SELECT id, name, attendance_coupons, commitment_coupons, task_coupons
+                    SELECT id, name, class_id, class, attendance_coupons, commitment_coupons, task_coupons
 
                     FROM students 
 
@@ -8684,18 +8692,27 @@ function submitAttendance()
 
 
             // Upsert attendance
+            ensureAttendanceHistorySchema($conn);
+            $attAcademicYear = getAcademicYearFromDate($dbDate);
+            $attClassId = !empty($student['class_id']) ? intval($student['class_id']) : ($resolvedClassId ?: null);
+            $attClassName = !empty($student['class']) ? trim($student['class']) : ($className ?: null);
 
             $ins = $conn->prepare("
 
-                INSERT INTO attendance (student_id, church_id, attendance_date, status, uncle_id)
+                INSERT INTO attendance (student_id, church_id, attendance_date, status, uncle_id, class_id, class_name, academic_year)
 
-                VALUES (?, ?, ?, ?, ?)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?)
 
-                ON DUPLICATE KEY UPDATE status = VALUES(status), uncle_id = VALUES(uncle_id)
+                ON DUPLICATE KEY UPDATE 
+                    status = VALUES(status), 
+                    uncle_id = VALUES(uncle_id),
+                    class_id = IFNULL(attendance.class_id, VALUES(class_id)),
+                    class_name = IFNULL(attendance.class_name, VALUES(class_name)),
+                    academic_year = IFNULL(attendance.academic_year, VALUES(academic_year))
 
             ");
 
-            $ins->bind_param("iissi", $studentId, $churchId, $dbDate, $status, $uncleId);
+            $ins->bind_param("iississs", $studentId, $churchId, $dbDate, $status, $uncleId, $attClassId, $attClassName, $attAcademicYear);
 
 
 
@@ -10194,6 +10211,13 @@ function updateStudent()
 
 
         if ($updateStmt->execute()) {
+            // Check if class changed, and stamp previous attendance
+            $beforeClassId = isset($beforeSnapshot['class_id']) ? (int)$beforeSnapshot['class_id'] : null;
+            $beforeClassName = trim($beforeSnapshot['class'] ?? '');
+            if (($classId !== null && (int)$classId !== (int)$beforeClassId) || ($className !== '' && $className !== $beforeClassName)) {
+                stampStudentPreviousAttendance($conn, $studentId, $beforeClassId, $beforeClassName);
+            }
+
             if (isset($_POST['email'])) {
                 $inputEmail = trim(sanitize($_POST['email']));
                 ensureStudentEmailColumns($conn);
@@ -10219,7 +10243,11 @@ function updateStudent()
 
             auditStudentEdit($studentId, $beforeSnapshot ?? [], $afterSnapshot ?? []);
 
-
+            $beforeClassId = isset($beforeSnapshot['class_id']) ? (int)$beforeSnapshot['class_id'] : null;
+            $beforeClassName = trim($beforeSnapshot['class'] ?? '');
+            if (($classId !== null && (int)$classId !== (int)$beforeClassId) || ($className !== '' && $className !== $beforeClassName)) {
+                stampStudentPreviousAttendance($conn, $studentId, $beforeClassId, $beforeClassName);
+            }
 
             sendJSON([
 
@@ -25192,6 +25220,8 @@ function getStudentProfile()
             $tasksStmt->close();
             $row['tasks'] = $studentTasks;
 
+            $row['attendance_history'] = getStudentAttendanceHistoryData($conn, $studentId);
+
             $defaultHash = '8d969eef6ecad3c29a3a629280e686cf0c3f5d5a86aff3ca12020c923adc6c92';
             $storedHash = $row['password_hash'] ?? '';
             $isDefPass = ($storedHash === $defaultHash);
@@ -26305,7 +26335,7 @@ function updateStudentAttendance()
 
             // Insert new - need to get church_id from student
 
-            $studentStmt = $conn->prepare("SELECT church_id FROM students WHERE id = ?");
+            $studentStmt = $conn->prepare("SELECT church_id, class_id, class FROM students WHERE id = ?");
 
             $studentStmt->bind_param("i", $studentId);
 
@@ -26317,19 +26347,21 @@ function updateStudentAttendance()
 
             if ($student = $studentResult->fetch_assoc()) {
 
+                ensureAttendanceHistorySchema($conn);
                 $churchId = $student['church_id'];
-
-
+                $attAcademicYear = getAcademicYearFromDate($date);
+                $attClassId = !empty($student['class_id']) ? intval($student['class_id']) : null;
+                $attClassName = !empty($student['class']) ? trim($student['class']) : null;
 
                 $updateStmt = $conn->prepare("
 
-                    INSERT INTO attendance (student_id, church_id, attendance_date, status, uncle_id)
+                    INSERT INTO attendance (student_id, church_id, attendance_date, status, uncle_id, class_id, class_name, academic_year)
 
-                    VALUES (?, ?, ?, ?, ?)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?)
 
                 ");
 
-                $updateStmt->bind_param("iissi", $studentId, $churchId, $date, $status, $uncleId);
+                $updateStmt->bind_param("iississs", $studentId, $churchId, $date, $status, $uncleId, $attClassId, $attClassName, $attAcademicYear);
 
             } else {
 
@@ -27362,6 +27394,279 @@ function getStudentAttendanceDetails()
 
     }
 
+}
+
+
+
+function ensureAttendanceHistorySchema($conn)
+{
+    static $done = false;
+    if ($done || !$conn) return;
+    $done = true;
+
+    try {
+        $cols = [];
+        $res = $conn->query("SHOW COLUMNS FROM attendance");
+        if ($res) {
+            while ($c = $res->fetch_assoc()) {
+                $cols[] = strtolower($c['Field']);
+            }
+        }
+        if (!in_array('class_id', $cols)) {
+            $conn->query("ALTER TABLE attendance ADD COLUMN class_id INT NULL DEFAULT NULL AFTER student_id");
+        }
+        if (!in_array('class_name', $cols)) {
+            $conn->query("ALTER TABLE attendance ADD COLUMN class_name VARCHAR(100) NULL DEFAULT NULL AFTER class_id");
+        }
+        if (!in_array('academic_year', $cols)) {
+            $conn->query("ALTER TABLE attendance ADD COLUMN academic_year VARCHAR(50) NULL DEFAULT NULL AFTER class_name");
+        }
+    } catch (Exception $e) {
+        error_log("ensureAttendanceHistorySchema error: " . $e->getMessage());
+    }
+}
+
+function getAcademicYearFromDate($dateStr)
+{
+    $ts = !empty($dateStr) ? strtotime($dateStr) : false;
+    if (!$ts) $ts = time();
+    $m = (int)date('n', $ts);
+    $y = (int)date('Y', $ts);
+    return ($m >= 9) ? ($y . ' - ' . ($y + 1)) : (($y - 1) . ' - ' . $y);
+}
+
+function getArabicDayName($dateStr)
+{
+    $ts = !empty($dateStr) ? strtotime($dateStr) : false;
+    if (!$ts) return '';
+    $days = [
+        'Sunday' => 'الأحد',
+        'Monday' => 'الإثنين',
+        'Tuesday' => 'الثلاثاء',
+        'Wednesday' => 'الأربعاء',
+        'Thursday' => 'الخميس',
+        'Friday' => 'الجمعة',
+        'Saturday' => 'السبت'
+    ];
+    $d = date('l', $ts);
+    return $days[$d] ?? $d;
+}
+
+function stampStudentPreviousAttendance($conn, $studentId, $oldClassId = null, $oldClassName = '')
+{
+    if (!$conn || empty($studentId)) return;
+    ensureAttendanceHistorySchema($conn);
+
+    $studentId = (int)$studentId;
+    $oldClassId = !empty($oldClassId) ? (int)$oldClassId : null;
+    $oldClassName = trim((string)$oldClassName);
+
+    // If old class name not provided, attempt to look up student's current class in database before it changes
+    if (empty($oldClassName)) {
+        $st = $conn->prepare("SELECT class, class_id FROM students WHERE id = ? LIMIT 1");
+        if ($st) {
+            $st->bind_param("i", $studentId);
+            $st->execute();
+            $row = $st->get_result()->fetch_assoc();
+            if ($row) {
+                $oldClassName = trim($row['class'] ?? '');
+                if (!$oldClassId && !empty($row['class_id'])) {
+                    $oldClassId = (int)$row['class_id'];
+                }
+            }
+        }
+    }
+
+    if (!empty($oldClassName) || !empty($oldClassId)) {
+        $upd = $conn->prepare("
+            UPDATE attendance
+            SET class_id = IF(class_id IS NULL OR class_id = 0, ?, class_id),
+                class_name = IF(class_name IS NULL OR class_name = '', ?, class_name),
+                academic_year = IF(academic_year IS NOT NULL AND academic_year != '', academic_year,
+                    IF(MONTH(date) >= 9, CONCAT(YEAR(date), ' - ', YEAR(date) + 1), CONCAT(YEAR(date) - 1, ' - ', YEAR(date)))
+                )
+            WHERE student_id = ? AND (class_name IS NULL OR class_name = '')
+        ");
+        if ($upd) {
+            $upd->bind_param("isi", $oldClassId, $oldClassName, $studentId);
+            $upd->execute();
+        }
+    }
+
+    // Also populate any missing academic_year on older attendance records for this student
+    $conn->query("
+        UPDATE attendance
+        SET academic_year = IF(MONTH(date) >= 9, CONCAT(YEAR(date), ' - ', YEAR(date) + 1), CONCAT(YEAR(date) - 1, ' - ', YEAR(date)))
+        WHERE student_id = " . $studentId . " AND (academic_year IS NULL OR academic_year = '')
+    ");
+}
+
+function getStudentAttendanceHistoryData($conn, $studentId)
+{
+    if (!$conn || empty($studentId)) {
+        return [
+            'groups' => [],
+            'total_records' => 0,
+            'current_class' => '',
+            'current_year' => getAcademicYearFromDate(date('Y-m-d'))
+        ];
+    }
+
+    ensureAttendanceHistorySchema($conn);
+    $studentId = (int)$studentId;
+
+    // Fetch current student info
+    $currentClassName = '';
+    $currentClassId = 0;
+    $st = $conn->prepare("SELECT id, name, class, class_id FROM students WHERE id = ? LIMIT 1");
+    if ($st) {
+        $st->bind_param("i", $studentId);
+        $st->execute();
+        $curr = $st->get_result()->fetch_assoc();
+        if ($curr) {
+            $currentClassName = trim($curr['class'] ?? '');
+            $currentClassId = !empty($curr['class_id']) ? (int)$curr['class_id'] : 0;
+        }
+    }
+
+    $currentAcademicYear = getAcademicYearFromDate(date('Y-m-d'));
+
+    // Fetch all attendance for student
+    $attStmt = $conn->prepare("
+        SELECT id, student_id, date, status, notes, recorded_by, class_id, class_name, academic_year, created_at
+        FROM attendance
+        WHERE student_id = ?
+        ORDER BY date DESC, id DESC
+    ");
+    if (!$attStmt) {
+        return [
+            'groups' => [],
+            'total_records' => 0,
+            'current_class' => $currentClassName,
+            'current_year' => $currentAcademicYear
+        ];
+    }
+
+    $attStmt->bind_param("i", $studentId);
+    $attStmt->execute();
+    $attResult = $attStmt->get_result();
+
+    $groupsMap = [];
+    $totalOldRecords = 0;
+
+    while ($row = $attResult->fetch_assoc()) {
+        $rowDate = $row['date'];
+        $rowYear = !empty($row['academic_year']) ? trim($row['academic_year']) : getAcademicYearFromDate($rowDate);
+        $rowClassName = !empty($row['class_name']) ? trim($row['class_name']) : '';
+        $rowClassId = !empty($row['class_id']) ? (int)$row['class_id'] : 0;
+
+        // Determine if this is a previous attendance record:
+        // 1. If class_name is different from current class
+        // 2. OR academic_year is different from current academic year
+        // 3. OR class_id is different (and non-zero)
+        $isPrevious = false;
+        if (!empty($rowClassName) && $rowClassName !== $currentClassName) {
+            $isPrevious = true;
+        } elseif (!empty($rowYear) && $rowYear !== $currentAcademicYear) {
+            $isPrevious = true;
+        } elseif ($rowClassId > 0 && $currentClassId > 0 && $rowClassId !== $currentClassId) {
+            $isPrevious = true;
+        }
+
+        if (!$isPrevious) {
+            continue;
+        }
+
+        $displayClassName = !empty($rowClassName) ? $rowClassName : ($currentClassName ?: 'فصل سابق');
+        $groupKey = $rowYear . '___' . $displayClassName;
+
+        if (!isset($groupsMap[$groupKey])) {
+            $groupsMap[$groupKey] = [
+                'group_key' => $groupKey,
+                'academic_year' => $rowYear,
+                'class_name' => $displayClassName,
+                'class_id' => $rowClassId,
+                'title' => 'العام الدراسي ' . $rowYear . ' — ' . $displayClassName,
+                'total' => 0,
+                'present' => 0,
+                'absent' => 0,
+                'excused' => 0,
+                'rate' => 0,
+                'records' => []
+            ];
+        }
+
+        $statusStr = strtolower(trim((string)$row['status']));
+        $groupsMap[$groupKey]['total']++;
+        $totalOldRecords++;
+
+        if (in_array($statusStr, ['present', 'حضور', '1', 'yes', 'true'])) {
+            $groupsMap[$groupKey]['present']++;
+            $statusLabel = 'حضور';
+            $statusType = 'present';
+        } elseif (in_array($statusStr, ['absent', 'غياب', '0', 'no', 'false'])) {
+            $groupsMap[$groupKey]['absent']++;
+            $statusLabel = 'غياب';
+            $statusType = 'absent';
+        } else {
+            $groupsMap[$groupKey]['excused']++;
+            $statusLabel = $row['status'] ?: 'معذور';
+            $statusType = 'excused';
+        }
+
+        $groupsMap[$groupKey]['records'][] = [
+            'id' => (int)$row['id'],
+            'date' => $rowDate,
+            'day_name' => getArabicDayName($rowDate),
+            'status' => $statusLabel,
+            'status_type' => $statusType,
+            'notes' => $row['notes'] ?? '',
+            'recorded_by' => $row['recorded_by'] ?? ''
+        ];
+    }
+
+    // Calculate rates and sort groups
+    $sortedGroups = [];
+    foreach ($groupsMap as $g) {
+        $tot = $g['total'];
+        $pres = $g['present'];
+        $g['rate'] = $tot > 0 ? round(($pres / $tot) * 100) : 0;
+        $sortedGroups[] = $g;
+    }
+
+    // Sort descending by academic year and date
+    usort($sortedGroups, function ($a, $b) {
+        return strcmp($b['academic_year'], $a['academic_year']);
+    });
+
+    return [
+        'groups' => $sortedGroups,
+        'total_records' => $totalOldRecords,
+        'current_class' => $currentClassName,
+        'current_year' => $currentAcademicYear
+    ];
+}
+
+function getStudentAttendanceHistory()
+{
+    global $conn;
+
+    $studentId = isset($_POST['student_id']) ? (int)$_POST['student_id'] : (isset($_GET['student_id']) ? (int)$_GET['student_id'] : 0);
+    if ($studentId <= 0) {
+        sendJSON(['success' => false, 'message' => 'معرف الطالب غير صالح']);
+    }
+
+    $data = getStudentAttendanceHistoryData($conn, $studentId);
+
+    sendJSON([
+        'success' => true,
+        'data' => $data,
+        'groups' => $data['groups'],
+        'history' => $data['groups'],
+        'total_records' => $data['total_records'],
+        'current_class' => $data['current_class'],
+        'current_year' => $data['current_year']
+    ]);
 }
 
 
@@ -38511,6 +38816,8 @@ function gradeUpStudentsForChurch(int $churchId, ?array $customMapping = null): 
 
             $gradClass = $rule['source_name'] ?? ($classById[$cid]['arabic_name'] ?? ($sClassName ?: ''));
 
+            stampStudentPreviousAttendance($conn, $sid, $cid, $gradClass);
+
             $gradStmt->bind_param("isii", $cid, $gradClass, $sid, $churchId);
 
             if ($gradStmt->execute() && $gradStmt->affected_rows > 0) {
@@ -38524,6 +38831,10 @@ function gradeUpStudentsForChurch(int $churchId, ?array $customMapping = null): 
             }
 
         } elseif ($rule['type'] === 'promote') {
+
+            $sourceClass = $rule['source_name'] ?? ($classById[$cid]['arabic_name'] ?? ($sClassName ?: ''));
+
+            stampStudentPreviousAttendance($conn, $sid, $cid, $sourceClass);
 
             $upd->bind_param("isii", $rule['target_id'], $rule['target_name'], $sid, $churchId);
 
@@ -42803,6 +43114,12 @@ function bulkUpdateStudentsClass()
                     // Audit
 
                     auditStudentEdit($studentId, $beforeSnapshot ?? [], $afterSnapshot ?? []);
+
+                    $beforeClassId = isset($beforeSnapshot['class_id']) ? (int)$beforeSnapshot['class_id'] : null;
+                    $beforeClassName = trim($beforeSnapshot['class'] ?? '');
+                    if (($classId !== null && (int)$classId !== (int)$beforeClassId) || ($className !== '' && $className !== $beforeClassName)) {
+                        stampStudentPreviousAttendance($conn, $studentId, $beforeClassId, $beforeClassName);
+                    }
 
                     $successCount++;
 
