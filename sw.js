@@ -1,7 +1,7 @@
 // ╔══════════════════════════════════════════════════════════════╗
-// ║  Sunday School PWA — Service Worker v45                     ║
+// ║  Sunday School PWA — Service Worker v46                     ║
 // ╚══════════════════════════════════════════════════════════════╝
-const SW_VERSION        = new URL(self.location.href).searchParams.get('v') || 'v45';
+const SW_VERSION        = new URL(self.location.href).searchParams.get('v') || 'v46';
 const CACHE_NAME        = `sunday-school-${SW_VERSION}`;
 const SYNC_TAG          = 'sync-attendance';
 const PERIODIC_SYNC_TAG = 'check-registrations';
@@ -311,6 +311,26 @@ self.addEventListener('fetch', e => {
                         headers: { 'Content-Type': url.pathname.endsWith('.css') ? 'text/css' : 'application/javascript' }
                     });
                 }
+            })()
+        );
+        return;
+    }
+
+    // Screenshots must ALWAYS be Network-First so updated image files show up immediately without stale cache
+    if (url.pathname.includes('/imgs/screenshots/') || url.pathname.includes('screenshots/')) {
+        e.respondWith(
+            (async () => {
+                try {
+                    const networkResp = await fetch(e.request, { cache: 'no-store' });
+                    if (networkResp && networkResp.ok) {
+                        const copy = networkResp.clone();
+                        caches.open(CACHE_NAME).then(c => c.put(e.request, copy)).catch(() => {});
+                        return networkResp;
+                    }
+                } catch (netErr) {}
+                const cached = await caches.match(e.request);
+                if (cached) return cached;
+                return new Response('Not found', { status: 404 });
             })()
         );
         return;

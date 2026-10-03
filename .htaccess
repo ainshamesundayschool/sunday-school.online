@@ -41,6 +41,11 @@ DirectoryIndex index.html index.php
         Header set Expires "0"
         Header set Service-Worker-Allowed "/"
     </FilesMatch>
+
+    # Screenshots and images must revalidate so file changes take effect immediately
+    <FilesMatch "\.(png|PNG|jpg|jpeg|webp|gif|svg)$">
+        Header set Cache-Control "no-cache, must-revalidate"
+    </FilesMatch>
 </IfModule>
 
 <IfModule mod_authz_core.c>
