@@ -4161,96 +4161,59 @@ $showSettings = $hasChurchId || $isDevOrAdmin;
         }
 
         /* ═══════════════════════════════════════════════════════════════
-           BULK ACTIONS BAR (Matches Topbar Exact Height 58px / 72px)
+           BULK ACTIONS BAR (Top Pinned Controls in Topbar + Action Track Above Att-Toolbar)
         ═══════════════════════════════════════════════════════════════ */
-        .bulk-actions-bar {
-            position: sticky;
-            top: 0;
-            z-index: 350;
-            background: var(--bg);
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
-            padding-top: env(safe-area-inset-top, 0px);
-            padding-bottom: 0;
-            padding-left: 16px;
-            padding-right: 16px;
-            height: calc(58px + env(safe-area-inset-top, 0px));
-            min-height: calc(58px + env(safe-area-inset-top, 0px));
-            max-height: calc(58px + env(safe-area-inset-top, 0px));
-            box-sizing: border-box;
+        /* Pinned start controls inside Topbar */
+        .topbar .bulk-bar-pinned-start {
+            display: none;
+            align-items: center;
+            gap: 8px;
+            flex-shrink: 0;
+            z-index: 15;
+        }
+
+        body.bulk-active .topbar .bulk-bar-pinned-start {
+            display: inline-flex !important;
+        }
+
+        body.bulk-active .topbar-brand,
+        body.bulk-active .topbar-search-wrap {
+            display: none !important;
+        }
+
+        body.bulk-active .topbar-actions {
+            display: flex !important;
+        }
+
+        body.bulk-active .class-view {
+            padding-bottom: 130px !important;
+        }
+
+        /* Bulk Actions Bar above Att-Toolbar */
+        .att-toolbar .bulk-actions-bar {
+            width: 100%;
             display: none;
             flex-direction: row;
             align-items: center;
             justify-content: flex-start;
             gap: 8px;
             color: var(--text);
+            padding-bottom: 10px;
+            margin-bottom: 8px;
             border-bottom: 1px solid var(--border-solid);
             direction: rtl;
-            box-shadow: var(--shadow-sm);
-            transition: background var(--t) var(--ease), border-color var(--t) var(--ease);
+            box-sizing: border-box;
+            transition: all var(--t) var(--ease);
         }
 
-        .bulk-actions-bar.show {
-            display: flex;
-        }
-
-        body.bulk-active .topbar {
-            display: none !important;
-        }
-
-        body.bulk-active .class-view {
-            padding-top: 0 !important;
-        }
-
-        body.bulk-active .att-toolbar {
-            bottom: 0 !important;
-            top: auto !important;
-            background: var(--surface) !important;
-            border-radius: var(--r-xl) var(--r-xl) 0 0 !important;
-            box-shadow: 0 -4px 12px rgba(15, 23, 42, 0.04) !important;
-            border-top: 1px solid var(--border-solid) !important;
-        }
-
-        body.bulk-active .bulk-actions-bar {
-            position: sticky !important;
-            top: 0 !important;
-            left: 0 !important;
-            right: 0 !important;
-            width: 100% !important;
-            z-index: 350 !important;
-            margin: 0 !important;
-            border-radius: 0 !important;
-            border: none !important;
-            border-bottom: 1px solid var(--border-solid) !important;
-            padding-top: env(safe-area-inset-top, 0px) !important;
-            padding-bottom: 0 !important;
-            padding-left: 16px !important;
-            padding-right: 16px !important;
-            height: calc(58px + env(safe-area-inset-top, 0px)) !important;
-            min-height: calc(58px + env(safe-area-inset-top, 0px)) !important;
-            max-height: calc(58px + env(safe-area-inset-top, 0px)) !important;
-            box-sizing: border-box !important;
-            box-shadow: var(--shadow-sm) !important;
-            background: var(--bg) !important;
-            backdrop-filter: blur(20px) !important;
-            -webkit-backdrop-filter: blur(20px) !important;
+        .att-toolbar .bulk-actions-bar.show,
+        body.bulk-active .att-toolbar .bulk-actions-bar {
             display: flex !important;
-            flex-direction: row !important;
-            align-items: center !important;
-            justify-content: flex-start !important;
-            gap: 8px !important;
-            direction: rtl !important;
-            animation: none !important;
         }
 
         @media (max-width: 640px) {
-            body.bulk-active .bulk-actions-bar {
-                padding-left: 8px !important;
-                padding-right: 8px !important;
-                gap: 4px !important;
-            }
-            .bulk-bar-pinned-start {
-                gap: 4px !important;
+            .topbar .bulk-bar-pinned-start {
+                gap: 5px !important;
             }
             .bulk-close-btn {
                 width: 30px !important;
@@ -4258,9 +4221,13 @@ $showSettings = $hasChurchId || $isDevOrAdmin;
                 min-width: 30px !important;
             }
             .bulk-select-filter-chip {
-                padding: 0 6px 0 4px !important;
-                gap: 3px !important;
+                padding: 0 8px 0 6px !important;
+                gap: 4px !important;
                 height: 30px !important;
+            }
+            .bulk-select-filter-chip .btn-bulk-label {
+                font-size: 0.78rem !important;
+                display: inline-block !important;
             }
             .selected-count-chip {
                 min-width: 20px !important;
@@ -4276,17 +4243,13 @@ $showSettings = $hasChurchId || $isDevOrAdmin;
             .btn-bulk-label {
                 font-size: 0.72rem !important;
             }
-            .bulk-more-tools-btn {
-                height: 30px !important;
-                padding: 0 8px !important;
-                min-width: 30px !important;
+            .bulk-actions-scroll-track {
+                gap: 5px !important;
+                padding: 2px 2px 2px 14px !important;
             }
         }
 
         @media (max-width: 480px) {
-            .bulk-select-filter-chip #bulkSelectFilterLabel {
-                display: none !important;
-            }
             .bulk-more-label {
                 display: none !important;
             }
@@ -4299,15 +4262,6 @@ $showSettings = $hasChurchId || $isDevOrAdmin;
             }
         }
 
-        @media (min-width: 1024px) {
-            body.bulk-active .bulk-actions-bar {
-                height: calc(72px + env(safe-area-inset-top, 0px)) !important;
-                min-height: calc(72px + env(safe-area-inset-top, 0px)) !important;
-                max-height: calc(72px + env(safe-area-inset-top, 0px)) !important;
-            }
-        }
-
-        /* Pinned start controls: Close, Combined Select & Filter, Count */
         .bulk-bar-pinned-start {
             display: inline-flex;
             align-items: center;
@@ -13204,10 +13158,10 @@ $showSettings = $hasChurchId || $isDevOrAdmin;
 
     <!-- MAIN CONTAINER -->
     <div id="mainContainer">
-        <!-- Bulk Actions Bar (Exact Height of Topbar: 58px / 72px) -->
-        <div class="bulk-actions-bar" id="bulkActionsBar" style="display: none;">
-            <!-- Pinned Right Group: Exit button + Combined Select & Filter Chip + Selected Count -->
-            <div class="bulk-bar-pinned-start">
+        <!-- TOPBAR -->
+        <header class="topbar">
+            <!-- Pinned Bulk Selection Controls (Replaces topbar-brand when bulk mode is active) -->
+            <div class="bulk-bar-pinned-start" id="bulkBarPinnedStart" style="display: none;">
                 <div class="bulk-bar-ctrl-group">
                     <button type="button" class="btn btn-ghost btn-sm bulk-close-btn" onclick="disableBulkSelectMode()" title="إلغاء وضع التحديد">
                         <i class="fas fa-times"></i>
@@ -13221,7 +13175,7 @@ $showSettings = $hasChurchId || $isDevOrAdmin;
                             <div class="bulk-check-circle" id="bulkBarSelectAllCircle" onclick="toggleSelectAllBulk(event)">
                                 <i class="fas fa-check"></i>
                             </div>
-                            <span class="btn-bulk-label" id="bulkSelectFilterLabel">تحديد الكل</span>
+                            <span class="btn-bulk-label" id="bulkSelectFilterLabel">تصفية</span>
                             <i class="fas fa-chevron-down bulk-chevron"></i>
                         </button>
                         <div class="dropdown-menu bulk-fixed-dropdown" id="bulkSelectFilterMenu" style="min-width: 175px;">
@@ -13264,88 +13218,6 @@ $showSettings = $hasChurchId || $isDevOrAdmin;
                 </div>
             </div>
 
-            <div class="bulk-v-divider"></div>
-
-            <!-- Scrollable Actions Track with Fade at Left End -->
-            <div class="bulk-actions-scroll-wrap" id="bulkActionsScrollWrap">
-                <div class="bulk-actions-scroll-track" id="bulkActionsScrollTrack">
-                    <!-- Unified Attendance Chip (حضور وغياب مع قائمة منسدلة) -->
-                    <div class="action-dropdown bulk-dropdown-wrap">
-                        <button type="button" class="btn-bulk-action bulk-att-combined" id="bulkAttendanceBtn"
-                            onclick="toggleDropdown('bulkAttendanceMenu', 'bulkAttendanceBtn'); event.stopPropagation();"
-                            title="تسجيل الحضور والغياب">
-                            <i class="fas fa-user-check"></i>
-                            <span class="btn-bulk-label">التحضير</span>
-                            <i class="fas fa-chevron-down bulk-chevron"></i>
-                        </button>
-                        <div class="dropdown-menu bulk-fixed-dropdown" id="bulkAttendanceMenu" style="min-width: 140px;">
-                            <button type="button" class="dropdown-item success" onclick="bulkMarkAttendance('present');closeAllDropdowns()">
-                                <i class="fas fa-check-circle"></i> تسجيل حضور
-                            </button>
-                            <button type="button" class="dropdown-item danger" onclick="bulkMarkAttendance('absent');closeAllDropdowns()">
-                                <i class="fas fa-times-circle"></i> تسجيل غياب
-                            </button>
-                        </div>
-                    </div>
-
-                    <!-- Coupons Dropdown -->
-                    <div class="action-dropdown bulk-dropdown-wrap">
-                        <button type="button" class="btn-bulk-action bulk-coupons" id="bulkCouponsBtn"
-                            onclick="toggleDropdown('bulkCouponsMenu', 'bulkCouponsBtn'); event.stopPropagation();"
-                            title="تعديل الكوبونات">
-                            <i class="fas fa-star"></i>
-                            <span class="btn-bulk-label">كوبونات</span>
-                            <i class="fas fa-chevron-down bulk-chevron"></i>
-                        </button>
-                        <div class="dropdown-menu bulk-fixed-dropdown" id="bulkCouponsMenu" style="min-width: 130px;">
-                            <div class="dropdown-group-label" style="padding:4px 10px; font-size:0.75rem; font-weight:bold; color:var(--text-3); text-align:right;">
-                                إضافة
-                            </div>
-                            <button type="button" class="dropdown-item" onclick="executeBulkCouponsDirect(10);closeAllDropdowns()">+10</button>
-                            <button type="button" class="dropdown-item" onclick="executeBulkCouponsDirect(30);closeAllDropdowns()">+30</button>
-                            <button type="button" class="dropdown-item" onclick="executeBulkCouponsDirect(50);closeAllDropdowns()">+50</button>
-                            <button type="button" class="dropdown-item" onclick="executeBulkCouponsDirect(100);closeAllDropdowns()">+100</button>
-                            <div class="dropdown-divider"></div>
-                            <div class="dropdown-group-label" style="padding:4px 10px; font-size:0.75rem; font-weight:bold; color:var(--text-3); text-align:right;">
-                                خصم
-                            </div>
-                            <button type="button" class="dropdown-item danger" onclick="executeBulkCouponsDirect(-10);closeAllDropdowns()">-10</button>
-                            <button type="button" class="dropdown-item danger" onclick="executeBulkCouponsDirect(-30);closeAllDropdowns()">-30</button>
-                            <button type="button" class="dropdown-item danger" onclick="executeBulkCouponsDirect(-50);closeAllDropdowns()">-50</button>
-                            <button type="button" class="dropdown-item danger" onclick="executeBulkCouponsDirect(-100);closeAllDropdowns()">-100</button>
-                        </div>
-                    </div>
-
-                    <!-- Transfer Class -->
-                    <button type="button" class="btn-bulk-action bulk-class" onclick="triggerBulkClass()" title="تغيير الفصل">
-                        <i class="fas fa-edit"></i>
-                        <span class="btn-bulk-label">نقل</span>
-                    </button>
-
-                    <!-- Bulk Note -->
-                    <button type="button" class="btn-bulk-action bulk-note" onclick="openBulkNoteModal()" title="إضافة ملاحظة جماعية">
-                        <i class="fas fa-sticky-note"></i>
-                        <span class="btn-bulk-label">ملاحظة</span>
-                    </button>
-
-                    <!-- Merge (visible when 2 selected) -->
-                    <button type="button" class="btn-bulk-action bulk-merge" id="bulkMergeBtn" onclick="triggerBulkMerge()"
-                        title="دمج الحسابين المكررين" style="display: none;">
-                        <i class="fas fa-code-merge"></i>
-                        <span class="btn-bulk-label">دمج</span>
-                    </button>
-
-                    <!-- Delete -->
-                    <button type="button" class="btn-bulk-action bulk-delete" onclick="triggerBulkDelete()" title="حذف المحددين">
-                        <i class="fas fa-trash"></i>
-                        <span class="btn-bulk-label">حذف</span>
-                    </button>
-                </div>
-            </div>
-        </div>
-
-        <!-- TOPBAR -->
-        <header class="topbar">
             <a class="topbar-brand" href="#">
                 <div class="topbar-logo">
                     <img src="/logo.png" alt="" onerror="this.outerHTML='<i class=\'fas fa-cross\'></i>'">
@@ -14177,6 +14049,85 @@ $showSettings = $hasChurchId || $isDevOrAdmin;
 
                 <!-- Sticky attendance toolbar (always at the bottom on mobile, side-by-side on desktop) -->
                 <div class="att-toolbar">
+                    <!-- Bulk Actions Scroll Track (shows above the attendance toolbar stats when bulk-active) -->
+                    <div class="bulk-actions-bar" id="bulkActionsBar" style="display: none;">
+                        <div class="bulk-actions-scroll-wrap" id="bulkActionsScrollWrap">
+                            <div class="bulk-actions-scroll-track" id="bulkActionsScrollTrack">
+                                <!-- Unified Attendance Chip (حضور وغياب مع قائمة منسدلة) -->
+                                <div class="action-dropdown bulk-dropdown-wrap">
+                                    <button type="button" class="btn-bulk-action bulk-att-combined" id="bulkAttendanceBtn"
+                                        onclick="toggleDropdown('bulkAttendanceMenu', 'bulkAttendanceBtn'); event.stopPropagation();"
+                                        title="تسجيل الحضور والغياب">
+                                        <i class="fas fa-user-check"></i>
+                                        <span class="btn-bulk-label">التحضير</span>
+                                        <i class="fas fa-chevron-down bulk-chevron"></i>
+                                    </button>
+                                    <div class="dropdown-menu bulk-fixed-dropdown" id="bulkAttendanceMenu" style="min-width: 140px;">
+                                        <button type="button" class="dropdown-item success" onclick="bulkMarkAttendance('present');closeAllDropdowns()">
+                                            <i class="fas fa-check-circle"></i> تسجيل حضور
+                                        </button>
+                                        <button type="button" class="dropdown-item danger" onclick="bulkMarkAttendance('absent');closeAllDropdowns()">
+                                            <i class="fas fa-times-circle"></i> تسجيل غياب
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <!-- Coupons Dropdown -->
+                                <div class="action-dropdown bulk-dropdown-wrap">
+                                    <button type="button" class="btn-bulk-action bulk-coupons" id="bulkCouponsBtn"
+                                        onclick="toggleDropdown('bulkCouponsMenu', 'bulkCouponsBtn'); event.stopPropagation();"
+                                        title="تعديل الكوبونات">
+                                        <i class="fas fa-star"></i>
+                                        <span class="btn-bulk-label">كوبونات</span>
+                                        <i class="fas fa-chevron-down bulk-chevron"></i>
+                                    </button>
+                                    <div class="dropdown-menu bulk-fixed-dropdown" id="bulkCouponsMenu" style="min-width: 130px;">
+                                        <div class="dropdown-group-label" style="padding:4px 10px; font-size:0.75rem; font-weight:bold; color:var(--text-3); text-align:right;">
+                                            إضافة
+                                        </div>
+                                        <button type="button" class="dropdown-item" onclick="executeBulkCouponsDirect(10);closeAllDropdowns()">+10</button>
+                                        <button type="button" class="dropdown-item" onclick="executeBulkCouponsDirect(30);closeAllDropdowns()">+30</button>
+                                        <button type="button" class="dropdown-item" onclick="executeBulkCouponsDirect(50);closeAllDropdowns()">+50</button>
+                                        <button type="button" class="dropdown-item" onclick="executeBulkCouponsDirect(100);closeAllDropdowns()">+100</button>
+                                        <div class="dropdown-divider"></div>
+                                        <div class="dropdown-group-label" style="padding:4px 10px; font-size:0.75rem; font-weight:bold; color:var(--text-3); text-align:right;">
+                                            خصم
+                                        </div>
+                                        <button type="button" class="dropdown-item danger" onclick="executeBulkCouponsDirect(-10);closeAllDropdowns()">-10</button>
+                                        <button type="button" class="dropdown-item danger" onclick="executeBulkCouponsDirect(-30);closeAllDropdowns()">-30</button>
+                                        <button type="button" class="dropdown-item danger" onclick="executeBulkCouponsDirect(-50);closeAllDropdowns()">-50</button>
+                                        <button type="button" class="dropdown-item danger" onclick="executeBulkCouponsDirect(-100);closeAllDropdowns()">-100</button>
+                                    </div>
+                                </div>
+
+                                <!-- Transfer Class -->
+                                <button type="button" class="btn-bulk-action bulk-class" onclick="triggerBulkClass()" title="تغيير الفصل">
+                                    <i class="fas fa-edit"></i>
+                                    <span class="btn-bulk-label">نقل</span>
+                                </button>
+
+                                <!-- Bulk Note -->
+                                <button type="button" class="btn-bulk-action bulk-note" onclick="openBulkNoteModal()" title="إضافة ملاحظة جماعية">
+                                    <i class="fas fa-sticky-note"></i>
+                                    <span class="btn-bulk-label">ملاحظة</span>
+                                </button>
+
+                                <!-- Merge (visible when 2 selected) -->
+                                <button type="button" class="btn-bulk-action bulk-merge" id="bulkMergeBtn" onclick="triggerBulkMerge()"
+                                    title="دمج الحسابين المكررين" style="display: none;">
+                                    <i class="fas fa-code-merge"></i>
+                                    <span class="btn-bulk-label">دمج</span>
+                                </button>
+
+                                <!-- Delete -->
+                                <button type="button" class="btn-bulk-action bulk-delete" onclick="triggerBulkDelete()" title="حذف المحددين">
+                                    <i class="fas fa-trash"></i>
+                                    <span class="btn-bulk-label">حذف</span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
                     <div class="toolbar-row"
                         style="display: flex; align-items: center; gap: 12px; width: 100%; direction: rtl;">
                         <!-- Stats (RTL start = physical right) -->
@@ -18326,11 +18277,20 @@ $showSettings = $hasChurchId || $isDevOrAdmin;
             activeDropdown = isOpen ? id : null;
 
             if (isOpen) {
-                if (menu.classList.contains('bulk-fixed-dropdown') || menu.closest('.bulk-actions-bar')) {
+                if (menu.classList.contains('bulk-fixed-dropdown') || menu.closest('.bulk-actions-bar') || (btnEl && btnEl.closest('.bulk-bar-pinned-start'))) {
                     if (btnEl) {
                         const bRect = btnEl.getBoundingClientRect();
-                        menu.style.top = (bRect.bottom + 6) + 'px';
                         const mWidth = menu.offsetWidth || 175;
+                        const mHeight = menu.offsetHeight || 180;
+
+                        if (bRect.bottom + mHeight + 10 > window.innerHeight && bRect.top > mHeight) {
+                            menu.style.top = 'auto';
+                            menu.style.bottom = (window.innerHeight - bRect.top + 6) + 'px';
+                        } else {
+                            menu.style.bottom = 'auto';
+                            menu.style.top = (bRect.bottom + 6) + 'px';
+                        }
+
                         let rightPos = window.innerWidth - bRect.right;
                         if (rightPos + mWidth > window.innerWidth - 10) {
                             rightPos = window.innerWidth - mWidth - 10;
@@ -20643,6 +20603,7 @@ $showSettings = $hasChurchId || $isDevOrAdmin;
             isBulkSelectMode = !isBulkSelectMode;
             const toggleBtn = document.getElementById('bulkSelectToggleBtn');
             const actionsBar = document.getElementById('bulkActionsBar');
+            const pinnedStart = document.getElementById('bulkBarPinnedStart');
 
             if (isBulkSelectMode) {
                 document.body.classList.add('bulk-active');
@@ -20653,6 +20614,9 @@ $showSettings = $hasChurchId || $isDevOrAdmin;
                 if (actionsBar) {
                     actionsBar.style.display = 'flex';
                     actionsBar.classList.add('show');
+                }
+                if (pinnedStart) {
+                    pinnedStart.style.display = 'inline-flex';
                 }
                 if (list) {
                     list.classList.add('bulk-active');
@@ -20668,6 +20632,9 @@ $showSettings = $hasChurchId || $isDevOrAdmin;
                 if (actionsBar) {
                     actionsBar.style.display = 'none';
                     actionsBar.classList.remove('show');
+                }
+                if (pinnedStart) {
+                    pinnedStart.style.display = 'none';
                 }
                 if (list) {
                     list.classList.remove('bulk-active');
@@ -20694,11 +20661,10 @@ $showSettings = $hasChurchId || $isDevOrAdmin;
         }
 
         function updateBulkBarHeight() {
-            const bar = document.getElementById('bulkActionsBar');
-            if (bar && isBulkSelectMode) {
-                const height = bar.offsetHeight;
-                document.documentElement.style.setProperty('--bulk-bar-height', height + 'px');
-                document.documentElement.style.setProperty('--bulk-active-padding', height + 'px');
+            const attToolbar = document.querySelector('.att-toolbar');
+            if (attToolbar && isBulkSelectMode) {
+                const height = attToolbar.offsetHeight;
+                document.documentElement.style.setProperty('--bulk-bottom-padding', (height + 20) + 'px');
             }
         }
         window.addEventListener('resize', updateBulkBarHeight);
