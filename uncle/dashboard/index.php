@@ -13208,51 +13208,53 @@ $showSettings = $hasChurchId || $isDevOrAdmin;
         <div class="bulk-actions-bar" id="bulkActionsBar" style="display: none;">
             <!-- Pinned Right Group: Exit button + Combined Select & Filter Chip + Selected Count -->
             <div class="bulk-bar-pinned-start">
-                <button type="button" class="btn btn-ghost btn-sm bulk-close-btn" onclick="disableBulkSelectMode()" title="إلغاء وضع التحديد">
-                    <i class="fas fa-times"></i>
-                </button>
-
-                <!-- Combined Select All & Filter Chip -->
-                <div class="action-dropdown bulk-dropdown-wrap" style="display: inline-flex;">
-                    <button type="button" class="btn-bulk-action bulk-select-filter-chip" id="bulkSelectFilterBtn"
-                        onclick="toggleDropdown('bulkSelectFilterMenu', 'bulkSelectFilterBtn'); event.stopPropagation();"
-                        title="خيارات التحديد والتصفية">
-                        <div class="bulk-check-circle" id="bulkBarSelectAllCircle" onclick="toggleSelectAllBulk(event)">
-                            <i class="fas fa-check"></i>
-                        </div>
-                        <span class="btn-bulk-label" id="bulkSelectFilterLabel">تحديد</span>
-                        <i class="fas fa-chevron-down bulk-chevron"></i>
+                <div class="bulk-bar-ctrl-group">
+                    <button type="button" class="btn btn-ghost btn-sm bulk-close-btn" onclick="disableBulkSelectMode()" title="إلغاء وضع التحديد">
+                        <i class="fas fa-times"></i>
                     </button>
-                    <div class="dropdown-menu bulk-fixed-dropdown" id="bulkSelectFilterMenu" style="min-width: 175px;">
-                        <button type="button" class="dropdown-item" onclick="toggleSelectAllBulk(event);closeAllDropdowns()">
-                            <i class="fas fa-check-double" style="color:var(--brand);"></i> تحديد الكل
+
+                    <!-- Combined Select All & Filter Chip -->
+                    <div class="action-dropdown bulk-dropdown-wrap" style="display: inline-flex;">
+                        <button type="button" class="btn-bulk-action bulk-select-filter-chip" id="bulkSelectFilterBtn"
+                            onclick="toggleDropdown('bulkSelectFilterMenu', 'bulkSelectFilterBtn'); event.stopPropagation();"
+                            title="خيارات التحديد والتصفية">
+                            <div class="bulk-check-circle" id="bulkBarSelectAllCircle" onclick="toggleSelectAllBulk(event)">
+                                <i class="fas fa-check"></i>
+                            </div>
+                            <span class="btn-bulk-label" id="bulkSelectFilterLabel">تحديد الكل</span>
+                            <i class="fas fa-chevron-down bulk-chevron"></i>
                         </button>
-                        <button type="button" class="dropdown-item" onclick="bulkSelectByFilter('none');closeAllDropdowns()">
-                            <i class="fas fa-minus-square" style="color:var(--text-3);"></i> إلغاء التحديد
-                        </button>
-                        <div class="dropdown-divider"></div>
-                        <div class="dropdown-group-label" style="padding:4px 10px; font-size:0.72rem; font-weight:bold; color:var(--text-3); text-align:right;">
-                            تحديد حسب الحضور
+                        <div class="dropdown-menu bulk-fixed-dropdown" id="bulkSelectFilterMenu" style="min-width: 175px;">
+                            <button type="button" class="dropdown-item" onclick="toggleSelectAllBulk(event);closeAllDropdowns()">
+                                <i class="fas fa-check-double" style="color:var(--brand);"></i> تحديد الكل
+                            </button>
+                            <button type="button" class="dropdown-item" onclick="bulkSelectByFilter('none');closeAllDropdowns()">
+                                <i class="fas fa-minus-square" style="color:var(--text-3);"></i> إلغاء التحديد
+                            </button>
+                            <div class="dropdown-divider"></div>
+                            <div class="dropdown-group-label" style="padding:4px 10px; font-size:0.72rem; font-weight:bold; color:var(--text-3); text-align:right;">
+                                تحديد حسب الحضور
+                            </div>
+                            <button type="button" class="dropdown-item" onclick="bulkSelectByFilter('pending');closeAllDropdowns()">
+                                <i class="fas fa-minus"></i> بدون تسجيل حضور
+                            </button>
+                            <button type="button" class="dropdown-item success" onclick="bulkSelectByFilter('present');closeAllDropdowns()">
+                                <i class="fas fa-check-circle"></i> الحاضرين فقط
+                            </button>
+                            <button type="button" class="dropdown-item danger" onclick="bulkSelectByFilter('absent');closeAllDropdowns()">
+                                <i class="fas fa-times-circle"></i> الغائبين فقط
+                            </button>
+                            <div class="dropdown-divider"></div>
+                            <div class="dropdown-group-label" style="padding:4px 10px; font-size:0.72rem; font-weight:bold; color:var(--text-3); text-align:right;">
+                                تحديد حسب النوع
+                            </div>
+                            <button type="button" class="dropdown-item" style="color: var(--brand);" onclick="bulkSelectByFilter('boys');closeAllDropdowns()">
+                                <i class="fas fa-mars"></i> الأولاد
+                            </button>
+                            <button type="button" class="dropdown-item" style="color: #ec4899;" onclick="bulkSelectByFilter('girls');closeAllDropdowns()">
+                                <i class="fas fa-venus"></i> البنات
+                            </button>
                         </div>
-                        <button type="button" class="dropdown-item" onclick="bulkSelectByFilter('pending');closeAllDropdowns()">
-                            <i class="fas fa-minus"></i> بدون تسجيل حضور
-                        </button>
-                        <button type="button" class="dropdown-item success" onclick="bulkSelectByFilter('present');closeAllDropdowns()">
-                            <i class="fas fa-check-circle"></i> الحاضرين فقط
-                        </button>
-                        <button type="button" class="dropdown-item danger" onclick="bulkSelectByFilter('absent');closeAllDropdowns()">
-                            <i class="fas fa-times-circle"></i> الغائبين فقط
-                        </button>
-                        <div class="dropdown-divider"></div>
-                        <div class="dropdown-group-label" style="padding:4px 10px; font-size:0.72rem; font-weight:bold; color:var(--text-3); text-align:right;">
-                            تحديد حسب النوع
-                        </div>
-                        <button type="button" class="dropdown-item" style="color: var(--brand);" onclick="bulkSelectByFilter('boys');closeAllDropdowns()">
-                            <i class="fas fa-mars"></i> الأولاد
-                        </button>
-                        <button type="button" class="dropdown-item" style="color: #ec4899;" onclick="bulkSelectByFilter('girls');closeAllDropdowns()">
-                            <i class="fas fa-venus"></i> البنات
-                        </button>
                     </div>
                 </div>
 
@@ -13263,32 +13265,6 @@ $showSettings = $hasChurchId || $isDevOrAdmin;
             </div>
 
             <div class="bulk-v-divider"></div>
-
-            <!-- Pinned More Tools Dropdown for Mobile / Quick Access -->
-            <div class="action-dropdown bulk-dropdown-wrap bulk-more-tools-wrap">
-                <button type="button" class="btn-bulk-action bulk-more-tools-btn" id="bulkMoreToolsBtn"
-                    onclick="toggleDropdown('bulkMoreToolsMenu', 'bulkMoreToolsBtn'); event.stopPropagation();"
-                    title="خيارات إضافية">
-                    <i class="fas fa-ellipsis-v"></i>
-                    <span class="btn-bulk-label">المزيد</span>
-                </button>
-                <div class="dropdown-menu bulk-fixed-dropdown" id="bulkMoreToolsMenu" style="min-width: 170px;">
-                    <button type="button" class="dropdown-item" onclick="triggerBulkClass();closeAllDropdowns()">
-                        <i class="fas fa-edit" style="color:var(--brand);"></i> نقل الفصل
-                    </button>
-                    <button type="button" class="dropdown-item" onclick="openBulkNoteModal();closeAllDropdowns()">
-                        <i class="fas fa-sticky-note" style="color:#f59e0b;"></i> ملاحظة جماعية
-                    </button>
-                    <button type="button" class="dropdown-item" id="bulkMoreMergeItem" onclick="triggerBulkMerge();closeAllDropdowns()" style="display:none;">
-                        <i class="fas fa-code-merge" style="color:var(--brand);"></i> دمج الحسابين
-                    </button>
-                    <div class="dropdown-divider"></div>
-                    <button type="button" class="dropdown-item danger" onclick="triggerBulkDelete();closeAllDropdowns()">
-                        <i class="fas fa-trash"></i> حذف المحددين
-                    </button>
-                </div>
-            </div>
-            <div class="bulk-v-divider bulk-more-divider"></div>
 
             <!-- Scrollable Actions Track with Fade at Left End -->
             <div class="bulk-actions-scroll-wrap" id="bulkActionsScrollWrap">
@@ -20862,13 +20838,9 @@ $showSettings = $hasChurchId || $isDevOrAdmin;
                 countEl.textContent = selectedStudentIds.size;
             }
             const mergeBtn = document.getElementById('bulkMergeBtn');
-            const moreMergeItem = document.getElementById('bulkMoreMergeItem');
             const isTwoSelected = selectedStudentIds.size === 2;
             if (mergeBtn) {
                 mergeBtn.style.display = isTwoSelected ? 'inline-flex' : 'none';
-            }
-            if (moreMergeItem) {
-                moreMergeItem.style.display = isTwoSelected ? 'flex' : 'none';
             }
             updateSelectAllHeaderCheckbox();
         }
