@@ -4243,11 +4243,59 @@ $showSettings = $hasChurchId || $isDevOrAdmin;
             animation: none !important;
         }
 
-        @media (max-width: 480px) {
+        @media (max-width: 640px) {
             body.bulk-active .bulk-actions-bar {
-                padding-left: 10px !important;
-                padding-right: 10px !important;
-                gap: 6px !important;
+                padding-left: 8px !important;
+                padding-right: 8px !important;
+                gap: 4px !important;
+            }
+            .bulk-bar-pinned-start {
+                gap: 4px !important;
+            }
+            .bulk-close-btn {
+                width: 30px !important;
+                height: 30px !important;
+                min-width: 30px !important;
+            }
+            .bulk-select-filter-chip {
+                padding: 0 6px 0 4px !important;
+                gap: 3px !important;
+                height: 30px !important;
+            }
+            .selected-count-chip {
+                min-width: 20px !important;
+                height: 20px !important;
+                padding: 2px 6px !important;
+                font-size: 0.72rem !important;
+            }
+            .btn-bulk-action {
+                height: 30px !important;
+                padding: 0 8px !important;
+                gap: 4px !important;
+            }
+            .btn-bulk-label {
+                font-size: 0.72rem !important;
+            }
+            .bulk-more-tools-btn {
+                height: 30px !important;
+                padding: 0 8px !important;
+                min-width: 30px !important;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .bulk-select-filter-chip #bulkSelectFilterLabel {
+                display: none !important;
+            }
+            .bulk-more-label {
+                display: none !important;
+            }
+            .bulk-actions-scroll-wrap::after {
+                width: 16px !important;
+            }
+            .bulk-actions-scroll-track {
+                padding: 2px 2px 2px 12px !important;
+                gap: 4px !important;
             }
         }
 
@@ -4386,7 +4434,7 @@ $showSettings = $hasChurchId || $isDevOrAdmin;
             display: flex;
             align-items: center;
             height: 100%;
-            overflow: visible;
+            overflow: hidden;
         }
 
         .bulk-actions-scroll-track {
@@ -4396,10 +4444,13 @@ $showSettings = $hasChurchId || $isDevOrAdmin;
             gap: 6px;
             width: 100%;
             overflow-x: auto;
-            overflow-y: visible;
+            overflow-y: hidden;
             -webkit-overflow-scrolling: touch;
+            touch-action: pan-x;
+            overscroll-behavior-x: contain;
+            scroll-behavior: smooth;
             scrollbar-width: none;
-            padding: 2px 2px 2px 28px; /* space so items can scroll past the left fade */
+            padding: 2px 2px 2px 22px; /* space so items can scroll past the left fade */
         }
 
         .bulk-actions-scroll-track::-webkit-scrollbar {
@@ -4413,10 +4464,42 @@ $showSettings = $hasChurchId || $isDevOrAdmin;
             top: 0;
             bottom: 0;
             left: 0;
-            width: 32px;
+            width: 24px;
             background: linear-gradient(to right, var(--bg) 25%, transparent 100%);
             pointer-events: none;
             z-index: 10;
+        }
+
+        /* Pinned More Tools Button for Mobile / Small Screens */
+        .btn-bulk-action.bulk-more-tools-btn {
+            background: var(--surface-2) !important;
+            color: var(--text) !important;
+            border: 1px solid var(--border-solid) !important;
+            font-weight: 700;
+            flex-shrink: 0;
+            z-index: 15;
+        }
+
+        .btn-bulk-action.bulk-more-tools-btn:hover,
+        .btn-bulk-action.bulk-more-tools-btn.open {
+            background: var(--brand-bg) !important;
+            color: var(--brand) !important;
+            border-color: var(--brand) !important;
+        }
+
+        .btn-bulk-action.bulk-more-tools-btn i {
+            color: var(--text-2);
+        }
+
+        .btn-bulk-action.bulk-more-tools-btn.open i {
+            color: var(--brand);
+        }
+
+        @media (min-width: 769px) {
+            .bulk-more-tools-wrap,
+            .bulk-more-divider {
+                display: none !important;
+            }
         }
 
         .bulk-actions-bar .action-dropdown,
@@ -13181,6 +13264,32 @@ $showSettings = $hasChurchId || $isDevOrAdmin;
 
             <div class="bulk-v-divider"></div>
 
+            <!-- Pinned More Tools Dropdown for Mobile / Quick Access -->
+            <div class="action-dropdown bulk-dropdown-wrap bulk-more-tools-wrap">
+                <button type="button" class="btn-bulk-action bulk-more-tools-btn" id="bulkMoreToolsBtn"
+                    onclick="toggleDropdown('bulkMoreToolsMenu', 'bulkMoreToolsBtn'); event.stopPropagation();"
+                    title="خيارات إضافية">
+                    <i class="fas fa-ellipsis-v"></i>
+                    <span class="btn-bulk-label">المزيد</span>
+                </button>
+                <div class="dropdown-menu bulk-fixed-dropdown" id="bulkMoreToolsMenu" style="min-width: 170px;">
+                    <button type="button" class="dropdown-item" onclick="triggerBulkClass();closeAllDropdowns()">
+                        <i class="fas fa-edit" style="color:var(--brand);"></i> نقل الفصل
+                    </button>
+                    <button type="button" class="dropdown-item" onclick="openBulkNoteModal();closeAllDropdowns()">
+                        <i class="fas fa-sticky-note" style="color:#f59e0b;"></i> ملاحظة جماعية
+                    </button>
+                    <button type="button" class="dropdown-item" id="bulkMoreMergeItem" onclick="triggerBulkMerge();closeAllDropdowns()" style="display:none;">
+                        <i class="fas fa-code-merge" style="color:var(--brand);"></i> دمج الحسابين
+                    </button>
+                    <div class="dropdown-divider"></div>
+                    <button type="button" class="dropdown-item danger" onclick="triggerBulkDelete();closeAllDropdowns()">
+                        <i class="fas fa-trash"></i> حذف المحددين
+                    </button>
+                </div>
+            </div>
+            <div class="bulk-v-divider bulk-more-divider"></div>
+
             <!-- Scrollable Actions Track with Fade at Left End -->
             <div class="bulk-actions-scroll-wrap" id="bulkActionsScrollWrap">
                 <div class="bulk-actions-scroll-track" id="bulkActionsScrollTrack">
@@ -20753,12 +20862,13 @@ $showSettings = $hasChurchId || $isDevOrAdmin;
                 countEl.textContent = selectedStudentIds.size;
             }
             const mergeBtn = document.getElementById('bulkMergeBtn');
+            const moreMergeItem = document.getElementById('bulkMoreMergeItem');
+            const isTwoSelected = selectedStudentIds.size === 2;
             if (mergeBtn) {
-                if (selectedStudentIds.size === 2) {
-                    mergeBtn.style.display = 'inline-flex';
-                } else {
-                    mergeBtn.style.display = 'none';
-                }
+                mergeBtn.style.display = isTwoSelected ? 'inline-flex' : 'none';
+            }
+            if (moreMergeItem) {
+                moreMergeItem.style.display = isTwoSelected ? 'flex' : 'none';
             }
             updateSelectAllHeaderCheckbox();
         }
