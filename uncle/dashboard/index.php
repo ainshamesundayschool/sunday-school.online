@@ -7183,15 +7183,75 @@ $showSettings = $hasChurchId || $isDevOrAdmin;
             animation: fadeSlideDown .22s var(--ease)
         }
 
-        /* ── ANNOUNCEMENTS MODERN DESIGN SYSTEM ── */
+        /* ── ANNOUNCEMENTS MODERN COMPACT DESIGN SYSTEM ── */
+        #announcementsModal .modal {
+            width: 100%;
+            max-width: 900px;
+            height: 90vh;
+            max-height: 90vh;
+            display: flex;
+            flex-direction: column;
+            padding: 0;
+            border-radius: var(--r-xl);
+            overflow: hidden;
+            box-shadow: var(--shadow-xl);
+        }
+
+        @media (max-width: 768px) {
+            #announcementsModal {
+                padding: 0;
+                justify-content: flex-start;
+            }
+            #announcementsModal .modal {
+                width: 100%;
+                max-width: 100%;
+                height: 100vh;
+                height: 100dvh;
+                max-height: 100dvh;
+                border-radius: 0;
+                margin: 0;
+                padding: 0;
+                box-shadow: none;
+            }
+        }
+
+        #announcementsModal .modal-header {
+            padding: 10px 14px;
+            margin: 0;
+            background: var(--surface);
+            border-bottom: 1px solid var(--border-solid);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-shrink: 0;
+        }
+
+        #announcementsModal .modal-header h3 {
+            font-size: 1rem;
+            margin: 0;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        #announcementsModal .modal-body {
+            padding: 10px 12px 14px;
+            flex: 1;
+            overflow-y: auto;
+            overscroll-behavior-y: contain;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
         .ann-tabs-bar {
             display: flex;
-            gap: 8px;
+            gap: 4px;
             background: var(--surface-2);
-            padding: 5px;
-            border-radius: var(--r-xl);
+            padding: 3px;
+            border-radius: var(--r-md);
             border: 1px solid var(--border-solid);
-            margin-bottom: 16px;
+            flex-shrink: 0;
         }
 
         .ann-tab-pill {
@@ -7199,23 +7259,23 @@ $showSettings = $hasChurchId || $isDevOrAdmin;
             display: inline-flex;
             align-items: center;
             justify-content: center;
-            gap: 8px;
-            padding: 10px 16px;
-            border-radius: var(--r-lg);
+            gap: 6px;
+            padding: 6px 10px;
+            border-radius: var(--r-sm);
             border: none;
             background: transparent;
             color: var(--text-2);
             font-family: 'Cairo', sans-serif;
-            font-size: .88rem;
+            font-size: .8rem;
             font-weight: 700;
             cursor: pointer;
-            transition: all .2s var(--ease);
+            transition: all .18s var(--ease);
             user-select: none;
         }
 
         .ann-tab-pill:hover {
             color: var(--brand);
-            background: rgba(91, 108, 245, .06);
+            background: var(--surface-3);
         }
 
         .ann-tab-pill.active {
@@ -7228,11 +7288,10 @@ $showSettings = $hasChurchId || $isDevOrAdmin;
         .ann-count-badge {
             background: var(--brand-bg);
             color: var(--brand);
-            padding: 2px 8px;
+            padding: 1px 6px;
             border-radius: var(--r-full);
-            font-size: .75rem;
+            font-size: .7rem;
             font-weight: 800;
-            transition: all .2s;
         }
 
         .ann-tab-pill.active .ann-count-badge {
@@ -7240,11 +7299,19 @@ $showSettings = $hasChurchId || $isDevOrAdmin;
             color: #fff;
         }
 
+        .ann-tab-content {
+            display: flex;
+            flex-direction: column;
+            flex: 1;
+            min-height: 0;
+        }
+
         .ann-list-toolbar {
             display: flex;
             align-items: center;
-            gap: 10px;
-            margin-bottom: 14px;
+            gap: 6px;
+            margin-bottom: 8px;
+            flex-shrink: 0;
         }
 
         .ann-search-wrap {
@@ -7256,108 +7323,107 @@ $showSettings = $hasChurchId || $isDevOrAdmin;
 
         .ann-search-wrap input {
             width: 100%;
-            padding: 9px 12px 9px 34px;
+            padding: 7px 10px 7px 30px;
             border-radius: var(--r-md);
-            border: 1.5px solid var(--border-solid);
+            border: 1px solid var(--border-solid);
             background: var(--surface-2);
             font-family: 'Cairo', sans-serif;
-            font-size: .84rem;
+            font-size: .8rem;
             color: var(--text);
             outline: none;
-            transition: all .2s;
+            transition: all .18s;
         }
 
         .ann-search-wrap input:focus {
             border-color: var(--brand);
             background: var(--surface);
-            box-shadow: 0 0 0 3px var(--brand-glow);
+            box-shadow: 0 0 0 2px var(--brand-glow);
         }
 
         .ann-search-wrap i {
             position: absolute;
-            right: 12px;
+            right: 10px;
             color: var(--text-3);
             pointer-events: none;
-            font-size: .84rem;
+            font-size: .78rem;
         }
 
         .ann-new-btn-quick {
             display: inline-flex;
             align-items: center;
-            gap: 6px;
-            padding: 9px 16px;
+            gap: 5px;
+            padding: 7px 12px;
             border-radius: var(--r-md);
             font-family: 'Cairo', sans-serif;
             font-weight: 700;
-            font-size: .84rem;
+            font-size: .78rem;
             white-space: nowrap;
+            background: var(--brand);
+            color: #fff;
+            border: none;
         }
 
         .announcements-cards-container {
-            display: grid;
-            gap: 12px;
-            grid-template-columns: 1fr;
-            max-height: 480px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
             overflow-y: auto;
-            padding: 2px;
-        }
-
-        @media (min-width: 769px) {
-            .announcements-cards-container {
-                grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
-            }
+            flex: 1;
+            padding: 1px;
         }
 
         .ann-card {
             background: var(--surface);
-            border: 1.5px solid var(--border-solid);
-            border-radius: var(--r-xl);
-            padding: 14px 16px;
-            transition: all .2s var(--ease);
+            border: 1px solid var(--border-solid);
+            border-radius: var(--r-md);
+            padding: 9px 12px;
+            transition: all .18s var(--ease);
             box-shadow: var(--shadow-sm);
             display: flex;
             flex-direction: column;
-            gap: 10px;
+            gap: 6px;
             position: relative;
-            overflow: hidden;
         }
 
         .ann-card.is-inactive {
-            opacity: .75;
+            opacity: .65;
             background: var(--surface-2);
             border-style: dashed;
         }
 
         .ann-card:hover {
-            transform: translateY(-2px);
+            border-color: var(--brand);
             box-shadow: var(--shadow-md);
-            border-color: rgba(91, 108, 245, .3);
         }
 
         .ann-card-header {
             display: flex;
             align-items: center;
             justify-content: space-between;
-            gap: 8px;
+            gap: 6px;
             flex-wrap: wrap;
         }
 
         .ann-card-badges {
             display: flex;
             align-items: center;
-            gap: 6px;
+            gap: 4px;
             flex-wrap: wrap;
+            flex: 1;
+            min-width: 0;
         }
 
         .ann-badge {
             display: inline-flex;
             align-items: center;
             gap: 4px;
-            padding: 3px 9px;
+            padding: 2px 7px;
             border-radius: var(--r-full);
-            font-size: .72rem;
+            font-size: .68rem;
             font-weight: 700;
             font-family: 'Cairo', sans-serif;
+            line-height: 1.3;
+            white-space: nowrap;
         }
 
         .ann-badge.type-message {
@@ -7381,8 +7447,8 @@ $showSettings = $hasChurchId || $isDevOrAdmin;
         }
 
         .ann-badge.target-both {
-            background: rgba(59, 130, 246, .12);
-            color: #2563eb;
+            background: var(--brand-bg);
+            color: var(--brand);
         }
 
         .ann-badge.badge-class {
@@ -7393,20 +7459,21 @@ $showSettings = $hasChurchId || $isDevOrAdmin;
         .ann-card-actions {
             display: flex;
             align-items: center;
-            gap: 6px;
+            gap: 5px;
+            flex-shrink: 0;
         }
 
         .ann-toggle-pill {
             display: inline-flex;
             align-items: center;
-            gap: 6px;
-            padding: 4px 10px;
+            gap: 4px;
+            padding: 3px 8px;
             border-radius: var(--r-full);
-            font-size: .72rem;
+            font-size: .68rem;
             font-weight: 700;
             border: none;
             cursor: pointer;
-            transition: all .2s;
+            transition: all .15s;
             font-family: 'Cairo', sans-serif;
         }
 
@@ -7421,14 +7488,13 @@ $showSettings = $hasChurchId || $isDevOrAdmin;
         }
 
         .ann-status-dot {
-            width: 7px;
-            height: 7px;
+            width: 6px;
+            height: 6px;
             border-radius: 50%;
         }
 
         .ann-toggle-pill.active .ann-status-dot {
             background: var(--success);
-            box-shadow: 0 0 6px var(--success);
         }
 
         .ann-toggle-pill.inactive .ann-status-dot {
@@ -7436,49 +7502,47 @@ $showSettings = $hasChurchId || $isDevOrAdmin;
         }
 
         .ann-del-btn {
-            width: 32px;
-            height: 32px;
-            border-radius: var(--r-md);
+            width: 26px;
+            height: 26px;
+            border-radius: var(--r-sm);
             border: none;
-            background: rgba(239, 68, 68, .1);
+            background: var(--danger-bg);
             color: var(--danger);
             display: inline-flex;
             align-items: center;
             justify-content: center;
             cursor: pointer;
-            font-size: .82rem;
-            transition: all .2s;
+            font-size: .75rem;
+            transition: all .15s;
         }
 
         .ann-del-btn:hover {
             background: var(--danger);
             color: #fff;
-            transform: scale(1.06);
         }
 
         .ann-card-body {
             display: flex;
             flex-direction: column;
-            gap: 8px;
-            flex: 1;
+            gap: 5px;
         }
 
         .ann-card-title {
-            font-size: .95rem;
-            font-weight: 800;
+            font-size: .86rem;
+            font-weight: 700;
             color: var(--text);
-            line-height: 1.45;
+            line-height: 1.4;
             word-break: break-word;
             margin: 0;
         }
 
         .ann-card-desc {
-            font-size: .82rem;
+            font-size: .76rem;
             color: var(--text-2);
             background: var(--surface-2);
-            padding: 8px 12px;
-            border-radius: var(--r-md);
-            line-height: 1.6;
+            padding: 5px 8px;
+            border-radius: var(--r-xs);
+            line-height: 1.5;
             white-space: pre-wrap;
             word-break: break-word;
             border: 1px solid var(--border-solid);
@@ -7486,9 +7550,9 @@ $showSettings = $hasChurchId || $isDevOrAdmin;
 
         .ann-card-img-wrap {
             width: 100%;
-            max-height: 160px;
+            max-height: 120px;
             overflow: hidden;
-            border-radius: var(--r-md);
+            border-radius: var(--r-sm);
             border: 1px solid var(--border-solid);
             cursor: pointer;
         }
@@ -7497,48 +7561,36 @@ $showSettings = $hasChurchId || $isDevOrAdmin;
             width: 100%;
             height: 100%;
             object-fit: cover;
-            transition: transform .3s;
-        }
-
-        .ann-card-img-wrap:hover img {
-            transform: scale(1.02);
-        }
-
-        .ann-card-btn-wrap {
-            margin-top: 4px;
+            display: block;
         }
 
         .ann-action-btn {
             display: inline-flex;
             align-items: center;
-            justify-content: center;
-            gap: 6px;
-            padding: 7px 16px;
-            border-radius: var(--r-md);
-            background: var(--coupon-grad);
+            gap: 5px;
+            padding: 5px 12px;
+            border-radius: var(--r-xs);
+            background: var(--brand);
             color: #fff;
-            font-size: .78rem;
+            font-size: .74rem;
             font-weight: 700;
             text-decoration: none;
-            box-shadow: 0 4px 12px rgba(139, 92, 246, .2);
-            transition: all .2s;
             width: fit-content;
         }
 
         .ann-action-btn:hover {
-            transform: translateY(-1px);
+            background: var(--brand-dark);
             color: #fff;
-            box-shadow: 0 6px 16px rgba(139, 92, 246, .3);
         }
 
         .ann-card-footer {
             display: flex;
             align-items: center;
             justify-content: space-between;
-            gap: 8px;
-            padding-top: 8px;
+            gap: 6px;
+            padding-top: 5px;
             border-top: 1px solid var(--border-solid);
-            font-size: .72rem;
+            font-size: .68rem;
             color: var(--text-3);
             flex-wrap: wrap;
         }
@@ -7546,13 +7598,14 @@ $showSettings = $hasChurchId || $isDevOrAdmin;
         .ann-footer-kids {
             display: inline-flex;
             align-items: center;
-            gap: 5px;
+            gap: 4px;
             color: var(--brand);
             background: var(--brand-bg);
-            padding: 2px 8px;
+            padding: 1px 6px;
             border-radius: var(--r-full);
-            font-weight: 600;
-            max-width: 220px;
+            font-weight: 700;
+            font-size: .68rem;
+            max-width: 100%;
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
@@ -7561,7 +7614,9 @@ $showSettings = $hasChurchId || $isDevOrAdmin;
         .ann-footer-time {
             display: inline-flex;
             align-items: center;
-            gap: 4px;
+            gap: 3px;
+            font-size: .68rem;
+            color: var(--text-3);
         }
 
         .ann-empty-state {
@@ -7570,131 +7625,148 @@ $showSettings = $hasChurchId || $isDevOrAdmin;
             align-items: center;
             justify-content: center;
             text-align: center;
-            padding: 40px 20px;
+            padding: 30px 16px;
             background: var(--surface-2);
-            border-radius: var(--r-xl);
-            border: 1.5px dashed var(--border-solid);
-            margin: 12px 0;
+            border-radius: var(--r-lg);
+            border: 1px dashed var(--border-solid);
+            margin: 8px 0;
         }
 
         .ann-empty-icon {
-            width: 60px;
-            height: 60px;
+            width: 48px;
+            height: 48px;
             border-radius: 50%;
             background: var(--brand-bg);
             color: var(--brand);
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 1.5rem;
-            margin-bottom: 12px;
+            font-size: 1.25rem;
+            margin-bottom: 8px;
         }
 
         .ann-empty-title {
-            font-size: 1rem;
+            font-size: .9rem;
             font-weight: 800;
             color: var(--text);
-            margin-bottom: 4px;
+            margin-bottom: 2px;
         }
 
         .ann-empty-desc {
-            font-size: .82rem;
+            font-size: .76rem;
             color: var(--text-3);
-            max-width: 320px;
+            max-width: 280px;
         }
 
         /* ── CREATION FORM MODERN DESIGN ── */
         .ann-create-form {
             display: flex;
             flex-direction: column;
-            gap: 14px;
-            max-height: 480px;
+            gap: 8px;
             overflow-y: auto;
-            padding: 2px 4px;
+            flex: 1;
+            padding: 1px;
         }
 
         .ann-form-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 12px;
+            gap: 8px;
         }
 
         @media (max-width: 640px) {
             .ann-form-grid {
                 grid-template-columns: 1fr;
-                gap: 10px;
+                gap: 8px;
             }
         }
 
         .ann-class-chips {
             display: flex;
             flex-wrap: wrap;
-            gap: 6px;
-            margin-top: 6px;
+            gap: 5px;
+            margin-top: 4px;
         }
 
         .ann-class-chip {
             display: inline-flex;
             align-items: center;
-            gap: 5px;
-            padding: 6px 14px;
+            justify-content: center;
+            gap: 4px;
+            padding: 4px 10px;
             border-radius: var(--r-full);
             background: var(--surface-2);
-            border: 1.5px solid var(--border-solid);
+            border: 1px solid var(--border-solid);
             color: var(--text-2);
             font-family: 'Cairo', sans-serif;
-            font-size: .78rem;
+            font-size: .74rem;
             font-weight: 700;
             cursor: pointer;
-            transition: all .18s var(--ease);
+            transition: all .15s var(--ease);
             user-select: none;
         }
 
         .ann-class-chip:hover {
             border-color: var(--brand);
-            background: var(--brand-bg);
             color: var(--brand);
+            background: var(--brand-bg);
         }
 
         .ann-class-chip.selected {
             background: var(--brand);
             border-color: var(--brand);
             color: #fff;
-            box-shadow: 0 4px 12px var(--brand-glow);
         }
 
         .ann-class-chip.all-chip.selected {
-            background: linear-gradient(135deg, #6366f1, #8b5cf6);
-            border-color: transparent;
+            background: var(--brand);
+            border-color: var(--brand);
+            color: #fff;
+        }
+
+        .ann-use-profile-pic-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 2px 8px;
+            border-radius: var(--r-full);
+            border: 1px solid var(--border-solid);
+            background: var(--surface-2);
+            color: var(--brand);
+            font-family: 'Cairo', sans-serif;
+            font-size: .7rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all .15s;
+        }
+
+        .ann-use-profile-pic-btn:hover {
+            background: var(--brand-bg);
+            border-color: var(--brand);
         }
 
         .ann-collapsible-section {
             border: 1px solid var(--border-solid);
-            border-radius: var(--r-lg);
+            border-radius: var(--r-md);
             background: var(--surface-2);
             overflow: hidden;
-            transition: border-color .2s;
-        }
-
-        .ann-collapsible-section:focus-within {
-            border-color: var(--brand);
         }
 
         .ann-collapsible-toggle {
             width: 100%;
-            padding: 12px 14px;
+            padding: 8px 10px;
             border: none;
             background: transparent;
             display: flex;
             align-items: center;
             justify-content: space-between;
             font-family: 'Cairo', sans-serif;
-            font-size: .82rem;
+            font-size: .78rem;
             font-weight: 700;
             color: var(--text);
             cursor: pointer;
             text-align: right;
-            transition: background .18s;
+            transition: background .15s;
         }
 
         .ann-collapsible-toggle:hover {
@@ -7702,46 +7774,45 @@ $showSettings = $hasChurchId || $isDevOrAdmin;
         }
 
         .ann-collapsible-body {
-            padding: 12px 14px;
+            padding: 8px 10px;
             border-top: 1px solid var(--border-solid);
             background: var(--surface);
         }
 
         .ann-chevron-icon {
-            transition: transform .25s var(--ease);
-            font-size: .76rem;
+            transition: transform .2s var(--ease);
+            font-size: .72rem;
             color: var(--text-3);
         }
 
         .ann-picked-count-pill {
             background: var(--brand-bg);
             color: var(--brand);
-            padding: 2px 8px;
+            padding: 1px 6px;
             border-radius: var(--r-full);
-            font-size: .72rem;
+            font-size: .68rem;
             font-weight: 700;
         }
 
-        /* ── EMAIL TOGGLE CARD ── */
+        /* ── EMAIL TOGGLE CARD (NO GRADIENTS) ── */
         .ann-email-toggle-card {
-            background: linear-gradient(135deg, rgba(91, 108, 245, .08), rgba(139, 92, 246, .08));
-            border: 1.5px solid rgba(91, 108, 245, .22);
-            border-radius: var(--r-lg);
-            padding: 12px 14px;
-            margin: 4px 0;
-            transition: all .2s var(--ease);
+            background: var(--surface-2);
+            border: 1px solid var(--border-solid);
+            border-radius: var(--r-md);
+            padding: 8px 10px;
+            margin: 2px 0;
+            transition: border-color .15s;
         }
 
         .ann-email-toggle-card:hover {
             border-color: var(--brand);
-            box-shadow: 0 4px 14px var(--brand-glow);
         }
 
         .ann-email-switch-label {
             display: flex;
             align-items: center;
             justify-content: space-between;
-            gap: 12px;
+            gap: 10px;
             cursor: pointer;
             user-select: none;
             width: 100%;
@@ -7749,42 +7820,41 @@ $showSettings = $hasChurchId || $isDevOrAdmin;
         }
 
         .ann-email-icon-box {
-            width: 38px;
-            height: 38px;
-            border-radius: var(--r-md);
-            background: linear-gradient(135deg, var(--brand), var(--coupon));
-            color: #fff;
+            width: 32px;
+            height: 32px;
+            border-radius: var(--r-sm);
+            background: var(--brand-bg);
+            color: var(--brand);
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 1rem;
+            font-size: .88rem;
             flex-shrink: 0;
-            box-shadow: 0 4px 10px rgba(91, 108, 245, .25);
         }
 
         .ann-email-details {
             flex: 1;
             display: flex;
             flex-direction: column;
-            gap: 2px;
+            gap: 1px;
         }
 
         .ann-email-question {
-            font-size: .86rem;
-            font-weight: 800;
+            font-size: .8rem;
+            font-weight: 700;
             color: var(--text);
         }
 
         .ann-email-hint {
-            font-size: .75rem;
-            color: var(--text-2);
-            line-height: 1.4;
+            font-size: .7rem;
+            color: var(--text-3);
+            line-height: 1.3;
         }
 
         .ann-switch-wrap {
             position: relative;
-            width: 48px;
-            height: 26px;
+            width: 42px;
+            height: 22px;
             flex-shrink: 0;
         }
 
@@ -7800,54 +7870,55 @@ $showSettings = $hasChurchId || $isDevOrAdmin;
             inset: 0;
             background: var(--border-solid);
             border-radius: var(--r-full);
-            transition: .25s var(--ease);
+            transition: .2s var(--ease);
             cursor: pointer;
         }
 
         .ann-switch-slider::before {
             content: '';
             position: absolute;
-            height: 20px;
-            width: 20px;
+            height: 16px;
+            width: 16px;
             right: 3px;
             bottom: 3px;
             background: #fff;
             border-radius: 50%;
-            transition: .25s var(--ease);
-            box-shadow: 0 2px 5px rgba(0, 0, 0, .2);
+            transition: .2s var(--ease);
+            box-shadow: 0 1px 3px rgba(0, 0, 0, .2);
         }
 
         .ann-switch-input:checked + .ann-switch-slider {
-            background: linear-gradient(135deg, var(--brand), var(--brand-dark));
+            background: var(--brand);
         }
 
         .ann-switch-input:checked + .ann-switch-slider::before {
-            transform: translateX(-22px);
+            transform: translateX(-20px);
         }
 
         .ann-form-actions {
             display: flex;
-            gap: 10px;
-            margin-top: 6px;
+            gap: 8px;
+            margin-top: 4px;
+            flex-shrink: 0;
         }
 
-        /* Student Picker Items */
+        /* Student Picker Items (NO GRADIENTS) */
         .announcement-student-picker {
-            display: grid;
-            gap: 10px;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
         }
 
         .announcement-student-search {
             width: 100%;
-            padding: 8px 12px 8px 32px;
-            border-radius: var(--r-md);
-            border: 1.5px solid var(--border-solid);
+            padding: 6px 10px 6px 28px;
+            border-radius: var(--r-sm);
+            border: 1px solid var(--border-solid);
             background: var(--surface);
             font-family: inherit;
-            font-size: .8rem;
+            font-size: .78rem;
             color: var(--text);
             outline: none;
-            transition: border-color .18s;
         }
 
         .announcement-student-search:focus {
@@ -7860,46 +7931,44 @@ $showSettings = $hasChurchId || $isDevOrAdmin;
 
         .announcement-student-search-wrap i {
             position: absolute;
-            right: 10px;
+            right: 8px;
             top: 50%;
             transform: translateY(-50%);
             color: var(--text-3);
-            font-size: .78rem;
+            font-size: .74rem;
             pointer-events: none;
         }
 
         .announcement-picked-list {
             display: flex;
             flex-wrap: wrap;
-            gap: 8px;
-            min-height: 12px;
+            gap: 4px;
+            min-height: 10px;
         }
 
         .announcement-picked-card {
             display: inline-flex;
             align-items: center;
-            gap: 6px;
-            padding: 4px 10px 4px 6px;
+            gap: 4px;
+            padding: 2px 7px 2px 4px;
             border-radius: var(--r-full);
             background: var(--surface);
             color: var(--text);
-            border: 1px solid rgba(91, 108, 245, .14);
-            box-shadow: 0 1px 0 rgba(255, 255, 255, .72) inset, 0 6px 14px rgba(15, 23, 42, .04);
-            font-size: .76rem;
+            border: 1px solid var(--border-solid);
+            font-size: .72rem;
             font-weight: 700;
         }
 
         .announcement-picked-card .ann-pick-ava {
-            width: 22px;
-            height: 22px;
+            width: 18px;
+            height: 18px;
             border-radius: 50%;
-            background: linear-gradient(135deg, #c7d2fe, #818cf8);
+            background: var(--brand-bg);
+            color: var(--brand);
             display: flex;
             align-items: center;
             justify-content: center;
             font-size: .55rem;
-            color: #fff;
-            font-weight: 700;
             overflow: hidden;
             flex-shrink: 0;
         }
@@ -7911,33 +7980,27 @@ $showSettings = $hasChurchId || $isDevOrAdmin;
         }
 
         .announcement-picked-card button {
-            width: 20px;
-            height: 20px;
+            width: 16px;
+            height: 16px;
             border-radius: 50%;
             border: none;
-            background: rgba(239, 68, 68, .12);
+            background: var(--danger-bg);
             color: var(--danger);
             display: inline-flex;
             align-items: center;
             justify-content: center;
             cursor: pointer;
-            font-size: .68rem;
+            font-size: .62rem;
             flex-shrink: 0;
-            transition: all .18s;
-        }
-
-        .announcement-picked-card button:hover {
-            background: var(--danger);
-            color: #fff;
         }
 
         .announcement-student-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
-            gap: 8px;
-            max-height: 220px;
+            grid-template-columns: repeat(auto-fill, minmax(95px, 1fr));
+            gap: 6px;
+            max-height: 180px;
             overflow-y: auto;
-            padding: 2px;
+            padding: 1px;
         }
 
         .announcement-student-option {
@@ -7946,33 +8009,30 @@ $showSettings = $hasChurchId || $isDevOrAdmin;
             align-items: center;
             justify-content: center;
             text-align: center;
-            padding: 8px 6px 6px;
-            border-radius: var(--r-md);
+            padding: 6px 4px 4px;
+            border-radius: var(--r-sm);
             background: var(--surface);
-            border: 1.5px solid rgba(91, 108, 245, .1);
+            border: 1px solid var(--border-solid);
             color: var(--text-2);
-            font-size: .74rem;
+            font-size: .7rem;
             font-weight: 700;
             cursor: pointer;
-            transition: all .18s var(--ease);
-            gap: 4px;
+            transition: all .15s var(--ease);
+            gap: 3px;
         }
 
         .announcement-student-option .ann-stu-ava {
-            width: 32px;
-            height: 32px;
+            width: 28px;
+            height: 28px;
             border-radius: 50%;
-            background: linear-gradient(135deg, #e0e7ff, #c7d2fe);
+            background: var(--surface-3);
+            color: var(--text-2);
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: .78rem;
-            color: #818cf8;
-            font-weight: 700;
+            font-size: .72rem;
             overflow: hidden;
             flex-shrink: 0;
-            border: 2px solid transparent;
-            transition: border-color .18s;
         }
 
         .announcement-student-option .ann-stu-ava img {
@@ -7982,9 +8042,7 @@ $showSettings = $hasChurchId || $isDevOrAdmin;
         }
 
         .announcement-student-option:hover {
-            transform: translateY(-1px);
             border-color: var(--brand);
-            background: rgba(255, 255, 255, .92);
             color: var(--brand);
         }
 
@@ -7992,15 +8050,10 @@ $showSettings = $hasChurchId || $isDevOrAdmin;
             background: var(--brand);
             border-color: var(--brand);
             color: #fff;
-            box-shadow: 0 6px 14px rgba(91, 108, 245, .22);
-        }
-
-        .announcement-student-option.selected .ann-stu-ava {
-            border-color: rgba(255, 255, 255, .7);
         }
 
         .announcement-student-helper {
-            font-size: .72rem;
+            font-size: .7rem;
             color: var(--text-3);
             font-weight: 600;
         }
@@ -15906,7 +15959,10 @@ $showSettings = $hasChurchId || $isDevOrAdmin;
 
                         <div class="ann-form-grid">
                             <div class="form-group" style="margin:0">
-                                <label class="form-label"><i class="fas fa-image"></i> رابط الصورة <small style="color:var(--text-3);">(اختياري)</small></label>
+                                <label class="form-label" style="display:flex; align-items:center; justify-content:space-between; margin-bottom:4px;">
+                                    <span><i class="fas fa-image"></i> رابط الصورة <small style="color:var(--text-3);">(اختياري)</small></span>
+                                    <button type="button" class="ann-use-profile-pic-btn" id="useMyProfilePicForAnnouncement" title="استخدم صورتي الشخصية"><i class="fas fa-user-circle"></i> صورتي</button>
+                                </label>
                                 <input type="url" class="form-input" id="announcementImageUrl" placeholder="https://example.com/image.png">
                             </div>
                             <div class="form-group" style="margin:0">
@@ -19797,7 +19853,7 @@ $showSettings = $hasChurchId || $isDevOrAdmin;
                     const dxTotal = t.clientX - startX;
 
                     if (dyTotal > 10 && Math.abs(dyTotal) > Math.abs(dxTotal)) {
-                        if (startedOnHeader || (initialScrollTop <= 0 && isAtTop)) {
+                        if (startedOnHeader) {
                             isSwipingDown = true;
                             swipeStartY = startY;
                         }
