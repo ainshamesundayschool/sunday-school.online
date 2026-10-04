@@ -20838,9 +20838,13 @@ $showSettings = $hasChurchId || $isDevOrAdmin;
                 countEl.textContent = selectedStudentIds.size;
             }
             const mergeBtn = document.getElementById('bulkMergeBtn');
+            const moreMergeItem = document.getElementById('bulkMoreMergeItem');
             const isTwoSelected = selectedStudentIds.size === 2;
             if (mergeBtn) {
                 mergeBtn.style.display = isTwoSelected ? 'inline-flex' : 'none';
+            }
+            if (moreMergeItem) {
+                moreMergeItem.style.display = isTwoSelected ? 'flex' : 'none';
             }
             updateSelectAllHeaderCheckbox();
         }
