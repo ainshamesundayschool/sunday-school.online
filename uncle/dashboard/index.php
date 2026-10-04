@@ -3133,8 +3133,9 @@ $showSettings = $hasChurchId || $isDevOrAdmin;
         .att-toolbar {
             position: fixed;
             bottom: 0;
-            left: 50%;
-            transform: translateX(-50%);
+            left: 0;
+            right: 0;
+            margin-inline: auto;
             width: 100%;
             max-width: 1440px;
             z-index: 999;
@@ -3727,7 +3728,11 @@ $showSettings = $hasChurchId || $isDevOrAdmin;
             gap: 2px;
             justify-content: center;
             max-width: 120px;
-            margin-top: 3px
+            margin-top: 3px;
+        }
+
+        .status-indicator > * {
+            border: 1px solid var(--surface-2);
         }
 
         .status-badge {
@@ -3735,30 +3740,31 @@ $showSettings = $hasChurchId || $isDevOrAdmin;
             font-weight: 600;
             padding: 2px 6px;
             border-radius: var(--r-full);
-            white-space: nowrap
+            white-space: nowrap;
+            border: 1px solid var(--surface-2);
         }
 
         .status-badge.saved {
             background: var(--success-bg);
-            color: #065f46
+            color: #065f46;
         }
 
         [data-theme="dark"] .status-badge.saved {
-            color: #6ee7b7
+            color: #6ee7b7;
         }
 
         .status-badge.local {
             background: var(--surface-3);
-            color: var(--text-3)
+            color: var(--text-3);
         }
 
         .status-badge.local-unsaved {
-            background: var(--warning-bg);
-            color: #92400e;
+            background: var(--danger-bg);
+            color: var(--danger-dark);
         }
 
         [data-theme="dark"] .status-badge.local-unsaved {
-            color: #fbbf24;
+            color: #fca5a5;
         }
 
         .status-badge.offline-saved {
@@ -4209,6 +4215,18 @@ $showSettings = $hasChurchId || $isDevOrAdmin;
         .att-toolbar .bulk-actions-bar.show,
         body.bulk-active .att-toolbar .bulk-actions-bar {
             display: flex !important;
+            animation: bulkBarSlideUp 0.3s var(--spring) forwards;
+        }
+
+        @keyframes bulkBarSlideUp {
+            from {
+                opacity: 0;
+                transform: translateY(12px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
 
         @media (max-width: 640px) {
@@ -4600,6 +4618,8 @@ $showSettings = $hasChurchId || $isDevOrAdmin;
             background: rgba(16, 185, 129, 0.12) !important;
             color: var(--success) !important;
             border: 1px solid rgba(16, 185, 129, 0.25) !important;
+            order: -1 !important;
+            flex-shrink: 0 !important;
         }
 
         .btn-bulk-action.bulk-merge:hover {
@@ -4609,6 +4629,24 @@ $showSettings = $hasChurchId || $isDevOrAdmin;
 
         .btn-bulk-action.bulk-merge i {
             color: var(--success) !important;
+        }
+
+        .btn-bulk-action.bulk-merge.show-anim {
+            animation: bulkBtnPopIn 0.35s var(--spring) forwards;
+        }
+
+        @keyframes bulkBtnPopIn {
+            0% {
+                opacity: 0;
+                transform: scale(0.6) translateY(6px);
+            }
+            70% {
+                transform: scale(1.08) translateY(-2px);
+            }
+            100% {
+                opacity: 1;
+                transform: scale(1) translateY(0);
+            }
         }
 
         /* Bulk Delete */
@@ -4631,12 +4669,24 @@ $showSettings = $hasChurchId || $isDevOrAdmin;
         .bulk-fixed-dropdown,
         .bulk-actions-bar .dropdown-menu {
             position: fixed !important;
-            z-index: 999999 !important;
+            z-index: 9999999 !important;
             box-shadow: var(--shadow-xl) !important;
             border: 1px solid var(--border-solid) !important;
             background: var(--surface) !important;
             border-radius: var(--r-md) !important;
             padding: 6px 0 !important;
+            max-height: 75vh !important;
+            overflow-y: auto !important;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        .bulk-fixed-dropdown.open,
+        .bulk-actions-bar .dropdown-menu.open {
+            display: block !important;
+            visibility: visible !important;
+            opacity: 1 !important;
+            pointer-events: auto !important;
+            transform: translateY(0) scale(1) !important;
         }
 
         /* Premium Merge Duplicates Table & UI Styles */
@@ -14053,6 +14103,13 @@ $showSettings = $hasChurchId || $isDevOrAdmin;
                     <div class="bulk-actions-bar" id="bulkActionsBar" style="display: none;">
                         <div class="bulk-actions-scroll-wrap" id="bulkActionsScrollWrap">
                             <div class="bulk-actions-scroll-track" id="bulkActionsScrollTrack">
+                                <!-- Merge (visible when 2 selected) - Shown first in row with pop-in animation -->
+                                <button type="button" class="btn-bulk-action bulk-merge" id="bulkMergeBtn" onclick="triggerBulkMerge()"
+                                    title="دمج الحسابين المكررين" style="display: none;">
+                                    <i class="fas fa-code-merge"></i>
+                                    <span class="btn-bulk-label">دمج</span>
+                                </button>
+
                                 <!-- Unified Attendance Chip (حضور وغياب مع قائمة منسدلة) -->
                                 <div class="action-dropdown bulk-dropdown-wrap">
                                     <button type="button" class="btn-bulk-action bulk-att-combined" id="bulkAttendanceBtn"
@@ -14110,13 +14167,6 @@ $showSettings = $hasChurchId || $isDevOrAdmin;
                                 <button type="button" class="btn-bulk-action bulk-note" onclick="openBulkNoteModal()" title="إضافة ملاحظة جماعية">
                                     <i class="fas fa-sticky-note"></i>
                                     <span class="btn-bulk-label">ملاحظة</span>
-                                </button>
-
-                                <!-- Merge (visible when 2 selected) -->
-                                <button type="button" class="btn-bulk-action bulk-merge" id="bulkMergeBtn" onclick="triggerBulkMerge()"
-                                    title="دمج الحسابين المكررين" style="display: none;">
-                                    <i class="fas fa-code-merge"></i>
-                                    <span class="btn-bulk-label">دمج</span>
                                 </button>
 
                                 <!-- Delete -->
@@ -18278,20 +18328,24 @@ $showSettings = $hasChurchId || $isDevOrAdmin;
 
             if (isOpen) {
                 if (menu.classList.contains('bulk-fixed-dropdown') || menu.closest('.bulk-actions-bar') || (btnEl && btnEl.closest('.bulk-bar-pinned-start'))) {
+                    // Critical for mobile: detach from scroll / transform containers and append to document.body
+                    if (menu.parentElement !== document.body) {
+                        document.body.appendChild(menu);
+                    }
                     if (btnEl) {
                         const bRect = btnEl.getBoundingClientRect();
                         const mWidth = menu.offsetWidth || 175;
-                        const mHeight = menu.offsetHeight || 180;
+                        const isBottomBar = bRect.top > (window.innerHeight / 2);
 
-                        if (bRect.bottom + mHeight + 10 > window.innerHeight && bRect.top > mHeight) {
+                        if (isBottomBar) {
                             menu.style.top = 'auto';
-                            menu.style.bottom = (window.innerHeight - bRect.top + 6) + 'px';
+                            menu.style.bottom = Math.max(10, Math.round(window.innerHeight - bRect.top + 6)) + 'px';
                         } else {
                             menu.style.bottom = 'auto';
-                            menu.style.top = (bRect.bottom + 6) + 'px';
+                            menu.style.top = Math.round(bRect.bottom + 6) + 'px';
                         }
 
-                        let rightPos = window.innerWidth - bRect.right;
+                        let rightPos = Math.round(window.innerWidth - bRect.right);
                         if (rightPos + mWidth > window.innerWidth - 10) {
                             rightPos = window.innerWidth - mWidth - 10;
                         }
@@ -18325,7 +18379,11 @@ $showSettings = $hasChurchId || $isDevOrAdmin;
             document.querySelectorAll('.action-strip-btn.open, .topbar-btn.open, .btn-bulk-action.open').forEach(b => b.classList.remove('open'));
             activeDropdown = null;
         }
-        document.addEventListener('click', e => { if (!e.target.closest('.action-dropdown')) closeAllDropdowns(); });
+        document.addEventListener('click', e => {
+            if (!e.target.closest('.action-dropdown') && !e.target.closest('.dropdown-menu') && !e.target.closest('.btn-bulk-action')) {
+                closeAllDropdowns();
+            }
+        });
         window.addEventListener('scroll', () => {
             if (activeDropdown && (document.getElementById(activeDropdown)?.closest('.bulk-actions-bar') || document.getElementById(activeDropdown)?.classList.contains('bulk-fixed-dropdown'))) {
                 closeAllDropdowns();
@@ -20807,7 +20865,17 @@ $showSettings = $hasChurchId || $isDevOrAdmin;
             const moreMergeItem = document.getElementById('bulkMoreMergeItem');
             const isTwoSelected = selectedStudentIds.size === 2;
             if (mergeBtn) {
-                mergeBtn.style.display = isTwoSelected ? 'inline-flex' : 'none';
+                if (isTwoSelected) {
+                    if (mergeBtn.style.display !== 'inline-flex') {
+                        mergeBtn.style.display = 'inline-flex';
+                        mergeBtn.classList.remove('show-anim');
+                        void mergeBtn.offsetWidth;
+                        mergeBtn.classList.add('show-anim');
+                    }
+                } else {
+                    mergeBtn.style.display = 'none';
+                    mergeBtn.classList.remove('show-anim');
+                }
             }
             if (moreMergeItem) {
                 moreMergeItem.style.display = isTwoSelected ? 'flex' : 'none';
