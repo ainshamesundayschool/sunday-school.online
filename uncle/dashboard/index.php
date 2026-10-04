@@ -17435,7 +17435,7 @@ $showSettings = $hasChurchId || $isDevOrAdmin;
                 if (st === 'pending' && !isInChanged) badges += '<span class="status-badge pending"><i class="fas fa-minus"></i> لا بيانات</span>';
                 else if (st === 'pending' && isInChanged) badges += '<span class="status-badge local"><i class="fas fa-times-circle"></i> مسح — محلياً</span>';
                 else if (isSynced) badges += '<span class="status-badge saved"><i class="fas fa-check"></i> محفوظ</span>';
-                else if (isInChanged) badges += '<span class="status-badge local-unsaved"><i class="fas fa-clock"></i> محلياً</span>';
+                else if (isInChanged) badges += '<span class="status-badge local-unsaved"><i class="fas fa-clock"></i> غير محفوظ</span>';
                 if (isCouponChanged) badges += `<span class="status-badge coupon-unsaved"><i class="fas fa-star"></i> ${addC >= 0 ? '+' : ''}${addC}</span>`;
                 // Show real class name as a small tag
                 const classBadge = `<span style="font-size:.62rem;background:var(--brand-bg);color:var(--brand);padding:1px 6px;border-radius:10px;margin-right:4px">${s['الفصل']}</span>`;
@@ -19981,7 +19981,7 @@ $showSettings = $hasChurchId || $isDevOrAdmin;
                 } else if (isSynced) {
                     badges += '<span class="status-badge saved"><i class="fas fa-check"></i> محفوظ</span>';
                 } else if (isInChanged) {
-                    badges += '<span class="status-badge local-unsaved"><i class="fas fa-clock"></i> محفوظ محلياً</span>';
+                    badges += '<span class="status-badge local-unsaved"><i class="fas fa-clock"></i> غير محفوظ</span>';
                 }
 
                 if (isOfflineCoupSaved) {
@@ -20144,7 +20144,7 @@ $showSettings = $hasChurchId || $isDevOrAdmin;
             } else if (isSynced) {
                 badges += '<span class="status-badge saved"><i class="fas fa-check"></i> محفوظ</span>';
             } else if (isInChanged) {
-                badges += '<span class="status-badge local-unsaved"><i class="fas fa-clock"></i> محفوظ محلياً</span>';
+                badges += '<span class="status-badge local-unsaved"><i class="fas fa-clock"></i> غير محفوظ</span>';
             }
             const addC = parseInt(couponData[studentId] || 0);
             if (isOfflineCoupSaved) {
