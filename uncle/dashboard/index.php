@@ -1883,7 +1883,7 @@ $showSettings = $hasChurchId || $isDevOrAdmin;
             font-size: 0.6rem;
             font-weight: 800;
             padding: 1px 5px;
-            border-radius: 4px;
+            border-radius: 10px;
             z-index: 2;
         }
 
@@ -12830,58 +12830,58 @@ $showSettings = $hasChurchId || $isDevOrAdmin;
                     <span class="tool-card-name">سحب كوبونات</span>
                     <span class="tool-card-desc">اسحب جوائز الكوبونات بسرعة.</span>
                 </button>
-                <button class="tool-card" onclick="openTasksModal();hideAllToolsModal()">
+                <button class="tool-card" onclick="openToolFromAllTools(openTasksModal, event)">
                     <span class="tool-card-icon"><i class="fas fa-tasks"></i></span>
                     <span class="tool-card-name">التاسكات</span>
                     <span class="tool-card-desc">إدارة الاختبارات والواجبات والتسليمات.</span>
                 </button>
-                <button class="tool-card" onclick="hideAllToolsModal();showPaperExamsModal()">
+                <button class="tool-card" onclick="openToolFromAllTools(showPaperExamsModal, event)">
                     <span class="tool-card-icon" style="color:var(--brand);"><i class="fas fa-file-invoice"></i></span>
                     <span class="tool-card-name">الامتحانات الورقية</span>
                     <span class="tool-card-desc">إدارة درجات ورصد الامتحانات الورقية للأطفال.</span>
                 </button>
-                <button class="tool-card" onclick="hideAllToolsModal();showAllKidsCustomExport()">
+                <button class="tool-card" onclick="openToolFromAllTools(showAllKidsCustomExport, event)">
                     <span class="tool-card-icon" style="color:var(--brand);"><i class="fas fa-table"></i></span>
                     <span class="tool-card-name">حفظ كجدول</span>
                     <span class="tool-card-desc">صدّر البيانات بالطريقة المناسبة لك.</span>
                 </button>
-                <button class="tool-card" onclick="hideAllToolsModal();showAnnouncementsModal()">
+                <button class="tool-card" onclick="openToolFromAllTools(showAnnouncementsModal, event)">
                     <span class="tool-card-icon"><i class="fas fa-bullhorn"></i></span>
                     <span class="tool-card-name">الإعلانات</span>
                     <span class="tool-card-desc">أرسل إعلانات عامة أو مخصصة للأطفال.</span>
                 </button>
-                <button class="tool-card" onclick="hideAllToolsModal();showBirthdayModal()">
+                <button class="tool-card" onclick="openToolFromAllTools(showBirthdayModal, event)">
                     <span class="tool-card-icon"><i class="fas fa-birthday-cake"></i></span>
                     <span class="tool-card-name">أعياد الميلاد</span>
                     <span class="tool-card-desc">اعرف أعياد اليوم والشهر بسرعة.</span>
                 </button>
-                <button class="tool-card" onclick="hideAllToolsModal();showAllStudentsModal()">
+                <button class="tool-card" onclick="openToolFromAllTools(showAllStudentsModal, event)">
                     <span class="tool-card-icon"><i class="fas fa-list"></i></span>
                     <span class="tool-card-name">جميع الأطفال</span>
                     <span class="tool-card-desc">عرض كل الأطفال مع بحث وفرز شامل.</span>
                 </button>
-                <button class="tool-card" onclick="hideAllToolsModal();openSiblingSuggestionsView()">
+                <button class="tool-card" onclick="openToolFromAllTools(openSiblingSuggestionsView, event)">
                     <span class="tool-card-icon"><i class="fas fa-wand-magic-sparkles"></i></span>
                     <span class="tool-card-name">اقتراحات الإخوات</span>
                     <span class="tool-card-desc">راجع اقتراحات الربط بين الإخوات.</span>
                 </button>
                 <button class="tool-card" id="allToolsBulkAddBtn"
-                    onclick="hideAllToolsModal();window.location.href='<?php echo $pathPrefix; ?>/uncle/church/?action=bulkAdd'">
+                    onclick="openToolFromAllTools(() => { window.location.href='<?php echo $pathPrefix; ?>/uncle/church/?action=bulkAdd'; }, event)">
                     <span class="tool-card-icon"><i class="fas fa-upload"></i></span>
                     <span class="tool-card-name">إضافة مجموعة</span>
                     <span class="tool-card-desc">أضف أطفال كثيرين مرة واحدة من ملف.</span>
                 </button>
-                <button class="tool-card" onclick="hideAllToolsModal();showUncleFees()">
+                <button class="tool-card" onclick="openToolFromAllTools(showUncleFees, event)">
                     <span class="tool-card-icon" style="color:#10b981;"><i class="fas fa-money-bill-wave"></i></span>
                     <span class="tool-card-name">اشتراكاتي المالية</span>
                     <span class="tool-card-desc">عرض وتتبع اشتراكاتك المالية والمدفوعات للخدمة.</span>
                 </button>
-                <button class="tool-card" onclick="hideAllToolsModal();showUncleHistory()">
+                <button class="tool-card" onclick="openToolFromAllTools(showUncleHistory, event)">
                     <span class="tool-card-icon" style="color:#f59e0b;"><i class="fas fa-history"></i></span>
                     <span class="tool-card-name">سجل نشاطاتي</span>
                     <span class="tool-card-desc">سجل الأنشطة والعمليات التي قمت بها في لوحة التحكم.</span>
                 </button>
-                <button class="tool-card" onclick="hideAllToolsModal();showHelpModal()">
+                <button class="tool-card" onclick="openToolFromAllTools(showHelpModal, event)">
                     <span class="tool-card-icon" style="color:var(--brand);"><i
                             class="fas fa-question-circle"></i></span>
                     <span class="tool-card-name">دليل مساعدة الخدمة</span>
@@ -15129,6 +15129,7 @@ $showSettings = $hasChurchId || $isDevOrAdmin;
                             <i class="fas fa-phone input-icon"></i>
                             <input type="tel" id="studentPhone" class="form-input" placeholder="01xxxxxxxxx" dir="ltr">
                         </div>
+                    </div>
                     <div style="margin-top: 8px;">
                         <button type="button" class="btn btn-sm" onclick="openParentPhoneModal('add')" style="display:inline-flex; align-items:center; gap:6px; font-size:0.85rem; font-weight:700; color:var(--brand); background:var(--brand-bg); border:1px dashed var(--brand); border-radius:var(--r-md); padding:7px 14px; cursor:pointer; transition:all var(--t) var(--ease);">
                             <i class="fas fa-plus"></i> إضافة رقم هاتف إضافي
@@ -15279,14 +15280,14 @@ $showSettings = $hasChurchId || $isDevOrAdmin;
     </div>
 
     <!-- Birthday Modal -->
-    <div class="modal-overlay" id="birthdayModal">
+    <div class="modal-overlay" id="birthdayModal" style="z-index: 1000018;">
         <div class="modal modal-lg">
             <div class="modal-header">
                 <h3><i class="fas fa-birthday-cake" style="color:#db2777"></i> أعياد الميلاد</h3>
                 <div style="display:flex;gap:6px;align-items:center">
                     <span id="birthdayMonthCount"
                         style="background:var(--brand-bg);color:var(--brand);padding:3px 10px;border-radius:var(--r-full);font-size:.75rem;font-weight:700"></span>
-                    <button class="close-btn" id="closeBirthdayModal">&times;</button>
+                    <button class="close-btn" id="closeBirthdayModal" onclick="hideBirthdayModal()">&times;</button>
                 </div>
             </div>
             <div class="month-selector" id="monthSelector"></div>
@@ -15321,11 +15322,11 @@ $showSettings = $hasChurchId || $isDevOrAdmin;
     </div>
 
     <!-- All Students Modal -->
-    <div class="modal-overlay" id="allStudentsModal">
+    <div class="modal-overlay" id="allStudentsModal" style="z-index: 1000018;">
         <div class="modal modal-lg">
             <div class="modal-header">
                 <h3><i class="fas fa-users"></i> جميع الأطفال</h3>
-                <button class="close-btn" id="closeAllStudentsModal">&times;</button>
+                <button class="close-btn" id="closeAllStudentsModal" onclick="hideAllStudentsModal()">&times;</button>
             </div>
             <div class="table-toolbar">
                 <div class="search-wrap" style="flex:1;margin-bottom:0;padding:4px 6px;width:100%">
@@ -16134,11 +16135,11 @@ $showSettings = $hasChurchId || $isDevOrAdmin;
     </div>
 
     <!-- Announcements Modal -->
-    <div class="modal-overlay" id="announcementsModal">
+    <div class="modal-overlay" id="announcementsModal" style="z-index: 1000025;">
         <div class="modal modal-lg">
             <div class="modal-header">
                 <h3><i class="fas fa-bullhorn"></i> إدارة وتنبيهات الإعلانات</h3>
-                <button class="close-btn" id="closeAnnouncementsModal">&times;</button>
+                <button class="close-btn" id="closeAnnouncementsModal" onclick="hideAnnouncementsModal()">&times;</button>
             </div>
             <div class="modal-body" style="padding:14px 18px 24px; overflow-y:auto; flex:1;">
                 <!-- Tab Bar -->
@@ -17766,8 +17767,10 @@ $showSettings = $hasChurchId || $isDevOrAdmin;
                 if (isExactIdMatch) {
                     badges += `<span class="status-badge" style="background:var(--brand); color:#fff; font-weight:700;"><i class="fas fa-id-card"></i> ID: ${dbId}</span>`;
                 }
-                if (isBdayToday2) badges += '<span class="bday-row-badge"><i class="fas fa-birthday-cake" style="margin-left: 3px;"></i>عيد ميلاد سعيد!</span>';
-                if (st === 'pending' && !isInChanged) badges += '<span class="status-badge pending"><i class="fas fa-minus"></i> لا بيانات</span>';
+                if (st === 'pending' && !isInChanged) {
+                    if (isCouponChanged) badges += '<span class="status-badge local-unsaved"><i class="fas fa-clock"></i> غير محفوظ</span>';
+                    else badges += '<span class="status-badge pending"><i class="fas fa-minus"></i> لا بيانات</span>';
+                }
                 else if (st === 'pending' && isInChanged) badges += '<span class="status-badge local"><i class="fas fa-times-circle"></i> مسح — محلياً</span>';
                 else if (isSynced) badges += '<span class="status-badge saved"><i class="fas fa-check"></i> محفوظ</span>';
                 else if (isInChanged) badges += '<span class="status-badge local-unsaved"><i class="fas fa-clock"></i> غير محفوظ</span>';
@@ -18296,6 +18299,21 @@ $showSettings = $hasChurchId || $isDevOrAdmin;
         function hideAccountEditForm() { openUncleAccountPage('profile'); }
         function showAllToolsModal() { document.getElementById('allToolsModal').classList.add('active'); stopAutoRefresh(); }
         function hideAllToolsModal() { document.getElementById('allToolsModal').classList.remove('active'); startAutoRefresh(); }
+        function openToolFromAllTools(fn, e) {
+            if (e) {
+                e.stopPropagation();
+                if (e.cancelable) e.preventDefault();
+            }
+            hideAllToolsModal();
+            setTimeout(() => {
+                try {
+                    if (typeof fn === 'function') fn();
+                    else if (typeof window[fn] === 'function') window[fn]();
+                } catch (err) {
+                    console.error('Error opening tool from all tools:', err);
+                }
+            }, 80);
+        }
 
         // ── DROPDOWNS ─────────────────────────────────────────────────
         function toggleDropdown(id, btn) {
@@ -20347,7 +20365,13 @@ $showSettings = $hasChurchId || $isDevOrAdmin;
                 if (isOfflineAttSaved) {
                     badges += '<span class="status-badge offline-saved"><i class="fas fa-cloud-upload-alt"></i> محفوظ أوفلاين</span>';
                 } else if (st === 'pending' && !isInChanged) {
-                    badges += '<span class="status-badge pending"><i class="fas fa-minus"></i> لا بيانات</span>';
+                    if (isCouponChanged) {
+                        badges += '<span class="status-badge local-unsaved"><i class="fas fa-clock"></i> غير محفوظ</span>';
+                    } else if (isOfflineCoupSaved) {
+                        badges += '<span class="status-badge offline-saved"><i class="fas fa-cloud-upload-alt"></i> محفوظ أوفلاين</span>';
+                    } else {
+                        badges += '<span class="status-badge pending"><i class="fas fa-minus"></i> لا بيانات</span>';
+                    }
                 } else if (st === 'pending' && isInChanged) {
                     badges += '<span class="status-badge local"><i class="fas fa-times-circle"></i> مسح — محلياً</span>';
                 } else if (isSynced) {
@@ -20538,7 +20562,13 @@ $showSettings = $hasChurchId || $isDevOrAdmin;
             if (isOfflineAttSaved) {
                 badges += '<span class="status-badge offline-saved"><i class="fas fa-cloud-upload-alt"></i> محفوظ أوفلاين</span>';
             } else if (st === 'pending' && !isInChanged) {
-                badges += '<span class="status-badge pending"><i class="fas fa-minus"></i> لا بيانات</span>';
+                if (isCouponChanged) {
+                    badges += '<span class="status-badge local-unsaved"><i class="fas fa-clock"></i> غير محفوظ</span>';
+                } else if (isOfflineCoupSaved) {
+                    badges += '<span class="status-badge offline-saved"><i class="fas fa-cloud-upload-alt"></i> محفوظ أوفلاين</span>';
+                } else {
+                    badges += '<span class="status-badge pending"><i class="fas fa-minus"></i> لا بيانات</span>';
+                }
             } else if (st === 'pending' && isInChanged) {
                 badges += '<span class="status-badge local"><i class="fas fa-times-circle"></i> مسح — محلياً</span>';
             } else if (isSynced) {
@@ -20638,6 +20668,7 @@ $showSettings = $hasChurchId || $isDevOrAdmin;
         function openModal(id) {
             const m = document.getElementById(id);
             if (m) {
+                m._openedAt = Date.now();
                 m.classList.add('active');
                 stopAutoRefresh();
             }
@@ -27025,13 +27056,13 @@ $showSettings = $hasChurchId || $isDevOrAdmin;
                 }
             }
 
-            document.getElementById('addPersonModal').classList.add('active'); stopAutoRefresh();
+            openModal('addPersonModal');
         }
-        function hideAddPersonModal() { document.getElementById('addPersonForm').reset(); document.getElementById('addPersonModal').classList.remove('active'); startAutoRefresh(); }
-        function showBirthdayModal() { document.getElementById('birthdayModal').classList.add('active'); renderBirthdayMonths(); showBirthdaysByMonth(new Date().getMonth()); stopAutoRefresh(); }
-        function hideBirthdayModal() { document.getElementById('birthdayModal').classList.remove('active'); startAutoRefresh(); }
-        function showAllStudentsModal() { document.getElementById('allStudentsModal').classList.add('active'); clearAllStudentsSearch(); renderAllStudentsTable(); setupAllStudentsSearch(); stopAutoRefresh(); }
-        function hideAllStudentsModal() { document.getElementById('allStudentsModal').classList.remove('active'); startAutoRefresh(); }
+        function hideAddPersonModal() { document.getElementById('addPersonForm').reset(); closeModal('addPersonModal'); }
+        function showBirthdayModal() { openModal('birthdayModal'); renderBirthdayMonths(); showBirthdaysByMonth(new Date().getMonth()); }
+        function hideBirthdayModal() { closeModal('birthdayModal'); }
+        function showAllStudentsModal() { openModal('allStudentsModal'); clearAllStudentsSearch(); renderAllStudentsTable(); setupAllStudentsSearch(); }
+        function hideAllStudentsModal() { closeModal('allStudentsModal'); }
 
 
 
@@ -27289,16 +27320,14 @@ $showSettings = $hasChurchId || $isDevOrAdmin;
         }
 
         function showAnnouncementsModal() {
-            document.getElementById('announcementsModal').classList.add('active');
+            openModal('announcementsModal');
             const searchInput = document.getElementById('announcementsSearchInput');
             if (searchInput) searchInput.value = '';
             if (typeof switchAnnouncementTab === 'function') switchAnnouncementTab('list');
             loadAnnouncements();
-            renderAnnouncementStudentGrid();
             renderAnnouncementSelectedCards();
-            stopAutoRefresh();
         }
-        function hideAnnouncementsModal() { document.getElementById('announcementsModal').classList.remove('active'); startAutoRefresh(); }
+        function hideAnnouncementsModal() { closeModal('announcementsModal'); }
         function showImageModal(src, e) {
             if (!src) return;
             if (e) { e.stopPropagation(); e.preventDefault(); }
@@ -27326,10 +27355,10 @@ $showSettings = $hasChurchId || $isDevOrAdmin;
         }
         function showBirthdaysByMonth(idx) {
             document.querySelectorAll('.month-btn').forEach((b, i) => b.classList.toggle('active', i === idx));
-            const stds = allStudentsData.length ? allStudentsData : (window.students || []);
-            const uncles = window.allUnclesData || [];
+            const stds = (Array.isArray(allStudentsData) && allStudentsData.length) ? allStudentsData : (Array.isArray(window.students) ? window.students : []);
+            const uncles = Array.isArray(window.allUnclesData) ? window.allUnclesData : [];
             const ms = [...stds, ...uncles].filter(s => {
-                if (!s['عيد الميلاد']) return false;
+                if (!s || !s['عيد الميلاد'] || typeof s['عيد الميلاد'] !== 'string') return false;
                 const p = s['عيد الميلاد'].split('/');
                 return p.length >= 2 && parseInt(p[1]) - 1 === idx;
             }).sort((a, b) => {
@@ -30519,6 +30548,7 @@ $showSettings = $hasChurchId || $isDevOrAdmin;
             document.querySelectorAll('.modal-overlay').forEach(overlay => {
                 overlay.addEventListener('click', e => {
                     if (e.target === overlay) {
+                        if (overlay._openedAt && (Date.now() - overlay._openedAt < 300)) return;
                         if (overlay.id === 'paperExamsModal' || overlay.id === 'paperExamMatchReviewModal') return;
                         overlay.classList.remove('active');
                         startAutoRefresh();
