@@ -7600,8 +7600,8 @@ $showSettings = $hasChurchId || $isDevOrAdmin;
         }
 
         .ann-card {
-            background: var(--surface);
-            border: 1px solid var(--border-solid);
+            background: var(--surface-2);
+            border: none;
             border-radius: var(--r-md);
             padding: 9px 12px;
             transition: all .18s var(--ease);
@@ -7614,12 +7614,10 @@ $showSettings = $hasChurchId || $isDevOrAdmin;
 
         .ann-card.is-inactive {
             opacity: .65;
-            background: var(--surface-2);
-            border-style: dashed;
+            background: var(--surface-3);
         }
 
         .ann-card:hover {
-            border-color: var(--brand);
             box-shadow: var(--shadow-md);
         }
 
@@ -7766,13 +7764,13 @@ $showSettings = $hasChurchId || $isDevOrAdmin;
         .ann-card-desc {
             font-size: .76rem;
             color: var(--text-2);
-            background: var(--surface-2);
-            padding: 5px 8px;
+            background: var(--surface-3);
+            padding: 6px 9px;
             border-radius: var(--r-xs);
             line-height: 1.5;
             white-space: pre-wrap;
             word-break: break-word;
-            border: 1px solid var(--border-solid);
+            border: none;
         }
 
         .ann-card-img-wrap {
@@ -7816,7 +7814,7 @@ $showSettings = $hasChurchId || $isDevOrAdmin;
             justify-content: space-between;
             gap: 6px;
             padding-top: 5px;
-            border-top: 1px solid var(--border-solid);
+            border-top: 1px solid var(--border);
             font-size: .68rem;
             color: var(--text-3);
             flex-wrap: wrap;
@@ -16103,10 +16101,10 @@ $showSettings = $hasChurchId || $isDevOrAdmin;
                 <!-- Tab Bar -->
                 <div class="ann-tabs-bar">
                     <button type="button" class="ann-tab-pill active" id="annTabListBtn" onclick="switchAnnouncementTab('list')">
-                        <i class="fas fa-bullhorn"></i> الإعلانات الحالية <span class="ann-count-badge" id="activeAnnouncementsCount">0</span>
+                        <i class="fas fa-bullhorn"></i> الإعلانات <span class="ann-count-badge" id="activeAnnouncementsCount">0</span>
                     </button>
                     <button type="button" class="ann-tab-pill" id="annTabNewBtn" onclick="switchAnnouncementTab('new')">
-                        <i class="fas fa-plus-circle"></i> إضافة إعلان جديد
+                        <i class="fas fa-plus-circle"></i> إعلان جديد
                     </button>
                 </div>
 
