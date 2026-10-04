@@ -1962,7 +1962,8 @@ $showSettings = $hasChurchId || $isDevOrAdmin;
             display: flex;
             align-items: center;
             gap: 8px;
-            text-decoration: none
+            text-decoration: none;
+            direction: ltr;
         }
 
         .footer-logo {
