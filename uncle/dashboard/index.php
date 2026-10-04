@@ -4003,15 +4003,16 @@ $showSettings = $hasChurchId || $isDevOrAdmin;
         }
 
         .attendance-item.selected {
-            background-color: var(--brand-bg) !important;
-            border-color: transparent !important;
+            background: var(--brand-bg) !important;
+            border-color: var(--brand) !important;
+            box-shadow: 0 0 0 2px var(--brand-glow), var(--shadow-sm) !important;
         }
 
         .attendance-item.selected .bulk-check-circle {
             border: none !important;
             background: var(--brand) !important;
             color: #ffffff !important;
-            box-shadow: none !important;
+            box-shadow: 0 2px 6px var(--brand-glow) !important;
         }
 
         .student-coupons-inline {
@@ -4390,6 +4391,7 @@ $showSettings = $hasChurchId || $isDevOrAdmin;
         .bulk-actions-scroll-track {
             display: flex;
             align-items: center;
+            justify-content: flex-start;
             gap: 6px;
             width: 100%;
             overflow-x: auto;
@@ -4416,9 +4418,22 @@ $showSettings = $hasChurchId || $isDevOrAdmin;
             z-index: 10;
         }
 
+        .bulk-actions-bar .action-dropdown,
         .bulk-dropdown-wrap {
-            position: relative;
-            flex-shrink: 0;
+            position: relative !important;
+            flex: 0 0 auto !important;
+            flex-grow: 0 !important;
+            flex-shrink: 0 !important;
+            display: inline-flex !important;
+            align-items: center !important;
+            width: auto !important;
+            min-width: 0 !important;
+            margin: 0 !important;
+        }
+
+        .bulk-dropdown-wrap > .btn-bulk-action {
+            flex: 0 0 auto !important;
+            width: auto !important;
         }
 
         .bulk-chevron {
@@ -4447,7 +4462,8 @@ $showSettings = $hasChurchId || $isDevOrAdmin;
             cursor: pointer;
             transition: all var(--t) var(--ease);
             white-space: nowrap;
-            flex-shrink: 0;
+            flex: 0 0 auto !important;
+            flex-shrink: 0 !important;
             box-shadow: none !important;
             user-select: none;
         }
@@ -13982,7 +13998,7 @@ $showSettings = $hasChurchId || $isDevOrAdmin;
                     <!-- Add Kid Button (Last button at the end) -->
                     <button class="btn btn-ghost btn-sm" onclick="showAddPersonModal()" title="إضافة طفل جديد"
                         style="width: 48px; height: 48px; border-radius: var(--r-md); display: flex; align-items: center; justify-content: center; flex: none; padding: 0;">
-                        <i class="fas fa-plus"></i>
+                        <i class="fas fa-user-plus"></i>
                     </button>
                 </div>
 
@@ -20258,13 +20274,13 @@ $showSettings = $hasChurchId || $isDevOrAdmin;
                 const isSelected = selectedStudentIds.has(dbId);
                 const selectClass = isSelected ? ' selected' : '';
                 return `<div class="attendance-item ${st}${localClass}${bdayClass}${selectClass}" id="ai-${id}" data-db-id="${dbId}"
-            ontouchstart="${isKhodam ? '' : `_holdStart(event,'${safeName}')`}"
-            ontouchmove="${isKhodam ? '' : '_holdMove(event)'}"
-            ontouchend="${isKhodam ? '' : '_holdEnd()'}"
-            ontouchcancel="${isKhodam ? '' : '_holdEnd()'}"
+            ontouchstart="_holdStart(event,'${safeName}')"
+            ontouchmove="_holdMove(event)"
+            ontouchend="_holdEnd()"
+            ontouchcancel="_holdEnd()"
             oncontextmenu="${isKhodam ? 'event.preventDefault()' : `_rowContextMenu(event,'${safeName}')`}">
             <div class="student-info" onclick="isBulkSelectMode ? toggleStudentSelection(event, ${dbId}) : showStudentDetails('${safeName}')" style="cursor:pointer">
-                <div class="bulk-check-wrap">
+                <div class="bulk-check-wrap" onclick="event.stopPropagation(); toggleStudentSelection(event, ${dbId});">
                     <div class="bulk-check-circle ${isSelected ? 'checked' : ''}"><i class="fas fa-check"></i></div>
                 </div>
                 ${img}${fallback}
@@ -20338,6 +20354,33 @@ $showSettings = $hasChurchId || $isDevOrAdmin;
             });
         }
 
+        function findStudentOrUncleByStudentId(studentId) {
+            if (!studentId) return null;
+            const allList = (currentClass === 'الخدام')
+                ? (window.allUnclesData || [])
+                : (currentClass === 'الزوار'
+                    ? (window.allGuestsData || [])
+                    : (isCombinedView ? combinedStudents : students));
+            let s = (allList || []).find(x => getStudentId(x) === studentId);
+            if (!s && window.allUnclesData) s = window.allUnclesData.find(x => getStudentId(x) === studentId);
+            if (!s && typeof students !== 'undefined' && students) s = students.find(x => getStudentId(x) === studentId);
+            return s || null;
+        }
+
+        function findStudentOrUncleByDbId(dbId) {
+            const numId = Number(dbId);
+            if (!numId) return null;
+            const allList = (currentClass === 'الخدام')
+                ? (window.allUnclesData || [])
+                : (currentClass === 'الزوار'
+                    ? (window.allGuestsData || [])
+                    : (isCombinedView ? combinedStudents : students));
+            let s = (allList || []).find(x => Number(getStudentDbId(x)) === numId);
+            if (!s && window.allUnclesData) s = window.allUnclesData.find(x => Number(getStudentDbId(x)) === numId);
+            if (!s && typeof students !== 'undefined' && students) s = students.find(x => Number(getStudentDbId(x)) === numId);
+            return s || null;
+        }
+
         function _updateAttendanceRow(studentId) {
             const row = document.getElementById('ai-' + studentId);
             if (!row) { renderAttendanceList(currentClass); return; }
@@ -20346,8 +20389,7 @@ $showSettings = $hasChurchId || $isDevOrAdmin;
             const isInChanged = changedStudents.has(studentId);
             const isCouponChanged = changedCouponStudents.has(studentId);
 
-            const allList = isCombinedView ? combinedStudents : students;
-            const s = allList.find(x => getStudentId(x) === studentId);
+            const s = findStudentOrUncleByStudentId(studentId);
             const srv = s ? getServerAttendanceStatus(s, currentFriday) : 'pending';
             const isSynced = srv !== 'pending' && st === srv && !isInChanged;
 
@@ -20366,12 +20408,14 @@ $showSettings = $hasChurchId || $isDevOrAdmin;
             const _bdParts = (s ? (s['عيد الميلاد'] || '') : '').split('/');
             const isBdayToday = _bdParts.length >= 2 && parseInt(_bdParts[0]) === _now.getDate() && parseInt(_bdParts[1]) - 1 === _now.getMonth();
 
+            const dbId = s ? Number(getStudentDbId(s)) : (parseInt(row.getAttribute('data-db-id')) || null);
+            const isSelected = dbId ? selectedStudentIds.has(dbId) : false;
+
             // Update row class
             let rowCls = 'attendance-item ' + st;
             if (isInChanged || isCouponChanged || isOfflineAttSaved || isOfflineCoupSaved) rowCls += ' has-local';
             if (isBdayToday) rowCls += ' bday-row';
-            const dbId = s ? Number(getStudentDbId(s)) : null;
-            if (dbId && selectedStudentIds.has(dbId)) rowCls += ' selected';
+            if (isSelected) rowCls += ' selected';
             row.className = rowCls;
 
             // Update badges
@@ -20410,7 +20454,6 @@ $showSettings = $hasChurchId || $isDevOrAdmin;
             }
 
             // Update bulk checkbox checked state
-            const isSelected = dbId ? selectedStudentIds.has(dbId) : false;
             const checkCircle = row.querySelector('.bulk-check-circle');
             if (checkCircle) {
                 if (isSelected) {
@@ -20586,12 +20629,17 @@ $showSettings = $hasChurchId || $isDevOrAdmin;
                 selectedStudentIds.add(numId);
             }
 
-            // Find student node and update row class/checkbox in-place
-            const allList = isCombinedView ? combinedStudents : students;
-            const s = allList.find(x => Number(getStudentDbId(x)) === numId);
+            // Find student or uncle node and update row class/checkbox in-place
+            const s = findStudentOrUncleByDbId(numId);
             if (s) {
                 const sid = getStudentId(s);
                 _updateAttendanceRow(sid);
+            } else {
+                const row = document.querySelector(`.attendance-item[data-db-id="${numId}"]`);
+                if (row) {
+                    const sid = row.id ? row.id.replace('ai-', '') : null;
+                    if (sid) _updateAttendanceRow(sid);
+                }
             }
 
             updateBulkUI();
