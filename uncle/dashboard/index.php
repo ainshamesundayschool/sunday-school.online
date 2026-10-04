@@ -4257,12 +4257,13 @@ $showSettings = $hasChurchId || $isDevOrAdmin;
             }
         }
 
-        /* Pinned start controls: Close, Select All, Count */
+        /* Pinned start controls: Close, Combined Select & Filter, Count */
         .bulk-bar-pinned-start {
             display: inline-flex;
             align-items: center;
             gap: 6px;
             flex-shrink: 0;
+            z-index: 15;
         }
 
         .bulk-close-btn {
@@ -4290,30 +4291,58 @@ $showSettings = $hasChurchId || $isDevOrAdmin;
             transform: scale(1.05);
         }
 
-        .bulk-select-all-pill {
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-            padding: 4px 8px 4px 6px;
-            background: var(--surface-2);
-            border: 1px solid var(--border-solid);
-            border-radius: var(--r-full);
+        /* Combined Select All & Filter Chip */
+        .bulk-select-filter-chip {
+            display: inline-flex !important;
+            align-items: center !important;
+            gap: 6px !important;
+            height: 32px !important;
+            padding: 0 10px 0 8px !important;
+            background: var(--surface-2) !important;
+            border: 1px solid var(--border-solid) !important;
+            border-radius: var(--r-full) !important;
             cursor: pointer;
             user-select: none;
+            color: var(--text) !important;
+            box-shadow: none !important;
             transition: all var(--t) var(--ease);
         }
 
-        .bulk-select-all-pill:hover {
-            border-color: var(--brand);
-            background: var(--brand-bg);
+        .bulk-select-filter-chip:hover,
+        .bulk-select-filter-chip.open {
+            border-color: var(--brand) !important;
+            background: var(--brand-bg) !important;
+            color: var(--brand) !important;
         }
 
-        .bulk-select-all-label {
+        .bulk-select-filter-chip .bulk-check-circle {
+            width: 17px;
+            height: 17px;
+            min-width: 17px;
+            border-radius: 5px;
+            border: 1.5px solid var(--border-solid);
+            background: var(--surface);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.62rem;
+            color: transparent;
+            cursor: pointer;
+            transition: all var(--t) var(--ease);
+            margin: 0;
+        }
+
+        .bulk-select-filter-chip .bulk-check-circle.checked {
+            background: var(--brand);
+            border-color: var(--brand);
+            color: #ffffff;
+        }
+
+        .bulk-select-filter-chip .btn-bulk-label {
             font-size: 0.78rem;
             font-weight: 700;
-            color: var(--text-2);
+            color: inherit;
             font-family: 'Cairo', sans-serif;
-            line-height: 1;
             white-space: nowrap;
         }
 
@@ -4322,29 +4351,69 @@ $showSettings = $hasChurchId || $isDevOrAdmin;
             align-items: center;
         }
 
+        .selected-count-chip {
+            background: var(--brand);
+            color: #ffffff;
+            padding: 2px 8px;
+            border-radius: var(--r-full);
+            font-size: 0.78rem;
+            font-weight: 700;
+            min-width: 22px;
+            height: 22px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 2px 6px var(--brand-glow);
+            font-family: 'Cairo', sans-serif;
+        }
+
         .bulk-v-divider {
             width: 1px;
-            height: 22px;
+            height: 24px;
             background: var(--border-solid);
             flex-shrink: 0;
             margin: 0 2px;
+            z-index: 12;
         }
 
-        /* Scrollable action buttons track */
+        /* Scrollable action buttons container with left fade indicator */
+        .bulk-actions-scroll-wrap {
+            position: relative;
+            flex: 1;
+            min-width: 0;
+            display: flex;
+            align-items: center;
+            height: 100%;
+            overflow: visible;
+        }
+
         .bulk-actions-scroll-track {
             display: flex;
             align-items: center;
             gap: 6px;
-            flex: 1;
-            min-width: 0;
+            width: 100%;
             overflow-x: auto;
+            overflow-y: visible;
             -webkit-overflow-scrolling: touch;
             scrollbar-width: none;
-            padding: 2px 0;
+            padding: 2px 2px 2px 28px; /* space so items can scroll past the left fade */
         }
 
         .bulk-actions-scroll-track::-webkit-scrollbar {
             display: none;
+        }
+
+        /* Left fade overlay indicating more tools to the left in RTL */
+        .bulk-actions-scroll-wrap::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            left: 0;
+            width: 32px;
+            background: linear-gradient(to right, var(--bg) 25%, transparent 100%);
+            pointer-events: none;
+            z-index: 10;
         }
 
         .bulk-dropdown-wrap {
@@ -4356,73 +4425,44 @@ $showSettings = $hasChurchId || $isDevOrAdmin;
             font-size: 0.55rem;
             margin-right: 2px;
             opacity: 0.75;
+            transition: transform var(--t) var(--ease);
         }
 
-        .bulk-actions-btns {
-            display: flex;
-            gap: 6px;
-            flex-wrap: wrap;
-            align-items: center;
-            justify-content: center;
+        .btn-bulk-action.open .bulk-chevron {
+            transform: rotate(180deg);
         }
 
-        .filter-chip {
-            background: rgba(120, 120, 120, 0.12);
-            color: var(--text-2);
-            border: none;
-            border-radius: 50px;
-            width: 28px;
-            height: 28px;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            transition: all 0.2s ease;
-        }
-
-        .filter-chip:hover {
-            transform: scale(1.08);
-            background: rgba(120, 120, 120, 0.2);
-            color: var(--text);
-        }
-
-        .selected-count-chip {
-            background: var(--brand);
-            color: #ffffff;
-            padding: 2px 8px;
-            border-radius: 20px;
-            font-size: 0.8rem;
-            font-weight: 700;
-            min-width: 24px;
-            height: 24px;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-        }
-
+        /* Bulk Action Buttons (Consistent 32px height, pill shape) */
         .btn-bulk-action {
             display: inline-flex;
             align-items: center;
             justify-content: center;
-            height: 26px;
-            padding: 0 8px !important;
-            gap: 4px;
-            border-radius: var(--r-sm, 6px) !important;
-            border: none !important;
+            height: 32px;
+            padding: 0 10px !important;
+            gap: 5px;
+            border-radius: var(--r-full) !important;
+            border: 1px solid var(--border-solid) !important;
+            background: var(--surface-2);
+            color: var(--text-2);
             cursor: pointer;
-            transition: all 0.2s ease;
+            transition: all var(--t) var(--ease);
+            white-space: nowrap;
+            flex-shrink: 0;
+            box-shadow: none !important;
+            user-select: none;
         }
 
         .btn-bulk-label {
-            font-size: 0.65rem;
+            font-size: 0.76rem;
             font-weight: 700;
             font-family: 'Cairo', sans-serif;
             white-space: nowrap;
             color: inherit;
+            line-height: 1;
         }
 
         .btn-bulk-action i {
-            font-size: 0.65rem;
+            font-size: 0.74rem;
             line-height: 1 !important;
             display: inline-flex !important;
             align-items: center !important;
@@ -4430,71 +4470,119 @@ $showSettings = $hasChurchId || $isDevOrAdmin;
         }
 
         .btn-bulk-action:hover {
-            opacity: 0.85;
-            transform: scale(1.05);
+            transform: translateY(-1px);
+            box-shadow: var(--shadow-sm) !important;
         }
 
-        .btn-bulk-action.bulk-att-present {
-            background: rgba(16, 185, 129, 0.15) !important;
+        /* Combined Attendance Chip (حضور وغياب) */
+        .btn-bulk-action.bulk-att-combined {
+            background: rgba(16, 185, 129, 0.12) !important;
+            color: var(--success-dark) !important;
+            border: 1px solid rgba(16, 185, 129, 0.25) !important;
+        }
+
+        .btn-bulk-action.bulk-att-combined:hover,
+        .btn-bulk-action.bulk-att-combined.open {
+            background: rgba(16, 185, 129, 0.2) !important;
+            border-color: var(--success) !important;
+        }
+
+        .btn-bulk-action.bulk-att-combined i {
             color: var(--success) !important;
         }
 
-        .btn-bulk-action.bulk-att-present i {
-            color: var(--success) !important;
-        }
-
-        .btn-bulk-action.bulk-att-absent {
-            background: rgba(239, 68, 68, 0.15) !important;
-            color: var(--danger) !important;
-        }
-
-        .btn-bulk-action.bulk-att-absent i {
-            color: var(--danger) !important;
-        }
-
+        /* Coupons Chip (Strictly per AGENTS.md) */
         .btn-bulk-action.bulk-coupons {
-            background: rgba(245, 158, 11, 0.15) !important;
-            color: var(--warning) !important;
+            background: var(--coupon-bg) !important;
+            color: var(--coupon) !important;
+            border: 1px solid rgba(139, 92, 246, 0.25) !important;
+        }
+
+        .btn-bulk-action.bulk-coupons:hover,
+        .btn-bulk-action.bulk-coupons.open {
+            background: var(--coupon-bg) !important;
+            border-color: var(--coupon) !important;
+            filter: brightness(0.96);
         }
 
         .btn-bulk-action.bulk-coupons i {
-            color: var(--warning) !important;
+            color: var(--coupon) !important;
         }
 
+        /* Class Transfer */
         .btn-bulk-action.bulk-class {
-            background: rgba(91, 108, 245, 0.15) !important;
+            background: rgba(91, 108, 245, 0.12) !important;
             color: var(--brand) !important;
+            border: 1px solid rgba(91, 108, 245, 0.22) !important;
+        }
+
+        .btn-bulk-action.bulk-class:hover {
+            background: rgba(91, 108, 245, 0.2) !important;
+            border-color: var(--brand) !important;
         }
 
         .btn-bulk-action.bulk-class i {
             color: var(--brand) !important;
         }
 
+        /* Bulk Note */
+        .btn-bulk-action.bulk-note {
+            background: rgba(59, 130, 246, 0.12) !important;
+            color: #2563eb !important;
+            border: 1px solid rgba(59, 130, 246, 0.22) !important;
+        }
+
+        .btn-bulk-action.bulk-note:hover {
+            background: rgba(59, 130, 246, 0.2) !important;
+            border-color: #2563eb !important;
+        }
+
+        .btn-bulk-action.bulk-note i {
+            color: #2563eb !important;
+        }
+
+        /* Bulk Merge (when 2 selected) */
+        .btn-bulk-action.bulk-merge {
+            background: rgba(16, 185, 129, 0.12) !important;
+            color: var(--success) !important;
+            border: 1px solid rgba(16, 185, 129, 0.25) !important;
+        }
+
+        .btn-bulk-action.bulk-merge:hover {
+            background: rgba(16, 185, 129, 0.2) !important;
+            border-color: var(--success) !important;
+        }
+
+        .btn-bulk-action.bulk-merge i {
+            color: var(--success) !important;
+        }
+
+        /* Bulk Delete */
         .btn-bulk-action.bulk-delete {
-            background: rgba(239, 68, 68, 0.15) !important;
+            background: rgba(239, 68, 68, 0.12) !important;
             color: var(--danger) !important;
+            border: 1px solid rgba(239, 68, 68, 0.25) !important;
+        }
+
+        .btn-bulk-action.bulk-delete:hover {
+            background: var(--danger-bg) !important;
+            border-color: var(--danger) !important;
         }
 
         .btn-bulk-action.bulk-delete i {
             color: var(--danger) !important;
         }
 
-        .btn-bulk-action.bulk-note {
-            background: rgba(59, 130, 246, 0.15) !important;
-            color: #3b82f6 !important;
-        }
-
-        .btn-bulk-action.bulk-note i {
-            color: #3b82f6 !important;
-        }
-
-        .btn-bulk-action.bulk-merge {
-            background: rgba(139, 92, 246, 0.15) !important;
-            color: #8b5cf6 !important;
-        }
-
-        .btn-bulk-action.bulk-merge i {
-            color: #8b5cf6 !important;
+        /* Bulk Dropdowns (Must never be clipped by parent containers or topbar) */
+        .bulk-fixed-dropdown,
+        .bulk-actions-bar .dropdown-menu {
+            position: fixed !important;
+            z-index: 999999 !important;
+            box-shadow: var(--shadow-xl) !important;
+            border: 1px solid var(--border-solid) !important;
+            background: var(--surface) !important;
+            border-radius: var(--r-md) !important;
+            padding: 6px 0 !important;
         }
 
         /* Premium Merge Duplicates Table & UI Styles */
@@ -13018,126 +13106,141 @@ $showSettings = $hasChurchId || $isDevOrAdmin;
 
     <!-- MAIN CONTAINER -->
     <div id="mainContainer">
-        <!-- Bulk Actions Bar -->
+        <!-- Bulk Actions Bar (Exact Height of Topbar: 58px / 72px) -->
         <div class="bulk-actions-bar" id="bulkActionsBar" style="display: none;">
-            <!-- Pinned Right Group: Exit button + Select All + Selected Count -->
+            <!-- Pinned Right Group: Exit button + Combined Select & Filter Chip + Selected Count -->
             <div class="bulk-bar-pinned-start">
                 <button type="button" class="btn btn-ghost btn-sm bulk-close-btn" onclick="disableBulkSelectMode()" title="إلغاء وضع التحديد">
                     <i class="fas fa-times"></i>
                 </button>
 
-                <div class="bulk-select-all-pill" onclick="toggleSelectAllBulk(event)" title="تحديد الكل">
-                    <div class="bulk-check-circle" id="bulkBarSelectAllCircle">
-                        <i class="fas fa-check"></i>
-                    </div>
-                    <span class="bulk-select-all-label">الكل</span>
-                </div>
-
-                <div class="bulk-count-badge-wrap" title="عدد المحددين">
-                    <span id="bulkSelectedCount" class="selected-count-chip">0</span>
-                </div>
-            </div>
-
-            <div class="bulk-v-divider"></div>
-            <!-- Scrollable Actions Track -->
-            <div class="bulk-actions-scroll-track">
-                <!-- Mark Present -->
-                <button type="button" class="btn-bulk-action bulk-att-present" onclick="bulkMarkAttendance('present')" title="حضور">
-                    <i class="fas fa-check"></i>
-                    <span class="btn-bulk-label">حضور</span>
-                </button>
-
-                <!-- Mark Absent -->
-                <button type="button" class="btn-bulk-action bulk-att-absent" onclick="bulkMarkAttendance('absent')" title="غياب">
-                    <i class="fas fa-times"></i>
-                    <span class="btn-bulk-label">غياب</span>
-                </button>
-
-                <!-- Coupons Dropdown -->
-                <div class="action-dropdown bulk-dropdown-wrap">
-                    <button type="button" class="btn-bulk-action bulk-coupons" id="bulkCouponsBtn"
-                        onclick="toggleDropdown('bulkCouponsMenu', 'bulkCouponsBtn'); event.stopPropagation();"
-                        title="تعديل الكوبونات">
-                        <i class="fas fa-star"></i>
-                        <span class="btn-bulk-label">كوبونات</span>
+                <!-- Combined Select All & Filter Chip -->
+                <div class="action-dropdown bulk-dropdown-wrap" style="display: inline-flex;">
+                    <button type="button" class="btn-bulk-action bulk-select-filter-chip" id="bulkSelectFilterBtn"
+                        onclick="toggleDropdown('bulkSelectFilterMenu', 'bulkSelectFilterBtn'); event.stopPropagation();"
+                        title="خيارات التحديد والتصفية">
+                        <div class="bulk-check-circle" id="bulkBarSelectAllCircle" onclick="toggleSelectAllBulk(event)">
+                            <i class="fas fa-check"></i>
+                        </div>
+                        <span class="btn-bulk-label" id="bulkSelectFilterLabel">تحديد</span>
                         <i class="fas fa-chevron-down bulk-chevron"></i>
                     </button>
-                    <div class="dropdown-menu" id="bulkCouponsMenu" style="left:auto; right:0; min-width:130px; z-index:10000;">
-                        <div class="dropdown-group-label" style="padding:4px 10px; font-size:0.75rem; font-weight:bold; color:var(--text-3); text-align:right;">
-                            إضافة
-                        </div>
-                        <button type="button" class="dropdown-item" onclick="executeBulkCouponsDirect(10);closeAllDropdowns()">+10</button>
-                        <button type="button" class="dropdown-item" onclick="executeBulkCouponsDirect(30);closeAllDropdowns()">+30</button>
-                        <button type="button" class="dropdown-item" onclick="executeBulkCouponsDirect(50);closeAllDropdowns()">+50</button>
-                        <button type="button" class="dropdown-item" onclick="executeBulkCouponsDirect(100);closeAllDropdowns()">+100</button>
+                    <div class="dropdown-menu bulk-fixed-dropdown" id="bulkSelectFilterMenu" style="min-width: 175px;">
+                        <button type="button" class="dropdown-item" onclick="toggleSelectAllBulk(event);closeAllDropdowns()">
+                            <i class="fas fa-check-double" style="color:var(--brand);"></i> تحديد الكل
+                        </button>
+                        <button type="button" class="dropdown-item" onclick="bulkSelectByFilter('none');closeAllDropdowns()">
+                            <i class="fas fa-minus-square" style="color:var(--text-3);"></i> إلغاء التحديد
+                        </button>
                         <div class="dropdown-divider"></div>
-                        <div class="dropdown-group-label" style="padding:4px 10px; font-size:0.75rem; font-weight:bold; color:var(--text-3); text-align:right;">
-                            خصم
+                        <div class="dropdown-group-label" style="padding:4px 10px; font-size:0.72rem; font-weight:bold; color:var(--text-3); text-align:right;">
+                            تحديد حسب الحضور
                         </div>
-                        <button type="button" class="dropdown-item danger" onclick="executeBulkCouponsDirect(-10);closeAllDropdowns()">-10</button>
-                        <button type="button" class="dropdown-item danger" onclick="executeBulkCouponsDirect(-30);closeAllDropdowns()">-30</button>
-                        <button type="button" class="dropdown-item danger" onclick="executeBulkCouponsDirect(-50);closeAllDropdowns()">-50</button>
-                        <button type="button" class="dropdown-item danger" onclick="executeBulkCouponsDirect(-100);closeAllDropdowns()">-100</button>
-                    </div>
-                </div>
-
-                <!-- Filter Dropdown -->
-                <div class="action-dropdown bulk-dropdown-wrap">
-                    <button type="button" class="btn-bulk-action bulk-filter-btn" id="bulkFilterBtn"
-                        onclick="toggleDropdown('bulkFilterMenu', 'bulkFilterBtn'); event.stopPropagation();"
-                        title="تحديد حسب">
-                        <i class="fas fa-filter"></i>
-                        <span class="btn-bulk-label">تصفية</span>
-                        <i class="fas fa-chevron-down bulk-chevron"></i>
-                    </button>
-                    <div class="dropdown-menu" id="bulkFilterMenu" style="left:auto; right:0; min-width:150px; z-index:10000;">
                         <button type="button" class="dropdown-item" onclick="bulkSelectByFilter('pending');closeAllDropdowns()">
-                            <i class="fas fa-minus"></i> بدون حضور
+                            <i class="fas fa-minus"></i> بدون تسجيل حضور
                         </button>
                         <button type="button" class="dropdown-item success" onclick="bulkSelectByFilter('present');closeAllDropdowns()">
-                            <i class="fas fa-check-circle"></i> الحاضرين
+                            <i class="fas fa-check-circle"></i> الحاضرين فقط
                         </button>
                         <button type="button" class="dropdown-item danger" onclick="bulkSelectByFilter('absent');closeAllDropdowns()">
-                            <i class="fas fa-times-circle"></i> الغائبين
+                            <i class="fas fa-times-circle"></i> الغائبين فقط
                         </button>
                         <div class="dropdown-divider"></div>
+                        <div class="dropdown-group-label" style="padding:4px 10px; font-size:0.72rem; font-weight:bold; color:var(--text-3); text-align:right;">
+                            تحديد حسب النوع
+                        </div>
                         <button type="button" class="dropdown-item" style="color: var(--brand);" onclick="bulkSelectByFilter('boys');closeAllDropdowns()">
                             <i class="fas fa-mars"></i> الأولاد
                         </button>
                         <button type="button" class="dropdown-item" style="color: #ec4899;" onclick="bulkSelectByFilter('girls');closeAllDropdowns()">
                             <i class="fas fa-venus"></i> البنات
                         </button>
-                        <div class="dropdown-divider"></div>
-                        <button type="button" class="dropdown-item" onclick="bulkSelectByFilter('none');closeAllDropdowns()">
-                            <i class="fas fa-minus-square"></i> إلغاء التحديد
-                        </button>
                     </div>
                 </div>
 
-                <!-- Transfer Class -->
-                <button type="button" class="btn-bulk-action bulk-class" onclick="triggerBulkClass()" title="تغيير الفصل">
-                    <i class="fas fa-edit"></i>
-                    <span class="btn-bulk-label">نقل</span>
-                </button>
+                <!-- Selected Count Chip -->
+                <div class="bulk-count-badge-wrap" title="عدد المحددين">
+                    <span id="bulkSelectedCount" class="selected-count-chip">0</span>
+                </div>
+            </div>
 
-                <!-- Bulk Note -->
-                <button type="button" class="btn-bulk-action bulk-note" onclick="openBulkNoteModal()" title="إضافة ملاحظة جماعية">
-                    <i class="fas fa-sticky-note"></i>
-                    <span class="btn-bulk-label">ملاحظة</span>
-                </button>
+            <div class="bulk-v-divider"></div>
 
-                <!-- Merge (visible when 2 selected) -->
-                <button type="button" class="btn-bulk-action bulk-merge" id="bulkMergeBtn" onclick="triggerBulkMerge()"
-                    title="دمج الحسابين المكررين" style="display: none;">
-                    <i class="fas fa-code-merge"></i>
-                    <span class="btn-bulk-label">دمج</span>
-                </button>
+            <!-- Scrollable Actions Track with Fade at Left End -->
+            <div class="bulk-actions-scroll-wrap" id="bulkActionsScrollWrap">
+                <div class="bulk-actions-scroll-track" id="bulkActionsScrollTrack">
+                    <!-- Unified Attendance Chip (حضور وغياب مع قائمة منسدلة) -->
+                    <div class="action-dropdown bulk-dropdown-wrap">
+                        <button type="button" class="btn-bulk-action bulk-att-combined" id="bulkAttendanceBtn"
+                            onclick="toggleDropdown('bulkAttendanceMenu', 'bulkAttendanceBtn'); event.stopPropagation();"
+                            title="تسجيل الحضور والغياب">
+                            <i class="fas fa-user-check"></i>
+                            <span class="btn-bulk-label">التحضير</span>
+                            <i class="fas fa-chevron-down bulk-chevron"></i>
+                        </button>
+                        <div class="dropdown-menu bulk-fixed-dropdown" id="bulkAttendanceMenu" style="min-width: 140px;">
+                            <button type="button" class="dropdown-item success" onclick="bulkMarkAttendance('present');closeAllDropdowns()">
+                                <i class="fas fa-check-circle"></i> تسجيل حضور
+                            </button>
+                            <button type="button" class="dropdown-item danger" onclick="bulkMarkAttendance('absent');closeAllDropdowns()">
+                                <i class="fas fa-times-circle"></i> تسجيل غياب
+                            </button>
+                        </div>
+                    </div>
 
-                <!-- Delete -->
-                <button type="button" class="btn-bulk-action bulk-delete" onclick="triggerBulkDelete()" title="حذف المحددين">
-                    <i class="fas fa-trash"></i>
-                    <span class="btn-bulk-label">حذف</span>
-                </button>
+                    <!-- Coupons Dropdown -->
+                    <div class="action-dropdown bulk-dropdown-wrap">
+                        <button type="button" class="btn-bulk-action bulk-coupons" id="bulkCouponsBtn"
+                            onclick="toggleDropdown('bulkCouponsMenu', 'bulkCouponsBtn'); event.stopPropagation();"
+                            title="تعديل الكوبونات">
+                            <i class="fas fa-star"></i>
+                            <span class="btn-bulk-label">كوبونات</span>
+                            <i class="fas fa-chevron-down bulk-chevron"></i>
+                        </button>
+                        <div class="dropdown-menu bulk-fixed-dropdown" id="bulkCouponsMenu" style="min-width: 130px;">
+                            <div class="dropdown-group-label" style="padding:4px 10px; font-size:0.75rem; font-weight:bold; color:var(--text-3); text-align:right;">
+                                إضافة
+                            </div>
+                            <button type="button" class="dropdown-item" onclick="executeBulkCouponsDirect(10);closeAllDropdowns()">+10</button>
+                            <button type="button" class="dropdown-item" onclick="executeBulkCouponsDirect(30);closeAllDropdowns()">+30</button>
+                            <button type="button" class="dropdown-item" onclick="executeBulkCouponsDirect(50);closeAllDropdowns()">+50</button>
+                            <button type="button" class="dropdown-item" onclick="executeBulkCouponsDirect(100);closeAllDropdowns()">+100</button>
+                            <div class="dropdown-divider"></div>
+                            <div class="dropdown-group-label" style="padding:4px 10px; font-size:0.75rem; font-weight:bold; color:var(--text-3); text-align:right;">
+                                خصم
+                            </div>
+                            <button type="button" class="dropdown-item danger" onclick="executeBulkCouponsDirect(-10);closeAllDropdowns()">-10</button>
+                            <button type="button" class="dropdown-item danger" onclick="executeBulkCouponsDirect(-30);closeAllDropdowns()">-30</button>
+                            <button type="button" class="dropdown-item danger" onclick="executeBulkCouponsDirect(-50);closeAllDropdowns()">-50</button>
+                            <button type="button" class="dropdown-item danger" onclick="executeBulkCouponsDirect(-100);closeAllDropdowns()">-100</button>
+                        </div>
+                    </div>
+
+                    <!-- Transfer Class -->
+                    <button type="button" class="btn-bulk-action bulk-class" onclick="triggerBulkClass()" title="تغيير الفصل">
+                        <i class="fas fa-edit"></i>
+                        <span class="btn-bulk-label">نقل</span>
+                    </button>
+
+                    <!-- Bulk Note -->
+                    <button type="button" class="btn-bulk-action bulk-note" onclick="openBulkNoteModal()" title="إضافة ملاحظة جماعية">
+                        <i class="fas fa-sticky-note"></i>
+                        <span class="btn-bulk-label">ملاحظة</span>
+                    </button>
+
+                    <!-- Merge (visible when 2 selected) -->
+                    <button type="button" class="btn-bulk-action bulk-merge" id="bulkMergeBtn" onclick="triggerBulkMerge()"
+                        title="دمج الحسابين المكررين" style="display: none;">
+                        <i class="fas fa-code-merge"></i>
+                        <span class="btn-bulk-label">دمج</span>
+                    </button>
+
+                    <!-- Delete -->
+                    <button type="button" class="btn-bulk-action bulk-delete" onclick="triggerBulkDelete()" title="حذف المحددين">
+                        <i class="fas fa-trash"></i>
+                        <span class="btn-bulk-label">حذف</span>
+                    </button>
+                </div>
             </div>
         </div>
 
@@ -18111,31 +18214,51 @@ $showSettings = $hasChurchId || $isDevOrAdmin;
             activeDropdown = isOpen ? id : null;
 
             if (isOpen) {
-                // Dynamically ensure it is visible and does not overflow the screen bounds
-                menu.style.left = '';
-                menu.style.right = '';
+                if (menu.classList.contains('bulk-fixed-dropdown') || menu.closest('.bulk-actions-bar')) {
+                    if (btnEl) {
+                        const bRect = btnEl.getBoundingClientRect();
+                        menu.style.top = (bRect.bottom + 6) + 'px';
+                        const mWidth = menu.offsetWidth || 175;
+                        let rightPos = window.innerWidth - bRect.right;
+                        if (rightPos + mWidth > window.innerWidth - 10) {
+                            rightPos = window.innerWidth - mWidth - 10;
+                        }
+                        if (rightPos < 10) rightPos = 10;
+                        menu.style.right = rightPos + 'px';
+                        menu.style.left = 'auto';
+                    }
+                } else {
+                    // Dynamically ensure it is visible and does not overflow the screen bounds
+                    menu.style.left = '';
+                    menu.style.right = '';
 
-                const rect = menu.getBoundingClientRect();
+                    const rect = menu.getBoundingClientRect();
 
-                // If it overflows the left edge of the screen
-                if (rect.left < 10) {
-                    menu.style.left = '10px';
-                    menu.style.right = 'auto';
-                }
-                // If it overflows the right edge of the screen
-                else if (rect.right > window.innerWidth - 10) {
-                    menu.style.left = 'auto';
-                    menu.style.right = '10px';
+                    // If it overflows the left edge of the screen
+                    if (rect.left < 10) {
+                        menu.style.left = '10px';
+                        menu.style.right = 'auto';
+                    }
+                    // If it overflows the right edge of the screen
+                    else if (rect.right > window.innerWidth - 10) {
+                        menu.style.left = 'auto';
+                        menu.style.right = '10px';
+                    }
                 }
             }
         }
         function closeAllDropdowns() {
             document.querySelectorAll('.dropdown-menu.open').forEach(m => m.classList.remove('open'));
             document.querySelectorAll('.custom-dropdown-menu.open').forEach(m => m.classList.remove('open'));
-            document.querySelectorAll('.action-strip-btn.open, .topbar-btn.open').forEach(b => b.classList.remove('open'));
+            document.querySelectorAll('.action-strip-btn.open, .topbar-btn.open, .btn-bulk-action.open').forEach(b => b.classList.remove('open'));
             activeDropdown = null;
         }
         document.addEventListener('click', e => { if (!e.target.closest('.action-dropdown')) closeAllDropdowns(); });
+        window.addEventListener('scroll', () => {
+            if (activeDropdown && (document.getElementById(activeDropdown)?.closest('.bulk-actions-bar') || document.getElementById(activeDropdown)?.classList.contains('bulk-fixed-dropdown'))) {
+                closeAllDropdowns();
+            }
+        }, { passive: true });
 
         // ── VIEWPORT-AWARE CARD ANIMATION ─────────────────────────────
         // Only animate items currently visible on screen — items below the fold
