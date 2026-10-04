@@ -842,7 +842,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'logou
     .page {
       max-width: 860px;
       margin: 0 auto;
-      padding: 0 12px 90px;
+      padding: 0 12px calc(85px + env(safe-area-inset-bottom, 0px));
       position: relative;
       z-index: 1;
     }
@@ -4894,29 +4894,33 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'logou
     /* ══ BOTTOM NAVIGATION ══════════════════════════════════════ */
     .bottom-nav {
       position: fixed;
-      bottom: 12px;
-      left: 14px;
-      right: 14px;
-      height: 60px;
-      background: rgba(255, 255, 255, 0.94);
+      bottom: 0;
+      left: 0;
+      right: 0;
+      width: 100%;
+      min-height: 60px;
+      height: calc(60px + env(safe-area-inset-bottom, 0px));
+      background: rgba(255, 255, 255, 0.95);
       backdrop-filter: blur(20px);
       -webkit-backdrop-filter: blur(20px);
-      border: 1px solid var(--border-solid);
-      border-radius: var(--r-xl);
+      border: none;
+      border-top: 1px solid var(--border-solid);
+      border-radius: 0;
       display: flex;
       justify-content: space-around;
       align-items: center;
       z-index: 490;
-      padding: 6px 8px;
-      box-shadow: 0 8px 30px rgba(0, 0, 0, 0.08);
-      max-width: 500px;
-      margin: 0 auto;
+      padding: 6px 8px calc(6px + env(safe-area-inset-bottom, 0px)) 8px;
+      box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.05);
+      max-width: 100%;
+      margin: 0;
+      box-sizing: border-box;
     }
 
     [data-theme="dark"] .bottom-nav {
-      background: rgba(24, 27, 38, 0.94);
-      border-color: rgba(91, 108, 245, 0.18);
-      box-shadow: 0 8px 30px rgba(0, 0, 0, 0.4);
+      background: rgba(24, 27, 38, 0.95);
+      border-top: 1px solid rgba(91, 108, 245, 0.18);
+      box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.35);
     }
 
     .bottom-nav-item {
@@ -4946,7 +4950,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'logou
       color: var(--brand);
       background: var(--brand-bg);
       font-weight: 800;
-      margin-inline: 10px;
+      margin-inline: 4px;
     }
 
     .bottom-nav-item.active i {

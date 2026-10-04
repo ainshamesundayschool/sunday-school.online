@@ -14763,37 +14763,16 @@ $showSettings = $hasChurchId || $isDevOrAdmin;
                         </div>
                         <input type="text" id="editStudentPhoneCustomType" class="form-input" placeholder="اكتب صلة صاحب الرقم..." style="width:100%; margin-top:4px; display:none;">
                     </div>
-                </div>
-                <div class="form-group" style="grid-column:1/-1;" id="editEmergencyPhoneGroup">
-                    <label class="form-label" style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
-                        <span><i class="fas fa-phone-alt" style="margin-left:6px; color:var(--primary);"></i>أرقام هواتف إضافية</span>
-                    </label>
-                    <!-- Quick Add Box for additional parent contacts -->
-                    <div style="background:var(--surface-2, rgba(255,255,255,0.05)); border:1px dashed var(--primary); border-radius:10px; padding:12px; margin-bottom:10px;">
-                        <div style="font-size:0.85rem; font-weight:600; margin-bottom:8px; color:var(--primary); display:flex; align-items:center; gap:6px;">
-                            <i class="fas fa-plus-circle"></i> إضافة رقم ولي أمر / جهة اتصال جديدة:
-                        </div>
-                        <div style="display:flex; gap:8px; flex-wrap:wrap; margin-bottom:8px;">
-                            <select id="editNewParentRelation" class="form-input" style="flex:1; min-width:110px; padding:6px 10px; font-size:0.85rem;" onchange="handleParentPhoneRelationChange(this)">
-                                <option value="father">أب</option>
-                                <option value="mother">أم</option>
-                                <option value="brother">أخ</option>
-                                <option value="sister">أخت</option>
-                                <option value="grandfather">جد</option>
-                                <option value="grandmother">جدة</option>
-                                <option value="uncle">عم / خال</option>
-                                <option value="aunt">عمة / خالة</option>
-                                <option value="guardian" selected>ولي أمر</option>
-                                <option value="other">أخرى (مخصص)</option>
-                            </select>
-                            <input type="text" id="editNewParentCustomRelation" class="form-input parent-phone-custom-rel" placeholder="صلة القرابة..." style="flex:1; min-width:110px; padding:6px 10px; font-size:0.85rem; display:none;">
-                            <input type="text" id="editNewParentName" class="form-input" placeholder="الاسم (اختياري)" style="flex:1.2; min-width:120px; padding:6px 10px; font-size:0.85rem;">
-                            <input type="tel" id="editNewParentPhone" class="form-input" placeholder="رقم الهاتف (01xxxxxxxxx)" dir="ltr" style="flex:1.5; min-width:140px; padding:6px 10px; font-size:0.85rem;">
-                        </div>
-                        <button type="button" class="btn btn-sm btn-primary" onclick="addParentPhoneFromBuilder('edit')" style="width:100%; display:flex; align-items:center; justify-content:center; gap:6px; padding:8px; font-size:0.85rem; font-weight:700; border-radius:8px; cursor:pointer;">
-                            <i class="fas fa-plus"></i> إضافة جهة الاتصال للقائمة
+                    <div style="margin-top: 8px;">
+                        <button type="button" class="btn btn-sm" onclick="openParentPhoneModal('edit')" style="display:inline-flex; align-items:center; gap:6px; font-size:0.85rem; font-weight:700; color:var(--brand); background:var(--brand-bg); border:1px dashed var(--brand); border-radius:var(--r-md); padding:7px 14px; cursor:pointer; transition:all var(--t) var(--ease);">
+                            <i class="fas fa-plus"></i> إضافة رقم هاتف إضافي
                         </button>
                     </div>
+                </div>
+                <div class="form-group" style="grid-column:1/-1; display:none;" id="editEmergencyPhoneGroup">
+                    <label class="form-label" style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                        <span><i class="fas fa-phone-alt" style="margin-left:6px; color:var(--brand);"></i>أرقام هواتف إضافية</span>
+                    </label>
                     <div id="editStudentParentPhonesList" class="parent-phones-list" style="display:flex; flex-direction:column; gap:8px;"></div>
                     <input type="hidden" id="editStudentEmergencyPhone" value="">
                 </div>
@@ -15064,39 +15043,16 @@ $showSettings = $hasChurchId || $isDevOrAdmin;
                             <i class="fas fa-phone input-icon"></i>
                             <input type="tel" id="studentPhone" class="form-input" placeholder="01xxxxxxxxx" dir="ltr">
                         </div>
-                        <input type="text" id="studentPhoneCustomType" class="form-input" placeholder="اكتب صلة صاحب الرقم..." style="width:100%; margin-top:4px; display:none;">
-                    </div>
-                </div>
-                <div class="form-group" style="grid-column:1/-1;" id="studentEmergencyPhoneGroup">
-                    <label class="form-label" style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
-                        <span><i class="fas fa-phone-alt" style="margin-left:6px; color:var(--primary);"></i>أرقام هواتف إضافية</span>
-                    </label>
-                    <!-- Quick Add Box for additional parent contacts -->
-                    <div style="background:var(--surface-2, rgba(255,255,255,0.05)); border:1px dashed var(--primary); border-radius:10px; padding:12px; margin-bottom:10px;">
-                        <div style="font-size:0.85rem; font-weight:600; margin-bottom:8px; color:var(--primary); display:flex; align-items:center; gap:6px;">
-                            <i class="fas fa-plus-circle"></i> إضافة رقم ولي أمر / جهة اتصال جديدة:
-                        </div>
-                        <div style="display:flex; gap:8px; flex-wrap:wrap; margin-bottom:8px;">
-                            <select id="newParentRelation" class="form-input" style="flex:1; min-width:110px; padding:6px 10px; font-size:0.85rem;" onchange="handleParentPhoneRelationChange(this)">
-                                <option value="father">أب</option>
-                                <option value="mother">أم</option>
-                                <option value="brother">أخ</option>
-                                <option value="sister">أخت</option>
-                                <option value="grandfather">جد</option>
-                                <option value="grandmother">جدة</option>
-                                <option value="uncle">عم / خال</option>
-                                <option value="aunt">عمة / خالة</option>
-                                <option value="guardian" selected>ولي أمر</option>
-                                <option value="other">أخرى (مخصص)</option>
-                            </select>
-                            <input type="text" id="newParentCustomRelation" class="form-input parent-phone-custom-rel" placeholder="صلة القرابة..." style="flex:1; min-width:110px; padding:6px 10px; font-size:0.85rem; display:none;">
-                            <input type="text" id="newParentName" class="form-input" placeholder="الاسم (اختياري)" style="flex:1.2; min-width:120px; padding:6px 10px; font-size:0.85rem;">
-                            <input type="tel" id="newParentPhone" class="form-input" placeholder="رقم الهاتف (01xxxxxxxxx)" dir="ltr" style="flex:1.5; min-width:140px; padding:6px 10px; font-size:0.85rem;">
-                        </div>
-                        <button type="button" class="btn btn-sm btn-primary" onclick="addParentPhoneFromBuilder('add')" style="width:100%; display:flex; align-items:center; justify-content:center; gap:6px; padding:8px; font-size:0.85rem; font-weight:700; border-radius:8px; cursor:pointer;">
-                            <i class="fas fa-plus"></i> إضافة جهة الاتصال للقائمة
+                    <div style="margin-top: 8px;">
+                        <button type="button" class="btn btn-sm" onclick="openParentPhoneModal('add')" style="display:inline-flex; align-items:center; gap:6px; font-size:0.85rem; font-weight:700; color:var(--brand); background:var(--brand-bg); border:1px dashed var(--brand); border-radius:var(--r-md); padding:7px 14px; cursor:pointer; transition:all var(--t) var(--ease);">
+                            <i class="fas fa-plus"></i> إضافة رقم هاتف إضافي
                         </button>
                     </div>
+                </div>
+                <div class="form-group" style="grid-column:1/-1; display:none;" id="studentEmergencyPhoneGroup">
+                    <label class="form-label" style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                        <span><i class="fas fa-phone-alt" style="margin-left:6px; color:var(--brand);"></i>أرقام هواتف إضافية</span>
+                    </label>
                     <div id="newStudentParentPhonesList" class="parent-phones-list" style="display:flex; flex-direction:column; gap:8px;"></div>
                     <input type="hidden" id="studentEmergencyPhone" value="">
                 </div>
@@ -16270,6 +16226,62 @@ $showSettings = $hasChurchId || $isDevOrAdmin;
                             </button>
                         </div>
                     </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Parent Phone Sub-Modal -->
+    <div id="parentPhoneModal" class="modal-overlay">
+        <div class="modal" style="max-width: 440px; width: 100%;">
+            <div class="modal-header">
+                <h3><i class="fas fa-phone-alt" style="margin-left: 8px; color: var(--brand);"></i>إضافة رقم هاتف إضافي</h3>
+                <button type="button" class="close-btn" onclick="closeParentPhoneModal()">&times;</button>
+            </div>
+            <div class="modal-body" style="padding: 16px 20px;">
+                <div class="form-group" style="margin-bottom: 14px;">
+                    <label class="form-label" style="font-weight: 700; font-size: 0.88rem; margin-bottom: 6px;">صلة القرابة</label>
+                    <div class="input-icon-wrap">
+                        <i class="fas fa-user-tag input-icon"></i>
+                        <select id="modalParentRelation" class="form-input" onchange="handleModalParentRelationChange(this)">
+                            <option value="father" selected>أب</option>
+                            <option value="mother">أم</option>
+                            <option value="brother">أخ</option>
+                            <option value="sister">أخت</option>
+                            <option value="grandfather">جد</option>
+                            <option value="grandmother">جدة</option>
+                            <option value="uncle">عم / خال</option>
+                            <option value="aunt">عمة / خالة</option>
+                            <option value="guardian">ولي أمر</option>
+                            <option value="other">أخرى (مخصص)</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-group" id="modalParentCustomRelationGroup" style="display: none; margin-bottom: 14px;">
+                    <label class="form-label" style="font-weight: 700; font-size: 0.88rem; margin-bottom: 6px;">اكتب صلة القرابة</label>
+                    <input type="text" id="modalParentCustomRelation" class="form-input" placeholder="مثال: ابن عم، صديق الأسرة...">
+                </div>
+                <div class="form-group" style="margin-bottom: 14px;">
+                    <label class="form-label" style="font-weight: 700; font-size: 0.88rem; margin-bottom: 6px;">اسم جهة الاتصال <span style="font-weight: 400; color: var(--text-3); font-size: 0.8rem;">(اختياري)</span></label>
+                    <div class="input-icon-wrap">
+                        <i class="fas fa-user input-icon"></i>
+                        <input type="text" id="modalParentName" class="form-input" placeholder="اسم صاحب الرقم">
+                    </div>
+                </div>
+                <div class="form-group" style="margin-bottom: 16px;">
+                    <label class="form-label" style="font-weight: 700; font-size: 0.88rem; margin-bottom: 6px;">رقم الهاتف <span style="color: var(--danger);">*</span></label>
+                    <div class="input-icon-wrap">
+                        <i class="fas fa-phone input-icon"></i>
+                        <input type="tel" id="modalParentPhone" class="form-input" placeholder="01xxxxxxxxx" dir="ltr">
+                    </div>
+                </div>
+                <div style="display: flex; gap: 10px; margin-top: 10px;">
+                    <button type="button" class="btn btn-primary" onclick="confirmAddParentPhoneFromModal()" style="flex: 2; justify-content: center;">
+                        <i class="fas fa-check"></i> إضافة الرقم
+                    </button>
+                    <button type="button" class="btn btn-secondary" onclick="closeParentPhoneModal()" style="flex: 1; justify-content: center;">
+                        إلغاء
+                    </button>
                 </div>
             </div>
         </div>
@@ -24254,7 +24266,7 @@ $showSettings = $hasChurchId || $isDevOrAdmin;
                         <option value="other" ${isOther ? 'selected' : ''}>أخرى (مخصص)</option>
                     </select>
                     <input type="text" class="form-input parent-phone-custom-rel" placeholder="صلة القرابة..." value="${escAttr(customRel)}" style="flex:1; padding:6px 10px; font-size:0.85rem; display:${isOther ? 'block' : 'none'};">
-                    <button type="button" class="btn btn-sm" onclick="this.closest('.parent-phone-row').remove()" title="حذف" style="background:rgba(239, 68, 68, 0.15); color:#ef4444; border:1px solid rgba(239, 68, 68, 0.3); border-radius:6px; padding:6px 10px; cursor:pointer;">
+                    <button type="button" class="btn btn-sm" onclick="removeParentPhoneRow(this)" title="حذف" style="background:rgba(239, 68, 68, 0.15); color:#ef4444; border:1px solid rgba(239, 68, 68, 0.3); border-radius:6px; padding:6px 10px; cursor:pointer;">
                         <i class="fas fa-trash-alt"></i>
                     </button>
                 </div>
@@ -24263,6 +24275,86 @@ $showSettings = $hasChurchId || $isDevOrAdmin;
                     <input type="tel" class="form-input parent-phone-number" placeholder="رقم الهاتف (01xxxxxxxxx)" value="${escAttr(phone)}" style="padding:6px 10px; font-size:0.85rem;" dir="ltr">
                 </div>
             </div>`;
+        }
+
+        function removeParentPhoneRow(btn) {
+            const row = btn.closest('.parent-phone-row');
+            if (!row) return;
+            const container = row.parentElement;
+            row.remove();
+            if (container && container.querySelectorAll('.parent-phone-row').length === 0) {
+                const groupEl = container.closest('#studentEmergencyPhoneGroup, #editStudentEmergencyPhoneGroup') 
+                    || document.getElementById(container.id === 'editStudentParentPhonesList' ? 'editStudentEmergencyPhoneGroup' : 'studentEmergencyPhoneGroup');
+                if (groupEl) groupEl.style.display = 'none';
+            }
+        }
+
+        let currentParentPhoneModalMode = 'add';
+
+        function openParentPhoneModal(mode = 'add') {
+            currentParentPhoneModalMode = mode;
+            const modal = document.getElementById('parentPhoneModal');
+            if (!modal) return;
+            const relEl = document.getElementById('modalParentRelation');
+            const customRelEl = document.getElementById('modalParentCustomRelation');
+            const customGroup = document.getElementById('modalParentCustomRelationGroup');
+            const nameEl = document.getElementById('modalParentName');
+            const phoneEl = document.getElementById('modalParentPhone');
+            if (relEl) relEl.value = 'father';
+            if (customRelEl) customRelEl.value = '';
+            if (customGroup) customGroup.style.display = 'none';
+            if (nameEl) nameEl.value = '';
+            if (phoneEl) phoneEl.value = '';
+            modal.classList.add('active');
+            setTimeout(() => { if (phoneEl) phoneEl.focus(); }, 100);
+        }
+
+        function closeParentPhoneModal() {
+            const modal = document.getElementById('parentPhoneModal');
+            if (modal) modal.classList.remove('active');
+        }
+
+        function handleModalParentRelationChange(selectEl) {
+            const customGroup = document.getElementById('modalParentCustomRelationGroup');
+            if (customGroup) {
+                if (selectEl.value === 'other') {
+                    customGroup.style.display = 'block';
+                    const inp = document.getElementById('modalParentCustomRelation');
+                    if (inp) inp.focus();
+                } else {
+                    customGroup.style.display = 'none';
+                }
+            }
+        }
+
+        function confirmAddParentPhoneFromModal() {
+            const phoneEl = document.getElementById('modalParentPhone');
+            const relEl = document.getElementById('modalParentRelation');
+            const customRelEl = document.getElementById('modalParentCustomRelation');
+            const nameEl = document.getElementById('modalParentName');
+            
+            const phone = phoneEl ? phoneEl.value.trim() : '';
+            if (!phone) {
+                if (typeof showToast === 'function') showToast('يرجى كتابة رقم الهاتف أولاً', 'error');
+                else alert('يرجى كتابة رقم الهاتف أولاً');
+                if (phoneEl) phoneEl.focus();
+                return;
+            }
+            
+            const rel = relEl ? relEl.value : 'father';
+            const customRel = (rel === 'other' && customRelEl) ? customRelEl.value.trim() : '';
+            const name = nameEl ? nameEl.value.trim() : '';
+            const containerId = (currentParentPhoneModalMode === 'edit') ? 'editStudentParentPhonesList' : 'newStudentParentPhonesList';
+            
+            addParentPhoneRow(containerId, {
+                relation: rel,
+                custom_relation: customRel,
+                name: name,
+                phone: phone
+            });
+            
+            closeParentPhoneModal();
+            if (typeof showToast === 'function') showToast('تمت إضافة رقم الهاتف بنجاح', 'success');
         }
 
         function handleParentPhoneRelationChange(selectEl) {
@@ -24321,6 +24413,8 @@ $showSettings = $hasChurchId || $isDevOrAdmin;
         function addParentPhoneRow(containerId, item = { relation: 'father', custom_relation: '', name: '', phone: '' }) {
             const container = document.getElementById(containerId);
             if (!container) return;
+            const groupEl = document.getElementById(containerId === 'editStudentParentPhonesList' ? 'editStudentEmergencyPhoneGroup' : 'studentEmergencyPhoneGroup');
+            if (groupEl) groupEl.style.display = 'block';
             const div = document.createElement('div');
             div.innerHTML = renderParentPhoneRowHtml(containerId, item);
             container.appendChild(div.firstElementChild);
@@ -24397,7 +24491,12 @@ $showSettings = $hasChurchId || $isDevOrAdmin;
             }
             
             if (list.length > 0) {
+                const groupEl = document.getElementById(containerId === 'editStudentParentPhonesList' ? 'editStudentEmergencyPhoneGroup' : 'studentEmergencyPhoneGroup');
+                if (groupEl) groupEl.style.display = 'block';
                 list.forEach(item => addParentPhoneRow(containerId, item));
+            } else {
+                const groupEl = document.getElementById(containerId === 'editStudentParentPhonesList' ? 'editStudentEmergencyPhoneGroup' : 'studentEmergencyPhoneGroup');
+                if (groupEl) groupEl.style.display = 'none';
             }
         }
 
